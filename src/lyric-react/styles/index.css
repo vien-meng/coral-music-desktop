@@ -1,0 +1,338 @@
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  background: transparent;
+  user-select: none;
+}
+
+.lyric-shell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-width: 320px;
+  min-height: 120px;
+  border-radius: 8px;
+  background: rgba(18, 22, 28, 0.58);
+  color: #fff;
+  opacity: var(--lyric-opacity, 1);
+  transition: opacity 180ms ease;
+}
+
+.lyric-shell.locked {
+  background: transparent;
+}
+
+.lyric-shell.hidden {
+  opacity: 0.05;
+}
+
+.lyric-shell.hidden:not(.locked):hover {
+  opacity: var(--lyric-opacity, 1);
+}
+
+.lyric-control-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 6px;
+  background-color: rgba(0, 0, 0, 0.68);
+  opacity: 0;
+  transition: opacity 160ms ease;
+  z-index: 2;
+}
+
+.lyric-audio-visualizer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.lyric-audio-visualizer-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.lyric-shell:hover .lyric-control-bar {
+  opacity: 1;
+}
+
+.lyric-control-bar .ant-btn {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.lyric-control-bar .ant-btn:hover,
+.lyric-control-bar .ant-btn.is-active {
+  color: var(--lyric-played-color, #ff8a80);
+}
+
+.lyric-display {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.lyric-display-horizontal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lyric-display-vertical {
+  writing-mode: vertical-rl;
+}
+
+.lyric-line-list {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  text-align: center;
+  scrollbar-width: none;
+}
+
+.lyric-line-list::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.lyric-line-host {
+  min-width: 100%;
+}
+
+.lyric-display-horizontal .lyric-space {
+  height: 80%;
+}
+
+.lyric-display-vertical .lyric-line-list {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.lyric-display-vertical .lyric-space {
+  width: 80%;
+  height: 100%;
+}
+
+.lyric-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  gap: 10px;
+  padding: 28px 48px;
+  box-sizing: border-box;
+}
+
+.lyric-current {
+  color: var(--lyric-played-color, #ff8a80);
+  font-size: 1.4em;
+  font-weight: 700;
+  text-shadow: 0 2px 10px var(--lyric-shadow-color, rgba(0, 0, 0, 0.36));
+}
+
+.lyric-next {
+  color: var(--lyric-unplay-color, rgba(255, 255, 255, 0.72));
+  font-size: 0.9em;
+  opacity: 0.72;
+}
+
+.lyric-line-list .font-lrc,
+.lyric-line-list .shadow {
+  padding: 0.08em 0.14em;
+  margin: -0.08em 0;
+}
+
+.lyric-line-list .font-lrc {
+  color: var(--lyric-unplay-color, rgba(255, 255, 255, 0.72));
+}
+
+.lyric-line-list .shadow {
+  color: transparent;
+}
+
+.lyric-line-list .line-content {
+  line-height: 1.2;
+  margin: var(--line-gap, 15px) 0;
+  overflow-wrap: break-word;
+}
+
+.lyric-line-list .line-content .font-lrc {
+  cursor: grab;
+}
+
+.lyric-line-list .line-content .extended {
+  font-size: 0.8em;
+  margin-top: var(--line-extended-gap, 5px);
+}
+
+.lyric-line-list .line-content.line-mode .font-lrc,
+.lyric-line-list .line-content.font-mode .extended .font-lrc,
+.lyric-line-list .font-mode > .line > .font-lrc > span {
+  transition: color 260ms ease, font-size 260ms ease;
+}
+
+.lyric-line-list .line-content.line-mode.active .font-lrc,
+.lyric-line-list .line-content.font-mode.played .font-lrc {
+  color: var(--lyric-played-color, #ff8a80);
+}
+
+.lyric-line-list .font-mode > .line > .font-lrc > span {
+  padding-left: 0.12em;
+  padding-right: 0.12em;
+  padding-bottom: 0.12em;
+  margin-left: -0.11em;
+  margin-right: -0.11em;
+  margin-bottom: -0.12em;
+  background-color: var(--lyric-unplay-color, rgba(255, 255, 255, 0.72));
+  background-image: linear-gradient(90deg, var(--lyric-played-color, #ff8a80), var(--lyric-played-color, #ff8a80));
+  background-repeat: no-repeat;
+  background-size: 0 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.lyric-display-vertical .lyric-line-list .line-content {
+  margin: 0 var(--line-gap, 15px);
+}
+
+.lyric-display-vertical .lyric-line-list .line-content.line-mode {
+  letter-spacing: 5px;
+}
+
+.lyric-display-vertical .lyric-line-list .line-content .extended {
+  margin-top: 0;
+  margin-right: var(--line-extended-gap, 5px);
+}
+
+.lyric-display-vertical .lyric-line-list .font-mode > .line > .font-lrc > span {
+  background-image: linear-gradient(180deg, var(--lyric-played-color, #ff8a80), var(--lyric-played-color, #ff8a80));
+}
+
+.lyric-line-list.lrc-active-zoom .line-content.active .extended {
+  font-size: 0.94em;
+}
+
+.lyric-line-list.lrc-active-zoom .line-content.active .line {
+  font-size: 1.2em;
+}
+
+.lyric-line-list.lrc-ellipsis .line-content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lyric-line-list.font-weight-font .font-lrc,
+.lyric-line-list.font-weight-line .line,
+.lyric-line-list.font-weight-extended .extended {
+  font-weight: 700;
+}
+
+.lyric-meta {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  display: flex;
+  gap: 8px;
+  max-width: calc(100% - 24px);
+  font-size: 12px;
+  opacity: 0.74;
+  z-index: 2;
+}
+
+.lyric-error {
+  position: absolute;
+  right: 12px;
+  top: 10px;
+  max-width: calc(100% - 24px);
+  color: #ffccc7;
+  font-size: 12px;
+  z-index: 2;
+}
+
+.lyric-resize {
+  position: absolute;
+  z-index: 3;
+}
+
+.lyric-resize-left {
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 100%;
+  cursor: ew-resize;
+}
+
+.lyric-resize-right {
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 100%;
+  cursor: ew-resize;
+}
+
+.lyric-resize-top {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  cursor: ns-resize;
+}
+
+.lyric-resize-bottom {
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 6px;
+  cursor: ns-resize;
+}
+
+.lyric-resize-top-left,
+.lyric-resize-top-right,
+.lyric-resize-bottom-left,
+.lyric-resize-bottom-right {
+  width: 8px;
+  height: 8px;
+}
+
+.lyric-resize-top-left {
+  top: 0;
+  left: 0;
+  cursor: nwse-resize;
+}
+
+.lyric-resize-top-right {
+  top: 0;
+  right: 0;
+  cursor: nesw-resize;
+}
+
+.lyric-resize-bottom-left {
+  bottom: 0;
+  left: 0;
+  cursor: nesw-resize;
+}
+
+.lyric-resize-bottom-right {
+  right: 0;
+  bottom: 0;
+  cursor: nwse-resize;
+}

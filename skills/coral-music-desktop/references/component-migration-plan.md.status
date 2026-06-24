@@ -1,0 +1,22 @@
+## Current Progress (as of Step 97 - 2026-06-24)
+
+### Routes Fully Migrated (PlaceholderRoute removed)
+- Search (`/search`)
+- Song List (`/song-list`)
+- Leaderboard (`/leaderboard`)
+- Download (`/download`)
+- Settings (`/setting`)
+
+### Routes Still Wrapped
+- **List** (`/list`) — drag reorder parity done, but PlaceholderRoute remains; Vue `views/List/index.vue` exists as placeholder
+
+### Vue Files Cleaned Up
+- `src/renderer/views/songList/` — **deleted** (7 files)
+- `src/renderer/views/List/MyList/` and `.../MusicList/` — **deleted** (~28 files)
+
+### Next Implementation Batch
+1. Remove PlaceholderRoute from `LocalListRoute` in `routeConfig.tsx`
+2. Delete `src/renderer/views/List/index.vue` placeholder
+3. Delete dead Vue views: `src/renderer/views/Leaderboard/`, `Search/`, `Download/`
+4. Move to **Player Bar / PlayDetail** migration (21 layout Vue files, Step 8)
+5. Sound effects and audio visualization (Step 14)

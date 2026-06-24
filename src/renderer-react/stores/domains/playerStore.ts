@@ -1,0 +1,600 @@
+import { makeAutoObservable, observable, reaction, type IReactionDisposer } from 'mobx'
+import {
+  playerRuntimeBridge,
+  type PlayerRuntimeBridge,
+  type PlayerRuntimeMusicInfo,
+  type PlayerSoundEffectConfig,
+  type PlayerRuntimeStatus,
+} from '../../services/playerService'
+import type { DislikeStore } from './dislikeStore'
+import type { SettingsStore } from './settingsStore'
+
+const clamp = (value: number, min: number, max: number): number => {
+  return Math.min(max, Math.max(min, value))
+}
+
+const normalizeStatusVolume = (volume: number): number => {
+  if (!Number.isFinite(volume)) return 1
+  return volume > 1 ? clamp(volume / 100, 0, 1) : clamp(volume, 0, 1)
+}
+
+const getRuntimeMusicId = (musicInfo: PlayerRuntimeMusicInfo): string => {
+  return 'progress' in musicInfo ? musicInfo.id : musicInfo.id
+}
+
+const isDownloadMusicInfo = (musicInfo: PlayerRuntimeMusicInfo): musicInfo is LX.Download.ListItem => {
+  return 'progress' in musicInfo && 'metadata' in musicInfo
+}
+
+const getRandomIndex = (length: number): number => {
+  return Math.floor(Math.random() * length)
+}
+
+type PlayMode = LX.AppSetting['player.togglePlayMethod']
+
+const createSoundEffectConfig = (setting: LX.AppSetting): PlayerSoundEffectConfig => ({
+  eqGains: {
+    31: setting['player.soundEffect.biquadFilter.hz31'],
+    62: setting['player.soundEffect.biquadFilter.hz62'],
+    125: setting['player.soundEffect.biquadFilter.hz125'],
+    250: setting['player.soundEffect.biquadFilter.hz250'],
+    500: setting['player.soundEffect.biquadFilter.hz500'],
+    1000: setting['player.soundEffect.biquadFilter.hz1000'],
+    2000: setting['player.soundEffect.biquadFilter.hz2000'],
+    4000: setting['player.soundEffect.biquadFilter.hz4000'],
+    8000: setting['player.soundEffect.biquadFilter.hz8000'],
+    16000: setting['player.soundEffect.biquadFilter.hz16000'],
+  },
+  pannerEnabled: setting['player.soundEffect.panner.enable'],
+  pannerSoundR: setting['player.soundEffect.panner.soundR'],
+  pitchPlaybackRate: setting['player.soundEffect.pitchShifter.playbackRate'],
+})
+
+const lrcTimeTagRxp = /\[\d{1,2}:\d{1,2}(?:[.:]\d+)?]/g
+const lrcMetaTagRxp = /^\[[a-zA-Z]+:[^\]]*]\s*/g
+
+const cleanLyricBlock = (lyric: string | null | undefined): string => {
+  return (lyric ?? '')
+    .split(/\r?\n/)
+    .map(line => line.replace(lrcTimeTagRxp, '').replace(lrcMetaTagRxp, '').trim())
+    .filter(Boolean)
+    .join('\n')
+}
+
+export class PlayerStore {
+  currentMusic: PlayerRuntimeMusicInfo | null = null
+  currentQueueId: string | null = null
+  currentQueueIndex = -1
+  isPlaying = false
+  isHydrated = false
+  playQueue: PlayerRuntimeMusicInfo[] = []
+  status: Partial<LX.Player.Status> | null = null
+  currentTime = 0
+  progress = 0
+  maxPlayTime = 0
+  volume = 1
+  isMute = false
+  playbackRate = 1
+  statusText = ''
+  isPlayDetailOpen = false
+  isCommentPanelOpen = false
+  isLyricSelectionOpen = false
+  playedMusicIds: string[] = []
+
+  private runtime: PlayerRuntimeBridge = playerRuntimeBridge
+  private runtimeStatusDisposer: (() => void) | null = null
+  private settingsDisposer: IReactionDisposer | null = null
+  private historyPlayMode: PlayMode | null = null
+
+  constructor(
+    private readonly settings: SettingsStore | null = null,
+    private readonly dislike: DislikeStore | null = null,
+  ) {
+    makeAutoObservable<this, 'dislike' | 'historyPlayMode' | 'runtime' | 'runtimeStatusDisposer' | 'settings' | 'settingsDisposer'>(
+      this,
+      {
+        dislike: false,
+        historyPlayMode: false,
+        runtime: false,
+        runtimeStatusDisposer: false,
+        settings: false,
+        settingsDisposer: false,
+        playedMusicIds: observable.shallow,
+        playQueue: observable.shallow,
+      },
+      { autoBind: true },
+    )
+  }
+
+  get displayName(): string {
+    return this.displayMusicInfo?.name ?? this.status?.name ?? '等待播放'
+  }
+
+  get displaySinger(): string {
+    return this.displayMusicInfo?.singer ?? this.status?.singer ?? '珊瑚音乐'
+  }
+
+  get musicInfo(): PlayerRuntimeMusicInfo | null {
+    return this.currentMusic
+  }
+
+  get displayMusicInfo(): LX.Music.MusicInfo | null {
+    if (!this.currentMusic) return null
+    return 'progress' in this.currentMusic ? this.currentMusic.metadata.musicInfo : this.currentMusic
+  }
+
+  get coverUrl(): string | null {
+    return this.displayMusicInfo?.meta.picUrl ?? this.status?.picUrl ?? null
+  }
+
+  get albumName(): string {
+    return this.displayMusicInfo?.meta.albumName ?? this.status?.albumName ?? ''
+  }
+
+  get lyricText(): string {
+    return [
+      this.status?.lyricLineAllText,
+      this.status?.lyricLineText,
+      this.status?.lxlyric,
+      this.status?.lyric,
+    ]
+      .map(text => text?.trim() ?? '')
+      .find(text => text.length > 0) ?? ''
+  }
+
+  get currentLyricInfo(): LX.Music.LyricInfo {
+    return {
+      lyric: this.status?.lyric ?? '',
+      lxlyric: this.status?.lxlyric ?? '',
+      rlyric: this.status?.rlyric ?? '',
+      tlyric: this.status?.tlyric ?? '',
+    }
+  }
+
+  get lyricDisplayLines(): string[] {
+    return this.lyricText
+      .split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(Boolean)
+      .slice(0, 24)
+  }
+
+  get lyricSelectionText(): string {
+    const lyricInfo = this.currentLyricInfo
+    const sections = [
+      cleanLyricBlock(lyricInfo.lyric),
+      cleanLyricBlock(lyricInfo.tlyric),
+      cleanLyricBlock(lyricInfo.rlyric),
+    ].filter(Boolean)
+
+    if (sections.length) return sections.join('\n\n')
+    return cleanLyricBlock(this.lyricText)
+  }
+
+  get lyricSelectionLines(): string[] {
+    return this.lyricSelectionText
+      .split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(Boolean)
+  }
+
+  get playInfo(): { musicInfo: PlayerRuntimeMusicInfo | null } | null {
+    return this.currentMusic ? { musicInfo: this.currentMusic } : null
+  }
+
+  get queueCount(): number {
+    return this.playQueue.length
+  }
+
+  get queuePositionText(): string {
+    if (!this.playQueue.length) return ''
+
+    const currentIndex = this.currentMusic
+      ? this.findQueueIndex(this.currentMusic)
+      : this.currentQueueIndex
+    if (currentIndex < 0) return ''
+
+    return `${currentIndex + 1} / ${this.playQueue.length}`
+  }
+
+  hydrate(runtime: PlayerRuntimeBridge = playerRuntimeBridge): void {
+    if (this.isHydrated) return
+
+    this.bindRuntime(runtime)
+    this.startSettingsSync()
+    this.isHydrated = true
+  }
+
+  dispose(): void {
+    this.runtimeStatusDisposer?.()
+    this.runtimeStatusDisposer = null
+    this.settingsDisposer?.()
+    this.settingsDisposer = null
+    this.runtime.dispose()
+    this.isPlayDetailOpen = false
+    this.clearQueue()
+    this.isHydrated = false
+  }
+
+  bindRuntime(runtime: PlayerRuntimeBridge): void {
+    this.runtimeStatusDisposer?.()
+    this.runtime = runtime
+    this.runtimeStatusDisposer = runtime.onStatus(status => {
+      this.applyRuntimeStatus(status)
+    })
+  }
+
+  getAnalyser(): AnalyserNode | null {
+    return this.runtime.getAnalyser?.() ?? null
+  }
+
+  playMusic(musicInfo?: PlayerRuntimeMusicInfo): void {
+    if (musicInfo) {
+      this.currentMusic = musicInfo
+      this.syncQueueIndex(musicInfo)
+      this.recordPlayedMusic(musicInfo)
+    }
+    this.runtime.playMusic(musicInfo)
+  }
+
+  playNext(isAutoToggle = false): void {
+    const nextMusic = this.getQueueSibling('next', isAutoToggle)
+    if (!nextMusic) {
+      if (!isAutoToggle) this.runtime.playNext()
+      return
+    }
+
+    this.playMusic(nextMusic)
+  }
+
+  playPrev(): void {
+    const prevMusic = this.getQueueSibling('prev', false)
+    if (!prevMusic) {
+      this.runtime.playPrev()
+      return
+    }
+
+    this.playMusic(prevMusic)
+  }
+
+  setQueue(queue: PlayerRuntimeMusicInfo[], queueId: string | null = null): void {
+    const shouldResetHistory = this.currentQueueId !== queueId || this.shouldAutoCleanPlayedHistory()
+    this.playQueue = queue.slice()
+    this.currentQueueId = queueId
+    if (shouldResetHistory) this.clearPlayedHistory()
+    if (this.currentMusic) this.syncQueueIndex(this.currentMusic)
+  }
+
+  clearQueue(): void {
+    this.playQueue = []
+    this.currentQueueId = null
+    this.currentQueueIndex = -1
+    this.clearPlayedHistory()
+  }
+
+  playFromQueue(
+    musicInfo: PlayerRuntimeMusicInfo,
+    queue: PlayerRuntimeMusicInfo[],
+    queueId: string | null = null,
+  ): void {
+    this.setQueue(queue, queueId)
+    this.currentQueueIndex = this.findQueueIndex(musicInfo)
+    this.playMusic(musicInfo)
+  }
+
+  togglePlay(): void {
+    this.runtime.togglePlay()
+  }
+
+  seek(seconds: number): void {
+    this.setCurrentTime(seconds)
+    this.runtime.seek(seconds)
+  }
+
+  setVolume(volume: number): void {
+    this.volume = Math.max(0, Math.min(1, volume))
+    void this.settings?.updateAppSetting({ 'player.volume': this.volume })
+    this.runtime.setVolume(this.volume)
+  }
+
+  setMute(isMute: boolean): void {
+    this.isMute = isMute
+    void this.settings?.updateAppSetting({ 'player.isMute': isMute })
+    this.runtime.setMute(isMute)
+  }
+
+  setPlaybackRate(rate: number): void {
+    this.playbackRate = Math.max(0.5, Math.min(2, rate))
+    void this.settings?.updateAppSetting({ 'player.playbackRate': this.playbackRate })
+    this.runtime.setPlaybackRate(this.playbackRate)
+  }
+
+  setProgress(progress: number): void {
+    this.progress = Math.max(0, Math.min(1, progress))
+    this.currentTime = this.progress * this.maxPlayTime
+  }
+
+  setCurrentTime(seconds: number): void {
+    this.currentTime = Math.max(0, seconds)
+    this.progress = this.maxPlayTime ? clamp(this.currentTime / this.maxPlayTime, 0, 1) : 0
+  }
+
+  setMaxPlayTime(seconds: number): void {
+    this.maxPlayTime = Math.max(0, seconds)
+    this.progress = this.maxPlayTime ? clamp(this.currentTime / this.maxPlayTime, 0, 1) : 0
+  }
+
+  setStatusText(text: string): void {
+    this.statusText = text
+  }
+
+  openPlayDetail(): void {
+    this.isPlayDetailOpen = true
+  }
+
+  closePlayDetail(): void {
+    this.isPlayDetailOpen = false
+    this.isCommentPanelOpen = false
+    this.isLyricSelectionOpen = false
+  }
+
+  togglePlayDetail(): void {
+    this.isPlayDetailOpen = !this.isPlayDetailOpen
+    if (!this.isPlayDetailOpen) {
+      this.isCommentPanelOpen = false
+      this.isLyricSelectionOpen = false
+    }
+  }
+
+  closeCommentPanel(): void {
+    this.isCommentPanelOpen = false
+  }
+
+  closeLyricSelection(): void {
+    this.isLyricSelectionOpen = false
+  }
+
+  toggleCommentPanel(): void {
+    this.isCommentPanelOpen = !this.isCommentPanelOpen
+    if (this.isCommentPanelOpen) this.isLyricSelectionOpen = false
+  }
+
+  toggleLyricSelection(): void {
+    this.isLyricSelectionOpen = !this.isLyricSelectionOpen
+    if (this.isLyricSelectionOpen) this.isCommentPanelOpen = false
+  }
+
+  setStatus(status: PlayerRuntimeStatus): void {
+    this.status = {
+      ...this.status,
+      ...status,
+    }
+
+    if (status.status) {
+      this.isPlaying = status.status === 'playing'
+    }
+  }
+
+  updateLyricSnapshot(lyricInfo: LX.Music.LyricInfo): void {
+    this.status = {
+      ...this.status,
+      lyric: lyricInfo.lyric,
+      lxlyric: lyricInfo.lxlyric ?? '',
+      rlyric: lyricInfo.rlyric ?? '',
+      tlyric: lyricInfo.tlyric ?? '',
+    }
+  }
+
+  private applyRuntimeStatus(status: PlayerRuntimeStatus): void {
+    this.setStatus(status)
+
+    if (typeof status.progress === 'number') {
+      this.setCurrentTime(status.progress)
+    }
+
+    if (typeof status.duration === 'number') {
+      this.setMaxPlayTime(status.duration)
+    }
+
+    if (typeof status.volume === 'number') {
+      this.volume = normalizeStatusVolume(status.volume)
+    }
+
+    if (typeof status.mute === 'boolean') {
+      this.isMute = status.mute
+    }
+
+    if (typeof status.playbackRate === 'number') {
+      this.playbackRate = clamp(status.playbackRate, 0.5, 2)
+    }
+
+    if (status.isEnded) this.playNext(true)
+  }
+
+  private findQueueIndex(musicInfo: PlayerRuntimeMusicInfo): number {
+    const musicId = getRuntimeMusicId(musicInfo)
+    return this.playQueue.findIndex(item => getRuntimeMusicId(item) === musicId)
+  }
+
+  private syncQueueIndex(musicInfo: PlayerRuntimeMusicInfo): void {
+    this.currentQueueIndex = this.findQueueIndex(musicInfo)
+  }
+
+  private getPlayMode(): LX.AppSetting['player.togglePlayMethod'] {
+    return this.settings?.appSetting?.['player.togglePlayMethod'] ?? 'listLoop'
+  }
+
+  private clearPlayedHistory(): void {
+    this.playedMusicIds = []
+  }
+
+  private isPlayedHistoryEnabled(playMode: PlayMode = this.getPlayMode()): boolean {
+    return playMode === 'random'
+  }
+
+  private shouldAutoCleanPlayedHistory(): boolean {
+    return this.settings?.appSetting?.['player.isAutoCleanPlayedList'] === true
+  }
+
+  private recordPlayedMusic(musicInfo: PlayerRuntimeMusicInfo, force = false): void {
+    if (!force && !this.isPlayedHistoryEnabled()) return
+
+    const musicId = getRuntimeMusicId(musicInfo)
+    if (this.playedMusicIds.includes(musicId)) return
+
+    this.playedMusicIds = [...this.playedMusicIds, musicId].slice(-1000)
+  }
+
+  private isStaticPlayableQueueItem(musicInfo: PlayerRuntimeMusicInfo): boolean {
+    if (isDownloadMusicInfo(musicInfo)) {
+      return musicInfo.isComplate && !/\.ape$/i.test(musicInfo.metadata.fileName)
+    }
+
+    if (musicInfo.source === 'local') {
+      return Boolean(musicInfo.meta.filePath.trim())
+    }
+
+    return true
+  }
+
+  private isDislikedQueueItem(musicInfo: PlayerRuntimeMusicInfo): boolean {
+    return this.dislike?.hasDislike(musicInfo) ?? false
+  }
+
+  private getBaseQueueCandidateIndexes(): number[] {
+    return this.playQueue
+      .map((musicInfo, index) => ({ index, musicInfo }))
+      .filter(({ musicInfo }) => this.isStaticPlayableQueueItem(musicInfo) && !this.isDislikedQueueItem(musicInfo))
+      .map(({ index }) => index)
+  }
+
+  private getHistoryFilteredCandidateIndexes(baseIndexes: number[], safeIndex: number, playMode: PlayMode): number[] {
+    if (!this.isPlayedHistoryEnabled(playMode)) return baseIndexes
+
+    const currentMusicId = this.playQueue[safeIndex]
+      ? getRuntimeMusicId(this.playQueue[safeIndex])
+      : null
+    const unplayedIndexes = baseIndexes.filter(index => {
+      const musicId = getRuntimeMusicId(this.playQueue[index])
+      return musicId === currentMusicId || !this.playedMusicIds.includes(musicId)
+    })
+
+    if (unplayedIndexes.length) return unplayedIndexes
+
+    this.clearPlayedHistory()
+    if (this.currentMusic) this.recordPlayedMusic(this.currentMusic, true)
+
+    const resetIndexes = baseIndexes.filter(index => {
+      const musicId = getRuntimeMusicId(this.playQueue[index])
+      return musicId !== currentMusicId
+    })
+    return resetIndexes.length ? resetIndexes : baseIndexes
+  }
+
+  private getSequentialCandidateIndex(
+    candidateIndexes: number[],
+    safeIndex: number,
+    direction: 'next' | 'prev',
+    isLoop: boolean,
+  ): number | null {
+    if (!candidateIndexes.length) return null
+
+    if (direction === 'next') {
+      const nextIndex = candidateIndexes.find(index => index > safeIndex)
+      if (nextIndex != null) return nextIndex
+      return isLoop ? candidateIndexes[0] : null
+    }
+
+    const prevIndex = candidateIndexes.findLast(index => index < safeIndex)
+    if (prevIndex != null) return prevIndex
+    return isLoop ? candidateIndexes.at(-1) ?? null : null
+  }
+
+  private getQueueSibling(direction: 'next' | 'prev', isAutoToggle: boolean): PlayerRuntimeMusicInfo | null {
+    if (!this.playQueue.length) return null
+
+    const currentIndex = this.currentMusic
+      ? this.findQueueIndex(this.currentMusic)
+      : this.currentQueueIndex
+    const safeIndex = currentIndex >= 0 ? currentIndex : 0
+    let targetIndex = safeIndex
+    let playMode = this.getPlayMode()
+
+    if (this.historyPlayMode !== playMode) {
+      this.historyPlayMode = playMode
+      this.clearPlayedHistory()
+      if (this.currentMusic && this.isPlayedHistoryEnabled(playMode)) this.recordPlayedMusic(this.currentMusic, true)
+    }
+
+    if (!isAutoToggle && (playMode === 'list' || playMode === 'singleLoop' || playMode === 'none')) {
+      playMode = 'listLoop'
+    }
+
+    const baseCandidateIndexes = this.getBaseQueueCandidateIndexes()
+    const candidateIndexes = this.getHistoryFilteredCandidateIndexes(baseCandidateIndexes, safeIndex, playMode)
+
+    switch (playMode) {
+      case 'random':
+        {
+          const randomCandidateIndexes = candidateIndexes.filter(index => index !== safeIndex)
+          const availableIndexes = randomCandidateIndexes.length ? randomCandidateIndexes : candidateIndexes
+          if (!availableIndexes.length) return null
+          targetIndex = availableIndexes[getRandomIndex(availableIndexes.length)]
+        }
+        break
+      case 'listLoop':
+        {
+          const sequentialIndex = this.getSequentialCandidateIndex(candidateIndexes, safeIndex, direction, true)
+          if (sequentialIndex == null) return null
+          targetIndex = sequentialIndex
+        }
+        break
+      case 'list':
+        {
+          const sequentialIndex = this.getSequentialCandidateIndex(candidateIndexes, safeIndex, direction, false)
+          if (sequentialIndex == null) return null
+          targetIndex = sequentialIndex
+        }
+        break
+      case 'singleLoop':
+        if (!candidateIndexes.includes(safeIndex)) {
+          const sequentialIndex = this.getSequentialCandidateIndex(candidateIndexes, safeIndex, direction, true)
+          if (sequentialIndex == null) return null
+          targetIndex = sequentialIndex
+        }
+        break
+      default:
+        return null
+    }
+
+    this.currentQueueIndex = targetIndex
+    return this.playQueue[targetIndex] ?? null
+  }
+
+  private startSettingsSync(): void {
+    if (!this.settings || this.settingsDisposer) return
+
+    this.settingsDisposer = reaction(
+      () => {
+        const setting = this.settings?.appSetting
+        if (!setting) return null
+
+        return {
+          isMute: setting['player.isMute'],
+          playbackRate: setting['player.playbackRate'],
+          soundEffectConfig: createSoundEffectConfig(setting),
+          volume: setting['player.volume'],
+        }
+      },
+      snapshot => {
+        if (!snapshot) return
+
+        this.volume = normalizeStatusVolume(snapshot.volume)
+        this.isMute = snapshot.isMute
+        this.playbackRate = clamp(snapshot.playbackRate, 0.5, 2)
+        this.runtime.setSoundEffectConfig?.(snapshot.soundEffectConfig)
+      },
+      { fireImmediately: true },
+    )
+  }
+}

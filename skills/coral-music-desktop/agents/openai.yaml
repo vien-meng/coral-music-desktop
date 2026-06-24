@@ -1,0 +1,4 @@
+interface:
+  display_name: "Coral Music Desktop"
+  short_description: "珊瑚音乐 architecture and refactor guide"
+  default_prompt: "Use $coral-music-desktop to understand the 珊瑚音乐 modules and plan safe refactors."

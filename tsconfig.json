@@ -1,0 +1,27 @@
+{
+  // https://github.com/tsconfig/bases#recommended-tsconfigjson
+  "extends": "@tsconfig/recommended/tsconfig.json",
+  "compilerOptions": {
+    "target": "ESNext",
+    "allowJs": true,
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "resolveJsonModule": true,
+    "rootDir": "./",
+    "outDir": "./dist",
+    "paths": {
+      "@root/*": ["src/*"],
+      "@main/*": ["src/main/*"],
+      "@renderer/*": ["src/renderer-react/*"],
+      "@renderer-react/*": ["src/renderer-react/*"],
+      "@lyric/*": ["src/lyric-react/*"],
+      "@lyric-react/*": ["src/lyric-react/*"],
+      "@static/*": ["src/static/*"],
+      "@common/*": ["src/common/*"],
+      "@shared/*": ["src/shared/*"]
+    },
+  },
+  "exclude": ["node_modules", "build", "dist", "dist-vite"]
+}

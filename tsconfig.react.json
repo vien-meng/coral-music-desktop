@@ -1,0 +1,38 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "allowJs": false,
+    "checkJs": false,
+    "noEmit": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "skipLibCheck": true,
+    "strict": false,
+    "types": ["node", "react", "react-dom"]
+  },
+  "include": [
+    "vite.config.ts",
+    "build-config/vite/**/*.ts",
+    "src/common/types/**/*.d.ts",
+    "src/renderer-react/vite-env.d.ts",
+    "src/renderer-react/vue-compat.d.ts",
+    "src/renderer-react/services/appService.ts",
+    "src/renderer-react/services/downloadService.ts",
+    "src/renderer-react/services/downloadTaskFactory.ts",
+    "src/renderer-react/services/ipc/client.ts",
+    "src/renderer-react/services/musicCommentService.ts",
+    "src/renderer-react/services/musicDetailService.ts",
+    "src/renderer-react/services/musicSdk/index.ts",
+    "src/renderer-react/services/musicSdk/request.ts",
+    "src/renderer-react/services/onlineMusicService.ts",
+    "src/renderer-react/services/playerService.ts",
+    "src/renderer-react/services/playerRuntime/musicUrlResolver.ts",
+    "src/renderer-react/services/settingService.ts",
+    "src/renderer-react/components/player/BatchDownloadModal.tsx",
+    "src/renderer-react/components/player/DownloadQualityModal.tsx",
+    "src/renderer-react/stores/domains/playerStore.ts",
+    "src/renderer-react/stores/domains/settingsStore.ts",
+    "src/shared/ipc/contracts.ts"
+  ],
+  "exclude": ["node_modules", "build", "dist", "dist-vite"]
+}
