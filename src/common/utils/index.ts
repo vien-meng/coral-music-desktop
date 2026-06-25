@@ -1,10 +1,46 @@
-import log from 'electron-log/node'
-
-
 export const isLinux = process.platform == 'linux'
 export const isWin = process.platform == 'win32'
 export const isMac = process.platform == 'darwin'
 export const isProd = process.env.NODE_ENV == 'production'
+
+type LogMethod = (...args: unknown[]) => void
+
+interface RuntimeLogger {
+  debug: LogMethod
+  error: LogMethod
+  info: LogMethod
+  warn: LogMethod
+}
+
+interface NodeRequireGlobal {
+  require?: (moduleName: 'electron-log/node') => RuntimeLogger
+}
+
+let runtimeLog: RuntimeLogger | null = null
+
+const consoleLog: RuntimeLogger = {
+  debug: (...args) => { console.debug(...args) },
+  error: (...args) => { console.error(...args) },
+  info: (...args) => { console.info(...args) },
+  warn: (...args) => { console.warn(...args) },
+}
+
+const getRuntimeLog = (): RuntimeLogger => {
+  if (runtimeLog) return runtimeLog
+  const nodeRequire = typeof require === 'function'
+    ? require
+    : (globalThis as typeof globalThis & NodeRequireGlobal).require
+  if (!nodeRequire) return consoleLog
+  runtimeLog = nodeRequire('electron-log/node')
+  return runtimeLog
+}
+
+const log: RuntimeLogger = {
+  debug: (...args) => { getRuntimeLog().debug(...args) },
+  error: (...args) => { getRuntimeLog().error(...args) },
+  info: (...args) => { getRuntimeLog().info(...args) },
+  warn: (...args) => { getRuntimeLog().warn(...args) },
+}
 
 export const getPlatform = (platform: NodeJS.Platform = process.platform) => {
   switch (platform) {

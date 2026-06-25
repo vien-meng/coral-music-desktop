@@ -1,5 +1,6 @@
 import { makeAutoObservable, observable } from 'mobx'
 import { listService } from '../../services/listService'
+import { localAudioService, type LocalAudioImportOptions, type LocalAudioImportResult } from '../../services/localAudioService'
 
 export class ListStore {
   actionError: string | null = null
@@ -7,6 +8,7 @@ export class ListStore {
   hydrateError: string | null = null
   isHydrated = false
   isHydrating = false
+  isImportingLocalAudio = false
   isLoadingMusics = false
   isMutatingMusic = false
   isMutatingList = false
@@ -178,6 +180,42 @@ export class ListStore {
       this.actionError = error instanceof Error ? error.message : String(error)
     } finally {
       this.isMutatingList = false
+    }
+  }
+
+  async importLocalAudioPaths(
+    inputPaths: string[],
+    addMusicLocationType: LX.AddMusicLocationType,
+    options: LocalAudioImportOptions = {},
+  ): Promise<LocalAudioImportResult | null> {
+    const listId = this.selectedListId
+    if (!listId || !inputPaths.length) return null
+
+    this.isImportingLocalAudio = true
+    this.actionError = null
+
+    try {
+      const musicInfos = await localAudioService.createLocalMusicInfosFromPaths(inputPaths, options)
+      const existingIds = new Set(this.selectedMusics.map(musicInfo => musicInfo.id))
+      const importedMusics = musicInfos.filter(musicInfo => !existingIds.has(musicInfo.id))
+      if (importedMusics.length) {
+        await listService.addListMusics(listId, importedMusics, addMusicLocationType)
+        this.selectedMusics = addMusicLocationType === 'top'
+          ? [...importedMusics, ...this.selectedMusics]
+          : [...this.selectedMusics, ...importedMusics]
+      }
+
+      return {
+        candidateCount: musicInfos.length,
+        duplicateCount: musicInfos.length - importedMusics.length,
+        importedMusics,
+        skippedCount: 0,
+      }
+    } catch (error) {
+      this.actionError = error instanceof Error ? error.message : String(error)
+      return null
+    } finally {
+      this.isImportingLocalAudio = false
     }
   }
 

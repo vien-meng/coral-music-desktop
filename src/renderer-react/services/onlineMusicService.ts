@@ -1,6 +1,5 @@
 import { similar } from '@common/utils/common'
 import { toNewMusicInfo } from '@common/utils/tools'
-import musicSdk from './musicSdk/sdk'
 
 export type OnlineSourceWithAll = LX.OnlineSource | 'all'
 
@@ -111,9 +110,15 @@ type MusicSdk = Record<string, unknown> & {
   sources: MusicSdkSourceInfo[]
 }
 
-const sdk = musicSdk as MusicSdk
+let musicSdkPromise: Promise<MusicSdk> | null = null
 
-const getSourceSdk = (source: LX.OnlineSource): MusicSdkSource | null => {
+const loadMusicSdk = async(): Promise<MusicSdk> => {
+  musicSdkPromise ??= import('./musicSdk/sdk').then(module => module.default as MusicSdk)
+  return await musicSdkPromise
+}
+
+const getSourceSdk = async(source: LX.OnlineSource): Promise<MusicSdkSource | null> => {
+  const sdk = await loadMusicSdk()
   const sourceSdk = sdk[source]
   if (typeof sourceSdk !== 'object' || sourceSdk == null || Array.isArray(sourceSdk)) return null
   return sourceSdk as MusicSdkSource
@@ -128,10 +133,15 @@ const dedupeById = <Item extends { id: string }>(list: Item[]): Item[] => {
   })
 }
 
-const getSourcesByFeature = (feature: keyof MusicSdkSource): LX.OnlineSource[] => {
+const getSourcesByFeature = async(feature: keyof MusicSdkSource): Promise<LX.OnlineSource[]> => {
+  const sdk = await loadMusicSdk()
+  const result: LX.OnlineSource[] = []
+  for (const source of sdk.sources.map(source => source.id)) {
+    if (await getSourceSdk(source).then(sourceSdk => Boolean(sourceSdk?.[feature]))) result.push(source)
+  }
   return sdk.sources
     .map(source => source.id)
-    .filter(source => Boolean(getSourceSdk(source)?.[feature]))
+    .filter(source => result.includes(source))
 }
 
 const sortMusicByKeyword = (list: LX.Music.MusicInfo[], keyword: string): LX.Music.MusicInfo[] => {
@@ -159,20 +169,20 @@ const normalizeMusicSearchResult = (
   }
 }
 
-export const getMusicSearchSources = (): LX.OnlineSource[] => {
-  return getSourcesByFeature('musicSearch')
+export const getMusicSearchSources = async(): Promise<LX.OnlineSource[]> => {
+  return await getSourcesByFeature('musicSearch')
 }
 
-export const getSongListSources = (): LX.OnlineSource[] => {
-  return getSourcesByFeature('songList')
+export const getSongListSources = async(): Promise<LX.OnlineSource[]> => {
+  return await getSourcesByFeature('songList')
 }
 
-export const getSongListSorts = (source: LX.OnlineSource): Array<{ id: string, name: string }> => {
-  return getSourceSdk(source)?.songList?.sortList ?? []
+export const getSongListSorts = async(source: LX.OnlineSource): Promise<Array<{ id: string, name: string }>> => {
+  return (await getSourceSdk(source))?.songList?.sortList ?? []
 }
 
-export const getLeaderboardSources = (): LX.OnlineSource[] => {
-  return getSourcesByFeature('leaderboard')
+export const getLeaderboardSources = async(): Promise<LX.OnlineSource[]> => {
+  return await getSourcesByFeature('leaderboard')
 }
 
 export const searchMusic = async(
@@ -183,7 +193,7 @@ export const searchMusic = async(
 ): Promise<OnlineMusicSearchResult> => {
   if (source === 'all') {
     const results = await Promise.all(
-      getMusicSearchSources().map(async currentSource => {
+      (await getMusicSearchSources()).map(async currentSource => {
         try {
           const result = await searchMusic(text, page, currentSource, limit)
           return result
@@ -212,7 +222,7 @@ export const searchMusic = async(
     }
   }
 
-  const searchApi = getSourceSdk(source)?.musicSearch
+  const searchApi = (await getSourceSdk(source))?.musicSearch
   if (!searchApi) throw new Error(`music search source not found: ${source}`)
 
   const result = await searchApi.search(text, page, limit)
@@ -227,7 +237,7 @@ export const searchSongLists = async(
 ): Promise<OnlineSongListResult> => {
   if (source === 'all') {
     const results = await Promise.all(
-      getSongListSources().map(async currentSource => {
+      (await getSongListSources()).map(async currentSource => {
         try {
           return await searchSongLists(text, page, currentSource, limit)
         } catch {
@@ -252,7 +262,7 @@ export const searchSongLists = async(
     }
   }
 
-  const songListApi = getSourceSdk(source)?.songList
+  const songListApi = (await getSourceSdk(source))?.songList
   if (!songListApi) throw new Error(`song list search source not found: ${source}`)
 
   const result = await songListApi.search(text, page, limit)
@@ -265,7 +275,7 @@ export const searchSongLists = async(
 }
 
 export const getSongListTags = async(source: LX.OnlineSource): Promise<unknown> => {
-  const songListApi = getSourceSdk(source)?.songList
+  const songListApi = (await getSourceSdk(source))?.songList
   if (!songListApi) throw new Error(`song list source not found: ${source}`)
 
   return await songListApi.getTags()
@@ -277,7 +287,7 @@ export const getSongLists = async(
   sortId: string,
   page: number,
 ): Promise<OnlineSongListResult> => {
-  const songListApi = getSourceSdk(source)?.songList
+  const songListApi = (await getSourceSdk(source))?.songList
   if (!songListApi) throw new Error(`song list source not found: ${source}`)
 
   return await songListApi.getList(sortId, tagId, page)
@@ -288,7 +298,7 @@ export const getSongListDetail = async(
   id: string,
   page: number,
 ): Promise<OnlineSongListDetailResult> => {
-  const songListApi = getSourceSdk(source)?.songList
+  const songListApi = (await getSourceSdk(source))?.songList
   if (!songListApi) throw new Error(`song list source not found: ${source}`)
 
   const result = await songListApi.getListDetail(id, page)
@@ -300,7 +310,7 @@ export const getSongListDetail = async(
 }
 
 export const getLeaderboardBoards = async(source: LX.OnlineSource): Promise<OnlineLeaderboardBoard> => {
-  const leaderboardApi = getSourceSdk(source)?.leaderboard
+  const leaderboardApi = (await getSourceSdk(source))?.leaderboard
   if (!leaderboardApi) throw new Error(`leaderboard source not found: ${source}`)
 
   return await leaderboardApi.getBoards()
@@ -311,7 +321,7 @@ export const getLeaderboardDetail = async(
   id: string,
   page: number,
 ): Promise<OnlineLeaderboardDetailResult> => {
-  const leaderboardApi = getSourceSdk(source)?.leaderboard
+  const leaderboardApi = (await getSourceSdk(source))?.leaderboard
   if (!leaderboardApi) throw new Error(`leaderboard source not found: ${source}`)
 
   const result = await leaderboardApi.getList(id, page)

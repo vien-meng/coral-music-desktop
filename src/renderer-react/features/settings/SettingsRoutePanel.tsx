@@ -16,7 +16,6 @@ import {
   Form,
   Input,
   InputNumber,
-  List,
   Modal,
   Popconfirm,
   Radio,
@@ -30,11 +29,13 @@ import { observer } from 'mobx-react-lite'
 import { useState, type ReactNode } from 'react'
 import { TRAY_AUTO_ID } from '@common/constants'
 import { sizeFormate } from '@common/utils/common'
-import { readFile } from '@common/utils/nodejs'
+import { coralProjectLinks } from '@shared/brand'
+import { PlainList, PlainListItem, PlainListMeta } from '../../components/base'
 import { appService } from '../../services/appService'
 import { backupService } from '../../services/backupService'
 import { cacheService } from '../../services/cacheService'
 import { listService } from '../../services/listService'
+import { readFile } from '../../services/nodeBridgeService'
 import { rootStore } from '../../stores/rootStore'
 import { DislikeListModal } from './DislikeListModal'
 import { HotKeySection } from './HotKeySection'
@@ -1072,19 +1073,17 @@ export const SettingsRoutePanel = observer(() => {
                   配对码
                 </Button>
               </Space>
-              <List
-                size="small"
-                dataSource={syncServerDevices}
-                locale={{
-                  emptyText: (
-                    <Empty
-                      image={Empty.PRESENTED_IMAGE_SIMPLE}
-                      description="暂无设备"
-                    />
-                  ),
-                }}
+              <PlainList
+                items={syncServerDevices}
+                empty={(
+                  <Empty
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    description="暂无设备"
+                  />
+                )}
                 renderItem={(device) => (
-                  <List.Item
+                  <PlainListItem
+                    key={device.clientId}
                     actions={[
                       <Popconfirm
                         key="remove"
@@ -1106,11 +1105,11 @@ export const SettingsRoutePanel = observer(() => {
                       </Popconfirm>,
                     ]}
                   >
-                    <List.Item.Meta
+                    <PlainListMeta
                       title={device.deviceName}
                       description={device.clientId}
                     />
-                  </List.Item>
+                  </PlainListItem>
                 )}
               />
             </Space>
@@ -1197,7 +1196,7 @@ export const SettingsRoutePanel = observer(() => {
                 size="small"
                 onClick={() => {
                   void appService.openUrl(
-                    'https://lyswhut.github.io/lx-music-doc/desktop/custom-source',
+                    coralProjectLinks.customSourceDocs,
                   )
                 }}
               >
@@ -1206,19 +1205,17 @@ export const SettingsRoutePanel = observer(() => {
             </Space>
           </Form.Item>
           <Form.Item label="已安装 API" className="coral-settings-wide-item">
-            <List
-              size="small"
-              dataSource={userApi.userApis}
-              locale={{
-                emptyText: (
-                  <Empty
-                    image={Empty.PRESENTED_IMAGE_SIMPLE}
-                    description="暂无 API"
-                  />
-                ),
-              }}
+            <PlainList
+              items={userApi.userApis}
+              empty={(
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description="暂无 API"
+                />
+              )}
               renderItem={(api) => (
-                <List.Item
+                <PlainListItem
+                  key={api.id}
                   actions={[
                     <Button
                       key="set"
@@ -1269,7 +1266,7 @@ export const SettingsRoutePanel = observer(() => {
                     </Popconfirm>,
                   ]}
                 >
-                  <List.Item.Meta
+                  <PlainListMeta
                     title={
                       <Space wrap>
                         <Text>{api.name}</Text>
@@ -1294,7 +1291,7 @@ export const SettingsRoutePanel = observer(() => {
                       </Space>
                     }
                   />
-                </List.Item>
+                </PlainListItem>
               )}
             />
           </Form.Item>
@@ -1647,48 +1644,48 @@ export const SettingsRoutePanel = observer(() => {
         </SettingSection>
 
         <SettingSection title="关于">
-          <Form.Item label="开源地址">
+          <Form.Item label="上游开源地址">
             <Button
               type="link"
               onClick={() => {
                 void appService.openUrl(
-                  'https://github.com/lyswhut/lx-music-desktop',
+                  coralProjectLinks.upstreamRepository,
                 )
               }}
             >
               GitHub
             </Button>
           </Form.Item>
-          <Form.Item label="最新版本">
+          <Form.Item label="上游最新版本">
             <Button
               type="link"
               onClick={() => {
                 void appService.openUrl(
-                  'https://github.com/lyswhut/lx-music-desktop/releases',
+                  coralProjectLinks.upstreamReleases,
                 )
               }}
             >
               下载地址
             </Button>
           </Form.Item>
-          <Form.Item label="常见问题">
+          <Form.Item label="上游常见问题">
             <Button
               type="link"
               onClick={() => {
                 void appService.openUrl(
-                  'https://lyswhut.github.io/lx-music-doc/faq',
+                  coralProjectLinks.upstreamFaq,
                 )
               }}
             >
               文档
             </Button>
           </Form.Item>
-          <Form.Item label="问题反馈">
+          <Form.Item label="上游问题反馈">
             <Button
               type="link"
               onClick={() => {
                 void appService.openUrl(
-                  'https://github.com/lyswhut/lx-music-desktop/issues',
+                  coralProjectLinks.upstreamIssues,
                 )
               }}
             >
@@ -1699,7 +1696,7 @@ export const SettingsRoutePanel = observer(() => {
             type="info"
             showIcon
             message="珊瑚音乐完全免费开源"
-            description="软件只有 GitHub 是原始发布渠道，没有客服、没有公众号，请注意防骗。"
+            description="当前迁移版保留 LX Music 生态文档与协议兼容；正式发布渠道请以项目配置为准。"
           />
         </SettingSection>
 

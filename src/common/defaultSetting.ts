@@ -47,6 +47,18 @@ const defaultSetting: LX.AppSetting = {
   'player.waitPlayEndStopTime': '',
   'player.autoSkipOnError': true,
   'player.isAutoCleanPlayedList': false,
+  'player.localAudio.enabled': true,
+  'player.localAudio.scanDirs': [],
+  'player.localAudio.supportedExts': ['mp3', 'flac', 'wav', 'm4a', 'aac', 'ogg', 'opus'],
+  'player.externalDecoder.enabled': false,
+  'player.externalDecoder.provider': 'none',
+  'player.externalDecoder.executablePath': '',
+  'player.externalDecoder.pluginDirs': [],
+  'player.externalDecoder.preferredOutput': 'wav',
+  'player.externalDecoder.extensions': ['dsf', 'dff', 'iso', 'sacd'],
+  'player.externalDecoder.timeoutMs': 30_000,
+  'player.sourcePlugin.allowUserApi': true,
+  'player.sourcePlugin.preferUserApi': true,
   'player.soundEffect.convolution.fileName': '',
   'player.soundEffect.convolution.mainGain': 10,
   'player.soundEffect.convolution.sendGain': 0,
@@ -168,4 +180,3 @@ if (new Date().getMonth() < 2) {
 
 
 export default defaultSetting
-

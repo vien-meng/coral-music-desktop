@@ -156,7 +156,7 @@ export class SearchStore {
     try {
       const onlineMusicService = await loadOnlineMusicService()
       this.sources = [
-        ...onlineMusicService.getMusicSearchSources(),
+        ...await onlineMusicService.getMusicSearchSources(),
         'all',
       ]
 

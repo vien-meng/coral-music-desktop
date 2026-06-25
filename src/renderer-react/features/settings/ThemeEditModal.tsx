@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from 'react'
 import Pickr from '@simonwep/pickr'
 import '@simonwep/pickr/dist/themes/classic.min.css'
 import { createThemeColors } from '../../services/themeColorUtils'
-import { basename, copyFile, joinPath, moveFile, removeFile } from '@common/utils/nodejs'
 import { isUrl } from '@common/utils/common'
 import { appService } from '../../services/appService'
+import { basename, copyFile, joinPath, moveFile, removeFile } from '../../services/nodeBridgeService'
 import { rootStore } from '../../stores/rootStore'
 
 const { Text } = Typography

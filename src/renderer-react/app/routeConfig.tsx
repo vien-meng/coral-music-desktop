@@ -6,15 +6,14 @@ import {
   SettingOutlined,
   UnorderedListOutlined,
 } from '@ant-design/icons'
-// Typography import removed
-import { observer } from 'mobx-react-lite'
-import { DownloadRoutePanel } from '../features/download/DownloadRoutePanel'
-import { LeaderboardRoutePanel } from '../features/leaderboard/LeaderboardRoutePanel'
-import { LocalListRoutePanel } from '../features/list/LocalListRoutePanel'
-import { SearchRoutePanel } from '../features/search/SearchRoutePanel'
-import { SettingsRoutePanel } from '../features/settings/SettingsRoutePanel'
-import { SongListRoutePanel } from '../features/song-list/SongListRoutePanel'
+import { lazy, type ReactNode } from 'react'
 
+const SearchRoutePanel = lazy(async() => ({ default: (await import('../features/search/SearchRoutePanel')).SearchRoutePanel }))
+const SongListRoutePanel = lazy(async() => ({ default: (await import('../features/song-list/SongListRoutePanel')).SongListRoutePanel }))
+const LeaderboardRoutePanel = lazy(async() => ({ default: (await import('../features/leaderboard/LeaderboardRoutePanel')).LeaderboardRoutePanel }))
+const LocalListRoutePanel = lazy(async() => ({ default: (await import('../features/list/LocalListRoutePanel')).LocalListRoutePanel }))
+const DownloadRoutePanel = lazy(async() => ({ default: (await import('../features/download/DownloadRoutePanel')).DownloadRoutePanel }))
+const SettingsRoutePanel = lazy(async() => ({ default: (await import('../features/settings/SettingsRoutePanel')).SettingsRoutePanel }))
 
 export type RendererRouteKey = 'search' | 'song-list' | 'leaderboard' | 'list' | 'download' | 'setting'
 
@@ -26,72 +25,48 @@ export interface RendererRoute {
   element: ReactNode
 }
 
-const SearchRoute = observer(() => {
-  return <SearchRoutePanel />
-})
-
-const SongListRoute = observer(() => {
-  return <SongListRoutePanel />
-})
-
-const LeaderboardRoute = observer(() => {
-  return <LeaderboardRoutePanel />
-})
-
-const LocalListRoute = observer(() => {
-  return <LocalListRoutePanel />
-})
-
-const DownloadRoute = observer(() => {
-  return <DownloadRoutePanel />
-})
-
-const SettingRoute = observer(() => {
-  return <SettingsRoutePanel />
-})
-
 export const rendererRoutes: RendererRoute[] = [
   {
     key: 'search',
     path: '/search',
     label: '搜索',
     icon: <SearchOutlined />,
-    element: <SearchRoute />,
+    element: <SearchRoutePanel />,
   },
   {
     key: 'song-list',
     path: '/song-list',
     label: '歌单广场',
     icon: <UnorderedListOutlined />,
-    element: <SongListRoute />,
+    element: <SongListRoutePanel />,
   },
   {
     key: 'leaderboard',
     path: '/leaderboard',
     label: '排行榜',
     icon: <OrderedListOutlined />,
-    element: <LeaderboardRoute />,
+    element: <LeaderboardRoutePanel />,
   },
   {
     key: 'list',
     path: '/list',
     label: '我的列表',
     icon: <PlayCircleOutlined />,
-    element: <LocalListRoute />,
+    element: <LocalListRoutePanel />,
   },
   {
     key: 'download',
     path: '/download',
     label: '下载',
     icon: <DownloadOutlined />,
-    element: <DownloadRoute />,
+    element: <DownloadRoutePanel />,
   },
   {
     key: 'setting',
     path: '/setting',
     label: '设置',
     icon: <SettingOutlined />,
-    element: <SettingRoute />,
+    element: <SettingsRoutePanel />,
   },
 ]
 

@@ -1,4 +1,4 @@
-import crypto from 'node:crypto'
+const crypto = globalThis.require('node:crypto')
 
 const PART_1_INDEXES = [23, 14, 6, 36, 16, 40, 7, 19]
 const PART_2_INDEXES = [16, 1, 32, 12, 19, 27, 8, 5]

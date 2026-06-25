@@ -290,6 +290,66 @@ declare global {
       'player.isAutoCleanPlayedList': boolean
 
       /**
+       * 是否启用本地音频文件能力
+       */
+      'player.localAudio.enabled': boolean
+
+      /**
+       * 本地音乐库扫描目录
+       */
+      'player.localAudio.scanDirs': string[]
+
+      /**
+       * 本地播放器原生支持的扩展名
+       */
+      'player.localAudio.supportedExts': string[]
+
+      /**
+       * 是否启用外部解码适配器
+       */
+      'player.externalDecoder.enabled': boolean
+
+      /**
+       * 外部解码适配器提供方
+       */
+      'player.externalDecoder.provider': 'none' | 'foobar2000'
+
+      /**
+       * 外部解码器可执行文件路径
+       */
+      'player.externalDecoder.executablePath': string
+
+      /**
+       * 外部解码插件目录
+       */
+      'player.externalDecoder.pluginDirs': string[]
+
+      /**
+       * 外部解码输出格式
+       */
+      'player.externalDecoder.preferredOutput': 'wav' | 'pcm'
+
+      /**
+       * 需要外部解码适配器处理的扩展名
+       */
+      'player.externalDecoder.extensions': string[]
+
+      /**
+       * 外部解码探测/启动超时时间
+       */
+      'player.externalDecoder.timeoutMs': number
+
+      /**
+       * 是否允许使用 LX Music User API 音源插件
+       */
+      'player.sourcePlugin.allowUserApi': boolean
+
+      /**
+       * 解析在线音乐时是否优先使用当前 User API 音源插件
+       */
+      'player.sourcePlugin.preferUserApi': boolean
+
+      /**
        * 播放详情页-是否缩放当前播放的歌词行
        */
       'playDetail.isZoomActiveLrc': boolean

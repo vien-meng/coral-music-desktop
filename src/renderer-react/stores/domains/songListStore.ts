@@ -190,10 +190,10 @@ export class SongListStore {
 
     try {
       const onlineMusicService = await loadOnlineMusicService()
-      this.sources = onlineMusicService.getSongListSources()
+      this.sources = await onlineMusicService.getSongListSources()
       this.sortList = {
         ...this.sortList,
-        [source]: onlineMusicService.getSongListSorts(source),
+        [source]: await onlineMusicService.getSongListSorts(source),
       }
       const result = await onlineMusicService.getSongLists(source, tagId, sortId, page)
       if (this.listInfo.key !== key) return
@@ -234,7 +234,7 @@ export class SongListStore {
 
     try {
       const onlineMusicService = await loadOnlineMusicService()
-      this.sources = onlineMusicService.getSongListSources()
+      this.sources = await onlineMusicService.getSongListSources()
       const result = await onlineMusicService.getSongListDetail(source, id, page)
       if (this.listDetailInfo.key !== key) return
 
@@ -269,10 +269,10 @@ export class SongListStore {
 
     try {
       const onlineMusicService = await loadOnlineMusicService()
-      this.sources = onlineMusicService.getSongListSources()
+      this.sources = await onlineMusicService.getSongListSources()
       this.sortList = {
         ...this.sortList,
-        [source]: onlineMusicService.getSongListSorts(source),
+        [source]: await onlineMusicService.getSongListSorts(source),
       }
       const tagInfo = await onlineMusicService.getSongListTags(source)
       this.tags = {

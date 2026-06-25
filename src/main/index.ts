@@ -12,6 +12,7 @@ import {
 import { isLinux } from '@common/utils'
 import { initAppSetting } from '@main/app'
 import registerModules from '@main/modules'
+import { runDownloadSmokeIfEnabled } from '@main/modules/winMain/downloadSmoke'
 
 // 初始化应用
 const init = () => {
@@ -19,6 +20,7 @@ const init = () => {
   void initAppSetting().then(() => {
     registerModules()
     global.lx.event_app.app_inited()
+    runDownloadSmokeIfEnabled()
   })
 }
 

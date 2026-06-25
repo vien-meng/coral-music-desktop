@@ -1,5 +1,5 @@
 // https://github.com/Binaryify/NeteaseCloudMusicApi/blob/master/util/crypto.js
-import { createCipheriv, createDecipheriv, publicEncrypt, randomBytes, createHash, constants } from 'crypto'
+const { createCipheriv, createDecipheriv, publicEncrypt, randomBytes, createHash, constants } = globalThis.require('node:crypto')
 const iv = Buffer.from('0102030405060708')
 const presetKey = Buffer.from('0CoJUm6Qyw8W8jud')
 const linuxapiKey = Buffer.from('rFgB&h#%2?^eDg:Q')

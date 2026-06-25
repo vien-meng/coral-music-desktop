@@ -1,16 +1,8 @@
-<p align="center"><a href="https://github.com/lyswhut/lx-music-desktop"><img width="200" src="https://github.com/lyswhut/lx-music-desktop/blob/master/doc/images/icon.png" alt="lx-music logo"></a></p>
-
 <h1 align="center">珊瑚音乐 (Coral Music) 桌面版</h1>
 
-<p align="center">
-  <a href="https://github.com/lyswhut/lx-music-desktop/releases"><img src="https://img.shields.io/github/release/lyswhut/lx-music-desktop" alt="Release version"></a>
-  <a href="https://github.com/lyswhut/lx-music-desktop/actions/workflows/release.yml"><img src="https://github.com/lyswhut/lx-music-desktop/workflows/Build/badge.svg" alt="Build status"></a>
-  <a href="https://github.com/lyswhut/lx-music-desktop/actions/workflows/beta-pack.yml"><img src="https://github.com/lyswhut/lx-music-desktop/workflows/Build%20Beta/badge.svg" alt="Build status"></a>
-  <a href="https://electronjs.org/releases/stable"><img src="https://img.shields.io/github/package-json/dependency-version/lyswhut/lx-music-desktop/dev/electron/master" alt="Electron version"></a>
-  <a href="https://github.com/lyswhut/lx-music-desktop/tree/dev"><img src="https://img.shields.io/github/package-json/v/lyswhut/lx-music-desktop/dev" alt="Dev branch version"></a>
-</p>
-
 <p align="center">一个基于 Electron、React、MobX、Vite、TypeScript 与 Ant Design 开发的桌面音乐播放器</p>
+
+> 当前仓库是从 `lx-music-desktop` 迁移而来的 Coral Music 分支。正式 Coral Music 仓库、Issues、Releases 与发布渠道尚未配置完成；README 中出现的 LX Music 链接仅作为上游资料、兼容文档或致谢来源。
 
 ## 说明
 
@@ -31,17 +23,54 @@
 - macOS
 - Windows 10 及以上
 
-*移动版项目地址：https://github.com/lyswhut/lx-music-mobile*
+## 迁移开发验证
 
-*LX Music 项目发展调整与新项目计划：https://github.com/lyswhut/lx-music-desktop/issues/1912*
+当前分支已迁移到 Electron + React + MobX + Vite + TypeScript + Ant Design。日常开发优先使用以下命令验证：
 
-软件变化请查看[更新日志](https://github.com/lyswhut/lx-music-desktop/blob/master/CHANGELOG.md)。
+```sh
+npm run dev
+npm run smoke:full
+```
 
-软件下载请查看 [GitHub Releases](https://github.com/lyswhut/lx-music-desktop/releases)。
+其中 `smoke:full` 是当前最完整的无网络验证链路，会依次执行：
 
-使用常见问题请参阅[桌面版常见问题](https://lyswhut.github.io/lx-music-doc/desktop/faq)。
+1. `npm run build`
+2. `npm run lint`
+3. `npm run smoke:release`
+4. `npm run smoke:dist`
 
-目前本项目的原始发布地址只有 [**GitHub**](https://github.com/lyswhut/lx-music-desktop/releases)，其他渠道均为第三方转载发布，与本项目无关！
+更细粒度的验证命令：
+
+```sh
+npm run typecheck:react
+npm run smoke:migration
+npm run smoke:package
+npm run smoke:bundle
+npm run smoke:dist
+npm run smoke:download
+```
+
+`smoke:download` 会启动 Electron dev 模式并验证下载运行时桥接；如果当前环境无法监听本地端口或启动 Electron，请在本机普通终端重试。
+
+### 打包目录验证
+
+`npm run pack:dir` 会触发 Electron Builder 下载 Electron runtime，因此它不包含在无网络 smoke 链路中。为避免默认 Electron 缓存里残留不完整下载，建议使用独立缓存目录重试：
+
+```sh
+ELECTRON_CACHE=/private/tmp/coral-electron-cache npm run pack:dir
+```
+
+成功后应生成平台对应的目录产物，例如 macOS arm64 下的 `build/mac-arm64`。
+
+上游移动版项目地址：https://github.com/lyswhut/lx-music-mobile
+
+LX Music 项目发展调整与新项目计划：https://github.com/lyswhut/lx-music-desktop/issues/1912
+
+上游软件变化可参考 [LX Music 更新日志](https://github.com/lyswhut/lx-music-desktop/blob/master/CHANGELOG.md)。
+
+Coral Music 正式下载地址尚未配置；在此之前不要将上游 LX Music Releases 视为 Coral Music 发布渠道。
+
+使用常见问题可先参考上游[桌面版常见问题](https://lyswhut.github.io/lx-music-doc/desktop/faq)。
 
 为了提高使用门槛，本软件内的默认设置、UI 操作不以新手友好为目标，所以使用前建议先根据你的喜好浏览调整一遍软件设置，阅读一遍[音乐播放列表机制](https://lyswhut.github.io/lx-music-doc/desktop/faq/playlist)及[可用的鼠标、键盘快捷操作](https://lyswhut.github.io/lx-music-doc/desktop/faq/hotkey)。
 

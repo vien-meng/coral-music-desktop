@@ -8,6 +8,19 @@ const parsePort = (value: string | undefined, fallback: number): number => {
   return Number.isFinite(port) ? port : fallback
 }
 
+const getManualChunk = (id: string): string | undefined => {
+  if (!id.includes('node_modules')) return undefined
+  if (/[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/.test(id)) return 'vendor-react'
+  if (/[\\/]node_modules[\\/]@ant-design[\\/]icons[\\/]/.test(id)) return 'vendor-icons'
+  if (/[\\/]node_modules[\\/]@ant-design[\\/](cssinjs|cssinjs-utils|colors|fast-color)[\\/]/.test(id)) return 'vendor-antd-runtime'
+  const antdComponent = id.match(/[\\/]node_modules[\\/]antd[\\/](?:es|lib)[\\/]([^\\/]+)/)?.[1]
+  if (antdComponent) return `vendor-antd-${antdComponent}`
+  if (/[\\/]node_modules[\\/]antd[\\/]/.test(id)) return 'vendor-antd-core'
+  if (/[\\/]node_modules[\\/](rc-|@rc-component)[\\/]/.test(id)) return 'vendor-rc'
+  if (/[\\/]node_modules[\\/](mobx|mobx-react-lite)[\\/]/.test(id)) return 'vendor-state'
+  return 'vendor'
+}
+
 export default defineConfig({
   root: path.join(projectRoot, 'src/renderer-react'),
   base: './',
@@ -32,6 +45,9 @@ export default defineConfig({
     reportCompressedSize: false,
     rollupOptions: {
       input: path.join(projectRoot, 'src/renderer-react/index.html'),
+      output: {
+        manualChunks: getManualChunk,
+      },
     },
   },
 })

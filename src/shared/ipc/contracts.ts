@@ -6,6 +6,7 @@ import {
   WIN_LYRIC_RENDERER_EVENT_NAME,
   WIN_MAIN_RENDERER_EVENT_NAME,
 } from '@common/ipcNames'
+import type { ExternalDecoderProbeParams, ExternalDecoderProbeResult } from '@shared/playbackCapabilities'
 
 interface IpcContract<Params = undefined, Result = void> {
   params: Params
@@ -69,6 +70,18 @@ export const ipcChannels = {
       WIN_MAIN_RENDERER_EVENT_NAME.download_list_clear as 'winMain_download_list_clear',
     downloadListRemove:
       WIN_MAIN_RENDERER_EVENT_NAME.download_list_remove as 'winMain_download_list_remove',
+    downloadListUpdate:
+      WIN_MAIN_RENDERER_EVENT_NAME.download_list_update as 'winMain_download_list_update',
+    downloadTaskAction:
+      WIN_MAIN_RENDERER_EVENT_NAME.download_task_action as 'winMain_download_task_action',
+    downloadTaskPause:
+      WIN_MAIN_RENDERER_EVENT_NAME.download_task_pause as 'winMain_download_task_pause',
+    downloadTaskRetry:
+      WIN_MAIN_RENDERER_EVENT_NAME.download_task_retry as 'winMain_download_task_retry',
+    downloadTaskStart:
+      WIN_MAIN_RENDERER_EVENT_NAME.download_task_start as 'winMain_download_task_start',
+    externalDecoderProbe:
+      WIN_MAIN_RENDERER_EVENT_NAME.external_decoder_probe as 'winMain_external_decoder_probe',
     getData: WIN_MAIN_RENDERER_EVENT_NAME.get_data as 'winMain_get_data',
     getThemes: WIN_MAIN_RENDERER_EVENT_NAME.get_themes as 'winMain_get_themes',
     getUserApiList:
@@ -126,6 +139,8 @@ export const ipcChannels = {
       WIN_MAIN_RENDERER_EVENT_NAME.get_lyric_raw as 'winMain_get_lyric_raw',
     getLyricEdited:
       WIN_MAIN_RENDERER_EVENT_NAME.get_lyric_edited as 'winMain_get_lyric_edited',
+    saveLyricRaw:
+      WIN_MAIN_RENDERER_EVENT_NAME.save_lyric_raw as 'winMain_save_lyric_raw',
     saveLyricEdited:
       WIN_MAIN_RENDERER_EVENT_NAME.save_lyric_edited as 'winMain_save_lyric_edited',
     removeLyricEdited:
@@ -194,6 +209,18 @@ export interface IpcDataSaveParams {
   data: unknown
 }
 
+export interface IpcDownloadTaskStartParams {
+  task: LX.Download.ListItem
+  url: string
+  isRetry?: boolean
+}
+
+export interface IpcDownloadTaskAction {
+  taskId: string
+  task?: LX.Download.ListItem
+  action: LX.Download.DownloadTaskActions
+}
+
 export interface CoralIpcInvokeMap {
   [ipcChannels.common.getAppSetting]: IpcContract<undefined, LX.AppSetting>
   [ipcChannels.common.getEnvParams]: IpcContract<undefined, LX.EnvParams>
@@ -252,6 +279,14 @@ export interface CoralIpcInvokeMap {
   LX.Download.ListItem[]
   >
   [ipcChannels.winMain.downloadListRemove]: IpcContract<string[], void>
+  [ipcChannels.winMain.downloadListUpdate]: IpcContract<LX.Download.ListItem[], void>
+  [ipcChannels.winMain.downloadTaskPause]: IpcContract<string, LX.Download.ListItem | null>
+  [ipcChannels.winMain.downloadTaskRetry]: IpcContract<IpcDownloadTaskStartParams, LX.Download.ListItem>
+  [ipcChannels.winMain.downloadTaskStart]: IpcContract<IpcDownloadTaskStartParams, LX.Download.ListItem>
+  [ipcChannels.winMain.externalDecoderProbe]: IpcContract<
+  ExternalDecoderProbeParams,
+  ExternalDecoderProbeResult
+  >
   [ipcChannels.winMain.getData]: IpcContract<string, unknown>
   [ipcChannels.winMain.getThemes]: IpcContract<undefined, IpcThemeCollection>
   [ipcChannels.winMain.getUserApiList]: IpcContract<
@@ -301,6 +336,7 @@ export interface CoralIpcInvokeMap {
   [ipcChannels.winMain.clearMusicUrl]: IpcContract<undefined, void>
   [ipcChannels.winMain.getLyricRaw]: IpcContract<string, LX.Music.LyricInfo>
   [ipcChannels.winMain.getLyricEdited]: IpcContract<string, LX.Music.LyricInfo>
+  [ipcChannels.winMain.saveLyricRaw]: IpcContract<LX.Music.LyricInfoSave, void>
   [ipcChannels.winMain.saveLyricEdited]: IpcContract<LX.Music.LyricInfoSave, void>
   [ipcChannels.winMain.removeLyricEdited]: IpcContract<string, void>
   [ipcChannels.winMain.getLyricRawCount]: IpcContract<undefined, number>
@@ -359,6 +395,7 @@ export interface CoralIpcEventMap {
   [ipcChannels.dislike.clearDislikeMusicInfos]: undefined
   [ipcChannels.dislike.overwriteDislikeMusicInfos]: LX.Dislike.DislikeRules
   [ipcChannels.winMain.onConfigChange]: Partial<LX.AppSetting>
+  [ipcChannels.winMain.downloadTaskAction]: IpcDownloadTaskAction
   [ipcChannels.winMain.playerActionOnButtonClick]: IpcPlayerActionClick
   [ipcChannels.winMain.syncAction]: LX.Sync.SyncMainWindowActions
   [ipcChannels.winLyric.mainWindowInited]: undefined

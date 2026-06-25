@@ -10,6 +10,7 @@ import {
 } from './winMain'
 import { quitApp } from '@main/app'
 import { TRAY_AUTO_ID } from '@common/constants'
+import { coralBrand } from '@shared/brand'
 
 let tray: Electron.Tray | null
 let isEnableTray: boolean = false
@@ -306,7 +307,7 @@ const setLyric = (lyricLineText?: string) => {
   }
 }
 
-const defaultTip = 'LX Music'
+const defaultTip = coralBrand.englishName
 const setTip = () => {
   if (!tray) return
 

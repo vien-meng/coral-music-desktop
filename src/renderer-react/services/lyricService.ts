@@ -38,6 +38,17 @@ export const saveLyricEdited = async(
   })
 }
 
+export const saveLyricRaw = async(
+  musicInfo: LX.Music.MusicInfo,
+  lyricInfo: LX.Music.LyricInfo,
+): Promise<void> => {
+  if (!ipcClient.canUseIpc()) return
+  await ipcClient.invoke(ipcChannels.winMain.saveLyricRaw, {
+    id: musicInfo.id,
+    lyrics: normalizeLyricInfo(lyricInfo),
+  })
+}
+
 export const removeLyricEdited = async(musicInfo: LX.Music.MusicInfo): Promise<void> => {
   if (!ipcClient.canUseIpc()) return
   await ipcClient.invoke(ipcChannels.winMain.removeLyricEdited, musicInfo.id)
@@ -48,4 +59,5 @@ export const lyricService = {
   getLyricRaw,
   removeLyricEdited,
   saveLyricEdited,
+  saveLyricRaw,
 }

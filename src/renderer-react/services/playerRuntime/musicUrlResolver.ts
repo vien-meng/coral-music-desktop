@@ -1,6 +1,6 @@
 import { encodePath } from '@common/utils/common'
-import { checkPath } from '@common/utils/nodejs'
 import { cacheService } from '../cacheService'
+import { checkPath } from '../nodeBridgeService'
 import type { PlayerRuntimeMusicInfo } from './types'
 
 const TRY_QUALITIES: LX.Quality[] = ['flac24bit', 'flac', '320k']

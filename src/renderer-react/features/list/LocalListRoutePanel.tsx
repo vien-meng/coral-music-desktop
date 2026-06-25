@@ -4,6 +4,7 @@ import {
   DeleteOutlined,
   EditOutlined,
   ExportOutlined,
+  FileAddOutlined,
   ImportOutlined,
   MoreOutlined,
   OrderedListOutlined,
@@ -18,11 +19,13 @@ import {
   VerticalAlignBottomOutlined,
   VerticalAlignTopOutlined,
 } from '@ant-design/icons'
-import { Alert, Button, Checkbox, Dropdown, Input, InputNumber, List as AntList, message, Modal, Select, Space, Tag, Tooltip } from 'antd'
+import { Alert, Button, Checkbox, Dropdown, Input, InputNumber, message, Modal, Select, Space, Tag, Tooltip, Typography } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { OnlineMusicPreviewList } from '../online/OnlinePreviewList'
 import { filterFileName } from '@common/utils/common'
+import { externalDecoderExtensions, nativeLocalAudioExtensions } from '@shared/playbackCapabilities'
+import { PlainList, PlainListItem, PlainListMeta } from '../../components/base'
 import type { SearchSource } from '../../stores/domains/searchStore'
 import { appService } from '../../services/appService'
 import { loadOnlineMusicService } from '../../services/onlineMusicServiceLoader'
@@ -31,6 +34,8 @@ import { DownloadQualityModal } from '../../components/player/DownloadQualityMod
 import { DraggableMusicList } from '../../components/player/DraggableMusicList'
 import { BatchDownloadModal } from '../../components/player/BatchDownloadModal'
 import { rootStore } from '../../stores/rootStore'
+
+const { Text } = Typography
 
 type MusicSortField = 'album' | 'interval' | 'name' | 'singer' | 'source'
 type SortDirection = 'asc' | 'desc'
@@ -139,7 +144,8 @@ const getDuplicateMusicReviewItems = (musicInfos: LX.Music.MusicInfo[]): Duplica
 
 export const LocalListRoutePanel = observer(() => {
   const { list, player, search, ui } = rootStore
-  const addMusicLocationType = rootStore.settings.appSetting?.['list.addMusicLocationType'] ?? 'top'
+  const appSetting = rootStore.settings.appSetting
+  const addMusicLocationType = appSetting?.['list.addMusicLocationType'] ?? 'top'
   const selectedListId = list.selectedListId ?? undefined
   const [createName, setCreateName] = useState('')
   const [renameName, setRenameName] = useState(list.selectedList?.name ?? '')
@@ -407,6 +413,41 @@ export const LocalListRoutePanel = observer(() => {
     })
   }
 
+  const handleImportLocalAudio = (): void => {
+    const nativeExtensions = appSetting?.['player.localAudio.supportedExts'] ?? nativeLocalAudioExtensions
+    const externalExtensions = appSetting?.['player.externalDecoder.extensions'] ?? externalDecoderExtensions
+
+    void appService.showSelectDialog({
+      filters: [
+        { extensions: [...nativeExtensions, ...externalExtensions], name: 'Audio Files' },
+        { extensions: ['*'], name: 'All Files' },
+      ],
+      properties: ['openFile', 'openDirectory', 'multiSelections'],
+      title: '导入本地音频',
+    }).then(async result => {
+      if (result.canceled || !result.filePaths.length) return
+      const importResult = await list.importLocalAudioPaths(
+        result.filePaths,
+        addMusicLocationType,
+        {
+          externalExtensions,
+          nativeExtensions,
+        },
+      )
+      if (!importResult) return
+      setSelectedMusicIds([])
+      if (!importResult.importedMusics.length) {
+        void message.warning(importResult.candidateCount
+          ? `已跳过 ${importResult.duplicateCount} 首重复本地音频`
+          : '未发现支持的本地音频文件')
+        return
+      }
+
+      const duplicateText = importResult.duplicateCount ? `，跳过重复 ${importResult.duplicateCount} 首` : ''
+      void message.success(`已导入 ${importResult.importedMusics.length} 首本地音频${duplicateText}`)
+    })
+  }
+
   const handleExportListPart = (): void => {
     if (!list.selectedList) return
 
@@ -535,6 +576,14 @@ export const LocalListRoutePanel = observer(() => {
           onClick={handleImportListPart}
         >
           导入列表
+        </Button>
+        <Button
+          icon={<FileAddOutlined />}
+          disabled={!list.selectedList}
+          loading={list.isImportingLocalAudio}
+          onClick={handleImportLocalAudio}
+        >
+          本地音频
         </Button>
         <Button
           icon={<ExportOutlined />}
@@ -810,16 +859,17 @@ export const LocalListRoutePanel = observer(() => {
               list={dragList}
               onReorder={handleDragReorder}
               renderItem={(item, index) => (
-                <AntList.Item
+                <PlainListItem
+                  key={item.id}
                   actions={[
                     <Button key="confirm" type="link" size="small" onClick={handleSaveDragOrder}>保存顺序</Button>,
                   ]}
                 >
-                  <AntList.Item.Meta
+                  <PlainListMeta
                     title={<Text ellipsis>{index + 1}. {item.name}</Text>}
                     description={<Text type="secondary" ellipsis>{item.singer}</Text>}
                   />
-                </AntList.Item>
+                </PlainListItem>
               )}
             />
           </Space>
@@ -977,11 +1027,11 @@ export const LocalListRoutePanel = observer(() => {
           setIsDuplicateReviewOpen(false)
         }}
       >
-        <AntList
-          size="small"
-          dataSource={duplicateReviewItems}
+        <PlainList
+          items={duplicateReviewItems}
           renderItem={item => (
-            <AntList.Item
+            <PlainListItem
+              key={item.musicInfo.id}
               actions={[
                 item.isRetained
                   ? <Tag key="keep" color="green">保留</Tag>
@@ -1001,7 +1051,7 @@ export const LocalListRoutePanel = observer(() => {
                     ),
               ]}
             >
-              <AntList.Item.Meta
+              <PlainListMeta
                 title={`${item.index + 1}. ${item.musicInfo.name} - ${item.musicInfo.singer}`}
                 description={(
                   <Space wrap>
@@ -1012,7 +1062,7 @@ export const LocalListRoutePanel = observer(() => {
                   </Space>
                 )}
               />
-            </AntList.Item>
+            </PlainListItem>
           )}
         />
       </Modal>

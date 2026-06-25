@@ -1,17 +1,42 @@
-import needle from 'needle'
 import { debugRequest } from './env'
 import { requestMsg } from './message'
 import { bHh } from './sdk/options'
-import { deflateRaw } from 'zlib'
 import { proxy } from './sdk/runtimeState'
-import { httpOverHttp, httpsOverHttp } from 'tunnel'
 import type {
   RequestOptions,
   HttpResponse,
   CancelableRequest,
 } from './types/http'
+import type * as Needle from 'needle'
+import type * as Tunnel from 'tunnel'
+import type * as Zlib from 'node:zlib'
 
 const httpsRxp = /^https:/
+
+interface NodeRequire {
+  (moduleName: 'needle'): typeof Needle
+  (moduleName: 'node:zlib'): typeof Zlib
+  (moduleName: 'tunnel'): typeof Tunnel
+}
+
+interface NodeGlobal {
+  require?: NodeRequire
+}
+
+const getDeflateRaw = (): typeof Zlib.deflateRaw => {
+  const nodeRequire = (globalThis as typeof globalThis & NodeGlobal).require
+  if (!nodeRequire) throw new Error('Node zlib is unavailable in the current renderer context.')
+  return nodeRequire('node:zlib').deflateRaw
+}
+
+const getNodeRequire = (): NodeRequire => {
+  const nodeRequire = (globalThis as typeof globalThis & NodeGlobal).require
+  if (!nodeRequire) throw new Error('Node require is unavailable in the current renderer context.')
+  return nodeRequire
+}
+
+const getNeedle = (): typeof Needle => getNodeRequire()('needle')
+const getTunnel = (): typeof Tunnel => getNodeRequire()('tunnel')
 
 interface ProxyInfo {
   enable: boolean
@@ -41,6 +66,7 @@ const getRequestAgent = (url: string) => {
       },
     }
   }
+  const { httpOverHttp, httpsOverHttp } = getTunnel()
   return options ? (httpsRxp.test(url) ? httpsOverHttp : httpOverHttp)(options as never) : undefined
 }
 
@@ -76,23 +102,23 @@ const sendRequest = (
   options: RequestOptions,
   callback: RequestCallback,
 ): NodeJS.ReadableStream => {
-  let data: needle.BodyData = null as needle.BodyData
+  let data: Needle.BodyData = null as Needle.BodyData
   if (options.body) {
-    data = options.body as needle.BodyData
+    data = options.body as Needle.BodyData
   } else if (options.form) {
-    data = options.form as needle.BodyData
+    data = options.form as Needle.BodyData
     options.json = false
   } else if (options.formData) {
-    data = options.formData as needle.BodyData
+    data = options.formData as Needle.BodyData
     options.json = false
   }
   options.response_timeout = options.timeout
 
-  return needle.request(
+  return getNeedle().request(
     options.method ?? 'get',
     url,
     data,
-    options as needle.NeedleOptions,
+    options as Needle.NeedleOptions,
     (err, resp, body) => {
       if (!err && resp) {
         body = resp.body = resp.raw.toString()
@@ -107,7 +133,7 @@ const sendRequest = (
 }
 
 const handleDeflateRaw = async(data: Buffer): Promise<Buffer> => new Promise((resolve, reject) => {
-  deflateRaw(data, (err, buf) => {
+  getDeflateRaw()(data, (err, buf) => {
     if (err) {
       reject(err)
       return

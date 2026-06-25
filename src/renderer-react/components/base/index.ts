@@ -1,6 +1,8 @@
 export { ContextMenu } from './ContextMenu'
 export type { MenuItem } from './ContextMenu'
 export { IconButton } from './IconButton'
+export { PlainList, PlainListItem, PlainListMeta } from './PlainList'
+export type { PlainListPagination } from './PlainList'
 export { SliderBar } from './SliderBar'
 export { VirtualizedList } from './VirtualizedList'
 export type { VirtualizedListHandle } from './VirtualizedList'

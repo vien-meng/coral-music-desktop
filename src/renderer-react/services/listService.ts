@@ -1,9 +1,9 @@
 import { LIST_IDS } from '@common/constants'
 import { filterMusicList, fixNewMusicInfoQuality, toNewMusicInfo } from '@common/utils/tools'
-import { readLxConfigFile, saveLxConfigFile } from '@common/utils/nodejs'
 import { ipcChannels } from '@shared/ipc/contracts'
 import { ipcClient } from './ipc/client'
 import { isElectronRenderer } from './appService'
+import { readLxConfigFile, saveLxConfigFile } from './nodeBridgeService'
 
 interface PlayListPartV1 {
   type: 'playListPart'

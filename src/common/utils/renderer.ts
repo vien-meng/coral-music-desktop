@@ -1,4 +1,6 @@
 
+import { coralBrand } from '@shared/brand'
+
 const easeInOutQuad = (t: number, b: number, c: number, d: number): number => {
   t /= d / 2
   if (t < 1) return (c / 2) * t * t + b
@@ -342,7 +344,6 @@ export const scrollXRTo = (element: ScrollElement<HTMLElement>, to: number, dura
   */
 let dom_title = document.getElementsByTagName('title')[0]
 export const setTitle = (title: string | null) => {
-  title ||= 'LX Music'
+  title ||= coralBrand.englishName
   dom_title.innerText = title
 }
-

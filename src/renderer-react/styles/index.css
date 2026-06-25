@@ -61,6 +61,14 @@ body {
   padding: 24px;
 }
 
+.coral-route-loading {
+  align-items: center;
+  display: flex;
+  height: 100%;
+  justify-content: center;
+  min-height: 160px;
+}
+
 .coral-player-slot {
   border-top: 1px solid rgba(5, 5, 5, 0.08);
   height: 76px;
@@ -401,12 +409,71 @@ body {
   padding: 0 14px;
 }
 
-.coral-comment-list .ant-list-pagination {
-  margin: 12px 0 14px;
-}
-
 .coral-comment-item {
   min-width: 0;
+}
+
+.coral-plain-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.coral-plain-list-empty {
+  padding: 16px 0;
+}
+
+.coral-plain-list-item {
+  align-items: center;
+  border-block-end: 1px solid rgba(5, 5, 5, 0.06);
+  display: flex;
+  gap: 12px;
+  min-width: 0;
+  padding: 8px 0;
+}
+
+.coral-plain-list-item:last-child {
+  border-block-end: 0;
+}
+
+.coral-plain-list-item-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.coral-plain-list-item-actions {
+  align-items: center;
+  display: flex;
+  flex: none;
+  gap: 4px;
+}
+
+.coral-plain-list-meta {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  min-width: 0;
+}
+
+.coral-plain-list-meta-avatar {
+  flex: none;
+}
+
+.coral-plain-list-meta-content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.coral-plain-list-meta-title,
+.coral-plain-list-meta-description {
+  min-width: 0;
+}
+
+.coral-plain-list-pagination {
+  margin: 12px 0 14px;
+  text-align: right;
 }
 
 .coral-comment-user {
@@ -619,7 +686,7 @@ body {
   overflow: auto;
 }
 
-.coral-board-list .ant-list-item {
+.coral-board-list .coral-plain-list-item {
   padding-inline: 0;
 }
 

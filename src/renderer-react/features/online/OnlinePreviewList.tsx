@@ -1,6 +1,7 @@
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
-import { Button, Empty, InputNumber, List, Space, Tooltip, Typography } from 'antd'
+import { Button, Empty, InputNumber, Space, Tooltip, Typography } from 'antd'
 import type { ReactNode } from 'react'
+import { PlainList, PlainListItem, PlainListMeta } from '../../components/base'
 
 const { Text } = Typography
 
@@ -76,20 +77,17 @@ export const OnlinePager = ({ disabled = false, hasNext, loading = false, maxPag
 
 export const OnlineMusicPreviewList = ({ actions, emptyText, list }: OnlineMusicPreviewListProps) => {
   return (
-    <List
-      size="small"
+    <PlainList
       className="coral-result-list"
-      dataSource={list}
-      locale={{
-        emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyText} />,
-      }}
+      items={list}
+      empty={<Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyText} />}
       renderItem={item => (
-        <List.Item actions={actions?.(item)}>
-          <List.Item.Meta
+        <PlainListItem key={item.id} actions={actions?.(item)}>
+          <PlainListMeta
             title={<Text ellipsis>{item.name}</Text>}
             description={<Text type="secondary" ellipsis>{`${item.singer} · ${formatSource(item.source)} · ${item.interval ?? '--:--'}`}</Text>}
           />
-        </List.Item>
+        </PlainListItem>
       )}
     />
   )
@@ -101,20 +99,17 @@ export const OnlineSongListPreviewList = <Item extends OnlineSongListPreviewItem
   list,
 }: OnlineSongListPreviewListProps<Item>) => {
   return (
-    <List
-      size="small"
+    <PlainList
       className="coral-result-list"
-      dataSource={list}
-      locale={{
-        emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyText} />,
-      }}
+      items={list}
+      empty={<Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyText} />}
       renderItem={item => (
-        <List.Item actions={actions?.(item)}>
-          <List.Item.Meta
+        <PlainListItem key={item.id} actions={actions?.(item)}>
+          <PlainListMeta
             title={<Text ellipsis>{item.name}</Text>}
             description={<Text type="secondary" ellipsis>{`${item.author} · ${formatSource(item.source)} · ${item.play_count}`}</Text>}
           />
-        </List.Item>
+        </PlainListItem>
       )}
     />
   )

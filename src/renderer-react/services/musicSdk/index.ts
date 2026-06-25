@@ -1,9 +1,11 @@
 import { dateFormat } from '@common/utils/common'
+import { coralBrand } from '@shared/brand'
+import { toMD5 } from './sdk/utils'
 
 export * from '@common/utils/renderer'
-export * from '@common/utils/nodejs'
 export * from '@common/utils/common'
 export * from '@common/utils/tools'
+export { toMD5 }
 
 /**
  * 格式化播放数量
@@ -41,7 +43,7 @@ export const dateFormat2 = (time: number): string => {
  */
 let dom_title = document.getElementsByTagName('title')[0]
 export const setTitle = (title: string | null) => {
-  title ||= 'LX Music'
+  title ||= coralBrand.englishName
   dom_title.innerText = title
 }
 

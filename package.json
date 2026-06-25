@@ -63,6 +63,14 @@
     "build:preload": "cross-env CORAL_VITE_TARGET=preload vite build",
     "lint": "eslint --ext .ts,.tsx,.js,.jsx -f node_modules/eslint-formatter-friendly vite.config.ts src/renderer-react src/lyric-react src/shared build-config",
     "typecheck:react": "tsc -p tsconfig.react.json --noEmit --pretty false",
+    "smoke:migration": "node build-config/smoke-migration.js",
+    "smoke:package": "node build-config/smoke-package-audit.js",
+    "smoke:bundle": "node build-config/smoke-bundle-config.js",
+    "smoke:playback-capabilities": "node build-config/smoke-playback-capabilities.js",
+    "smoke:dist": "node build-config/smoke-dist-output.js",
+    "smoke:download": "cross-env CORAL_DOWNLOAD_SMOKE=true NODE_OPTIONS=--max-http-header-size=200000 node build-config/runner-dev.js",
+    "smoke:release": "npm run smoke:migration && npm run smoke:package && npm run smoke:bundle && npm run smoke:playback-capabilities && npm run typecheck:react",
+    "smoke:full": "npm run build && npm run lint && npm run smoke:release && npm run smoke:dist",
     "lint:fix": "eslint --ext .ts,.tsx,.js,.jsx -f node_modules/eslint-formatter-friendly --fix vite.config.ts src/renderer-react src/lyric-react src/shared build-config",
     "postinstall": "electron-builder install-app-deps",
     "dp": "cross-env ELECTRON_GET_USE_PROXY=true GLOBAL_AGENT_HTTPS_PROXY=http://127.0.0.1:2081 npm run pack",
@@ -105,8 +113,7 @@
     "antd"
   ],
   "author": {
-    "name": "lyswhut",
-    "email": "lyswhut@qq.com"
+    "name": "Coral Music Team"
   },
   "license": "Apache-2.0",
   "bugs": {

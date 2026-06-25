@@ -58,6 +58,7 @@ const modules = {
     open_dir_in_explorer: 'open_dir_in_explorer',
     open_dev_tools: 'open_dev_tools',
     set_power_save_blocker: 'set_power_save_blocker',
+    external_decoder_probe: 'external_decoder_probe',
 
     player_status: 'player_status',
     change_tray: 'change_tray',
@@ -154,6 +155,10 @@ const modules = {
     download_list_update: 'download_list_update',
     download_list_remove: 'download_list_remove',
     download_list_clear: 'download_list_clear',
+    download_task_start: 'download_task_start',
+    download_task_pause: 'download_task_pause',
+    download_task_retry: 'download_task_retry',
+    download_task_action: 'download_task_action',
   },
   winLyric: {
     close: 'close',

@@ -4,17 +4,25 @@ const builder = require('electron-builder')
 const beforePack = require('./build-before-pack')
 const afterPack = require('./build-after-pack')
 
+const publishConfig = process.env.CORAL_PUBLISH_OWNER && process.env.CORAL_PUBLISH_REPO
+  ? [{
+      provider: 'github',
+      owner: process.env.CORAL_PUBLISH_OWNER,
+      repo: process.env.CORAL_PUBLISH_REPO,
+    }]
+  : undefined
+
 /**
 * @type {import('electron-builder').Configuration}
 * @see https://www.electron.build/configuration/configuration
 */
 const options = {
-  appId: 'cn.toside.music.desktop',
-  productName: 'lx-music-desktop',
+  appId: 'cn.coral.music.desktop',
+  productName: 'Coral Music',
   beforePack,
   afterPack,
   protocols: {
-    name: 'lx-music-protocol',
+    name: 'coral-music-protocol',
     schemes: [
       'lxmusic',
     ],
@@ -44,13 +52,7 @@ const options = {
   extraResources: [
     './licenses',
   ],
-  publish: [
-    {
-      provider: 'github',
-      owner: 'lyswhut',
-      repo: 'lx-music-desktop',
-    },
-  ],
+  ...(publishConfig ? { publish: publishConfig } : {}),
 }
 /**
  * @type {import('electron-builder').Configuration}
@@ -59,7 +61,7 @@ const options = {
 const winOptions = {
   win: {
     icon: './resources/icons/icon.ico',
-    legalTrademarks: 'lyswhut',
+    legalTrademarks: 'Coral Music',
     // artifactName: '${productName}-v${version}-${env.ARCH}-${env.TARGET}.${ext}',
   },
   nsis: {
@@ -68,7 +70,7 @@ const winOptions = {
     allowToChangeInstallationDirectory: true,
     // differentialPackage: true,
     license: './licenses/license.rtf',
-    shortcutName: 'LX Music',
+    shortcutName: 'Coral Music',
   },
 }
 /**
@@ -77,7 +79,7 @@ const winOptions = {
  */
 const linuxOptions = {
   linux: {
-    maintainer: 'lyswhut <lyswhut@qq.com>',
+    maintainer: 'Coral Music Team',
     // artifactName: '${productName}-${version}.${env.ARCH}.${ext}',
     icon: './resources/icons',
     category: 'Utility;AudioVideo;Audio;Player;Music;',
@@ -87,9 +89,9 @@ const linuxOptions = {
       // https://specifications.freedesktop.org/desktop-entry-spec/latest/example.html
       // https://developer.gnome.org/documentation/guidelines/maintainer/integrating.html#desktop-files
       entry: {
-        Name: 'LX Music',
-        'Name[zh_CN]': 'LX Music',
-        'Name[zh_TW]': 'LX Music',
+        Name: 'Coral Music',
+        'Name[zh_CN]': '珊瑚音乐',
+        'Name[zh_TW]': '珊瑚音樂',
         Encoding: 'UTF-8',
         MimeType: 'x-scheme-handler/lxmusic',
         StartupNotify: 'false',
@@ -128,7 +130,7 @@ const macOptions = {
         path: '/Applications',
       },
     ],
-    title: 'LX Music v${version}',
+    title: 'Coral Music v${version}',
   },
 }
 
@@ -268,6 +270,9 @@ const createTarget = {
  * @param {'onTagOrDraft' | 'always' | 'never'} publishType 发布类型
  */
 const build = async(target, arch, packageType, publishType) => {
+  if (publishType && publishType !== 'never' && !publishConfig) {
+    throw new Error('Missing CORAL_PUBLISH_OWNER/CORAL_PUBLISH_REPO for publish build')
+  }
   if (target == 'dir') {
     await builder.build({
       dir: true,

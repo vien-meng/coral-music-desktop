@@ -15,7 +15,6 @@
     "build-config/vite/**/*.ts",
     "src/common/types/**/*.d.ts",
     "src/renderer-react/vite-env.d.ts",
-    "src/renderer-react/vue-compat.d.ts",
     "src/renderer-react/services/appService.ts",
     "src/renderer-react/services/downloadService.ts",
     "src/renderer-react/services/downloadTaskFactory.ts",

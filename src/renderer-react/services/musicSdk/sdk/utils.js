@@ -1,6 +1,8 @@
-import crypto from 'crypto'
-import dns from 'dns'
 import { decodeName } from '../index'
+
+const nodeRequire = globalThis.require
+const crypto = nodeRequire('node:crypto')
+const dns = nodeRequire('node:dns')
 
 export const toMD5 = str => crypto.createHash('md5').update(str).digest('hex')
 

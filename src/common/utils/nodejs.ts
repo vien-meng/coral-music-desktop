@@ -3,7 +3,6 @@ import crypto from 'node:crypto'
 import { gzip, gunzip } from 'node:zlib'
 import path from 'node:path'
 import { networkInterfaces } from 'node:os'
-import { log } from '@common/utils'
 
 export const joinPath = (...paths: string[]): string => path.join(...paths)
 
@@ -180,7 +179,7 @@ export const saveStrToFile = async(path: string, str: string | Buffer): Promise<
   await new Promise<void>((resolve, reject) => {
     fs.writeFile(path, str, err => {
       if (err) {
-        log.error(err)
+        console.error(err)
         reject(err)
         return
       }

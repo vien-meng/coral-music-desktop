@@ -94,7 +94,7 @@ export class LeaderboardStore {
 
     try {
       const onlineMusicService = await loadOnlineMusicService()
-      this.sources = onlineMusicService.getLeaderboardSources()
+      this.sources = await onlineMusicService.getLeaderboardSources()
       const board = await onlineMusicService.getLeaderboardBoards(source)
       this.setBoard(board)
       if (!this.boardId) this.boardId = board.list[0]?.id ?? null
@@ -120,7 +120,7 @@ export class LeaderboardStore {
 
     try {
       const onlineMusicService = await loadOnlineMusicService()
-      this.sources = onlineMusicService.getLeaderboardSources()
+      this.sources = await onlineMusicService.getLeaderboardSources()
       const result = await onlineMusicService.getLeaderboardDetail(source, boardId, page)
       if (this.listDetailInfo.key !== key) return
 

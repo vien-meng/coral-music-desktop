@@ -1,6 +1,7 @@
 import { Input, Modal, Select, Typography } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useCallback, useEffect, useState } from 'react'
+import { coralProjectLinks } from '@shared/brand'
 import { openUrl } from '../../../services/appService'
 import { rootStore } from '../../../stores/rootStore'
 
@@ -66,7 +67,7 @@ export const OpenListModal = observer(({ open, onClose }: OpenListModalProps) =>
               如果无法打开，请参考
               <Text
                 className="coral-link-text"
-                onClick={async() => openUrl('https://lyswhut.github.io/lx-music-doc/desktop/faq/cannot-open-songlist')}
+                onClick={async() => openUrl(coralProjectLinks.songListFaq)}
               >
                 {' '}FAQ
               </Text>

@@ -1,6 +1,7 @@
 import { DownloadOutlined, CloseOutlined } from '@ant-design/icons'
-import { Button, Modal, Space, Typography, List as AntList } from 'antd'
+import { Button, Empty, Modal, Space, Typography } from 'antd'
 import { useState } from 'react'
+import { PlainList, PlainListItem, PlainListMeta } from '../base'
 import * as downloadService from '../../services/downloadService'
 import { rootStore } from '../../stores/rootStore'
 
@@ -55,17 +56,16 @@ export const BatchDownloadModal = ({ musics, onClose }: BatchDownloadModalProps)
     >
       <Space direction="vertical" size="small" className="coral-wide">
         <Text type="secondary">选择音质后，所有歌曲将以该音质添加到下载列表</Text>
-        <AntList
-          size="small"
-          dataSource={musics.slice(0, 100)}
-          locale={{ emptyText: '暂无歌曲' }}
+        <PlainList
+          items={musics.slice(0, 100)}
+          empty={<Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无歌曲" />}
           renderItem={item => (
-            <AntList.Item>
-              <AntList.Item.Meta
+            <PlainListItem key={item.id}>
+              <PlainListMeta
                 title={item.name}
                 description={`${item.singer} · ${item.source}`}
               />
-            </AntList.Item>
+            </PlainListItem>
           )}
         />
         {musics.length > 100 && <Text type="secondary">...及其他 {musics.length - 100} 首</Text>}

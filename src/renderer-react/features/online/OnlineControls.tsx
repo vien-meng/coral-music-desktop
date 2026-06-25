@@ -1,4 +1,5 @@
-import { Empty, List, Select, Tag } from 'antd'
+import { Empty, Select, Tag } from 'antd'
+import { PlainList, PlainListItem } from '../../components/base'
 
 export interface OnlineSourceSelectProps<Source extends string> {
   className?: string
@@ -83,15 +84,12 @@ export const OnlineBoardSelector = <BoardItem extends OnlineBoardItem>({
   onSelect,
 }: OnlineBoardSelectorProps<BoardItem>) => {
   return (
-    <List
-      size="small"
+    <PlainList
       className="coral-board-list"
-      dataSource={boards}
-      locale={{
-        emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无榜单" />,
-      }}
+      items={boards}
+      empty={<Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无榜单" />}
       renderItem={item => (
-        <List.Item>
+        <PlainListItem key={item.id}>
           <button
             type="button"
             className={item.id === activeBoardId ? 'coral-board-native-button is-active' : 'coral-board-native-button'}
@@ -101,7 +99,7 @@ export const OnlineBoardSelector = <BoardItem extends OnlineBoardItem>({
           >
             {item.name}
           </button>
-        </List.Item>
+        </PlainListItem>
       )}
     />
   )

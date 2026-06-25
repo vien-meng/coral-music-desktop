@@ -23,7 +23,7 @@ export class RootStore {
   search = new SearchStore()
   songList = new SongListStore()
   leaderboard = new LeaderboardStore()
-  download = new DownloadStore()
+  download = new DownloadStore(this.settings)
   sync = new SyncStore()
   openApi = new OpenApiStore()
   userApi = new UserApiStore()
@@ -45,6 +45,7 @@ export class RootStore {
 
   dispose(): void {
     this.player.dispose()
+    this.download.disposeRuntime()
     this.settings.dispose()
     this.theme.dispose()
     this.dislike.dispose()

@@ -25,6 +25,8 @@ import {
 import { quitApp } from '@main/app'
 import { getAllThemes, removeTheme, saveTheme, setPowerSaveBlocker } from '@main/utils'
 import { openDirInExplorer } from '@common/utils/electron'
+import { probeExternalDecoder } from '../externalDecoderProbe'
+import type { ExternalDecoderProbeParams, ExternalDecoderProbeResult } from '@shared/playbackCapabilities'
 
 export default () => {
   // 设置应用名称
@@ -55,6 +57,9 @@ export default () => {
   })
   mainOn<boolean>(WIN_MAIN_RENDERER_EVENT_NAME.set_power_save_blocker, ({ params: enabled }) => {
     setPowerSaveBlocker(enabled)
+  })
+  mainHandle<ExternalDecoderProbeParams, ExternalDecoderProbeResult>(WIN_MAIN_RENDERER_EVENT_NAME.external_decoder_probe, async({ params }) => {
+    return probeExternalDecoder(params)
   })
   mainOn<boolean>(WIN_MAIN_RENDERER_EVENT_NAME.close, ({ params: isForce }) => {
     if (isForce) {

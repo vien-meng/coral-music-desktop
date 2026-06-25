@@ -1,5 +1,10 @@
-import { inflate } from 'zlib'
 import { decodeName } from './util'
+
+const getInflate = () => {
+  const nodeRequire = typeof require === 'function' ? require : globalThis.require
+  if (!nodeRequire) throw new Error('Node zlib is unavailable in the current renderer context.')
+  return nodeRequire('node:zlib').inflate
+}
 
 // https://github.com/lyswhut/lx-music-desktop/issues/296#issuecomment-683285784
 const enc_key = Buffer.from([0x40, 0x47, 0x61, 0x77, 0x5e, 0x32, 0x74, 0x47, 0x51, 0x36, 0x31, 0x2d, 0xce, 0xd2, 0x6e, 0x69], 'binary')
@@ -9,7 +14,7 @@ const decodeLyric = str => new Promise((resolve, reject) => {
   for (let i = 0, len = buf_str.length; i < len; i++) {
     buf_str[i] = buf_str[i] ^ enc_key[i % 16]
   }
-  inflate(buf_str, (err, result) => {
+  getInflate()(buf_str, (err, result) => {
     if (err) return reject(err)
     resolve(result.toString())
   })

@@ -586,7 +586,7 @@ Status on 2026-06-24: completed for Vue and renderer compatibility cleanup. Step
 Tasks:
 
 - [x] Move reusable non-UI logic from `src/renderer` into `src/renderer-react/services` or `src/shared`.
-- [ ] Move the full download executor from the legacy worker model into a React/main-process runtime bridge.
+- [x] Move the full download executor from the legacy worker model into a React/main-process runtime bridge.
 - [x] Remove `src/common/utils/vueTools.ts` and `src/common/utils/vueRouter.ts` after no imports remain.
 - [x] Remove `src/common/types/shims_vue.d.ts` after no types depend on Vue.
 - [x] Delete legacy `.vue` files batch by batch only after React replacements pass runtime smoke tests.
@@ -603,10 +603,38 @@ Acceptance:
 
 Recommended next implementation batch:
 
-1. Port the full download runtime bridge: start, pause, retry, URL refresh, progress events, file save path checks, and metadata/lrc side effects.
-2. Move download execution that needs filesystem access behind typed IPC or a dedicated Electron worker surface instead of renderer globals.
-3. Tighten React-focused typecheck coverage to include migrated service modules such as `downloadTaskFactory`, `downloadService`, and `musicSdk` wrappers.
-4. Remove obsolete Vue/Webpack package dependencies and lockfile entries once package scripts no longer reference them.
-5. Add smoke coverage for search, song-list, leaderboard, local-list, playback URL resolution, and download task creation.
+1. Step 110 completed the first download runtime bridge: manual start, pause, retry, URL refresh request, progress events, save path checks, and download DB persistence now run through typed IPC.
+2. Step 111 completed React-side queue scheduling around `download.maxDownloadNum`, automatic queued-task pickup after slot release, bounded URL refresh retry, and cached lyric sidecar export on completion.
+3. Step 112 completed download lyric cache prefetch, embedded MP3/FLAC metadata writing, sidecar lyric export, and completed-file existence/size verification.
+4. Step 113 removed the remaining React-side Vue compatibility shim and confirmed project package metadata no longer carries direct Vue/Webpack dependencies; lockfile only has a transitive funding URL mentioning webpack.
+5. Step 114 stabilized the renderer dev startup path after Electron reached the main window: React-side imports of `@common/utils/nodejs` were replaced with a renderer `nodeBridgeService`, music SDK crypto/zlib helpers now use runtime `globalThis.require`, and `npm run dev` no longer reproduces the `node:zlib.gzip` browser-externalized crash during the startup smoke window.
+6. Step 115 added a repeatable download runtime smoke command and fixed DB worker async reads in the main-process download runtime. `npm run smoke:download` now starts Electron dev mode, serves a local fixture file, verifies start/progress/pause/retry/completion, verifies failed URL recovery status, and verifies sidecar lyric output without touching the user's real download directory.
+7. Step 116 added `npm run smoke:migration`, a no-new-dependency migration smoke that verifies React route wiring, online/search/song-list/leaderboard service surfaces, MobX feature panel wiring, typed download IPC/runtime/store wiring, download smoke command availability, no Vue SFCs, and no React/lyric references to the deleted renderer bridge.
+8. Step 117 removed the renderer build's Node builtin externalization warnings by moving `electron`, `needle`, `tunnel`, `zlib`, and `electron-log/node` usage behind runtime `globalThis.require` or lazy wrappers. Renderer build now only reports the known music SDK dynamic/static import warning and chunk-size warnings.
+9. Step 118 completed the first package polish audit: Electron builder identity now uses Coral Music names and app id, old upstream publish defaults were removed in favor of explicit `CORAL_PUBLISH_OWNER` / `CORAL_PUBLISH_REPO`, and `npm run smoke:package` now verifies package identity, builder identity, resources, publish guardrails, and retained deep-link compatibility.
+10. Step 119 completed a release-readiness audit pass: user-facing upstream links are centralized in `coralProjectLinks`, Settings labels now make upstream links explicit, runtime title/tray fallbacks use the Coral brand, package author metadata uses `Coral Music Team`, and `npm run smoke:release` composes migration smoke, package audit, and React typecheck. `npm run pack:dir` reached Electron runtime download after Vite build/native rebuild, but the network download produced an incomplete zip and was interrupted.
+11. Step 120 scoped the optional UI/Electron click-through automation track and deferred it until local Electron runtime downloads/cache are stable; current coverage remains `smoke:migration`, `smoke:download`, `smoke:package`, and `smoke:release`.
+12. Step 121 removed deprecated Ant Design `List` usage from migrated React panels by adding `PlainList`, `PlainListItem`, and `PlainListMeta`, replacing all `List/List.Item/List.Item.Meta` call sites, and adding a migration smoke guard against reintroduction.
+13. Step 122 resolved the music SDK static/dynamic import warning by moving `onlineMusicService` and `musicDetailService` behind cached dynamic SDK loading. Renderer build now emits a separate `sdk-*.js` chunk around 222 KB and the main renderer chunk is about 1.305 MB. `smoke:migration` now guards against static SDK imports in React services.
+14. Step 123 completed route-level code splitting: the six main route panels now load via `React.lazy`, RouterOutlet uses Suspense fallback, migration smoke expects dynamic route imports, and the main renderer entry is about 316 KB with route panels emitted as separate chunks. The remaining renderer chunk warning is now concentrated in shared `base-*.js`.
+15. Step 124 added renderer manual chunk rules for React, MobX, vendor, icons, rc/AntD internals, and Ant Design component modules. Renderer build no longer emits chunk-size warnings; entry is about 118 KB and the largest renderer chunk is about 377 KB. The remaining full-build chunk warning is now isolated to the lyric renderer.
+16. Step 125 added lyric renderer manual chunk rules for React, MobX, Ant Design, icons, rc dependencies, generic vendor, and the lyric font player. Lyric main chunk dropped from about 603 KB to about 31 KB, largest lyric chunk is about 346 KB, and full `npm run build` no longer emits chunk-size warnings.
+17. Step 126 attempted to continue packaged-app readiness with a clean Electron cache path, but the required escalated/network `pack:dir` run was rejected by the environment usage limit before execution. Packaged `dir` verification remains pending; latest non-packaging gates are still green.
+18. Step 127 added `npm run smoke:bundle` and included it in `smoke:release`, guarding renderer/lyric manual chunk strategy, route-level lazy imports, and the absence of `chunkSizeWarningLimit` threshold masking.
+19. Step 128 added `npm run smoke:dist` and `npm run smoke:full`. Dist smoke validates required build outputs, route chunks, vendor chunks, browser chunk ceilings under 500 KiB, and bounded preload/worker outputs. `smoke:full` is now the strongest no-network gate: build, lint, release smoke, and dist smoke.
+20. Step 129 documented the no-network validation flow and packaged `pack:dir` retry path in `README.md`, including the clean-cache Electron runtime command `ELECTRON_CACHE=/private/tmp/coral-electron-cache npm run pack:dir`.
+21. Step 130 guarded release metadata placeholders: README no longer shows upstream LX release/build badges as Coral status, package repository/bugs/homepage stay empty until the real Coral repository is known, and package audit verifies these placeholders do not silently point to upstream.
+22. Step 131 added the playback capability contract for local audio, Foobar2000-style external decoder adapters, and LX Music User API source plugins. The project now has shared playback capability constants, AppSetting/default-setting keys for native local formats and explicit external decoder configuration, a dedicated playback capability plan, and `npm run smoke:playback-capabilities` included in release smoke.
+23. Step 132 started local audio import: React now has a local-audio service that scans selected files/directories, filters native/external-decoder candidate extensions, creates `MusicInfoLocal` records, and adds them to the selected list through the migrated list IPC/store path. Metadata tag parsing and decoder-backed playback remain in the next batches.
+24. Step 133 added local metadata scanning during import through the existing `music-metadata` dependency, loaded lazily at runtime to avoid renderer bundle Node builtin regressions. Imported local files now prefer tag title/artist/album/duration and fall back to filename inference when metadata cannot be read.
+25. Step 134 added a typed, non-executing external decoder probe boundary. React can now call `externalDecoderService.probeExternalDecoder`, which reaches the main process through typed IPC and validates Foobar2000 executable/plugin paths, supported extension declarations, and platform warnings without loading plugins or running a transcode.
 
-This order keeps the always-visible player surface stable while replacing the highest-risk legacy audio/detail logic in smaller batches.
+Recommended next implementation batch:
+
+1. Step 135: expose decoder probe status and path selection in Settings, then implement the external decoder runtime adapter that transcodes unsupported local formats such as DSD/SACD into WAV or PCM before handing them to the existing player runtime.
+2. Step 136: polish LX Music User API source-plugin management with validation/status display and keep `common.apiSource` as the selected plugin key.
+3. Step 137: add playback capability smoke for local fixture import/playback, fake decoder adapter probing, and User API plugin selection rollback.
+4. Step 138: revisit UI/Electron click-through automation once the packaging/runtime environment is less noisy.
+5. Step 139: when the real Coral Music repository is known, set `repository.url`, `bugs.url`, `homepage`, README badges, and publish owner/repo workflow docs together.
+
+This order keeps the app startable first, then expands local playback and source-plugin capability behind typed, smoke-guarded runtime boundaries before returning to release metadata polish.

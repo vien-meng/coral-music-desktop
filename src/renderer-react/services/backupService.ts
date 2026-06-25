@@ -2,14 +2,12 @@ import { LIST_IDS } from '@common/constants'
 import { filterFileName } from '@common/utils/common'
 import { filterMusicList, fixNewMusicInfoQuality, toNewMusicInfo } from '@common/utils/tools'
 import migrateSetting from '@common/utils/migrateSetting'
-import { joinPath, readLxConfigFile, saveStrToFile } from '@common/utils/nodejs'
-import { gzip } from 'zlib'
-import { writeFile } from 'fs/promises'
 import { message } from 'antd'
 import { listService } from './listService'
 import { settingService } from './settingService'
 import { cacheService } from './cacheService'
 import { isElectronRenderer } from './appService'
+import { joinPath, readLxConfigFile, saveLxConfigFile, saveStrToFile } from './nodeBridgeService'
 
 interface BackupListInfo {
   id: string
@@ -59,20 +57,6 @@ interface DefaultListV1 {
 }
 
 type ConfigFile = AllDataV2 | AllDataV1 | SettingV2 | SettingV1 | PlayListV2 | PlayListV1 | DefaultListV1
-
-const safeSaveLxConfigFile = async(path: string, data: unknown): Promise<void> => {
-  if (!path.endsWith('.lxmc')) path += '.lxmc'
-  const gzipped = await new Promise<Buffer>((resolve, reject) => {
-    gzip(JSON.stringify(data), (err, result) => {
-      if (err) {
-        reject(err)
-        return
-      }
-      resolve(result)
-    })
-  })
-  await writeFile(path, gzipped, 'binary')
-}
 
 const getAllLists = async(): Promise<BackupListInfo[]> => {
   const lists: BackupListInfo[] = []
@@ -180,7 +164,7 @@ export const exportAllData = async(path: string, appSetting: LX.AppSetting): Pro
       setting: { ...appSetting },
       playList: await getAllLists(),
     }
-    await safeSaveLxConfigFile(path, allData)
+    await saveLxConfigFile(path, allData)
   } catch (err) {
     void message.error(`导出失败：${err instanceof Error ? err.message : String(err)}`)
   }
@@ -214,7 +198,7 @@ export const exportSetting = async(path: string, appSetting: LX.AppSetting): Pro
       type: 'setting_v2',
       data: { ...appSetting },
     }
-    await safeSaveLxConfigFile(path, data)
+    await saveLxConfigFile(path, data)
   } catch (err) {
     void message.error(`导出失败：${err instanceof Error ? err.message : String(err)}`)
   }
@@ -256,7 +240,7 @@ export const exportPlayList = async(path: string): Promise<void> => {
       type: 'playList_v2',
       data: await getAllLists(),
     }
-    await safeSaveLxConfigFile(path, data)
+    await saveLxConfigFile(path, data)
   } catch (err) {
     void message.error(`导出失败：${err instanceof Error ? err.message : String(err)}`)
   }

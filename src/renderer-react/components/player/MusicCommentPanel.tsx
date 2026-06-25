@@ -4,9 +4,10 @@ import {
   ReloadOutlined,
   UserOutlined,
 } from '@ant-design/icons'
-import { Avatar, Button, Empty, Flex, List, Space, Tabs, Typography, message } from 'antd'
+import { Avatar, Button, Empty, Flex, Space, Tabs, Typography, message } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useCallback, useEffect, useState } from 'react'
+import { PlainList, PlainListItem, PlainListMeta } from '../base'
 import {
   musicCommentService,
   type MusicCommentItem,
@@ -138,12 +139,11 @@ export const MusicCommentPanel = observer(() => {
     }
 
     return (
-      <List
+      <PlainList
         className="coral-comment-list"
-        dataSource={state.comments}
-        itemLayout="horizontal"
+        items={state.comments}
         loading={state.isLoading}
-        locale={{ emptyText: '暂无评论' }}
+        empty={<Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无评论" />}
         pagination={state.total > state.limit
           ? {
               current: state.page,
@@ -153,14 +153,14 @@ export const MusicCommentPanel = observer(() => {
               total: state.total,
               onChange: page => { void loadComments(activeKind, page) },
             }
-          : false}
+          : undefined}
         renderItem={item => (
-          <List.Item key={item.id}>
-            <List.Item.Meta
+          <PlainListItem key={item.id}>
+            <PlainListMeta
               avatar={<Avatar icon={<UserOutlined />} src={item.avatar} shape="square" />}
               description={renderCommentText(item)}
             />
-          </List.Item>
+          </PlainListItem>
         )}
       />
     )

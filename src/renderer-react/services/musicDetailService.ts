@@ -1,22 +1,34 @@
-import musicSdk from './musicSdk/sdk'
 import { appService } from './appService'
 
-const isSourceSupported = (source: string): boolean => {
-  return typeof source === 'string' && source !== 'local' && source in musicSdk
+interface MusicDetailSdkSource {
+  getMusicDetailPageUrl?: (musicInfo: LX.Music.MusicInfo) => string | undefined
 }
 
-const getDetailPageUrl = (musicInfo: LX.Music.MusicInfo): string | null => {
-  if (!isSourceSupported(musicInfo.source)) return null
+type MusicSdk = Record<string, unknown>
 
+let musicSdkPromise: Promise<MusicSdk> | null = null
+
+const loadMusicSdk = async(): Promise<MusicSdk> => {
+  musicSdkPromise ??= import('./musicSdk/sdk').then(module => module.default as MusicSdk)
+  return await musicSdkPromise
+}
+
+const getDetailPageUrl = async(musicInfo: LX.Music.MusicInfo): Promise<string | null> => {
+  if (typeof musicInfo.source !== 'string' || musicInfo.source === 'local') return null
+
+  const musicSdk = await loadMusicSdk()
   const sdk = musicSdk[musicInfo.source]
-  if (typeof sdk.getMusicDetailPageUrl !== 'function') return null
+  if (typeof sdk !== 'object' || sdk == null || Array.isArray(sdk)) return null
 
-  const url = sdk.getMusicDetailPageUrl(musicInfo) as string | undefined
+  const sourceSdk = sdk as MusicDetailSdkSource
+  if (typeof sourceSdk.getMusicDetailPageUrl !== 'function') return null
+
+  const url = sourceSdk.getMusicDetailPageUrl(musicInfo)
   return url ?? null
 }
 
 export const openMusicDetail = async(musicInfo: LX.Music.MusicInfo): Promise<void> => {
-  const url = getDetailPageUrl(musicInfo)
+  const url = await getDetailPageUrl(musicInfo)
   if (!url) return
 
   await appService.openUrl(url)
