@@ -19,7 +19,7 @@ import {
   VerticalAlignBottomOutlined,
   VerticalAlignTopOutlined,
 } from '@ant-design/icons'
-import { Alert, Button, Checkbox, Dropdown, Input, InputNumber, message, Modal, Select, Space, Tag, Tooltip, Typography } from 'antd'
+import { Alert, Button, Checkbox, Dropdown, Empty, Input, InputNumber, message, Modal, Select, Space, Tag, Tooltip, Typography } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useEffect, useState } from 'react'
 import { OnlineMusicPreviewList } from '../online/OnlinePreviewList'
@@ -219,6 +219,11 @@ export const LocalListRoutePanel = observer(() => {
     void list.createUserList(name)
   }
 
+  const handleCreateLocalList = (): void => {
+    setCreateName('')
+    void list.createUserList('本地音乐')
+  }
+
   const handleRenameList = (): void => {
     void list.renameSelectedList(renameName)
   }
@@ -334,33 +339,30 @@ export const LocalListRoutePanel = observer(() => {
     if (list.selectedMusics.length < 2) return
 
     void list.replaceSelectedMusicOrder(shuffleMusicInfos(list.selectedMusics))
+  }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const handleDragReorder = (fromIndex: number, toIndex: number): void => {
-      const nextDragList = [...dragList]
-      const [movedItem] = nextDragList.splice(fromIndex, 1)
-      nextDragList.splice(toIndex, 0, movedItem)
-      setDragList(nextDragList)
-    }
+  const handleDragReorder = (fromIndex: number, toIndex: number): void => {
+    const nextDragList = [...dragList]
+    const [movedItem] = nextDragList.splice(fromIndex, 1)
+    nextDragList.splice(toIndex, 0, movedItem)
+    setDragList(nextDragList)
+  }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const handleSaveDragOrder = (): void => {
-      if (!dragList.length || dragList.length !== list.selectedMusics.length) return
-      void list.replaceSelectedMusicOrder(dragList)
+  const handleSaveDragOrder = (): void => {
+    if (!dragList.length || dragList.length !== list.selectedMusics.length) return
+    void list.replaceSelectedMusicOrder(dragList)
+    setIsDraggingMode(false)
+    setDragList([])
+  }
+
+  const toggleDragMode = (): void => {
+    if (isDraggingMode) {
       setIsDraggingMode(false)
       setDragList([])
+      return
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const toggleDragMode = (): void => {
-      if (isDraggingMode) {
-        setIsDraggingMode(false)
-        setDragList([])
-        return
-      }
-      setDragList(sortedMusics)
-      setIsDraggingMode(true)
-    }
+    setDragList(sortedMusics)
+    setIsDraggingMode(true)
   }
 
   const handleRemoveDuplicateMusics = (): void => {
@@ -413,39 +415,65 @@ export const LocalListRoutePanel = observer(() => {
     })
   }
 
-  const handleImportLocalAudio = (): void => {
+  const ensureLocalAudioTargetList = async(): Promise<boolean> => {
+    if (list.selectedListId) return true
+
+    const firstListId = list.userLists[0]?.id
+    if (firstListId) {
+      await list.loadSelectedListMusics(firstListId)
+      return true
+    }
+
+    await list.createUserList('本地音乐')
+    return Boolean(list.selectedListId)
+  }
+
+  const handleImportLocalAudio = async(): Promise<void> => {
+    if (appSetting && !appSetting['player.localAudio.enabled']) {
+      void message.warning('本地音频导入已关闭，请在“设置 > 本地解码”开启。')
+      ui.setActiveRoute('setting')
+      ui.requestQuickAction('configureExternalDecoder')
+      return
+    }
+
     const nativeExtensions = appSetting?.['player.localAudio.supportedExts'] ?? nativeLocalAudioExtensions
     const externalExtensions = appSetting?.['player.externalDecoder.extensions'] ?? externalDecoderExtensions
 
-    void appService.showSelectDialog({
+    const hasTargetList = await ensureLocalAudioTargetList()
+    if (!hasTargetList) {
+      void message.warning('请先创建一个列表')
+      return
+    }
+
+    const result = await appService.showSelectDialog({
       filters: [
         { extensions: [...nativeExtensions, ...externalExtensions], name: 'Audio Files' },
         { extensions: ['*'], name: 'All Files' },
       ],
       properties: ['openFile', 'openDirectory', 'multiSelections'],
       title: '导入本地音频',
-    }).then(async result => {
-      if (result.canceled || !result.filePaths.length) return
-      const importResult = await list.importLocalAudioPaths(
-        result.filePaths,
-        addMusicLocationType,
-        {
-          externalExtensions,
-          nativeExtensions,
-        },
-      )
-      if (!importResult) return
-      setSelectedMusicIds([])
-      if (!importResult.importedMusics.length) {
-        void message.warning(importResult.candidateCount
-          ? `已跳过 ${importResult.duplicateCount} 首重复本地音频`
-          : '未发现支持的本地音频文件')
-        return
-      }
-
-      const duplicateText = importResult.duplicateCount ? `，跳过重复 ${importResult.duplicateCount} 首` : ''
-      void message.success(`已导入 ${importResult.importedMusics.length} 首本地音频${duplicateText}`)
     })
+    if (result.canceled || !result.filePaths.length) return
+
+    const importResult = await list.importLocalAudioPaths(
+      result.filePaths,
+      addMusicLocationType,
+      {
+        externalExtensions,
+        nativeExtensions,
+      },
+    )
+    if (!importResult) return
+    setSelectedMusicIds([])
+    if (!importResult.importedMusics.length) {
+      void message.warning(importResult.candidateCount
+        ? `已跳过 ${importResult.duplicateCount} 首重复本地音频`
+        : '未发现支持的本地音频文件')
+      return
+    }
+
+    const duplicateText = importResult.duplicateCount ? `，跳过重复 ${importResult.duplicateCount} 首` : ''
+    void message.success(`已导入 ${importResult.importedMusics.length} 首本地音频${duplicateText}`)
   }
 
   const handleExportListPart = (): void => {
@@ -547,6 +575,11 @@ export const LocalListRoutePanel = observer(() => {
     })
   }
 
+  useEffect(() => {
+    if (!ui.consumeQuickAction('importLocalAudio')) return
+    void handleImportLocalAudio()
+  }, [ui.pendingQuickAction])
+
   return (
     <Space direction="vertical" size="middle" className="coral-wide">
       <Space wrap className="coral-route-controls">
@@ -579,9 +612,11 @@ export const LocalListRoutePanel = observer(() => {
         </Button>
         <Button
           icon={<FileAddOutlined />}
-          disabled={!list.selectedList}
+          disabled={list.isHydrating}
           loading={list.isImportingLocalAudio}
-          onClick={handleImportLocalAudio}
+          onClick={() => {
+            void handleImportLocalAudio()
+          }}
         >
           本地音频
         </Button>
@@ -877,6 +912,32 @@ export const LocalListRoutePanel = observer(() => {
               : (<>
           <OnlineMusicPreviewList
         list={sortedMusics}
+        empty={(
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description={list.selectedList ? '当前列表暂无歌曲' : '还没有选择列表'}
+          >
+            <Space wrap>
+              <Button
+                type="primary"
+                icon={<FileAddOutlined />}
+                loading={list.isImportingLocalAudio}
+                onClick={() => {
+                  void handleImportLocalAudio()
+                }}
+              >
+                导入本地音频
+              </Button>
+              <Button
+                icon={<PlusOutlined />}
+                loading={list.isMutatingList}
+                onClick={handleCreateLocalList}
+              >
+                新建列表
+              </Button>
+            </Space>
+          </Empty>
+        )}
         emptyText={list.selectedList ? '暂无歌曲' : '请选择列表'}
         actions={item => [
           <Checkbox

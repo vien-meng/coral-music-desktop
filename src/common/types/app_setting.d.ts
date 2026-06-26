@@ -312,7 +312,7 @@ declare global {
       /**
        * 外部解码适配器提供方
        */
-      'player.externalDecoder.provider': 'none' | 'foobar2000'
+      'player.externalDecoder.provider': 'none' | 'foobar2000' | 'ffmpeg'
 
       /**
        * 外部解码器可执行文件路径

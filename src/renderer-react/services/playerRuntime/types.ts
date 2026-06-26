@@ -1,4 +1,5 @@
 export type PlayerRuntimeStatus = Partial<LX.Player.Status> & {
+  errorText?: string
   isEnded?: boolean
 }
 export type PlayerStatusListener = (status: PlayerRuntimeStatus) => void

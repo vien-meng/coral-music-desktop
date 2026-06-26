@@ -1,4 +1,4 @@
-export type ExternalDecoderProvider = 'none' | 'foobar2000'
+export type ExternalDecoderProvider = 'none' | 'foobar2000' | 'ffmpeg'
 export type ExternalDecoderOutput = 'wav' | 'pcm'
 
 export interface ExternalDecoderProbeParams {
@@ -24,6 +24,20 @@ export interface ExternalDecoderProbeResult {
   pluginDirs: ExternalDecoderProbePathStatus[]
   provider: ExternalDecoderProvider
   supportedExtensions: string[]
+  warnings: string[]
+}
+
+export interface ExternalDecoderTranscodeParams {
+  executablePath: string
+  inputPath: string
+  output: ExternalDecoderOutput
+  provider: ExternalDecoderProvider
+  timeoutMs: number
+}
+
+export interface ExternalDecoderTranscodeResult {
+  outputPath: string
+  output: ExternalDecoderOutput
   warnings: string[]
 }
 
@@ -72,7 +86,7 @@ export const playbackCapabilityRoadmap = {
     externalDecoderExtensions,
   },
   externalDecoder: {
-    supportedProviders: ['none', 'foobar2000'] as const,
+    supportedProviders: ['none', 'foobar2000', 'ffmpeg'] as const,
     preferredOutputs: ['wav', 'pcm'] as const,
   },
   sourcePlugin: {

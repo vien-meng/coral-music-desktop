@@ -1,0 +1,100 @@
+import { settingService } from './settingService'
+import { userApiService } from './userApiService'
+
+type LegacyRuntimeState = typeof import('./musicSdk/sdk/runtimeState.js')
+
+interface LegacyMusicUrlResult {
+  source: LX.Source
+  action: 'musicUrl'
+  data: {
+    type: LX.Quality
+    url: string
+  }
+}
+
+interface LegacyUserApiMusicSource {
+  getMusicUrl: (
+    musicInfo: unknown,
+    quality: LX.Quality,
+  ) => {
+    promise: Promise<{
+      type: LX.Quality
+      url: string
+    }>
+  }
+}
+
+let runtimeStatePromise: Promise<LegacyRuntimeState> | null = null
+let syncedApiSource: string | null = null
+
+const loadRuntimeState = async(): Promise<LegacyRuntimeState> => {
+  runtimeStatePromise ??= import('./musicSdk/sdk/runtimeState.js')
+  return await runtimeStatePromise
+}
+
+const createUserApiMusicSource = (source: LX.Source): LegacyUserApiMusicSource => ({
+  getMusicUrl(musicInfo, quality) {
+    return {
+      promise: userApiService.requestUserApi({
+        action: 'musicUrl',
+        info: {
+          musicInfo,
+          type: quality,
+        },
+        source,
+      }).then(result => {
+        const urlResult = result as LegacyMusicUrlResult
+        if (!urlResult?.data?.url) throw new Error('User API did not return a playable URL.')
+        return {
+          type: urlResult.data.type ?? quality,
+          url: urlResult.data.url,
+        }
+      }),
+    }
+  },
+})
+
+const applyUserApiRuntime = async(
+  runtimeState: LegacyRuntimeState,
+  apiInfo: LX.UserApi.UserApiInfo,
+): Promise<void> => {
+  const apis: Record<string, LegacyUserApiMusicSource> = {}
+  for (const [source, sourceInfo] of Object.entries(apiInfo.sources ?? {})) {
+    if (sourceInfo.type !== 'music' || !sourceInfo.actions.includes('musicUrl')) continue
+    apis[source] = createUserApiMusicSource(source as LX.Source)
+  }
+
+  runtimeState.userApi.list = [apiInfo]
+  runtimeState.userApi.status = true
+  runtimeState.userApi.message = ''
+  runtimeState.userApi.apis = apis
+}
+
+export const syncMusicSdkRuntime = async(): Promise<string> => {
+  const runtimeState = await loadRuntimeState()
+  const setting = await settingService.getAppSetting()
+  const apiSource = setting?.['common.apiSource'] || 'temp'
+
+  runtimeState.apiSource.value = apiSource
+  if (!apiSource.startsWith('user_api')) {
+    syncedApiSource = apiSource
+    return apiSource
+  }
+
+  if (syncedApiSource !== apiSource) {
+    await userApiService.setUserApi(apiSource)
+    syncedApiSource = apiSource
+  }
+
+  const status = await userApiService.getUserApiStatus()
+  if (!status.status || !status.apiInfo) {
+    throw new Error(status.message || 'User API source is not ready.')
+  }
+
+  await applyUserApiRuntime(runtimeState, status.apiInfo)
+  return apiSource
+}
+
+export const musicSdkRuntime = {
+  sync: syncMusicSdkRuntime,
+}

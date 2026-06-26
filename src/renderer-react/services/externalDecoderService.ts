@@ -1,7 +1,12 @@
 import { ipcChannels } from '@shared/ipc/contracts'
 import { ipcClient } from './ipc/client'
 import { isElectronRenderer } from './appService'
-import type { ExternalDecoderProbeParams, ExternalDecoderProbeResult } from '@shared/playbackCapabilities'
+import type {
+  ExternalDecoderProbeParams,
+  ExternalDecoderProbeResult,
+  ExternalDecoderTranscodeParams,
+  ExternalDecoderTranscodeResult,
+} from '@shared/playbackCapabilities'
 
 const createDisabledProbeResult = (params: ExternalDecoderProbeParams): ExternalDecoderProbeResult => {
   return {
@@ -32,6 +37,17 @@ export const probeExternalDecoder = async(
   )
 }
 
+export const transcodeExternalDecoder = async(
+  params: ExternalDecoderTranscodeParams,
+): Promise<ExternalDecoderTranscodeResult> => {
+  if (!isElectronRenderer()) throw new Error('Electron IPC is unavailable.')
+  return await ipcClient.invoke(
+    ipcChannels.winMain.externalDecoderTranscode,
+    params,
+  )
+}
+
 export const externalDecoderService = {
   probeExternalDecoder,
+  transcodeExternalDecoder,
 }

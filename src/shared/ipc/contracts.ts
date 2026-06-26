@@ -6,7 +6,12 @@ import {
   WIN_LYRIC_RENDERER_EVENT_NAME,
   WIN_MAIN_RENDERER_EVENT_NAME,
 } from '@common/ipcNames'
-import type { ExternalDecoderProbeParams, ExternalDecoderProbeResult } from '@shared/playbackCapabilities'
+import type {
+  ExternalDecoderProbeParams,
+  ExternalDecoderProbeResult,
+  ExternalDecoderTranscodeParams,
+  ExternalDecoderTranscodeResult,
+} from '@shared/playbackCapabilities'
 
 interface IpcContract<Params = undefined, Result = void> {
   params: Params
@@ -82,6 +87,8 @@ export const ipcChannels = {
       WIN_MAIN_RENDERER_EVENT_NAME.download_task_start as 'winMain_download_task_start',
     externalDecoderProbe:
       WIN_MAIN_RENDERER_EVENT_NAME.external_decoder_probe as 'winMain_external_decoder_probe',
+    externalDecoderTranscode:
+      WIN_MAIN_RENDERER_EVENT_NAME.external_decoder_transcode as 'winMain_external_decoder_transcode',
     getData: WIN_MAIN_RENDERER_EVENT_NAME.get_data as 'winMain_get_data',
     getThemes: WIN_MAIN_RENDERER_EVENT_NAME.get_themes as 'winMain_get_themes',
     getUserApiList:
@@ -103,6 +110,8 @@ export const ipcChannels = {
       WIN_MAIN_RENDERER_EVENT_NAME.player_status as 'winMain_player_status',
     removeUserApi:
       WIN_MAIN_RENDERER_EVENT_NAME.remove_user_api as 'winMain_remove_user_api',
+    requestUserApi:
+      WIN_MAIN_RENDERER_EVENT_NAME.request_user_api as 'winMain_request_user_api',
     removeTheme:
       WIN_MAIN_RENDERER_EVENT_NAME.remove_theme as 'winMain_remove_theme',
     saveData: WIN_MAIN_RENDERER_EVENT_NAME.save_data as 'winMain_save_data',
@@ -287,6 +296,10 @@ export interface CoralIpcInvokeMap {
   ExternalDecoderProbeParams,
   ExternalDecoderProbeResult
   >
+  [ipcChannels.winMain.externalDecoderTranscode]: IpcContract<
+  ExternalDecoderTranscodeParams,
+  ExternalDecoderTranscodeResult
+  >
   [ipcChannels.winMain.getData]: IpcContract<string, unknown>
   [ipcChannels.winMain.getThemes]: IpcContract<undefined, IpcThemeCollection>
   [ipcChannels.winMain.getUserApiList]: IpcContract<
@@ -308,6 +321,10 @@ export interface CoralIpcInvokeMap {
   [ipcChannels.winMain.removeUserApi]: IpcContract<
   string[],
   LX.UserApi.UserApiInfo[]
+  >
+  [ipcChannels.winMain.requestUserApi]: IpcContract<
+  LX.UserApi.UserApiRequestParams,
+  unknown
   >
   [ipcChannels.winMain.removeTheme]: IpcContract<string, void>
   [ipcChannels.winMain.saveTheme]: IpcContract<LX.Theme, void>

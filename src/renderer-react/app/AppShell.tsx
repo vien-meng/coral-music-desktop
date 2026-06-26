@@ -1,9 +1,12 @@
 import {
   CustomerServiceOutlined,
+  FileAddOutlined,
+  LinkOutlined,
   MoonOutlined,
   SunOutlined,
+  UploadOutlined,
 } from '@ant-design/icons'
-import { Button, Flex, Layout, Menu, Space, Tag, Typography } from 'antd'
+import { Button, Dropdown, Flex, Layout, Menu, Space, Typography } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { coralBrand } from '@shared/brand'
 import { SearchInput, WindowControlBtns } from '../components/layout'
@@ -56,10 +59,9 @@ export const AppShell = observer(() => {
                 rootStore.search.setSearchText(text)
               }} />
             </div>
-            <Space>
-              <Tag color="cyan">Electron</Tag>
-              <Tag color="volcano">React</Tag>
+            <Space className="coral-header-actions" size={8}>
               <Button
+                className="coral-header-action-btn"
                 icon={theme.themeMode === 'light' ? <MoonOutlined /> : <SunOutlined />}
                 onClick={() => {
                   void theme.setThemeMode(theme.themeMode === 'light' ? 'dark' : 'light')
@@ -67,6 +69,45 @@ export const AppShell = observer(() => {
               >
                 {theme.themeMode === 'light' ? '深色' : '浅色'}
               </Button>
+              <Button
+                className="coral-header-action-btn"
+                icon={<FileAddOutlined />}
+                onClick={() => {
+                  ui.setActiveRoute('list')
+                  ui.requestQuickAction('importLocalAudio')
+                }}
+              >
+                本地文件
+              </Button>
+              <Dropdown
+                trigger={['click']}
+                menu={{
+                  items: [
+                    {
+                      icon: <UploadOutlined />,
+                      key: 'file',
+                      label: '导入音源文件',
+                    },
+                    {
+                      icon: <LinkOutlined />,
+                      key: 'online',
+                      label: '在线导入音源',
+                    },
+                  ],
+                  onClick: ({ key }) => {
+                    ui.setActiveRoute('setting')
+                    ui.requestQuickAction(
+                      key === 'file'
+                        ? 'importUserApiFile'
+                        : 'importUserApiOnline',
+                    )
+                  },
+                }}
+              >
+                <Button className="coral-header-action-btn" icon={<UploadOutlined />}>
+                  添加音源
+                </Button>
+              </Dropdown>
               {controlBtnPosition === 'right' ? (
                 <WindowControlBtns variant="windows" isFullscreen={isFullscreen} />
               ) : null}

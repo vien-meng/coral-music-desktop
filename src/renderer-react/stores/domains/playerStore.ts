@@ -68,7 +68,7 @@ export class PlayerStore {
   isPlaying = false
   isHydrated = false
   playQueue: PlayerRuntimeMusicInfo[] = []
-  status: Partial<LX.Player.Status> | null = null
+  status: PlayerRuntimeStatus | null = null
   currentTime = 0
   progress = 0
   maxPlayTime = 0
@@ -129,6 +129,18 @@ export class PlayerStore {
 
   get albumName(): string {
     return this.displayMusicInfo?.meta.albumName ?? this.status?.albumName ?? ''
+  }
+
+  get errorText(): string {
+    return this.status?.errorText ?? ''
+  }
+
+  get needsSourcePlugin(): boolean {
+    return /添加音源|User API|Api is not found|没有可用音源/.test(this.errorText)
+  }
+
+  get needsExternalDecoder(): boolean {
+    return /FFmpeg|外部解码|解码器|DSD|SACD|WAV|PCM|foobar/i.test(this.errorText)
   }
 
   get lyricText(): string {

@@ -59,6 +59,7 @@ const modules = {
     open_dev_tools: 'open_dev_tools',
     set_power_save_blocker: 'set_power_save_blocker',
     external_decoder_probe: 'external_decoder_probe',
+    external_decoder_transcode: 'external_decoder_transcode',
 
     player_status: 'player_status',
     change_tray: 'change_tray',

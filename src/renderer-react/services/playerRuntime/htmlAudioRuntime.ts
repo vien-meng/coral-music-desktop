@@ -1,6 +1,7 @@
 import {
   resolvePlayableMusicUrl,
 } from './musicUrlResolver'
+import { removeFile } from '../nodeBridgeService'
 import type {
   PlayerEqFrequency,
   PlayerRuntimeBridge,
@@ -61,6 +62,8 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
   private panner: StereoPannerNode | null = null
   private soundEffectConfig: PlayerSoundEffectConfig = createDefaultSoundEffectConfig()
   private currentMusic: PlayerRuntimeMusicInfo | null = null
+  private currentDecodedFilePath: string | null = null
+  private currentObjectUrl: string | null = null
   private loadRequestId = 0
   private status: PlayerRuntimeStatus = {}
   private isDisposed = false
@@ -166,6 +169,8 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
       this.audio.removeAttribute('src')
       this.audio.load()
     }
+    this.clearDecodedFile()
+    this.clearObjectUrl()
     void this.audioContext?.close()
     this.audioContext = null
     this.biquadFilters = []
@@ -226,6 +231,22 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
     audio.load()
   }
 
+  private clearDecodedFile(exceptPath?: string): void {
+    const filePath = this.currentDecodedFilePath
+    if (!filePath || filePath === exceptPath) return
+
+    this.currentDecodedFilePath = null
+    void removeFile(filePath)
+  }
+
+  private clearObjectUrl(exceptUrl?: string): void {
+    const objectUrl = this.currentObjectUrl
+    if (!objectUrl || objectUrl === exceptUrl) return
+
+    this.currentObjectUrl = null
+    globalThis.URL?.revokeObjectURL(objectUrl)
+  }
+
   private async loadAndPlayMusic(musicInfo: PlayerRuntimeMusicInfo, requestId: number): Promise<void> {
     let resolved: Awaited<ReturnType<typeof resolvePlayableMusicUrl>> = null
     try {
@@ -234,19 +255,32 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
       console.error(err)
       if (this.isDisposed || requestId !== this.loadRequestId) return
 
-      this.publish({ status: 'error' })
+      this.publish({
+        errorText: err instanceof Error ? err.message : String(err),
+        status: 'error',
+      })
       return
     }
 
-    if (this.isDisposed || requestId !== this.loadRequestId) return
+    if (this.isDisposed || requestId !== this.loadRequestId) {
+      if (resolved?.decodedFilePath) void removeFile(resolved.decodedFilePath)
+      if (resolved?.objectUrl) globalThis.URL?.revokeObjectURL(resolved.objectUrl)
+      return
+    }
 
     if (!resolved) {
+      this.clearDecodedFile()
+      this.clearObjectUrl()
       this.publish({ status: 'stoped' })
       return
     }
 
     this.currentMusic = resolved.musicInfo
     this.publishMusicInfo(resolved.musicInfo)
+    this.clearDecodedFile(resolved.decodedFilePath)
+    this.clearObjectUrl(resolved.objectUrl)
+    this.currentDecodedFilePath = resolved.decodedFilePath ?? null
+    this.currentObjectUrl = resolved.objectUrl ?? null
     this.setAudioSource(resolved.url)
     this.playAudio()
   }
@@ -267,8 +301,11 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
       .then(() => {
         this.publishAudioSnapshot({ status: 'playing' })
       })
-      .catch(() => {
-        this.publishAudioSnapshot({ status: 'error' })
+      .catch((err) => {
+        this.publishAudioSnapshot({
+          errorText: err instanceof Error ? err.message : String(err),
+          status: 'error',
+        })
       })
   }
 

@@ -14,6 +14,13 @@ body {
 .coral-shell {
   min-width: 960px;
   height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.coral-shell > .ant-layout {
+  min-width: 0;
+  min-height: 0;
 }
 
 .coral-sider {
@@ -40,10 +47,12 @@ body {
 }
 
 .coral-header {
+  flex: 0 0 76px;
   height: 76px;
   border-bottom: 1px solid rgba(5, 5, 5, 0.08);
   padding: 12px 24px;
   line-height: 1.4;
+  overflow: hidden;
 }
 
 .coral-drag-region {
@@ -52,11 +61,22 @@ body {
   -webkit-app-region: drag;
 }
 
+.coral-header-actions {
+  flex: 0 0 auto;
+  -webkit-app-region: no-drag;
+}
+
+.coral-header-action-btn {
+  padding-inline: 10px;
+}
+
 .coral-header h4 {
   margin: 0 0 4px;
 }
 
 .coral-content {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
   padding: 24px;
 }
@@ -71,6 +91,7 @@ body {
 
 .coral-player-slot {
   border-top: 1px solid rgba(5, 5, 5, 0.08);
+  flex: 0 0 76px;
   height: 76px;
   padding: 0;
 }
@@ -301,6 +322,12 @@ body {
   display: block;
   font-size: 12px;
   margin-top: 8px;
+}
+
+.coral-playdetail-error {
+  margin-top: 14px;
+  max-width: min(360px, 100%);
+  text-align: left;
 }
 
 .coral-playdetail-center {
@@ -590,7 +617,8 @@ body {
 }
 
 .coral-settings-panel {
-  max-width: 880px;
+  max-width: 960px;
+  padding-bottom: 32px;
 }
 
 .coral-settings-section {
@@ -634,6 +662,16 @@ body {
 
 .coral-settings-path {
   max-width: min(520px, 100%);
+}
+
+.coral-settings-decoder-path,
+.coral-settings-decoder-input {
+  max-width: min(640px, 100%);
+  width: 100%;
+}
+
+.coral-settings-probe-result {
+  max-width: min(720px, 100%);
 }
 
 .coral-search-input {

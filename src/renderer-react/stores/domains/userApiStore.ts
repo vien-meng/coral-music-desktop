@@ -1,6 +1,35 @@
 import { makeAutoObservable, observable } from 'mobx'
 import { userApiService } from '../../services/userApiService'
 
+const sourceNameMap: Record<string, string> = {
+  kg: '酷狗',
+  kw: '酷我',
+  mg: '咪咕',
+  tx: 'QQ',
+  wy: '网易',
+}
+
+export const getPlayableUserApiSources = (
+  apiInfo?: LX.UserApi.UserApiInfo | null,
+): string[] => {
+  return Object.entries(apiInfo?.sources ?? {})
+    .filter(([, source]) => source.type === 'music' && source.actions.includes('musicUrl'))
+    .map(([source]) => source)
+}
+
+export const getPlayableUserApiSourceNames = (
+  apiInfo?: LX.UserApi.UserApiInfo | null,
+): string[] => {
+  return getPlayableUserApiSources(apiInfo)
+    .map(source => sourceNameMap[source] ?? source.toUpperCase())
+}
+
+export const canPlayWithUserApi = (
+  apiInfo?: LX.UserApi.UserApiInfo | null,
+): boolean => {
+  return getPlayableUserApiSources(apiInfo).length > 0
+}
+
 export class UserApiStore {
   actionError: string | null = null
 
@@ -28,6 +57,18 @@ export class UserApiStore {
 
   get count(): number {
     return this.userApis.length
+  }
+
+  get playableUserApis(): LX.UserApi.UserApiInfo[] {
+    return this.userApis.filter(canPlayWithUserApi)
+  }
+
+  getPlayableSourceNames(apiInfo?: LX.UserApi.UserApiInfo | null): string[] {
+    return getPlayableUserApiSourceNames(apiInfo)
+  }
+
+  canPlay(apiInfo?: LX.UserApi.UserApiInfo | null): boolean {
+    return canPlayWithUserApi(apiInfo)
   }
 
   async hydrate(): Promise<void> {
