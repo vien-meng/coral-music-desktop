@@ -14,7 +14,6 @@ import {
 import {
   Alert,
   Button,
-  Divider,
   Empty,
   Form,
   Input,
@@ -111,7 +110,7 @@ const splitExtensionSetting = (value: string): string[] => {
 
 const SettingSection = ({ children, title }: SettingSectionProps) => (
   <section className="coral-settings-section">
-    <Divider orientation="left">{title}</Divider>
+    <h2>{title}</h2>
     <Form layout="vertical">{children}</Form>
   </section>
 )
@@ -578,7 +577,10 @@ export const SettingsRoutePanel = observer(() => {
   }
 
   return (
-    <Spin spinning={settings.isHydrating || settings.isSaving}>
+    <Spin
+      spinning={settings.isHydrating || settings.isSaving}
+      wrapperClassName="coral-settings-spin"
+    >
       <Space
         direction="vertical"
         size="middle"
@@ -1623,10 +1625,11 @@ export const SettingsRoutePanel = observer(() => {
                 type="link"
                 size="small"
                 onClick={() => {
-                  void appService.openUrl(
-                    coralProjectLinks.customSourceDocs,
-                  )
+                  if (coralProjectLinks.customSourceDocs) {
+                    void appService.openUrl(coralProjectLinks.customSourceDocs)
+                  }
                 }}
+                disabled={!coralProjectLinks.customSourceDocs}
               >
                 自定义源文档
               </Button>
@@ -1771,7 +1774,7 @@ export const SettingsRoutePanel = observer(() => {
                   onClick={async() => {
                     const result = await cacheService.showSaveDialog({
                       title: '导出播放列表',
-                      defaultPath: 'lx_list.lxmc',
+                      defaultPath: 'coral_list.lxmc',
                     })
                     if (result.canceled || !result.filePath) return
                     await backupService.exportPlayList(result.filePath)
@@ -1801,7 +1804,7 @@ export const SettingsRoutePanel = observer(() => {
                   onClick={async() => {
                     const result = await cacheService.showSaveDialog({
                       title: '导出设置',
-                      defaultPath: 'lx_setting_v2.lxmc',
+                      defaultPath: 'coral_setting_v2.lxmc',
                     })
                     if (result.canceled || !result.filePath) return
                     await backupService.exportSetting(result.filePath, appSetting)
@@ -1841,7 +1844,7 @@ export const SettingsRoutePanel = observer(() => {
                   onClick={async() => {
                     const result = await cacheService.showSaveDialog({
                       title: '导出全部数据',
-                      defaultPath: 'lx_datas_v2.lxmc',
+                      defaultPath: 'coral_datas_v2.lxmc',
                     })
                     if (result.canceled || !result.filePath) return
                     await backupService.exportAllData(result.filePath, appSetting)
@@ -1864,7 +1867,7 @@ export const SettingsRoutePanel = observer(() => {
                       onOk: async() => {
                         const result = await cacheService.showSaveDialog({
                           title: '导出为文本',
-                          defaultPath: 'lx_list_all.txt',
+                          defaultPath: 'coral_list_all.txt',
                         })
                         if (result.canceled || !result.filePath) return
                         let path = result.filePath
@@ -1895,7 +1898,7 @@ export const SettingsRoutePanel = observer(() => {
                       onOk: async() => {
                         const result = await cacheService.showSaveDialog({
                           title: '导出为 CSV',
-                          defaultPath: 'lx_list_all.csv',
+                          defaultPath: 'coral_list_all.csv',
                         })
                         if (result.canceled || !result.filePath) return
                         let path = result.filePath
@@ -2083,50 +2086,54 @@ export const SettingsRoutePanel = observer(() => {
         </SettingSection>
 
         <SettingSection title="关于">
-          <Form.Item label="上游开源地址">
+          <Form.Item label="项目开源地址">
             <Button
               type="link"
               onClick={() => {
-                void appService.openUrl(
-                  coralProjectLinks.upstreamRepository,
-                )
+                if (coralProjectLinks.projectRepository) {
+                  void appService.openUrl(coralProjectLinks.projectRepository)
+                }
               }}
+              disabled={!coralProjectLinks.projectRepository}
             >
               GitHub
             </Button>
           </Form.Item>
-          <Form.Item label="上游最新版本">
+          <Form.Item label="项目最新版本">
             <Button
               type="link"
               onClick={() => {
-                void appService.openUrl(
-                  coralProjectLinks.upstreamReleases,
-                )
+                if (coralProjectLinks.projectReleases) {
+                  void appService.openUrl(coralProjectLinks.projectReleases)
+                }
               }}
+              disabled={!coralProjectLinks.projectReleases}
             >
               下载地址
             </Button>
           </Form.Item>
-          <Form.Item label="上游常见问题">
+          <Form.Item label="项目常见问题">
             <Button
               type="link"
               onClick={() => {
-                void appService.openUrl(
-                  coralProjectLinks.upstreamFaq,
-                )
+                if (coralProjectLinks.projectFaq) {
+                  void appService.openUrl(coralProjectLinks.projectFaq)
+                }
               }}
+              disabled={!coralProjectLinks.projectFaq}
             >
               文档
             </Button>
           </Form.Item>
-          <Form.Item label="上游问题反馈">
+          <Form.Item label="项目问题反馈">
             <Button
               type="link"
               onClick={() => {
-                void appService.openUrl(
-                  coralProjectLinks.upstreamIssues,
-                )
+                if (coralProjectLinks.projectIssues) {
+                  void appService.openUrl(coralProjectLinks.projectIssues)
+                }
               }}
+              disabled={!coralProjectLinks.projectIssues}
             >
               提交 Issue
             </Button>
@@ -2135,7 +2142,7 @@ export const SettingsRoutePanel = observer(() => {
             type="info"
             showIcon
             message="珊瑚音乐完全免费开源"
-            description="当前迁移版保留 LX Music 生态文档与协议兼容；正式发布渠道请以项目配置为准。"
+            description="当前迁移版仍保留部分内部兼容层；正式发布渠道请以珊瑚音乐项目配置为准。"
           />
         </SettingSection>
 

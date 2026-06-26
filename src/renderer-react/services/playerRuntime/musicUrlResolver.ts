@@ -9,7 +9,7 @@ import { externalDecoderService } from '../externalDecoderService'
 import { musicSdkRuntime } from '../musicSdkRuntime'
 import { checkPath } from '../nodeBridgeService'
 import { settingService } from '../settingService'
-import { canDecodeLocalAudioExtension, decodeLocalAudioToObjectUrl } from './localAudioDecodeService'
+import { canDecodeLocalAudioExtension, decodeLocalAudioToObjectUrl, type DecodedAudioData } from './localAudioDecodeService'
 import type { PlayerRuntimeMusicInfo } from './types'
 
 const TRY_QUALITIES: LX.Quality[] = ['flac24bit', 'flac', '320k']
@@ -176,6 +176,7 @@ const toOnlineMusicInfo = (musicInfo: unknown): LX.Music.MusicInfoOnline | null 
 }
 
 export interface ResolvedPlaybackUrl {
+  decodedAudio?: DecodedAudioData
   decodedFilePath?: string
   objectUrl?: string
   musicInfo: PlayerRuntimeMusicInfo
@@ -197,7 +198,9 @@ export const resolveLocalMusicUrl = (musicInfo?: PlayerRuntimeMusicInfo): string
 
   const filePath = musicInfo.meta.filePath.trim()
   if (!filePath) return null
-  if (!canNativeAudioPlayExtension(getFileExtension(filePath))) return null
+  const extension = getFileExtension(filePath)
+  if (canDecodeLocalAudioExtension(extension)) return null
+  if (!canNativeAudioPlayExtension(extension)) return null
 
   return encodePath(filePath)
 }
@@ -213,14 +216,21 @@ export const canPlayWithLocalRuntime = (musicInfo?: PlayerRuntimeMusicInfo): boo
 
 const resolveInternalDecodedPath = async(
   filePath: string,
-): Promise<{ objectUrl: string, url: string } | null> => {
+): Promise<{ decodedAudio: DecodedAudioData, objectUrl: string, url: string } | null> => {
   const normalizedFilePath = filePath.trim()
   if (!normalizedFilePath) return null
 
   const extension = getFileExtension(normalizedFilePath)
   if (!canDecodeLocalAudioExtension(extension)) return null
 
-  return decodeLocalAudioToObjectUrl(normalizedFilePath, extension)
+  const decoded = await decodeLocalAudioToObjectUrl(normalizedFilePath, extension)
+  if (!decoded) return null
+
+  return {
+    decodedAudio: decoded.audioData,
+    objectUrl: decoded.objectUrl,
+    url: decoded.url,
+  }
 }
 
 const resolveExternalDecodedPath = async(
@@ -266,16 +276,16 @@ const resolveExternalDecodedLocalMusicUrl = async(
 export const resolveDownloadMusicUrl = async(
   musicInfo: LX.Download.ListItem,
   isRefresh = false,
-): Promise<{ decodedFilePath?: string, objectUrl?: string, url: string } | null> => {
+): Promise<{ decodedAudio?: DecodedAudioData, decodedFilePath?: string, objectUrl?: string, url: string } | null> => {
   if (isRefresh || !musicInfo.isComplate || /\.ape$/i.test(musicInfo.metadata.fileName)) return null
   if (musicInfo.metadata.filePath && await checkPath(musicInfo.metadata.filePath)) {
     const extension = getFileExtension(musicInfo.metadata.filePath)
+    const internalDecoded = await resolveInternalDecodedPath(musicInfo.metadata.filePath)
+    if (internalDecoded) return internalDecoded
+
     if (canNativeAudioPlayExtension(extension)) {
       return { url: encodePath(musicInfo.metadata.filePath) }
     }
-
-    const internalDecoded = await resolveInternalDecodedPath(musicInfo.metadata.filePath)
-    if (internalDecoded) return internalDecoded
 
     const decoded = await resolveExternalDecodedPath(musicInfo.metadata.filePath)
     if (decoded) return decoded
@@ -430,6 +440,7 @@ export const resolvePlayableMusicUrl = async(
       return {
         decodedFilePath: downloadUrl.decodedFilePath,
         objectUrl: downloadUrl.objectUrl,
+        decodedAudio: downloadUrl.decodedAudio,
         musicInfo,
         quality: musicInfo.metadata.quality,
         source: 'download',
@@ -458,6 +469,7 @@ export const resolvePlayableMusicUrl = async(
     if (internalDecodedLocal) {
       return {
         objectUrl: internalDecodedLocal.objectUrl,
+        decodedAudio: internalDecodedLocal.decodedAudio,
         musicInfo,
         quality: '128k',
         source: 'local',

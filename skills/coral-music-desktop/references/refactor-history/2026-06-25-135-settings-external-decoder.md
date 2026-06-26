@@ -23,5 +23,5 @@ Date: 2026-06-25
 ## Next Plan
 
 1. Step 136: implement the external decoder runtime/transcode adapter for unsupported local formats.
-2. Step 137: polish LX Music User API source-plugin management with validation/status display.
+2. Step 137: polish Coral Music User API source-plugin management with validation/status display.
 3. Step 138: add focused playback capability smoke around local import/playback, fake decoder probing, and User API rollback.

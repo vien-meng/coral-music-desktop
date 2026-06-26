@@ -255,7 +255,7 @@ export const exportPlayListToText = async(savePath: string, isMerge: boolean): P
       await saveStrToFile(savePath, content)
     } else {
       for (const list of lists) {
-        await saveStrToFile(joinPath(savePath, `lx_list_${filterFileName(list.name ?? list.id)}.txt`),
+        await saveStrToFile(joinPath(savePath, `coral_list_${filterFileName(list.name ?? list.id)}.txt`),
           list.list.map(m => `${m.name}  ${m.singer}  ${m.meta.albumName ?? ''}`).join('\n'))
       }
     }
@@ -279,7 +279,7 @@ export const exportPlayListToCsv = async(savePath: string, isMerge: boolean, hea
       await saveStrToFile(savePath, content)
     } else {
       for (const list of lists) {
-        await saveStrToFile(joinPath(savePath, `lx_list_${filterFileName(list.name ?? list.id)}.csv`),
+        await saveStrToFile(joinPath(savePath, `coral_list_${filterFileName(list.name ?? list.id)}.csv`),
           header + list.list.map(m => `${filterStr(m.name)},${filterStr(m.singer)},${filterStr(m.meta.albumName ?? '')}`).join('\n'))
       }
     }

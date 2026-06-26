@@ -98,10 +98,9 @@ export const ProgressBar = ({
           position: 'absolute',
           left: 0,
           right: 0,
-          height: 4,
-          borderRadius: 2,
+          height: 5,
+          borderRadius: 999,
           background: 'var(--color-primary-light-100-alpha-100)',
-          overflow: 'hidden',
         }}
       >
         <div
@@ -112,6 +111,7 @@ export const ProgressBar = ({
             height: '100%',
             width: percent,
             background: 'var(--color-primary)',
+            borderRadius: 999,
             transition: isActiveTransition && !isDragging ? 'width 0.3s ease' : 'none',
           }}
         />
@@ -129,6 +129,21 @@ export const ProgressBar = ({
             />
             )
           : null}
+        <div
+          style={{
+            position: 'absolute',
+            left: percent,
+            top: '50%',
+            height: isDragging ? 14 : 10,
+            width: isDragging ? 14 : 10,
+            borderRadius: '50%',
+            background: '#fff',
+            border: '2px solid var(--color-primary)',
+            boxShadow: '0 2px 8px rgba(15, 23, 42, 0.18)',
+            transform: 'translate(-50%, -50%)',
+            transition: isActiveTransition && !isDragging ? 'left 0.3s ease' : 'none',
+          }}
+        />
       </div>
     </div>
   )

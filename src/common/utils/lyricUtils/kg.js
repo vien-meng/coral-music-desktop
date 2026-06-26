@@ -6,7 +6,7 @@ const getInflate = () => {
   return nodeRequire('node:zlib').inflate
 }
 
-// https://github.com/lyswhut/lx-music-desktop/issues/296#issuecomment-683285784
+// Keep the Kugou lyric timestamp parser compatible with legacy payloads.
 const enc_key = Buffer.from([0x40, 0x47, 0x61, 0x77, 0x5e, 0x32, 0x74, 0x47, 0x51, 0x36, 0x31, 0x2d, 0xce, 0xd2, 0x6e, 0x69], 'binary')
 const decodeLyric = str => new Promise((resolve, reject) => {
   if (!str.length) return

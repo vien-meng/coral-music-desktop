@@ -125,6 +125,15 @@ const trimToNull = (value?: string | null): string | null => {
   return null
 }
 
+const readPictureDataUrl = (metadata: IAudioMetadata): string | null => {
+  const picture = metadata.common.picture?.[0]
+  if (!picture?.data.length) return null
+
+  const format = picture.format || 'image/jpeg'
+  const base64 = Buffer.from(picture.data).toString('base64')
+  return `data:${format};base64,${base64}`
+}
+
 export const createLocalMusicInfo = (filePath: string): LX.Music.MusicInfoLocal => {
   const { name, singer } = parseLocalAudioName(filePath)
   const ext = normalizeAudioExtension(extname(filePath))
@@ -134,9 +143,12 @@ export const createLocalMusicInfo = (filePath: string): LX.Music.MusicInfoLocal 
     interval: null,
     meta: {
       albumName: '',
+      bitrate: null,
       ext,
       filePath,
+      lossless: null,
       picUrl: null,
+      sampleRate: null,
       songId: filePath,
     },
     name,
@@ -145,8 +157,10 @@ export const createLocalMusicInfo = (filePath: string): LX.Music.MusicInfoLocal 
   }
 }
 
-export const createLocalMusicInfoWithMetadata = async(filePath: string): Promise<LX.Music.MusicInfoLocal> => {
-  const musicInfo = createLocalMusicInfo(filePath)
+export const enrichLocalMusicInfoWithMetadata = async(
+  musicInfo: LX.Music.MusicInfoLocal,
+): Promise<LX.Music.MusicInfoLocal> => {
+  const filePath = musicInfo.meta.filePath
   const metadata = await readLocalAudioMetadata(filePath)
   if (!metadata) return musicInfo
 
@@ -154,6 +168,13 @@ export const createLocalMusicInfoWithMetadata = async(filePath: string): Promise
   const artist = trimToNull(metadata.common.artist) ??
     trimToNull(metadata.common.artists?.filter(Boolean).join(' / '))
   const album = trimToNull(metadata.common.album)
+  const pictureUrl = readPictureDataUrl(metadata)
+  const bitrate = metadata.format.bitrate && Number.isFinite(metadata.format.bitrate)
+    ? Math.round(metadata.format.bitrate)
+    : null
+  const sampleRate = metadata.format.sampleRate && Number.isFinite(metadata.format.sampleRate)
+    ? metadata.format.sampleRate
+    : null
 
   return {
     ...musicInfo,
@@ -161,10 +182,18 @@ export const createLocalMusicInfoWithMetadata = async(filePath: string): Promise
     meta: {
       ...musicInfo.meta,
       albumName: album ?? musicInfo.meta.albumName,
+      bitrate,
+      lossless: metadata.format.lossless ?? null,
+      picUrl: pictureUrl ?? musicInfo.meta.picUrl,
+      sampleRate,
     },
     name: title ?? musicInfo.name,
     singer: artist ?? musicInfo.singer,
   }
+}
+
+export const createLocalMusicInfoWithMetadata = async(filePath: string): Promise<LX.Music.MusicInfoLocal> => {
+  return await enrichLocalMusicInfoWithMetadata(createLocalMusicInfo(filePath))
 }
 
 export const createLocalMusicInfosFromPaths = async(
@@ -185,5 +214,6 @@ export const localAudioService = {
   createLocalMusicInfo,
   createLocalMusicInfoWithMetadata,
   createLocalMusicInfosFromPaths,
+  enrichLocalMusicInfoWithMetadata,
   isLocalAudioDecoderCandidate,
 }

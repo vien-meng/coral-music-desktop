@@ -23,6 +23,9 @@ const logs = [
   '"Extension server error: Operation failed: Permission denied", source: devtools://devtools/bundled',
   '"Electron sandbox_bundle.js script failed to run"',
   '"TypeError: object null is not iterable (cannot read property Symbol(Symbol.iterator))",',
+  "'session.getAllExtensions' is deprecated",
+  'error messaging the mach port for IMKCFRunLoopWakeUpReliable',
+  'representedObject is not a WeakPtrToElectronMenuModelAsNSObject',
 ]
 
 function electronLog(data, color) {

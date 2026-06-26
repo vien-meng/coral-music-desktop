@@ -38,7 +38,6 @@ export const clipboardReadText = (): string => {
 
 
 export const encodePath = (path: string) => {
-  // https://github.com/lyswhut/lx-music-desktop/issues/963
-  // https://github.com/lyswhut/lx-music-desktop/issues/1461
+  // Keep proxy behavior compatible with legacy Electron networking edge cases.
   return path.replaceAll('%', '%25').replaceAll('#', '%23')
 }

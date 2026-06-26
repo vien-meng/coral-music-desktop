@@ -1,4 +1,4 @@
-export const URL_SCHEME_RXP = /^lxmusic:\/\//
+export const URL_SCHEME_RXP = /^coralmusic:\/\//
 
 export const SPLIT_CHAR = {
   DISLIKE_NAME: '@',
@@ -79,6 +79,6 @@ export const DOWNLOAD_STATUS = {
   COMPLETED: 'completed',
 } as const
 
-export const QUALITYS = ['flac24bit', 'flac', 'wav', 'ape', '320k', '192k', '128k'] as const
+export const QUALITYS = ['master', 'atmos_plus', 'atmos', 'hires', 'flac24bit', 'flac', 'wav', 'ape', '320k', '192k', '128k'] as const
 
 export const TRAY_AUTO_ID = -1

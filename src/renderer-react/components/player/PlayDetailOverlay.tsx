@@ -246,6 +246,13 @@ export const PlayDetailOverlay = observer(() => {
                 </Text>
                 )
               : null}
+            {player.bitrateText
+              ? (
+                <Text type="secondary" className="coral-playdetail-bitrate">
+                  {player.bitrateText}
+                </Text>
+                )
+              : null}
             {player.errorText ? (
               <Alert
                 showIcon

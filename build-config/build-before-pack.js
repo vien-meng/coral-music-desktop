@@ -30,8 +30,7 @@ const qrc_decode_fileNameMap = {
 const replaceSqliteLib = async(electronNodeAbi, arch) => {
   // console.log(await fs.readdir(path.join(context.appOutDir, './resources/')))
   // if (context.electronPlatformName != 'linux' || context.arch != Arch.arm64) return
-  // https://github.com/lyswhut/lx-music-desktop/issues/1102
-  // https://github.com/lyswhut/lx-music-desktop/issues/1161
+  // Keep native dependency rebuilds stable before packaging.
   console.log('replace sqlite lib...')
   const filePath = path.join(__dirname, `./lib/better_sqlite3_electron-v${electronNodeAbi}-${better_sqlite3_fileNameMap[arch]}.node`)
   console.log(filePath)

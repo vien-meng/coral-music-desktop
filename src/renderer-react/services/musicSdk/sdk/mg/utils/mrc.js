@@ -72,7 +72,7 @@ const toBigintArray = (data) => {
   return jArr
 }
 
-// https://github.com/lyswhut/lx-music-desktop/issues/445#issuecomment-1139338682
+// Migu MRC lyric payload parsing helpers.
 const MAX = 9223372036854775807n
 const MIN = -9223372036854775808n
 const toLong = str => {
@@ -101,4 +101,3 @@ export const decrypt = (data) => {
 // console.log(toByteArray([6048138644744000495n]))
 // console.log(toByteArray([16325999628386395n]))
 // console.log(toLong(90994076459972177136n))
-

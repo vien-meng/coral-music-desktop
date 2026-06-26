@@ -7,7 +7,7 @@ export const ENV_PARAMS = [
   'PROXY_HEADER',
   'MAX_SNAPSHOT_NUM',
   'LIST_ADD_MUSIC_LOCATION_TYPE',
-  'LX_USER_',
+  'CORAL_USER_',
 ] as const
 
 
@@ -22,10 +22,10 @@ export const LIST_IDS = {
 export const SYNC_CODE = {
   helloMsg: 'Hello~::^-^::~v4~',
   idPrefix: 'OjppZDo6',
-  authMsg: 'lx-music auth::',
+  authMsg: 'coral-music auth::',
   msgAuthFailed: 'Auth failed',
   msgBlockedIp: 'Blocked IP',
-  msgConnect: 'lx-music connect',
+  msgConnect: 'coral-music connect',
 
 
   authFailed: 'Auth failed',

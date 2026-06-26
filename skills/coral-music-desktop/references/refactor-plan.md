@@ -51,7 +51,7 @@ Keep the existing paths during early phases if that reduces churn; the target sh
 - Keep DB schema and IPC channel names stable until the React UI is functional.
 - Introduce typed adapters before deleting old globals.
 - Migrate by runtime surface: build/IPC, store/domain, main renderer UI, desktop lyric UI, cleanup.
-- Prefer Ant Design components before writing custom UI primitives; keep custom components only where LX Music has specialized behavior such as music rows, virtualized music lists, player controls, lyric rendering, audio visualization, and Electron window chrome.
+- Prefer Ant Design components before writing custom UI primitives; keep custom components only where Coral Music has specialized behavior such as music rows, virtualized music lists, player controls, lyric rendering, audio visualization, and Electron window chrome.
 - Run both old and new code only where it buys safety; avoid long-term dual sources of truth.
 
 ## Ant Design Component Strategy

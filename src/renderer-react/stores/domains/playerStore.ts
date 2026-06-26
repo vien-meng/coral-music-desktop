@@ -6,6 +6,7 @@ import {
   type PlayerSoundEffectConfig,
   type PlayerRuntimeStatus,
 } from '../../services/playerService'
+import { localAudioService } from '../../services/localAudioService'
 import type { DislikeStore } from './dislikeStore'
 import type { SettingsStore } from './settingsStore'
 
@@ -131,6 +132,24 @@ export class PlayerStore {
     return this.displayMusicInfo?.meta.albumName ?? this.status?.albumName ?? ''
   }
 
+  get bitrateText(): string {
+    const musicInfo = this.displayMusicInfo
+    if (!musicInfo || musicInfo.source !== 'local') return ''
+
+    const bitrate = musicInfo.meta.bitrate
+    if (!bitrate || !Number.isFinite(bitrate)) return ''
+
+    const kbps = Math.round(bitrate / 1000)
+    const details = [
+      `${kbps} kbps`,
+      musicInfo.meta.lossless ? 'Lossless' : '',
+      musicInfo.meta.sampleRate ? `${Math.round(musicInfo.meta.sampleRate / 1000)} kHz` : '',
+      musicInfo.meta.ext ? musicInfo.meta.ext.toUpperCase() : '',
+    ].filter(Boolean)
+
+    return details.join(' · ')
+  }
+
   get errorText(): string {
     return this.status?.errorText ?? ''
   }
@@ -245,6 +264,7 @@ export class PlayerStore {
       this.currentMusic = musicInfo
       this.syncQueueIndex(musicInfo)
       this.recordPlayedMusic(musicInfo)
+      this.enrichCurrentLocalMusicInfo(musicInfo)
     }
     this.runtime.playMusic(musicInfo)
   }
@@ -455,6 +475,29 @@ export class PlayerStore {
     if (this.playedMusicIds.includes(musicId)) return
 
     this.playedMusicIds = [...this.playedMusicIds, musicId].slice(-1000)
+  }
+
+  private enrichCurrentLocalMusicInfo(musicInfo: PlayerRuntimeMusicInfo): void {
+    if (isDownloadMusicInfo(musicInfo) || musicInfo.source !== 'local') return
+    if (musicInfo.meta.picUrl && musicInfo.meta.bitrate) return
+
+    const musicId = getRuntimeMusicId(musicInfo)
+    void localAudioService.enrichLocalMusicInfoWithMetadata(musicInfo)
+      .then(enrichedMusicInfo => {
+        if (!this.currentMusic || getRuntimeMusicId(this.currentMusic) !== musicId) return
+
+        this.currentMusic = enrichedMusicInfo
+        const queueIndex = this.findQueueIndex(enrichedMusicInfo)
+        if (queueIndex >= 0) {
+          this.playQueue = this.playQueue.map((item, index) => index === queueIndex ? enrichedMusicInfo : item)
+        }
+        this.status = {
+          ...this.status,
+          albumName: enrichedMusicInfo.meta.albumName,
+          picUrl: enrichedMusicInfo.meta.picUrl ?? '',
+        }
+      })
+      .catch(() => {})
   }
 
   private isStaticPlayableQueueItem(musicInfo: PlayerRuntimeMusicInfo): boolean {

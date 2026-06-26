@@ -27,6 +27,37 @@ interface LegacyUserApiMusicSource {
 let runtimeStatePromise: Promise<LegacyRuntimeState> | null = null
 let syncedApiSource: string | null = null
 
+const normalizeUserApiMusicUrlResult = (
+  result: unknown,
+  fallbackQuality: LX.Quality,
+): { type: LX.Quality, url: string } => {
+  if (typeof result === 'string') {
+    return {
+      type: fallbackQuality,
+      url: result,
+    }
+  }
+
+  if (typeof result !== 'object' || result == null) {
+    throw new Error('User API did not return a playable URL.')
+  }
+
+  const rawResult = result as Partial<LegacyMusicUrlResult> & {
+    type?: LX.Quality
+    url?: string
+  }
+  const data = typeof rawResult.data === 'object' && rawResult.data != null
+    ? rawResult.data
+    : rawResult
+  const url = data.url
+  if (typeof url !== 'string' || !url) throw new Error('User API did not return a playable URL.')
+
+  return {
+    type: data.type ?? fallbackQuality,
+    url,
+  }
+}
+
 const loadRuntimeState = async(): Promise<LegacyRuntimeState> => {
   runtimeStatePromise ??= import('./musicSdk/sdk/runtimeState.js')
   return await runtimeStatePromise
@@ -43,12 +74,7 @@ const createUserApiMusicSource = (source: LX.Source): LegacyUserApiMusicSource =
         },
         source,
       }).then(result => {
-        const urlResult = result as LegacyMusicUrlResult
-        if (!urlResult?.data?.url) throw new Error('User API did not return a playable URL.')
-        return {
-          type: urlResult.data.type ?? quality,
-          url: urlResult.data.url,
-        }
+        return normalizeUserApiMusicUrlResult(result, quality)
       }),
     }
   },

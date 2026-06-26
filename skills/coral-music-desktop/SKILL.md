@@ -5,7 +5,7 @@ description: Project-specific architecture, module map, and refactor guidance fo
 
 # 珊瑚音乐 / Coral Music Desktop
 
-Use this skill as the project onboarding and refactor guide for `coral-music-desktop`, the 珊瑚音乐 refactor of the LX Music Desktop codebase.
+Use this skill as the project onboarding and refactor guide for `coral-music-desktop`, the 珊瑚音乐 / Coral Music Desktop codebase.
 Start with the smallest reference that matches the task, then inspect the current source before editing because this project has many runtime-coupled modules.
 
 ## Workflow

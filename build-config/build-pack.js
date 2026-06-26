@@ -24,7 +24,7 @@ const options = {
   protocols: {
     name: 'coral-music-protocol',
     schemes: [
-      'lxmusic',
+      'coralmusic',
     ],
   },
   directories: {
@@ -93,7 +93,7 @@ const linuxOptions = {
         'Name[zh_CN]': '珊瑚音乐',
         'Name[zh_TW]': '珊瑚音樂',
         Encoding: 'UTF-8',
-        MimeType: 'x-scheme-handler/lxmusic',
+        MimeType: 'x-scheme-handler/coralmusic',
         StartupNotify: 'false',
       },
     },

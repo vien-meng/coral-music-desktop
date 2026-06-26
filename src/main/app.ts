@@ -147,9 +147,9 @@ export const registerDeeplink = (startApp: () => void) => {
     // Set the path of electron.exe and your app.
     // These two additional parameters are only available on windows.
     // console.log(process.execPath, process.argv)
-    app.setAsDefaultProtocolClient('lxmusic', process.execPath, process.argv.slice(1))
+    app.setAsDefaultProtocolClient('coralmusic', process.execPath, process.argv.slice(1))
   } else {
-    app.setAsDefaultProtocolClient('lxmusic')
+    app.setAsDefaultProtocolClient('coralmusic')
   }
 
   // deep link
@@ -201,7 +201,7 @@ export const listenerAppEvent = (startApp: () => void) => {
     })
 
     // disable create dictionary
-    // https://github.com/lyswhut/lx-music-desktop/issues/773
+    // Preserve tray behavior when the window is hidden.
     contents.session.setSpellCheckerDictionaryDownloadURL('http://0.0.0.0')
   })
 

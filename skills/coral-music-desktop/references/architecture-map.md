@@ -57,7 +57,7 @@ flowchart TD
 3. `initSingleInstanceHandle()` enforces one app instance and forwards deeplink/show behavior.
 4. `applyElectronEnvParams()` applies GPU, hardware media key, proxy, and Linux GL flags.
 5. `setUserDataPath()` chooses portable/user data paths and `LxDatas`.
-6. `registerDeeplink(init)` registers `lxmusic://`.
+6. `registerDeeplink(init)` registers `coralmusic://`.
 7. `listenerAppEvent(init)` attaches navigation guards, native theme, proxy, and app lifecycle handlers.
 8. `app.whenReady()` calls `init()`, delayed on Linux.
 9. `init()` loads hotkey/settings/DB/theme, registers modules, then emits `app_inited`.

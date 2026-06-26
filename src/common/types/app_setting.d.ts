@@ -340,7 +340,7 @@ declare global {
       'player.externalDecoder.timeoutMs': number
 
       /**
-       * 是否允许使用 LX Music User API 音源插件
+       * 是否允许使用珊瑚音乐 User API 音源插件
        */
       'player.sourcePlugin.allowUserApi': boolean
 

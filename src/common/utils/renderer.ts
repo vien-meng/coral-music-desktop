@@ -344,6 +344,5 @@ export const scrollXRTo = (element: ScrollElement<HTMLElement>, to: number, dura
   */
 let dom_title = document.getElementsByTagName('title')[0]
 export const setTitle = (title: string | null) => {
-  title ||= coralBrand.englishName
-  dom_title.innerText = title
+  dom_title.innerText = title || coralBrand.englishName
 }

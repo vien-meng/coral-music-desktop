@@ -480,7 +480,7 @@ export const LocalListRoutePanel = observer(() => {
     if (!list.selectedList) return
 
     void appService.showSaveDialog({
-      defaultPath: `lx_list_part_${filterFileName(list.selectedList.name)}.lxmc`,
+      defaultPath: `coral_list_part_${filterFileName(list.selectedList.name)}.lxmc`,
       title: '导出列表',
     }).then(async result => {
       if (result.canceled || !result.filePath) return
@@ -581,8 +581,8 @@ export const LocalListRoutePanel = observer(() => {
   }, [ui.pendingQuickAction])
 
   return (
-    <Space direction="vertical" size="middle" className="coral-wide">
-      <Space wrap className="coral-route-controls">
+    <Space direction="vertical" size="middle" className="coral-wide coral-local-page">
+      <Space wrap className="coral-route-controls coral-local-primary-controls">
         <Select
           value={selectedListId}
           placeholder="列表"
@@ -612,6 +612,7 @@ export const LocalListRoutePanel = observer(() => {
         </Button>
         <Button
           icon={<FileAddOutlined />}
+          type="primary"
           disabled={list.isHydrating}
           loading={list.isImportingLocalAudio}
           onClick={() => {
@@ -628,42 +629,48 @@ export const LocalListRoutePanel = observer(() => {
         >
           导出列表
         </Button>
-        <Button
-          icon={<VerticalAlignTopOutlined />}
-          disabled={!list.selectedList || list.userLists[0]?.id === list.selectedListId}
-          loading={list.isMutatingList}
-          onClick={() => {
-            void list.moveSelectedListToPosition(0)
+        <Dropdown
+          trigger={['click']}
+          menu={{
+            items: [
+              {
+                disabled: !list.selectedList || list.userLists[0]?.id === list.selectedListId,
+                icon: <VerticalAlignTopOutlined />,
+                key: 'listTop',
+                label: '列表置顶',
+              },
+              {
+                disabled: !list.selectedList || lastUserListId === list.selectedListId,
+                icon: <VerticalAlignBottomOutlined />,
+                key: 'listBottom',
+                label: '列表置底',
+              },
+              {
+                disabled: !list.selectedMusics.length,
+                icon: <SwapOutlined />,
+                key: 'duplicate',
+                label: '移除重复',
+              },
+              {
+                danger: true,
+                disabled: !list.selectedList || !list.selectedMusics.length,
+                icon: <ClearOutlined />,
+                key: 'clear',
+                label: '清空歌曲',
+              },
+            ],
+            onClick: ({ key }) => {
+              if (key === 'listTop') void list.moveSelectedListToPosition(0)
+              if (key === 'listBottom') void list.moveSelectedListToPosition(list.userLists.length)
+              if (key === 'duplicate') handleRemoveDuplicateMusics()
+              if (key === 'clear') handleClearMusics()
+            },
           }}
         >
-          列表置顶
-        </Button>
-        <Button
-          icon={<VerticalAlignBottomOutlined />}
-          disabled={!list.selectedList || lastUserListId === list.selectedListId}
-          loading={list.isMutatingList}
-          onClick={() => {
-            void list.moveSelectedListToPosition(list.userLists.length)
-          }}
-        >
-          列表置底
-        </Button>
-        <Button
-          danger
-          icon={<ClearOutlined />}
-          disabled={!list.selectedList || !list.selectedMusics.length}
-          loading={list.isMutatingMusic}
-          onClick={handleClearMusics}
-        >
-          清空
-        </Button>
-        <Button
-          disabled={!list.selectedMusics.length}
-          loading={list.isMutatingMusic}
-          onClick={handleRemoveDuplicateMusics}
-        >
-          移除重复
-        </Button>
+          <Button icon={<MoreOutlined />} loading={list.isMutatingList || list.isMutatingMusic}>
+            更多
+          </Button>
+        </Dropdown>
         <Button
           disabled={!list.selectedMusics.length}
           onClick={handleSelectAllMusics}
@@ -696,6 +703,8 @@ export const LocalListRoutePanel = observer(() => {
 
       <Input.Search
         allowClear
+        className="coral-local-search"
+        size="large"
         value={filterText}
         placeholder="搜索当前列表歌曲、歌手、专辑或来源"
         onChange={event => {
@@ -706,7 +715,7 @@ export const LocalListRoutePanel = observer(() => {
         }}
       />
 
-      <Space wrap className="coral-route-controls">
+      <Space wrap className="coral-route-controls coral-local-secondary-controls">
         <Select
           value={sortField}
           className="coral-list-action-input"
@@ -801,7 +810,7 @@ export const LocalListRoutePanel = observer(() => {
         </Button>
       </Space>
 
-      <Space wrap className="coral-route-controls">
+      <Space wrap className="coral-route-controls coral-local-secondary-controls">
         <Select
           allowClear
           value={targetListId}
@@ -829,7 +838,7 @@ export const LocalListRoutePanel = observer(() => {
         </Button>
       </Space>
 
-      <Space wrap className="coral-route-controls">
+      <Space wrap className="coral-route-controls coral-local-secondary-controls">
         <Input
           allowClear
           value={createName}

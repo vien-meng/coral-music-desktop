@@ -1,11 +1,13 @@
+import { FLACDecoder } from '@wasm-audio-decoders/flac'
 import { readFile } from '../nodeBridgeService'
 
 export interface DecodedAudioObjectUrl {
+  audioData: DecodedAudioData
   objectUrl: string
   url: string
 }
 
-interface DecodedAudioData {
+export interface DecodedAudioData {
   channelData: Float32Array[]
   sampleRate: number
 }
@@ -64,7 +66,6 @@ const encodePcm16Wav = (audioData: DecodedAudioData): ArrayBuffer => {
 }
 
 const decodeWithFlacWasm = async(data: Uint8Array): Promise<DecodedAudioData> => {
-  const { FLACDecoder } = await import('@wasm-audio-decoders/flac')
   const decoder = new FLACDecoder()
   try {
     await decoder.ready
@@ -96,6 +97,7 @@ export const decodeLocalAudioToObjectUrl = async(
   const objectUrl = URL.createObjectURL(blob)
 
   return {
+    audioData: decoded,
     objectUrl,
     url: objectUrl,
   }

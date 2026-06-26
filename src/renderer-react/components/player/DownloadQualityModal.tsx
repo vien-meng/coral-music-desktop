@@ -8,6 +8,10 @@ const { Text } = Typography
 
 const qualityLabels: Record<LX.Quality, string> = {
   flac24bit: 'FLAC Hires',
+  hires: 'Hi-Res',
+  atmos: 'Atmos',
+  atmos_plus: 'Atmos Plus',
+  master: 'Master',
   flac: 'FLAC',
   ape: 'APE',
   wav: 'WAV',
