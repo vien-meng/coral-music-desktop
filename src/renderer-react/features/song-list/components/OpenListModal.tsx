@@ -67,7 +67,9 @@ export const OpenListModal = observer(({ open, onClose }: OpenListModalProps) =>
               如果无法打开，请参考
               <Text
                 className="coral-link-text"
-                onClick={async() => openUrl(coralProjectLinks.songListFaq)}
+                onClick={async() => {
+                  if (coralProjectLinks.songListFaq) await openUrl(coralProjectLinks.songListFaq)
+                }}
               >
                 {' '}FAQ
               </Text>

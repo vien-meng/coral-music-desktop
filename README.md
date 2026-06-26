@@ -2,7 +2,7 @@
 
 <p align="center">一个基于 Electron、React、MobX、Vite、TypeScript 与 Ant Design 开发的桌面音乐播放器</p>
 
-> 当前仓库是从 `lx-music-desktop` 迁移而来的 Coral Music 分支。正式 Coral Music 仓库、Issues、Releases 与发布渠道尚未配置完成；README 中出现的 LX Music 链接仅作为上游资料、兼容文档或致谢来源。
+> 当前项目是用 React 技术栈开发的 Coral Music。正式 Coral Music 仓库、Issues、Releases 与发布渠道尚未配置完成；不要将其他项目的 Releases 视为 Coral Music 发布渠道。迁移资料、兼容文档或致谢来源仅作为历史参考。
 
 ## 说明
 
@@ -62,44 +62,6 @@ ELECTRON_CACHE=/private/tmp/coral-electron-cache npm run pack:dir
 
 成功后应生成平台对应的目录产物，例如 macOS arm64 下的 `build/mac-arm64`。
 
-上游移动版项目地址：https://github.com/lyswhut/lx-music-mobile
-
-LX Music 项目发展调整与新项目计划：https://github.com/lyswhut/lx-music-desktop/issues/1912
-
-上游软件变化可参考 [LX Music 更新日志](https://github.com/lyswhut/lx-music-desktop/blob/master/CHANGELOG.md)。
-
-Coral Music 正式下载地址尚未配置；在此之前不要将上游 LX Music Releases 视为 Coral Music 发布渠道。
-
-使用常见问题可先参考上游[桌面版常见问题](https://lyswhut.github.io/lx-music-doc/desktop/faq)。
-
-为了提高使用门槛，本软件内的默认设置、UI 操作不以新手友好为目标，所以使用前建议先根据你的喜好浏览调整一遍软件设置，阅读一遍[音乐播放列表机制](https://lyswhut.github.io/lx-music-doc/desktop/faq/playlist)及[可用的鼠标、键盘快捷操作](https://lyswhut.github.io/lx-music-doc/desktop/faq/hotkey)。
-
-### Scheme URL 支持
-
-从 v1.17.0 起支持 Scheme URL，可以使用此功能在浏览器等场景下调用 LX Music，我们开发了一个[油猴脚本](https://github.com/lyswhut/lx-music-script#readme)配套使用。
-
-脚本安装地址：[LX Music 辅助脚本](https://greasyfork.org/zh-CN/scripts/438148)。
-
-若你想自己调用 LX Music，可以参考文档「[Scheme URL 支持](https://lyswhut.github.io/lx-music-doc/desktop/scheme-url)」部分。
-
-### 数据同步服务
-
-从 v2.2.0 起，我们发布了一个独立的[数据同步服务](https://github.com/lyswhut/lx-music-sync-server#readme)。如果你有服务器，可以将其部署到服务器上作为私人多端同步服务使用，详情看该项目说明。
-
-### 开放 API 支持
-
-从 v2.7.0 起支持开放 API 服务。启用该功能后，将会在本地启动一个 HTTP 服务，提供播放器相关的接口供第三方软件调用，详情看文档「[开放 API 服务](https://lyswhut.github.io/lx-music-doc/desktop/open-api)」部分。
-
-### 数据存储目录
-
-默认情况下，软件的数据存储在：
-
-- Linux：`$XDG_CONFIG_HOME/lx-music-desktop` 或 `~/.config/lx-music-desktop`
-- macOS：`~/Library/Application Support/lx-music-desktop`
-- Windows：`%APPDATA%/lx-music-desktop`
-
-在 Windows 平台上，若程序文件夹中存在 `portable` 文件夹，则自动使用此文件夹作为数据存储文件夹（适用于 v1.17.0 及以上版本）。
-
 ## 用户界面
 
 <p><img width="100%" src="./doc/images/app.png" alt="珊瑚音乐 UI 截图"></p>
@@ -111,24 +73,6 @@ Coral Music 正式下载地址尚未配置；在此之前不要将上游 LX Musi
 - 对于添加新功能的 PR，建议在提交 PR 前先创建 Issue 进行说明，以确认该功能是否确实需要。
 - 对于修复 bug 的 PR，请提供修复前后的说明及重现方式。
 - 对于其他类型的 PR，则适当附上说明。
-
-贡献代码步骤：
-
-1. 参照[源码使用方法](https://lyswhut.github.io/lx-music-doc/desktop/use-source-code)设置开发环境；
-2. 克隆本仓库代码并切换至 `dev` 分支进行开发；
-3. 提交 PR 至 `dev` 分支。
-
-## 源码使用方法
-
-请参阅：<https://lyswhut.github.io/lx-music-doc/desktop/use-source-code>
-
-## 项目协议
-
-本项目基于 [Apache License 2.0](https://github.com/lyswhut/lx-music-desktop/blob/master/LICENSE) 许可证发行，以下协议是对于 Apache License 2.0 的补充，如有冲突，以以下协议为准。
-
----
-
-*词语约定：本协议中的"本项目"指 LX Music（洛雪音乐助手）桌面版项目；"使用者"指签署本协议的使用者；"官方音乐平台"指对本项目内置的包括酷我、酷狗、咪咕等音乐源的官方平台统称；"版权数据"指包括但不限于图像、音频、名字等在内的他人拥有所属版权的数据。*
 
 ### 一、数据来源
 
@@ -174,8 +118,8 @@ Coral Music 正式下载地址尚未配置；在此之前不要将上游 LX Musi
 
 ---
 
-若对此有疑问请 mail to: lyswhut+qq.com (请将 `+` 替换为 `@`)
+若对此有疑问，请通过珊瑚音乐项目配置的反馈渠道联系维护者。
 
 ## 致谢
 
-本项目基于 [lx-music-desktop](https://github.com/lyswhut/lx-music-desktop) 开发，并继承其 [Apache License 2.0](https://github.com/lyswhut/lx-music-desktop/blob/master/LICENSE) 开源协议。感谢 lx-music-desktop 原作者 lyswhut 的卓越贡献。
+本项目基于 Apache License 2.0 开源协议发布。感谢原始项目作者与开源社区的长期贡献。

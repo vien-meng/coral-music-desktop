@@ -26,9 +26,9 @@ const formatTime = (seconds: number): string => {
 }
 
 export const PlayBar = observer(() => {
-  const { player, settings } = rootStore
+  const { player, settings, ui } = rootStore
   const isPlaying = player.isPlaying
-  const statusText = player.statusText
+  const statusText = player.errorText || player.statusText
   const subtitleText = [
     statusText || player.displaySinger,
     player.queuePositionText,
@@ -70,7 +70,11 @@ export const PlayBar = observer(() => {
             <Text ellipsis className="coral-playbar-title">
               {player.displayName}
             </Text>
-            <Text type="secondary" ellipsis className="coral-playbar-subtitle">
+            <Text
+              type={player.errorText ? 'danger' : 'secondary'}
+              ellipsis
+              className="coral-playbar-subtitle"
+            >
               {subtitleText}
             </Text>
           </span>
@@ -126,6 +130,30 @@ export const PlayBar = observer(() => {
           <TogglePlayModeBtn />
           <SoundEffectBtn />
           <PlaybackRateBtn />
+          {player.needsSourcePlugin ? (
+            <Button
+              size="small"
+              type="primary"
+              onClick={() => {
+                ui.setActiveRoute('setting')
+                ui.requestQuickAction('importUserApiFile')
+              }}
+            >
+              添加音源
+            </Button>
+          ) : null}
+          {player.needsExternalDecoder ? (
+            <Button
+              size="small"
+              type="primary"
+              onClick={() => {
+                ui.setActiveRoute('setting')
+                ui.requestQuickAction('configureExternalDecoder')
+              }}
+            >
+              配置解码器
+            </Button>
+          ) : null}
         </Space>
       </Flex>
       <PlayDetailOverlay />

@@ -159,6 +159,7 @@
   },
   "dependencies": {
     "@simonwep/pickr": "^1.9.1",
+    "@wasm-audio-decoders/flac": "^0.2.10",
     "better-sqlite3": "^12.9.0",
     "bufferutil": "^4.1.0",
     "comlink": "~4.3.1",

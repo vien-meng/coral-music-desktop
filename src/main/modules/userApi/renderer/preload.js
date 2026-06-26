@@ -25,13 +25,14 @@ const eventNames = Object.values(EVENT_NAMES)
 const events = {
   request: null,
 }
-const allSources = ['kw', 'kg', 'tx', 'wy', 'mg', 'local']
+const allSources = ['kw', 'kg', 'tx', 'wy', 'mg', 'git', 'local']
 const supportQualitys = {
-  kw: ['128k', '320k', 'flac', 'flac24bit'],
-  kg: ['128k', '320k', 'flac', 'flac24bit'],
-  tx: ['128k', '320k', 'flac', 'flac24bit'],
-  wy: ['128k', '320k', 'flac', 'flac24bit'],
-  mg: ['128k', '320k', 'flac', 'flac24bit'],
+  kw: ['128k', '320k', 'flac', 'flac24bit', 'hires'],
+  kg: ['128k', '320k', 'flac', 'flac24bit', 'hires', 'atmos', 'master'],
+  tx: ['128k', '320k', 'flac', 'flac24bit', 'hires', 'atmos', 'atmos_plus'],
+  wy: ['128k', '320k', 'flac', 'flac24bit', 'hires', 'atmos', 'master'],
+  mg: ['128k', '320k', 'flac', 'flac24bit', 'hires'],
+  git: ['128k', '320k', 'flac'],
   local: [],
 }
 const supportActions = {
@@ -40,7 +41,7 @@ const supportActions = {
   tx: ['musicUrl'],
   wy: ['musicUrl'],
   mg: ['musicUrl'],
-  xm: ['musicUrl'],
+  git: ['musicUrl'],
   local: ['musicUrl', 'lyric', 'pic'],
 }
 
@@ -75,7 +76,7 @@ const handleRequest = (context, { requestKey, data }) => {
       }
       switch (data.action) {
         case 'musicUrl':
-          if (typeof response != 'string' || response.length > 2048 || !/^https?:/.test(response)) throw new Error('failed')
+          if (typeof response != 'string' || response.length > 8192 || !/^https?:/.test(response)) throw new Error('failed')
           sendData.result = {
             source: data.source,
             action: data.action,
@@ -93,7 +94,7 @@ const handleRequest = (context, { requestKey, data }) => {
           }
           break
         case 'pic':
-          if (typeof response != 'string' || response.length > 2048 || !/^https?:/.test(response)) throw new Error('failed')
+          if (typeof response != 'string' || response.length > 8192 || !/^https?:/.test(response)) throw new Error('failed')
           sendData.result = {
             source: data.source,
             action: data.action,

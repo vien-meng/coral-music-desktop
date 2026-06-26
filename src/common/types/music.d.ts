@@ -32,8 +32,11 @@ declare namespace LX {
     }
 
     interface MusicInfoMeta_local extends MusicInfoMetaBase {
+      bitrate?: number | null
       filePath: string
       ext: string
+      lossless?: boolean | null
+      sampleRate?: number | null
     }
 
 

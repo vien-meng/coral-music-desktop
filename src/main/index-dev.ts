@@ -6,10 +6,10 @@
  */
 
 import { app } from 'electron'
-import electronDebug from 'electron-debug'
 import installExtension, { REACT_DEVELOPER_TOOLS } from 'electron-devtools-installer'
 import { openDevTools } from './utils'
 
+const shouldEnableElectronDebug = process.env.CORAL_ENABLE_ELECTRON_DEBUG === 'true'
 const shouldInstallReactDevTools = process.env.CORAL_INSTALL_REACT_DEVTOOLS === 'true'
 
 const maybeInstallReactDevTools = (name: string, win: Electron.BrowserWindow): void => {
@@ -23,11 +23,18 @@ const maybeInstallReactDevTools = (name: string, win: Electron.BrowserWindow): v
       console.warn(`[${name}] React DevTools install skipped: ${err.message}`)
     })
 }
-// Install `electron-debug` with `devtron`
-electronDebug({
-  showDevTools: false,
-  devToolsMode: 'undocked',
-})
+if (shouldEnableElectronDebug) {
+  void import('electron-debug')
+    .then(({ default: electronDebug }) => {
+      electronDebug({
+        showDevTools: false,
+        devToolsMode: 'undocked',
+      })
+    })
+    .catch((err: Error) => {
+      console.warn(`electron-debug skipped: ${err.message}`)
+    })
+}
 
 app.on('ready', () => {
   global.lx.event_app.on('main_window_created', (win) => {

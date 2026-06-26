@@ -20,12 +20,6 @@ const cloneTask = (task: LX.Download.ListItem): LX.Download.ListItem => ({
   ...task,
   metadata: {
     ...task.metadata,
-    musicInfo: {
-      ...task.metadata.musicInfo,
-      meta: {
-        ...task.metadata.musicInfo.meta,
-      },
-    },
   },
 })
 

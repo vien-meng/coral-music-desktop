@@ -30,4 +30,4 @@ Date: 2026-06-25
 
 1. Step 134: add main-process external decoder probe configuration for Foobar2000 paths/plugins.
 2. Step 135: implement a controlled decoder/transcode runtime for DSD/SACD and other unsupported local formats.
-3. Step 136: polish LX Music User API source-plugin status and validation.
+3. Step 136: polish Coral Music User API source-plugin status and validation.

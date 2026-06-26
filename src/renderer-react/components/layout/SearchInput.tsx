@@ -35,7 +35,7 @@ export const SearchInput = observer(({ onSearch }: SearchInputProps) => {
     <AutoComplete
       value={text}
       options={options}
-      style={{ width: '100%', maxWidth: 400 }}
+      className="coral-global-search"
       onSearch={handleSearch}
       onSelect={handleSelect}
       onChange={setText}

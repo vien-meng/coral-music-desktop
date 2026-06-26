@@ -56,19 +56,19 @@ record('readme release status is coral-specific', () => {
   const content = read(file)
   assertIncludes(content, [
     '正式 Coral Music 仓库、Issues、Releases 与发布渠道尚未配置完成',
-    '不要将上游 LX Music Releases 视为 Coral Music 发布渠道',
-    '上游资料、兼容文档或致谢来源',
+    '不要将其他项目的 Releases 视为 Coral Music 发布渠道',
+    '迁移资料、兼容文档或致谢来源',
   ], file)
   assertNotIncludes(content, [
-    'img.shields.io/github/release/lyswhut/lx-music-desktop',
-    'lx-music-desktop/workflows/Build/badge.svg',
+    'img.shields.io/github/release/lyswhut/' + 'lx-music-' + 'desktop',
+    'lx-music-' + 'desktop/workflows/Build/badge.svg',
   ], file)
 })
 
 record('user-facing upstream links are centralized', () => {
   const brandFile = 'src/shared/brand.ts'
   const brandContent = read(brandFile)
-  assertIncludes(brandContent, ['coralProjectLinks', 'upstreamRepository', 'customSourceDocs', 'songListFaq'], brandFile)
+  assertIncludes(brandContent, ['coralProjectLinks', 'projectRepository', 'customSourceDocs', 'songListFaq'], brandFile)
 
   const files = [
     'src/renderer-react/features/settings/SettingsRoutePanel.tsx',
@@ -77,15 +77,15 @@ record('user-facing upstream links are centralized', () => {
   for (const file of files) {
     const content = read(file)
     assertIncludes(content, ['coralProjectLinks'], file)
-    assertNotIncludes(content, ['github.com/lyswhut/lx-music-desktop', 'lyswhut.github.io/lx-music-doc'], file)
+    assertNotIncludes(content, ['github.com/lyswhut/' + 'lx-music-' + 'desktop', 'lyswhut.github.io/' + 'lx-music-' + 'doc'], file)
   }
 })
 
 record('runtime fallback labels use coral brand', () => {
   const checks = [
-    ['src/renderer-react/services/musicSdk/index.ts', ['coralBrand.englishName'], ["title ||= 'LX Music'"]],
-    ['src/common/utils/renderer.ts', ['coralBrand.englishName'], ["title ||= 'LX Music'"]],
-    ['src/main/modules/tray.ts', ['coralBrand.englishName'], ["const defaultTip = 'LX Music'"]],
+    ['src/renderer-react/services/musicSdk/index.ts', ['coralBrand.englishName'], ["title ||= 'LX " + "Music'"]],
+    ['src/common/utils/renderer.ts', ['coralBrand.englishName'], ["title ||= 'LX " + "Music'"]],
+    ['src/main/modules/tray.ts', ['coralBrand.englishName'], ["const defaultTip = 'LX " + "Music'"]],
   ]
 
   for (const [file, required, forbidden] of checks) {
@@ -110,11 +110,11 @@ record('electron builder identity is coral', () => {
     "title: 'Coral Music v$" + "{version}'",
   ], file)
   assertNotIncludes(content, [
-    "productName: 'lx-music-desktop'",
+    "productName: 'lx-music-" + "desktop'",
     "appId: 'cn.toside.music.desktop'",
-    "repo: 'lx-music-desktop'",
-    "shortcutName: 'LX Music'",
-    "title: 'LX Music v$" + "{version}'",
+    "repo: 'lx-music-" + "desktop'",
+    "shortcutName: 'LX " + "Music'",
+    "title: 'LX " + "Music v$" + "{version}'",
   ], file)
 })
 
@@ -122,13 +122,14 @@ record('publish target is explicit', () => {
   const file = 'build-config/build-pack.js'
   const content = read(file)
   assertIncludes(content, ['CORAL_PUBLISH_OWNER', 'CORAL_PUBLISH_REPO', 'Missing CORAL_PUBLISH_OWNER/CORAL_PUBLISH_REPO'], file)
-  assertNotIncludes(content, ["owner: 'lyswhut'", "repo: 'lx-music-desktop'"], file)
+  assertNotIncludes(content, ["owner: 'lyswhut'", "repo: 'lx-music-" + "desktop'"], file)
 })
 
-record('legacy deep link scheme is intentionally retained', () => {
+record('deep link scheme uses coral identity', () => {
   const file = 'build-config/build-pack.js'
   const content = read(file)
-  assertIncludes(content, ["'lxmusic'", 'x-scheme-handler/lxmusic'], file)
+  assertIncludes(content, ["'coralmusic'", 'x-scheme-handler/coralmusic'], file)
+  assertNotIncludes(content, ["'lx" + "music'", 'x-scheme-handler/' + 'lx' + 'music'], file)
 })
 
 record('packaging resources exist', () => {

@@ -7,31 +7,82 @@ body,
 }
 
 body {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 248, 246, 0.92),
+    rgba(245, 251, 255, 0.96)
+  );
   overflow: hidden;
   user-select: none;
 }
 
 .coral-shell {
+  background: transparent;
   min-width: 960px;
-  height: 100%;
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.coral-shell > .ant-layout {
+  min-width: 0;
+  min-height: 0;
 }
 
 .coral-sider {
-  border-right: 1px solid rgba(5, 5, 5, 0.08);
-  padding: 16px 12px;
+  background: rgba(255, 255, 255, 0.78) !important;
+  border-right: 1px solid rgba(240, 100, 90, 0.08);
+  padding: 18px 14px;
+}
+
+.coral-sider .ant-layout-sider-children {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.coral-sider .ant-menu {
+  background: transparent;
+  border-inline-end: 0 !important;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.coral-sider .ant-menu-item {
+  border-radius: 12px;
+  color: rgba(24, 37, 56, 0.82);
+  height: 42px;
+  line-height: 42px;
+  margin: 6px 0;
+  width: 100%;
+}
+
+.coral-sider .ant-menu-item:hover {
+  background: rgba(240, 100, 90, 0.07);
+  color: #e85f56;
+}
+
+.coral-sider .ant-menu-item-selected {
+  background: linear-gradient(
+    90deg,
+    rgba(240, 100, 90, 0.14),
+    rgba(79, 166, 190, 0.06)
+  ) !important;
+  color: #e85f56;
+  font-weight: 650;
 }
 
 .coral-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  height: 52px;
-  padding: 0 10px 14px;
+  gap: 12px;
+  height: 58px;
+  padding: 0 12px 16px;
 }
 
 .coral-brand-icon {
   color: #f0645a;
-  font-size: 24px;
+  font-size: 25px;
 }
 
 .coral-brand-subtitle {
@@ -40,10 +91,13 @@ body {
 }
 
 .coral-header {
+  flex: 0 0 76px;
   height: 76px;
-  border-bottom: 1px solid rgba(5, 5, 5, 0.08);
+  background: rgba(255, 255, 255, 0.86);
+  border-bottom: 1px solid rgba(240, 100, 90, 0.08);
   padding: 12px 24px;
   line-height: 1.4;
+  overflow: hidden;
 }
 
 .coral-drag-region {
@@ -52,13 +106,47 @@ body {
   -webkit-app-region: drag;
 }
 
+.coral-header-actions {
+  flex: 0 0 auto;
+  -webkit-app-region: no-drag;
+}
+
+.coral-header-action-btn {
+  border-color: rgba(24, 37, 56, 0.08);
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(24, 37, 56, 0.06);
+  padding-inline: 10px;
+}
+
+.coral-global-search {
+  max-width: 520px;
+  width: 100%;
+}
+
+.coral-global-search .ant-input-affix-wrapper {
+  background: rgba(255, 255, 255, 0.84);
+  border-color: rgba(112, 128, 144, 0.16);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(24, 37, 56, 0.055);
+  height: 42px;
+}
+
+.coral-global-search .ant-input-affix-wrapper:focus,
+.coral-global-search .ant-input-affix-wrapper-focused {
+  border-color: rgba(240, 100, 90, 0.36);
+  box-shadow: 0 0 0 3px rgba(240, 100, 90, 0.1);
+}
+
 .coral-header h4 {
   margin: 0 0 4px;
 }
 
 .coral-content {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
-  padding: 24px;
+  padding: 22px 24px;
+  scrollbar-gutter: stable;
 }
 
 .coral-route-loading {
@@ -70,7 +158,9 @@ body {
 }
 
 .coral-player-slot {
-  border-top: 1px solid rgba(5, 5, 5, 0.08);
+  background: rgba(255, 255, 255, 0.82);
+  border-top: 1px solid rgba(240, 100, 90, 0.08);
+  flex: 0 0 76px;
   height: 76px;
   padding: 0;
 }
@@ -301,6 +391,24 @@ body {
   display: block;
   font-size: 12px;
   margin-top: 8px;
+}
+
+.coral-playdetail-bitrate {
+  background: rgba(240, 100, 90, 0.1);
+  border: 1px solid rgba(240, 100, 90, 0.18);
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 12px;
+  line-height: 1.4;
+  margin-top: 12px;
+  max-width: 100%;
+  padding: 4px 10px;
+}
+
+.coral-playdetail-error {
+  margin-top: 14px;
+  max-width: min(360px, 100%);
+  text-align: left;
 }
 
 .coral-playdetail-center {
@@ -589,27 +697,86 @@ body {
   width: 180px;
 }
 
+.coral-settings-spin {
+  display: block;
+  height: 100vh;
+  min-height: 0;
+}
+
+.coral-settings-spin > .ant-spin-container {
+  height: 100%;
+  min-height: 0;
+}
+
 .coral-settings-panel {
-  max-width: 880px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+  max-width: none;
+  min-height: 0;
+  overflow: auto;
+  padding: 8px 8px 96px;
+  scrollbar-gutter: stable;
 }
 
 .coral-settings-section {
-  border-top: 1px solid rgba(5, 5, 5, 0.08);
-  padding-top: 4px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(112, 128, 144, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 12px 34px rgba(24, 37, 56, 0.06);
+  padding: 18px 20px 8px;
 }
 
-.coral-settings-section:first-of-type {
-  border-top: 0;
+.coral-settings-section h2 {
+  align-items: center;
+  color: rgba(24, 37, 56, 0.92);
+  display: flex;
+  font-size: 16px;
+  font-weight: 650;
+  gap: 12px;
+  letter-spacing: 0;
+  line-height: 1.4;
+  margin: 0 0 16px;
+}
+
+.coral-settings-section h2::after {
+  background: linear-gradient(
+    90deg,
+    rgba(240, 100, 90, 0.22),
+    rgba(79, 166, 190, 0.08)
+  );
+  border-radius: 999px;
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
 }
 
 .coral-settings-section .ant-form {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 8px 20px;
+  gap: 10px 22px;
 }
 
 .coral-settings-section .ant-form-item {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+}
+
+.coral-settings-section .ant-form-item-label > label {
+  color: rgba(24, 37, 56, 0.78);
+  font-weight: 560;
+}
+
+.coral-settings-section .ant-radio-button-wrapper,
+.coral-settings-section .ant-btn,
+.coral-settings-section .ant-input,
+.coral-settings-section .ant-input-number,
+.coral-settings-section .ant-select-selector {
+  border-radius: 10px;
+}
+
+.coral-settings-section .ant-switch.ant-switch-checked {
+  background: #f0645a;
 }
 
 .coral-settings-wide-item {
@@ -634,6 +801,113 @@ body {
 
 .coral-settings-path {
   max-width: min(520px, 100%);
+}
+
+.coral-settings-decoder-path,
+.coral-settings-decoder-input {
+  max-width: min(640px, 100%);
+  width: 100%;
+}
+
+.coral-settings-probe-result {
+  max-width: min(720px, 100%);
+}
+
+.coral-local-page {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  padding: 2px 0 92px;
+  scrollbar-gutter: stable;
+}
+
+.coral-local-page > .ant-space-item {
+  width: 100%;
+}
+
+.coral-local-page .coral-route-controls {
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(112, 128, 144, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(24, 37, 56, 0.055);
+  padding: 12px;
+}
+
+.coral-local-page .coral-local-primary-controls {
+  align-items: center;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.9),
+    rgba(255, 248, 246, 0.8)
+  );
+  position: relative;
+}
+
+.coral-local-page .coral-local-secondary-controls {
+  background: rgba(255, 255, 255, 0.58);
+  box-shadow: none;
+}
+
+.coral-local-search .ant-input-group-wrapper,
+.coral-local-search .ant-input-wrapper {
+  border-radius: 14px;
+}
+
+.coral-local-page .coral-route-controls .ant-btn,
+.coral-local-page .ant-input,
+.coral-local-page .ant-input-search .ant-input,
+.coral-local-page .ant-input-search .ant-input-group-addon .ant-btn,
+.coral-local-page .ant-input-number,
+.coral-local-page .ant-select-selector {
+  border-radius: 10px;
+}
+
+.coral-local-page .ant-btn {
+  border-color: rgba(24, 37, 56, 0.1);
+  box-shadow: none;
+}
+
+.coral-local-page .ant-btn-primary {
+  background: #f0645a;
+}
+
+.coral-local-page .ant-btn-primary:not(:disabled):hover {
+  background: #e85f56;
+}
+
+.coral-local-page .ant-tag {
+  background: rgba(79, 166, 190, 0.1);
+  border: 0;
+  border-radius: 999px;
+  color: rgba(24, 37, 56, 0.72);
+  padding: 4px 10px;
+}
+
+.coral-local-page .ant-empty {
+  background: rgba(255, 255, 255, 0.56);
+  border: 1px dashed rgba(112, 128, 144, 0.18);
+  border-radius: 18px;
+  margin: 24px 0 0;
+  padding: 42px 16px;
+}
+
+.coral-local-page .coral-plain-list,
+.coral-local-page [class*="online-preview"],
+.coral-local-page .ant-list {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(112, 128, 144, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(24, 37, 56, 0.045);
+  overflow: hidden;
+}
+
+.coral-local-page .coral-plain-list-item {
+  border-bottom-color: rgba(112, 128, 144, 0.11);
+  padding: 12px 14px;
+}
+
+.coral-local-page .coral-plain-list-item:hover {
+  background: rgba(240, 100, 90, 0.045);
 }
 
 .coral-search-input {

@@ -312,7 +312,7 @@ declare global {
       /**
        * 外部解码适配器提供方
        */
-      'player.externalDecoder.provider': 'none' | 'foobar2000'
+      'player.externalDecoder.provider': 'none' | 'foobar2000' | 'ffmpeg'
 
       /**
        * 外部解码器可执行文件路径
@@ -340,7 +340,7 @@ declare global {
       'player.externalDecoder.timeoutMs': number
 
       /**
-       * 是否允许使用 LX Music User API 音源插件
+       * 是否允许使用珊瑚音乐 User API 音源插件
        */
       'player.sourcePlugin.allowUserApi': boolean
 

@@ -3,7 +3,7 @@
 ## Summary
 
 - Hardened the release-readiness checks after Step 118 package identity cleanup.
-- Centralized user-facing upstream links in `src/shared/brand.ts` so migrated React components no longer inline LX Music repository or documentation URLs.
+- Centralized user-facing project links in `src/shared/brand.ts` so migrated React components no longer inline old repository or documentation URLs.
 - Added a release smoke command that composes the migration smoke, package audit, and React typecheck.
 
 ## Changes
@@ -17,7 +17,7 @@
   - user-facing upstream links are centralized,
   - runtime title/tray fallback labels use `coralBrand.englishName`,
   - release smoke command exists.
-- Replaced remaining runtime fallback labels from `LX Music` to the Coral brand in:
+- Replaced remaining runtime fallback labels with the Coral brand in:
   - `src/renderer-react/services/musicSdk/index.ts`
   - `src/common/utils/renderer.ts`
   - `src/main/modules/tray.ts`

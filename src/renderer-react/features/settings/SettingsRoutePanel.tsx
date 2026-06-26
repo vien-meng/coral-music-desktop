@@ -1,17 +1,19 @@
 import {
   BgColorsOutlined,
+  CheckCircleOutlined,
   ClockCircleOutlined,
   DeleteOutlined,
   EditOutlined,
+  FolderOpenOutlined,
   KeyOutlined,
   LinkOutlined,
   ReloadOutlined,
+  WarningOutlined,
   UploadOutlined,
 } from '@ant-design/icons'
 import {
   Alert,
   Button,
-  Divider,
   Empty,
   Form,
   Input,
@@ -23,17 +25,24 @@ import {
   Space,
   Spin,
   Switch,
+  Tag,
   Typography,
 } from 'antd'
 import { observer } from 'mobx-react-lite'
-import { useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { TRAY_AUTO_ID } from '@common/constants'
 import { sizeFormate } from '@common/utils/common'
 import { coralProjectLinks } from '@shared/brand'
+import {
+  externalDecoderExtensions,
+  normalizeAudioExtension,
+  type ExternalDecoderProbeResult,
+} from '@shared/playbackCapabilities'
 import { PlainList, PlainListItem, PlainListMeta } from '../../components/base'
 import { appService } from '../../services/appService'
 import { backupService } from '../../services/backupService'
 import { cacheService } from '../../services/cacheService'
+import { externalDecoderService } from '../../services/externalDecoderService'
 import { listService } from '../../services/listService'
 import { readFile } from '../../services/nodeBridgeService'
 import { rootStore } from '../../stores/rootStore'
@@ -81,9 +90,27 @@ const lyricAlignOptions = [
   { label: '右侧', value: 'right' },
 ]
 
+const splitListSetting = (value: string): string[] => {
+  return Array.from(
+    new Set(
+      value
+        .split(/[\n,，;；\s]+/)
+        .map(item => item.trim())
+        .filter(Boolean),
+    ),
+  )
+}
+
+const splitExtensionSetting = (value: string): string[] => {
+  const extensions = splitListSetting(value)
+    .map(normalizeAudioExtension)
+    .filter(Boolean)
+  return Array.from(new Set(extensions))
+}
+
 const SettingSection = ({ children, title }: SettingSectionProps) => (
   <section className="coral-settings-section">
-    <Divider orientation="left">{title}</Divider>
+    <h2>{title}</h2>
     <Form layout="vertical">{children}</Form>
   </section>
 )
@@ -314,7 +341,7 @@ const ThemeSelectorModal = ({
 )
 
 export const SettingsRoutePanel = observer(() => {
-  const { settings, sync, theme, userApi, dislike, list } = rootStore
+  const { settings, sync, theme, userApi, dislike, list, ui } = rootStore
   const appSetting = settings.appSetting
   const [isOnlineImportOpen, setIsOnlineImportOpen] = useState(false)
   const [isThemeSelectorOpen, setIsThemeSelectorOpen] = useState(false)
@@ -327,6 +354,61 @@ export const SettingsRoutePanel = observer(() => {
   const [musicUrlCount, setMusicUrlCount] = useState(0)
   const [lyricRawCount, setLyricRawCount] = useState(0)
   const [lyricEditedCount, setLyricEditedCount] = useState(0)
+  const [decoderExtensionsDraft, setDecoderExtensionsDraft] = useState('')
+  const [decoderPluginDirsDraft, setDecoderPluginDirsDraft] = useState('')
+  const [decoderProbeResult, setDecoderProbeResult] =
+    useState<ExternalDecoderProbeResult | null>(null)
+  const [isProbingDecoder, setIsProbingDecoder] = useState(false)
+  const externalDecoderSectionRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (!appSetting) return
+    setDecoderExtensionsDraft(appSetting['player.externalDecoder.extensions'].join(', '))
+    setDecoderPluginDirsDraft(appSetting['player.externalDecoder.pluginDirs'].join('\n'))
+  }, [
+    appSetting?.['player.externalDecoder.extensions'],
+    appSetting?.['player.externalDecoder.pluginDirs'],
+  ])
+
+  useEffect(() => {
+    if (!appSetting) return
+
+    if (ui.consumeQuickAction('configureExternalDecoder')) {
+      externalDecoderSectionRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+      return
+    }
+
+    if (ui.consumeQuickAction('importUserApiOnline')) {
+      setIsOnlineImportOpen(true)
+      return
+    }
+
+    if (!ui.consumeQuickAction('importUserApiFile')) return
+
+    void (async() => {
+      if (userApi.userApis.length > 20) {
+        Modal.warning({ title: '提示', content: '最多支持 20 个自定义源' })
+        return
+      }
+
+      const result = await appService.showSelectDialog({
+        title: '导入文件',
+        properties: ['openFile'],
+        filters: [
+          { name: 'LX API File', extensions: ['js'] },
+          { name: 'All Files', extensions: ['*'] },
+        ],
+      })
+      if (result.canceled || !result.filePaths.length) return
+
+      const buffer = await readFile(result.filePaths[0])
+      const apiInfo = await userApi.importUserApi(buffer.toString())
+      if (apiInfo) await activateUserApi(apiInfo)
+    })()
+  }, [appSetting, ui.pendingQuickAction])
 
   if (!appSetting) {
     return (
@@ -340,10 +422,24 @@ export const SettingsRoutePanel = observer(() => {
 
   const syncServerDevices = sync.serverDevices ?? []
 
+  const activateUserApi = async(apiInfo: LX.UserApi.UserApiInfo): Promise<boolean> => {
+    if (!userApi.canPlay(apiInfo)) {
+      Modal.warning({
+        title: '音源不可用于播放',
+        content: '该 User API 没有声明任何平台的 musicUrl 能力，可以保留用于查看，但不会设为当前播放音源。',
+      })
+      return false
+    }
+
+    await userApi.setUserApi(apiInfo.id)
+    await settings.updateAppSetting({ 'common.apiSource': apiInfo.id })
+    return true
+  }
+
   const removeUserApi = async(api: LX.UserApi.UserApiInfo): Promise<void> => {
     if (api.id === appSetting['common.apiSource']) {
       const fallbackApiId =
-        userApi.userApis.find((userApiInfo) => userApiInfo.id !== api.id)?.id ??
+        userApi.playableUserApis.find((userApiInfo) => userApiInfo.id !== api.id)?.id ??
         ''
       await settings.updateAppSetting({ 'common.apiSource': fallbackApiId })
     }
@@ -368,7 +464,8 @@ export const SettingsRoutePanel = observer(() => {
     if (result.canceled || !result.filePaths.length) return
 
     const buffer = await readFile(result.filePaths[0])
-    await userApi.importUserApi(buffer.toString())
+    const apiInfo = await userApi.importUserApi(buffer.toString())
+    if (apiInfo) await activateUserApi(apiInfo)
   }
 
   const handleImportOnline = async(url: string): Promise<void> => {
@@ -389,15 +486,15 @@ export const SettingsRoutePanel = observer(() => {
       return
     }
 
-    await userApi.importUserApi(script)
+    const apiInfo = await userApi.importUserApi(script)
+    if (apiInfo) await activateUserApi(apiInfo)
   }
 
   const handleSetCurrentApi = async(
     api: LX.UserApi.UserApiInfo,
   ): Promise<void> => {
     if (api.id === appSetting['common.apiSource']) return
-    await userApi.setUserApi(api.id)
-    await settings.updateAppSetting({ 'common.apiSource': api.id })
+    await activateUserApi(api)
   }
 
   const updateSetting = <Key extends keyof LX.AppSetting>(
@@ -410,8 +507,80 @@ export const SettingsRoutePanel = observer(() => {
     applySetting(nextSetting)
   }
 
+  const currentUserApi = userApi.userApis.find(api => api.id === appSetting['common.apiSource'])
+  const currentUserApiSourceNames = userApi.getPlayableSourceNames(currentUserApi)
+  const canPlayCurrentUserApi = currentUserApiSourceNames.length > 0
+
+  const commitDecoderExtensions = (): string[] => {
+    const extensions = splitExtensionSetting(decoderExtensionsDraft)
+    const nextExtensions = extensions.length
+      ? extensions
+      : [...externalDecoderExtensions]
+    setDecoderExtensionsDraft(nextExtensions.join(', '))
+    updateSetting('player.externalDecoder.extensions', nextExtensions)
+    return nextExtensions
+  }
+
+  const commitDecoderPluginDirs = (): string[] => {
+    const pluginDirs = splitListSetting(decoderPluginDirsDraft)
+    setDecoderPluginDirsDraft(pluginDirs.join('\n'))
+    updateSetting('player.externalDecoder.pluginDirs', pluginDirs)
+    return pluginDirs
+  }
+
+  const handleSelectDecoderExecutable = async(): Promise<void> => {
+    const result = await appService.showSelectDialog({
+      title: '选择外部解码器可执行文件',
+      properties: ['openFile'],
+      filters: [
+        { name: 'Decoder', extensions: ['exe', 'app'] },
+        { name: 'All Files', extensions: ['*'] },
+      ],
+    })
+    if (result.canceled || !result.filePaths.length) return
+    updateSetting('player.externalDecoder.executablePath', result.filePaths[0])
+    setDecoderProbeResult(null)
+  }
+
+  const handleSelectDecoderPluginDirs = async(): Promise<void> => {
+    const result = await appService.showSelectDialog({
+      title: '选择 Foobar2000 组件目录',
+      properties: ['openDirectory', 'multiSelections'],
+    })
+    if (result.canceled || !result.filePaths.length) return
+
+    const pluginDirs = Array.from(new Set([
+      ...splitListSetting(decoderPluginDirsDraft),
+      ...result.filePaths,
+    ]))
+    setDecoderPluginDirsDraft(pluginDirs.join('\n'))
+    updateSetting('player.externalDecoder.pluginDirs', pluginDirs)
+    setDecoderProbeResult(null)
+  }
+
+  const handleProbeExternalDecoder = async(): Promise<void> => {
+    const extensions = commitDecoderExtensions()
+    const pluginDirs = commitDecoderPluginDirs()
+    setIsProbingDecoder(true)
+
+    try {
+      const result = await externalDecoderService.probeExternalDecoder({
+        executablePath: appSetting['player.externalDecoder.executablePath'],
+        extensions,
+        pluginDirs,
+        provider: appSetting['player.externalDecoder.provider'],
+      })
+      setDecoderProbeResult(result)
+    } finally {
+      setIsProbingDecoder(false)
+    }
+  }
+
   return (
-    <Spin spinning={settings.isHydrating || settings.isSaving}>
+    <Spin
+      spinning={settings.isHydrating || settings.isSaving}
+      wrapperClassName="coral-settings-spin"
+    >
       <Space
         direction="vertical"
         size="middle"
@@ -600,6 +769,244 @@ export const SettingsRoutePanel = observer(() => {
             />
           </Form.Item>
         </SettingSection>
+
+        <div ref={externalDecoderSectionRef}>
+          <SettingSection title="本地解码">
+          <SettingSwitch
+            appSetting={appSetting}
+            label="本地音频导入"
+            settingKey="player.localAudio.enabled"
+            updateSetting={applySetting}
+          />
+          <Form.Item label="外部解码器">
+            <Switch
+              checked={appSetting['player.externalDecoder.enabled']}
+              onChange={(checked) => {
+                applySetting({
+                  'player.externalDecoder.enabled': checked,
+                  'player.externalDecoder.executablePath': checked && !appSetting['player.externalDecoder.executablePath'].trim()
+                    ? 'ffmpeg'
+                    : appSetting['player.externalDecoder.executablePath'],
+                  'player.externalDecoder.preferredOutput': 'wav',
+                  'player.externalDecoder.provider': checked
+                    ? 'ffmpeg'
+                    : 'none',
+                })
+                setDecoderProbeResult(null)
+              }}
+            />
+          </Form.Item>
+          <Form.Item label="解码器类型">
+            <Radio.Group
+              value={appSetting['player.externalDecoder.provider']}
+              optionType="button"
+              buttonStyle="solid"
+              options={[
+                { label: '关闭', value: 'none' },
+                { label: 'FFmpeg', value: 'ffmpeg' },
+                { label: 'Foobar2000', value: 'foobar2000' },
+              ]}
+              onChange={(event) => {
+                const provider = event.target.value
+                applySetting({
+                  'player.externalDecoder.enabled': provider !== 'none',
+                  'player.externalDecoder.executablePath': provider === 'ffmpeg' && !appSetting['player.externalDecoder.executablePath'].trim()
+                    ? 'ffmpeg'
+                    : appSetting['player.externalDecoder.executablePath'],
+                  'player.externalDecoder.preferredOutput': provider === 'ffmpeg'
+                    ? 'wav'
+                    : appSetting['player.externalDecoder.preferredOutput'],
+                  'player.externalDecoder.provider': provider,
+                })
+                setDecoderProbeResult(null)
+              }}
+            />
+          </Form.Item>
+          <Form.Item label="运行状态" className="coral-settings-wide-item">
+            <Alert
+              showIcon
+              type={appSetting['player.externalDecoder.provider'] === 'ffmpeg' ? 'info' : 'warning'}
+              message={
+                appSetting['player.externalDecoder.provider'] === 'ffmpeg'
+                  ? 'FFmpeg 会在播放 DSD/SACD 等格式时转码为临时 WAV，切歌或退出播放器后自动清理；当前仅启用 WAV 输出。'
+                  : appSetting['player.externalDecoder.provider'] === 'foobar2000'
+                    ? 'Foobar2000 当前仅支持路径和组件探测，播放时会提示改用 FFmpeg。'
+                    : '外部格式播放前需要先启用 FFmpeg。'
+              }
+            />
+          </Form.Item>
+          <Form.Item label="输出格式">
+            <Radio.Group
+              value={appSetting['player.externalDecoder.preferredOutput']}
+              optionType="button"
+              buttonStyle="solid"
+              options={[
+                { label: 'WAV', value: 'wav' },
+                { label: 'PCM', value: 'pcm', disabled: true },
+              ]}
+              onChange={(event) => {
+                updateSetting(
+                  'player.externalDecoder.preferredOutput',
+                  event.target.value,
+                )
+              }}
+            />
+          </Form.Item>
+          <Form.Item label="超时">
+            <InputNumber
+              min={5}
+              max={300}
+              addonAfter="秒"
+              value={Math.round(
+                appSetting['player.externalDecoder.timeoutMs'] / 1000,
+              )}
+              onChange={(value) => {
+                if (value != null) {
+                  updateSetting('player.externalDecoder.timeoutMs', value * 1000)
+                }
+              }}
+            />
+          </Form.Item>
+          <Form.Item
+            label="解码器路径"
+            className="coral-settings-wide-item"
+          >
+            <Space.Compact className="coral-settings-decoder-path">
+              <Input
+                allowClear
+                value={appSetting['player.externalDecoder.executablePath']}
+                placeholder={appSetting['player.externalDecoder.provider'] === 'ffmpeg'
+                  ? 'ffmpeg 或 ffmpeg.exe'
+                  : 'foobar2000.exe'}
+                onChange={(event) => {
+                  updateSetting(
+                    'player.externalDecoder.executablePath',
+                    event.target.value,
+                  )
+                  setDecoderProbeResult(null)
+                }}
+              />
+              <Button
+                icon={<FolderOpenOutlined />}
+                onClick={() => {
+                  void handleSelectDecoderExecutable()
+                }}
+              />
+            </Space.Compact>
+          </Form.Item>
+          <Form.Item label="支持扩展" className="coral-settings-wide-item">
+            <Input
+              allowClear
+              value={decoderExtensionsDraft}
+              placeholder="dsf, dff, iso, sacd"
+              className="coral-settings-decoder-input"
+              onChange={(event) => {
+                setDecoderExtensionsDraft(event.target.value)
+                setDecoderProbeResult(null)
+              }}
+              onBlur={() => {
+                commitDecoderExtensions()
+              }}
+              onPressEnter={(event) => {
+                event.currentTarget.blur()
+              }}
+            />
+          </Form.Item>
+          <Form.Item label="组件目录" className="coral-settings-wide-item">
+            <Space direction="vertical" size="small" className="coral-wide">
+              <Input.TextArea
+                autoSize={{ minRows: 2, maxRows: 4 }}
+                value={decoderPluginDirsDraft}
+                placeholder="每行一个 Foobar2000 components 目录；FFmpeg 可留空"
+                onChange={(event) => {
+                  setDecoderPluginDirsDraft(event.target.value)
+                  setDecoderProbeResult(null)
+                }}
+                onBlur={() => {
+                  commitDecoderPluginDirs()
+                }}
+              />
+              <Space wrap>
+                <Button
+                  size="small"
+                  icon={<FolderOpenOutlined />}
+                  onClick={() => {
+                    void handleSelectDecoderPluginDirs()
+                  }}
+                >
+                  添加目录
+                </Button>
+                <Button
+                  size="small"
+                  icon={<ReloadOutlined />}
+                  loading={isProbingDecoder}
+                  onClick={() => {
+                    void handleProbeExternalDecoder()
+                  }}
+                >
+                  探测配置
+                </Button>
+              </Space>
+            </Space>
+          </Form.Item>
+          {decoderProbeResult ? (
+            <Form.Item label="探测结果" className="coral-settings-wide-item">
+              <Space
+                direction="vertical"
+                size="small"
+                className="coral-settings-probe-result"
+              >
+                <Alert
+                  showIcon
+                  type={decoderProbeResult.canProbe ? 'success' : 'warning'}
+                  icon={
+                    decoderProbeResult.canProbe
+                      ? <CheckCircleOutlined />
+                      : <WarningOutlined />
+                  }
+                  message={
+                    decoderProbeResult.canProbe
+                      ? '配置可用于下一步解码适配'
+                      : '配置尚未可用'
+                  }
+                  description={`平台 ${decoderProbeResult.platform} · 支持 ${decoderProbeResult.supportedExtensions.length || 0} 个扩展 · 缺失 ${decoderProbeResult.missingExtensions.length || 0} 个扩展`}
+                />
+                {decoderProbeResult.errors.length ? (
+                  <Alert
+                    showIcon
+                    type="error"
+                    message={decoderProbeResult.errors.join('；')}
+                  />
+                ) : null}
+                {decoderProbeResult.warnings.length ? (
+                  <Alert
+                    showIcon
+                    type="warning"
+                    message={decoderProbeResult.warnings.join('；')}
+                  />
+                ) : null}
+                {decoderProbeResult.pluginDirs.length ? (
+                  <PlainList
+                    items={decoderProbeResult.pluginDirs}
+                    renderItem={(pluginDir) => (
+                      <PlainListItem key={pluginDir.path}>
+                        <PlainListMeta
+                          title={pluginDir.path}
+                          description={
+                            pluginDir.exists && pluginDir.isDirectory
+                              ? '目录可用'
+                              : '目录不可用'
+                          }
+                        />
+                      </PlainListItem>
+                    )}
+                  />
+                ) : null}
+              </Space>
+            </Form.Item>
+          ) : null}
+          </SettingSection>
+        </div>
 
         <SettingSection title="播放详情">
           <SettingSwitch
@@ -1162,6 +1569,29 @@ export const SettingsRoutePanel = observer(() => {
               className="coral-settings-wide-item"
             />
           ) : null}
+          <Form.Item label="当前音源" className="coral-settings-wide-item">
+            <Alert
+              showIcon
+              type={currentUserApi && userApi.status?.status && canPlayCurrentUserApi ? 'success' : 'warning'}
+              message={currentUserApi ? currentUserApi.name : '未启用音源'}
+              description={
+                currentUserApi
+                  ? `状态：${userApi.status?.status ? '可用' : userApi.status?.message || '未就绪'} · 支持：${currentUserApiSourceNames.length ? currentUserApiSourceNames.join('、') : '暂无可播放平台'}`
+                  : '在线播放需要先导入并启用一个 User API 音源；本地文件播放不依赖音源。'
+              }
+              action={!currentUserApi ? (
+                <Button
+                  size="small"
+                  type="primary"
+                  onClick={() => {
+                    setIsOnlineImportOpen(true)
+                  }}
+                >
+                  在线导入
+                </Button>
+              ) : undefined}
+            />
+          </Form.Item>
           <Form.Item className="coral-settings-wide-item">
             <Space wrap>
               <Button
@@ -1195,10 +1625,11 @@ export const SettingsRoutePanel = observer(() => {
                 type="link"
                 size="small"
                 onClick={() => {
-                  void appService.openUrl(
-                    coralProjectLinks.customSourceDocs,
-                  )
+                  if (coralProjectLinks.customSourceDocs) {
+                    void appService.openUrl(coralProjectLinks.customSourceDocs)
+                  }
                 }}
+                disabled={!coralProjectLinks.customSourceDocs}
               >
                 自定义源文档
               </Button>
@@ -1213,86 +1644,97 @@ export const SettingsRoutePanel = observer(() => {
                   description="暂无 API"
                 />
               )}
-              renderItem={(api) => (
-                <PlainListItem
-                  key={api.id}
-                  actions={[
-                    <Button
-                      key="set"
-                      type={
-                        api.id === appSetting['common.apiSource']
-                          ? 'primary'
-                          : 'default'
-                      }
-                      size="small"
-                      disabled={api.id === appSetting['common.apiSource']}
-                      loading={userApi.isMutating}
-                      onClick={() => {
-                        void handleSetCurrentApi(api)
-                      }}
-                    >
-                      {api.id === appSetting['common.apiSource']
-                        ? '当前'
-                        : '设为当前'}
-                    </Button>,
-                    <Space key="update-alert" size={6}>
-                      <Text type="secondary">提醒</Text>
-                      <Switch
-                        size="small"
-                        checked={api.allowShowUpdateAlert}
-                        loading={userApi.isMutating}
-                        onChange={(checked) => {
-                          void userApi.setAllowUpdateAlert(api.id, checked)
-                        }}
-                      />
-                    </Space>,
-                    <Popconfirm
-                      key="remove"
-                      title="删除 User API"
-                      description={api.name}
-                      okText="删除"
-                      cancelText="取消"
-                      onConfirm={() => {
-                        void removeUserApi(api)
-                      }}
-                    >
+              renderItem={(api) => {
+                const playableSourceNames = userApi.getPlayableSourceNames(api)
+                const canPlay = playableSourceNames.length > 0
+
+                return (
+                  <PlainListItem
+                    key={api.id}
+                    actions={[
                       <Button
-                        danger
-                        type="text"
+                        key="set"
+                        type={
+                          api.id === appSetting['common.apiSource']
+                            ? 'primary'
+                            : 'default'
+                        }
                         size="small"
-                        icon={<DeleteOutlined />}
+                        disabled={api.id === appSetting['common.apiSource'] || !canPlay}
                         loading={userApi.isMutating}
-                      />
-                    </Popconfirm>,
-                  ]}
-                >
-                  <PlainListMeta
-                    title={
-                      <Space wrap>
-                        <Text>{api.name}</Text>
-                        {api.version ? (
-                          <Text type="secondary">{api.version}</Text>
-                        ) : null}
-                      </Space>
-                    }
-                    description={
-                      <Space direction="vertical" size={2}>
-                        {api.description ? (
-                          <Text type="secondary">{api.description}</Text>
-                        ) : null}
-                        <Space wrap size={8}>
-                          {api.author ? (
-                            <Text type="secondary">{api.author}</Text>
+                        onClick={() => {
+                          void handleSetCurrentApi(api)
+                        }}
+                      >
+                        {api.id === appSetting['common.apiSource']
+                          ? '当前'
+                          : '设为当前'}
+                      </Button>,
+                      <Space key="update-alert" size={6}>
+                        <Text type="secondary">提醒</Text>
+                        <Switch
+                          size="small"
+                          checked={api.allowShowUpdateAlert}
+                          loading={userApi.isMutating}
+                          onChange={(checked) => {
+                            void userApi.setAllowUpdateAlert(api.id, checked)
+                          }}
+                        />
+                      </Space>,
+                      <Popconfirm
+                        key="remove"
+                        title="删除 User API"
+                        description={api.name}
+                        okText="删除"
+                        cancelText="取消"
+                        onConfirm={() => {
+                          void removeUserApi(api)
+                        }}
+                      >
+                        <Button
+                          danger
+                          type="text"
+                          size="small"
+                          icon={<DeleteOutlined />}
+                          loading={userApi.isMutating}
+                        />
+                      </Popconfirm>,
+                    ]}
+                  >
+                    <PlainListMeta
+                      title={
+                        <Space wrap>
+                          <Text>{api.name}</Text>
+                          {api.version ? (
+                            <Text type="secondary">{api.version}</Text>
                           ) : null}
-                          <Text type="secondary">
-                            源 {Object.keys(api.sources ?? {}).length}
-                          </Text>
+                          <Tag color={canPlay ? 'green' : 'orange'}>
+                            {canPlay ? '可播放' : '不可播放'}
+                          </Tag>
                         </Space>
-                      </Space>
-                    }
-                  />
-                </PlainListItem>
-              )}
+                      }
+                      description={
+                        <Space direction="vertical" size={2}>
+                          {api.description ? (
+                            <Text type="secondary">{api.description}</Text>
+                          ) : null}
+                          <Space wrap size={8}>
+                            {api.author ? (
+                              <Text type="secondary">{api.author}</Text>
+                            ) : null}
+                            <Text type="secondary">
+                              源 {Object.keys(api.sources ?? {}).length}
+                            </Text>
+                            <Text type={canPlay ? 'secondary' : 'warning'}>
+                              播放 {canPlay ? playableSourceNames.join('、') : '未声明 musicUrl'}
+                            </Text>
+                          </Space>
+                        </Space>
+                      }
+                    />
+                  </PlainListItem>
+                )
+              }}
             />
           </Form.Item>
         </SettingSection>
@@ -1332,7 +1774,7 @@ export const SettingsRoutePanel = observer(() => {
                   onClick={async() => {
                     const result = await cacheService.showSaveDialog({
                       title: '导出播放列表',
-                      defaultPath: 'lx_list.lxmc',
+                      defaultPath: 'coral_list.lxmc',
                     })
                     if (result.canceled || !result.filePath) return
                     await backupService.exportPlayList(result.filePath)
@@ -1362,7 +1804,7 @@ export const SettingsRoutePanel = observer(() => {
                   onClick={async() => {
                     const result = await cacheService.showSaveDialog({
                       title: '导出设置',
-                      defaultPath: 'lx_setting_v2.lxmc',
+                      defaultPath: 'coral_setting_v2.lxmc',
                     })
                     if (result.canceled || !result.filePath) return
                     await backupService.exportSetting(result.filePath, appSetting)
@@ -1402,7 +1844,7 @@ export const SettingsRoutePanel = observer(() => {
                   onClick={async() => {
                     const result = await cacheService.showSaveDialog({
                       title: '导出全部数据',
-                      defaultPath: 'lx_datas_v2.lxmc',
+                      defaultPath: 'coral_datas_v2.lxmc',
                     })
                     if (result.canceled || !result.filePath) return
                     await backupService.exportAllData(result.filePath, appSetting)
@@ -1425,7 +1867,7 @@ export const SettingsRoutePanel = observer(() => {
                       onOk: async() => {
                         const result = await cacheService.showSaveDialog({
                           title: '导出为文本',
-                          defaultPath: 'lx_list_all.txt',
+                          defaultPath: 'coral_list_all.txt',
                         })
                         if (result.canceled || !result.filePath) return
                         let path = result.filePath
@@ -1456,7 +1898,7 @@ export const SettingsRoutePanel = observer(() => {
                       onOk: async() => {
                         const result = await cacheService.showSaveDialog({
                           title: '导出为 CSV',
-                          defaultPath: 'lx_list_all.csv',
+                          defaultPath: 'coral_list_all.csv',
                         })
                         if (result.canceled || !result.filePath) return
                         let path = result.filePath
@@ -1644,50 +2086,54 @@ export const SettingsRoutePanel = observer(() => {
         </SettingSection>
 
         <SettingSection title="关于">
-          <Form.Item label="上游开源地址">
+          <Form.Item label="项目开源地址">
             <Button
               type="link"
               onClick={() => {
-                void appService.openUrl(
-                  coralProjectLinks.upstreamRepository,
-                )
+                if (coralProjectLinks.projectRepository) {
+                  void appService.openUrl(coralProjectLinks.projectRepository)
+                }
               }}
+              disabled={!coralProjectLinks.projectRepository}
             >
               GitHub
             </Button>
           </Form.Item>
-          <Form.Item label="上游最新版本">
+          <Form.Item label="项目最新版本">
             <Button
               type="link"
               onClick={() => {
-                void appService.openUrl(
-                  coralProjectLinks.upstreamReleases,
-                )
+                if (coralProjectLinks.projectReleases) {
+                  void appService.openUrl(coralProjectLinks.projectReleases)
+                }
               }}
+              disabled={!coralProjectLinks.projectReleases}
             >
               下载地址
             </Button>
           </Form.Item>
-          <Form.Item label="上游常见问题">
+          <Form.Item label="项目常见问题">
             <Button
               type="link"
               onClick={() => {
-                void appService.openUrl(
-                  coralProjectLinks.upstreamFaq,
-                )
+                if (coralProjectLinks.projectFaq) {
+                  void appService.openUrl(coralProjectLinks.projectFaq)
+                }
               }}
+              disabled={!coralProjectLinks.projectFaq}
             >
               文档
             </Button>
           </Form.Item>
-          <Form.Item label="上游问题反馈">
+          <Form.Item label="项目问题反馈">
             <Button
               type="link"
               onClick={() => {
-                void appService.openUrl(
-                  coralProjectLinks.upstreamIssues,
-                )
+                if (coralProjectLinks.projectIssues) {
+                  void appService.openUrl(coralProjectLinks.projectIssues)
+                }
               }}
+              disabled={!coralProjectLinks.projectIssues}
             >
               提交 Issue
             </Button>
@@ -1696,7 +2142,7 @@ export const SettingsRoutePanel = observer(() => {
             type="info"
             showIcon
             message="珊瑚音乐完全免费开源"
-            description="当前迁移版保留 LX Music 生态文档与协议兼容；正式发布渠道请以项目配置为准。"
+            description="当前迁移版仍保留部分内部兼容层；正式发布渠道请以珊瑚音乐项目配置为准。"
           />
         </SettingSection>
 

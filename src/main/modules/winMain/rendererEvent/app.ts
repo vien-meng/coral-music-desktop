@@ -26,7 +26,13 @@ import { quitApp } from '@main/app'
 import { getAllThemes, removeTheme, saveTheme, setPowerSaveBlocker } from '@main/utils'
 import { openDirInExplorer } from '@common/utils/electron'
 import { probeExternalDecoder } from '../externalDecoderProbe'
-import type { ExternalDecoderProbeParams, ExternalDecoderProbeResult } from '@shared/playbackCapabilities'
+import { transcodeExternalDecoder } from '../externalDecoderRuntime'
+import type {
+  ExternalDecoderProbeParams,
+  ExternalDecoderProbeResult,
+  ExternalDecoderTranscodeParams,
+  ExternalDecoderTranscodeResult,
+} from '@shared/playbackCapabilities'
 
 export default () => {
   // 设置应用名称
@@ -46,10 +52,10 @@ export default () => {
   mainOn(WIN_MAIN_RENDERER_EVENT_NAME.hide_toggle, () => {
     toggleHide()
   })
-  mainOn(WIN_MAIN_RENDERER_EVENT_NAME.min, () => {
+  mainHandle(WIN_MAIN_RENDERER_EVENT_NAME.min, async() => {
     minimize()
   })
-  mainOn(WIN_MAIN_RENDERER_EVENT_NAME.max, () => {
+  mainHandle(WIN_MAIN_RENDERER_EVENT_NAME.max, async() => {
     maximize()
   })
   mainOn(WIN_MAIN_RENDERER_EVENT_NAME.focus, () => {
@@ -61,7 +67,10 @@ export default () => {
   mainHandle<ExternalDecoderProbeParams, ExternalDecoderProbeResult>(WIN_MAIN_RENDERER_EVENT_NAME.external_decoder_probe, async({ params }) => {
     return probeExternalDecoder(params)
   })
-  mainOn<boolean>(WIN_MAIN_RENDERER_EVENT_NAME.close, ({ params: isForce }) => {
+  mainHandle<ExternalDecoderTranscodeParams, ExternalDecoderTranscodeResult>(WIN_MAIN_RENDERER_EVENT_NAME.external_decoder_transcode, async({ params }) => {
+    return transcodeExternalDecoder(params)
+  })
+  mainHandle<boolean | undefined, void>(WIN_MAIN_RENDERER_EVENT_NAME.close, async({ params: isForce }) => {
     if (isForce) {
       app.exit(0)
       return

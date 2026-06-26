@@ -6,7 +6,7 @@ This plan extends the React/Electron migration with three new playback capabilit
 
 1. local audio file playback and library import;
 2. an external decoder adapter for formats that are not safe or practical to decode directly in Electron;
-3. LX Music User API source plugin configuration as the supported source-plugin path.
+3. Coral Music User API source plugin configuration as the supported source-plugin path.
 
 ## Capability Requirements
 
@@ -27,9 +27,9 @@ This plan extends the React/Electron migration with three new playback capabilit
 - On non-Windows platforms, Foobar2000 adapter support is optional and should be disabled or replaced by a platform-appropriate decoder adapter.
 - Security boundary: never auto-load arbitrary native components; only execute a user-selected decoder path with validated arguments and temporary output directories.
 
-### LX Music User API Source Plugins
+### Coral Music User API Source Plugins
 
-- Keep the existing LX Music User API runtime as the source-plugin compatibility path.
+- Keep the existing Coral Music User API runtime as the source-plugin compatibility path.
 - Continue to store and select the active source plugin through `common.apiSource`.
 - The Settings User API surface remains the primary configuration entry for import file, online import, enable/update-alert, remove, and set-current actions.
 - Future source-plugin work should improve validation, status display, and smoke coverage before introducing any new plugin registry.
@@ -65,7 +65,7 @@ Status: in progress on 2026-06-25.
 
 ### Step 135: Source Plugin Management Polish
 
-- Improve LX Music User API status display and validation.
+- Improve Coral Music User API status display and validation.
 - Add current source plugin health checks for search/detail/play URL resolution.
 - Keep `common.apiSource` as the selected source-plugin key.
 
@@ -79,4 +79,4 @@ Status: in progress on 2026-06-25.
 
 - The project already has local URL resolution for `source === 'local'`; this only covers formats Electron can play directly.
 - Foobar2000 integration is a future external adapter, not a direct in-process plugin loader.
-- The migrated LX Music User API flow already exists and should be extended, not replaced.
+- The migrated Coral Music User API flow already exists and should be extended, not replaced.

@@ -31,8 +31,9 @@ const getRuntimeLog = (): RuntimeLogger => {
     ? require
     : (globalThis as typeof globalThis & NodeRequireGlobal).require
   if (!nodeRequire) return consoleLog
-  runtimeLog = nodeRequire('electron-log/node')
-  return runtimeLog
+  const loadedLog = nodeRequire('electron-log/node')
+  runtimeLog = loadedLog
+  return loadedLog
 }
 
 const log: RuntimeLogger = {

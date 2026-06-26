@@ -24,6 +24,16 @@ export const setUserApi = async(id: string): Promise<void> => {
   await ipcClient.invoke(ipcChannels.winMain.setUserApi, id)
 }
 
+export const requestUserApi = async(
+  data: unknown,
+): Promise<unknown> => {
+  if (!isElectronRenderer()) throw new Error('User API is unavailable.')
+  return await ipcClient.invoke(ipcChannels.winMain.requestUserApi, {
+    data,
+    requestKey: `react_user_api_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+  })
+}
+
 export const removeUserApis = async(
   ids: string[],
 ): Promise<LX.UserApi.UserApiInfo[]> => {
@@ -46,6 +56,7 @@ export const userApiService = {
   getUserApiList,
   getUserApiStatus,
   importUserApi,
+  requestUserApi,
   removeUserApis,
   setAllowUpdateAlert: setUserApiAllowUpdateAlert,
   setUserApi,

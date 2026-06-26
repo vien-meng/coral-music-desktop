@@ -12,7 +12,7 @@ import {
   StepBackwardOutlined,
   StepForwardOutlined,
 } from '@ant-design/icons'
-import { Button, Empty, Flex, Space, Typography } from 'antd'
+import { Alert, Button, Empty, Flex, Space, Typography } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useCallback, useEffect, useState, type CSSProperties } from 'react'
 import { appService } from '../../services/appService'
@@ -42,7 +42,7 @@ const formatTime = (seconds: number): string => {
 }
 
 export const PlayDetailOverlay = observer(() => {
-  const { player, settings } = rootStore
+  const { player, settings, ui } = rootStore
   const [isFullscreen, setIsFullscreen] = useState(false)
   const isPlaying = player.isPlaying
   const lyricAlign = settings.appSetting?.['playDetail.style.align'] ?? 'center'
@@ -142,6 +142,36 @@ export const PlayDetailOverlay = observer(() => {
   if (player.isLyricSelectionOpen) centerNode = <LyricSelectionPanel />
   if (player.isCommentPanelOpen) centerNode = <MusicCommentPanel />
 
+  const errorActionNode = player.needsSourcePlugin
+    ? (
+      <Button
+        size="small"
+        type="primary"
+        onClick={() => {
+          player.closePlayDetail()
+          ui.setActiveRoute('setting')
+          ui.requestQuickAction('importUserApiFile')
+        }}
+      >
+        添加音源
+      </Button>
+      )
+    : player.needsExternalDecoder
+      ? (
+        <Button
+          size="small"
+          type="primary"
+          onClick={() => {
+            player.closePlayDetail()
+            ui.setActiveRoute('setting')
+            ui.requestQuickAction('configureExternalDecoder')
+          }}
+        >
+          配置解码器
+        </Button>
+        )
+      : undefined
+
   return (
     <section className={overlayClassName} aria-hidden={!player.isPlayDetailOpen}>
       <AudioVisualizer />
@@ -216,6 +246,22 @@ export const PlayDetailOverlay = observer(() => {
                 </Text>
                 )
               : null}
+            {player.bitrateText
+              ? (
+                <Text type="secondary" className="coral-playdetail-bitrate">
+                  {player.bitrateText}
+                </Text>
+                )
+              : null}
+            {player.errorText ? (
+              <Alert
+                showIcon
+                type="error"
+                className="coral-playdetail-error"
+                message={player.errorText}
+                action={errorActionNode}
+              />
+            ) : null}
           </div>
         </div>
 

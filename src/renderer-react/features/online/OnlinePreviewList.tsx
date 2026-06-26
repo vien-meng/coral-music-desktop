@@ -24,6 +24,7 @@ export interface OnlinePagerProps {
 
 export interface OnlineMusicPreviewListProps {
   actions?: (item: LX.Music.MusicInfo) => ReactNode[]
+  empty?: ReactNode
   emptyText: string
   list: LX.Music.MusicInfo[]
 }
@@ -75,12 +76,12 @@ export const OnlinePager = ({ disabled = false, hasNext, loading = false, maxPag
   )
 }
 
-export const OnlineMusicPreviewList = ({ actions, emptyText, list }: OnlineMusicPreviewListProps) => {
+export const OnlineMusicPreviewList = ({ actions, empty, emptyText, list }: OnlineMusicPreviewListProps) => {
   return (
     <PlainList
       className="coral-result-list"
       items={list}
-      empty={<Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyText} />}
+      empty={empty ?? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyText} />}
       renderItem={item => (
         <PlainListItem key={item.id} actions={actions?.(item)}>
           <PlainListMeta

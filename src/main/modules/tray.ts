@@ -148,7 +148,7 @@ export const createTray = () => {
   // 托盘
   tray = new Tray(nativeImage.createFromPath(getIconPath(global.lx.appSetting['tray.themeId'])))
 
-  // tray.setToolTip('LX Music')
+  // tray.setToolTip('Coral Music')
   // createMenu()
   tray.setIgnoreDoubleClickEvents(true)
   if (isWin) {
