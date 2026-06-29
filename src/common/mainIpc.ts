@@ -35,9 +35,7 @@ export function mainHandle<T, V>(
   name: string,
   listener: LX.IpcMainInvokeEventListenerParamsValue<T, V>,
 ): void {
-  ipcMain.handle(name, async (event, params) => {
-    return listener({ event, params });
-  });
+  ipcMain.handle(name, async (event, params) => listener({ event, params }));
 }
 
 export function mainHandleOnce(name: string, listener: LX.IpcMainInvokeEventListener): void;
@@ -57,9 +55,7 @@ export function mainHandleOnce<T, V>(
   name: string,
   listener: LX.IpcMainInvokeEventListenerParamsValue<T, V>,
 ): void {
-  ipcMain.handleOnce(name, async (event, params) => {
-    return listener({ event, params });
-  });
+  ipcMain.handleOnce(name, async (event, params) => listener({ event, params }));
 }
 export const mainHandleRemove = (name: string) => {
   ipcMain.removeHandler(name);

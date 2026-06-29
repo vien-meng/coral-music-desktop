@@ -2,6 +2,7 @@ const NodeID3 = require('node-id3');
 const path = require('path');
 const fs = require('fs');
 const download = require('./downloader');
+
 const extReg = /^(\.(?:jpe?g|png)).*$/;
 
 const handleWriteMeta = (meta, filePath) => {
