@@ -8,6 +8,7 @@ import {
   type PlayerRuntimeStatus,
 } from '../../services/playerService';
 import { localAudioService } from '../../services/localAudioService';
+import { localLyricService } from '../../services/localLyricService';
 import { onlineMediaService } from '../../services/onlineMediaService';
 import type { DislikeStore } from './dislikeStore';
 import type { SettingsStore } from './settingsStore';
@@ -324,6 +325,7 @@ export class PlayerStore {
       this.syncQueueIndex(musicInfo);
       this.recordPlayedMusic(musicInfo);
       this.enrichCurrentLocalMusicInfo(musicInfo);
+      this.enrichCurrentLocalLyricInfo(musicInfo);
       this.enrichCurrentOnlineMusicInfo(musicInfo);
     }
     this.runtime.playMusic(musicInfo, {
@@ -576,6 +578,32 @@ export class PlayerStore {
           ...this.status,
           albumName: enrichedMusicInfo.meta.albumName,
           picUrl: enrichedMusicInfo.meta.picUrl ?? '',
+        };
+      })
+      .catch(() => {});
+  }
+
+  private enrichCurrentLocalLyricInfo(musicInfo: PlayerRuntimeMusicInfo): void {
+    if (isDownloadMusicInfo(musicInfo) || musicInfo.source !== 'local') return;
+
+    const musicId = getRuntimeMusicId(musicInfo);
+    localLyricService
+      .getLocalLyricInfo(musicInfo)
+      .then(async (localLyricInfo) => {
+        if ([localLyricInfo.lyric, localLyricInfo.lxlyric].some(Boolean)) return localLyricInfo;
+        return localLyricService.getFallbackOnlineLyricInfo(musicInfo);
+      })
+      .then((lyricInfo) => {
+        if (!this.currentMusic || getRuntimeMusicId(this.currentMusic) !== musicId) return;
+        if (![lyricInfo.lyric, lyricInfo.lxlyric, lyricInfo.rlyric, lyricInfo.tlyric].some(Boolean))
+          return;
+
+        this.status = {
+          ...this.status,
+          lyric: lyricInfo.lyric,
+          lxlyric: lyricInfo.lxlyric ?? '',
+          rlyric: lyricInfo.rlyric ?? '',
+          tlyric: lyricInfo.tlyric ?? '',
         };
       })
       .catch(() => {});

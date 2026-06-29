@@ -25,6 +25,7 @@ export const removeApi = async (ids: string[]): Promise<LX.UserApi.UserApiInfo[]
 };
 
 export const setApi = async (id: string) => {
+  if (userApiId === id) return;
   if (userApiId) {
     userApiId = null;
     await closeWindow();

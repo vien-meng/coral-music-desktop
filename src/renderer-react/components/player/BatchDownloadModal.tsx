@@ -54,14 +54,15 @@ export const BatchDownloadModal = ({ musics, onClose }: BatchDownloadModalProps)
         list[musicInfo.source] = [quality];
         return list;
       }, {});
-      await downloadService.createDownloadTasks(
+      const tasks = await downloadService.createDownloadTasks(
         onlineMusics,
         quality,
-        '%title% - %artist%',
+        rootStore.settings.appSetting?.['download.fileName'] ?? '歌名 - 歌手',
         qualityList,
         '',
       );
-      rootStore.download.refreshTasks();
+      await rootStore.download.refreshTasks();
+      await rootStore.download.startTasks(tasks.map((task) => task.id));
     } finally {
       setIsCreating(false);
       onClose();

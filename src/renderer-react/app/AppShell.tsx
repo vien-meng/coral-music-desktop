@@ -25,6 +25,7 @@ export const AppShell = observer(() => {
 
   return (
     <Layout className="coral-shell">
+      <div className="coral-window-drag-strip" aria-hidden="true" />
       <Sider width={224} className="coral-sider">
         <div className="coral-brand">
           {controlBtnPosition === 'left' ? (
@@ -54,8 +55,8 @@ export const AppShell = observer(() => {
       </Sider>
       <Layout>
         <Header className="coral-header">
-          <Flex align="center" justify="space-between" gap={16}>
-            <div className="coral-drag-region" style={{ flex: 1, minWidth: 0 }}>
+          <Flex align="center" justify="space-between" gap={16} className="coral-header-row">
+            <div className="coral-header-search">
               <SearchInput
                 onSearch={(text) => {
                   ui.setActiveRoute('search');
@@ -63,6 +64,7 @@ export const AppShell = observer(() => {
                 }}
               />
             </div>
+            <div className="coral-header-drag-spacer" aria-hidden="true" />
             <Space className="coral-header-actions" size={8}>
               <Button
                 className="coral-header-action-btn"

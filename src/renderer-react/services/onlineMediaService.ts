@@ -10,7 +10,15 @@ interface MusicSdkSource {
   getPic?: (musicInfo: unknown) => Promise<string>;
 }
 
-type MusicSdk = Record<string, unknown>;
+type MusicSdk = Record<string, unknown> & {
+  findMusic?: (musicInfo: {
+    albumName: string;
+    interval: string;
+    name: string;
+    singer: string;
+    source: string;
+  }) => Promise<unknown[]>;
+};
 
 const emptyLyricInfo: LX.Music.LyricInfo = {
   lyric: '',
@@ -30,6 +38,52 @@ const normalizeLyricInfo = (
   rlyric: lyricInfo?.rlyric ?? '',
   tlyric: lyricInfo?.tlyric ?? '',
 });
+
+const toOnlineMusicInfo = (musicInfo: unknown): LX.Music.MusicInfoOnline | null => {
+  if (typeof musicInfo !== 'object' || musicInfo == null) return null;
+
+  const oldMusicInfo = musicInfo as Record<string, any>;
+  const source = oldMusicInfo.source;
+  const songId = oldMusicInfo.songmid;
+  if (typeof source !== 'string' || !songId) return null;
+
+  const meta: Record<string, unknown> = {
+    _qualitys: oldMusicInfo._types ?? {},
+    albumId: oldMusicInfo.albumId,
+    albumName: oldMusicInfo.albumName ?? '',
+    picUrl: oldMusicInfo.img ?? '',
+    qualitys: oldMusicInfo.types ?? [],
+    songId,
+  };
+  const newMusicInfo = {
+    id: `${source}_${songId}`,
+    interval: oldMusicInfo.interval ?? '',
+    meta,
+    name: oldMusicInfo.name ?? '',
+    singer: oldMusicInfo.singer ?? '',
+    source: source as LX.OnlineSource,
+  };
+
+  switch (source) {
+    case 'kg':
+      meta.hash = oldMusicInfo.hash;
+      newMusicInfo.id = `${songId}_${oldMusicInfo.hash}`;
+      break;
+    case 'tx':
+      meta.albumMid = oldMusicInfo.albumMid;
+      meta.id = oldMusicInfo.songId;
+      meta.strMediaMid = oldMusicInfo.strMediaMid;
+      break;
+    case 'mg':
+      meta.copyrightId = oldMusicInfo.copyrightId;
+      meta.lrcUrl = oldMusicInfo.lrcUrl;
+      meta.mrcUrl = oldMusicInfo.mrcUrl;
+      meta.trcUrl = oldMusicInfo.trcUrl;
+      break;
+  }
+
+  return newMusicInfo as unknown as LX.Music.MusicInfoOnline;
+};
 
 const loadMusicSdk = async (): Promise<MusicSdk> => {
   await musicSdkRuntime.sync();
@@ -68,6 +122,35 @@ export const getOnlineLyricInfo = async (
   return lyricInfo;
 };
 
+export const getOnlineLyricInfoByKeyword = async (musicInfo: {
+  interval: string;
+  name: string;
+  singer: string;
+}): Promise<LX.Music.LyricInfo> => {
+  const sdk = await loadMusicSdk();
+  const rawList =
+    (await sdk
+      .findMusic?.({
+        albumName: '',
+        interval: musicInfo.interval,
+        name: musicInfo.name,
+        singer: musicInfo.singer,
+        source: 'local',
+      })
+      .catch(() => [])) ?? [];
+
+  const candidates = rawList
+    .map(toOnlineMusicInfo)
+    .filter((item): item is LX.Music.MusicInfoOnline => item != null);
+
+  for (const candidate of candidates.slice(0, 5)) {
+    const lyricInfo = await getOnlineLyricInfo(candidate).catch(() => emptyLyricInfo);
+    if (hasLyricContent(lyricInfo)) return lyricInfo;
+  }
+
+  return emptyLyricInfo;
+};
+
 export const getOnlinePicUrl = async (musicInfo: LX.Music.MusicInfoOnline): Promise<string> => {
   if (musicInfo.meta.picUrl) return musicInfo.meta.picUrl;
 
@@ -77,6 +160,7 @@ export const getOnlinePicUrl = async (musicInfo: LX.Music.MusicInfoOnline): Prom
 };
 
 export const onlineMediaService = {
+  getOnlineLyricInfoByKeyword,
   getOnlineLyricInfo,
   getOnlinePicUrl,
 };

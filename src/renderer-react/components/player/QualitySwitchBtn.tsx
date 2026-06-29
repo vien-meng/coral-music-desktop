@@ -1,14 +1,10 @@
-import { QUALITYS } from '@common/constants';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import { Button, Popover, Space, Typography } from 'antd';
 import { observer } from 'mobx-react-lite';
+import { getAvailableOnlineMusicQualities } from '../../services/musicQualityService';
 import { rootStore } from '../../stores/rootStore';
 
 const { Text } = Typography;
-
-const PLAY_QUALITYS: LX.Quality[] = QUALITYS.filter(
-  (quality) => quality !== 'wav' && quality !== 'ape',
-);
 
 const qualityLabels: Partial<Record<LX.Quality, string>> = {
   '128k': '128k',
@@ -27,15 +23,6 @@ const isDownloadMusicInfo = (
 ): musicInfo is LX.Download.ListItem =>
   Boolean(musicInfo && 'progress' in musicInfo && 'metadata' in musicInfo);
 
-const getPlayableQualities = (musicInfo: LX.Music.MusicInfoOnline): LX.Quality[] => {
-  const qualitys = musicInfo.meta._qualitys;
-  return PLAY_QUALITYS.filter(
-    (quality, index) =>
-      Boolean(qualitys[quality]) ||
-      PLAY_QUALITYS.slice(index + 1).some((fallbackQuality) => Boolean(qualitys[fallbackQuality])),
-  );
-};
-
 export const QualitySwitchBtn = observer(() => {
   const { player } = rootStore;
   const currentMusic = player.musicInfo;
@@ -49,7 +36,7 @@ export const QualitySwitchBtn = observer(() => {
   )
     return null;
 
-  const playableQualities = getPlayableQualities(displayMusicInfo);
+  const playableQualities = getAvailableOnlineMusicQualities(displayMusicInfo);
   if (!playableQualities.length) return null;
 
   const currentQuality = player.actualQuality;

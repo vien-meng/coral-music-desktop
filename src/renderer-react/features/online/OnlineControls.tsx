@@ -1,5 +1,6 @@
 import { Empty, Select, Tag } from 'antd';
 import { PlainList, PlainListItem } from '../../components/base';
+import { getSourceDisplayName } from '../../services/sourceNameService';
 
 export interface OnlineSourceSelectProps<Source extends string> {
   className?: string;
@@ -30,8 +31,6 @@ export interface OnlineBoardSelectorProps<BoardItem extends OnlineBoardItem = On
   onSelect: (board: BoardItem) => void;
 }
 
-const formatSource = (source: string): string => source.toUpperCase();
-
 export const OnlineSourceSelect = <Source extends string>({
   className = 'coral-source-select',
   onChange,
@@ -41,7 +40,7 @@ export const OnlineSourceSelect = <Source extends string>({
   <Select
     value={value}
     options={sources.map((source) => ({
-      label: formatSource(source),
+      label: getSourceDisplayName(source),
       value: source,
     }))}
     className={className}

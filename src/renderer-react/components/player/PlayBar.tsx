@@ -12,6 +12,7 @@ import { rootStore } from '../../stores/rootStore';
 import { PlaybackRateBtn } from './PlaybackRateBtn';
 import { PlayDetailOverlay } from './PlayDetailOverlay';
 import { ProgressBar } from './ProgressBar';
+import { QualitySwitchBtn } from './QualitySwitchBtn';
 import { SoundEffectBtn } from './SoundEffectBtn';
 import { TogglePlayModeBtn } from './TogglePlayModeBtn';
 import { VolumeBtn } from './VolumeBtn';
@@ -133,6 +134,7 @@ export const PlayBar = observer(() => {
               onClick={handleToggleDesktopLyric}
             />
           </Tooltip>
+          <QualitySwitchBtn />
           <VolumeBtn />
           <TogglePlayModeBtn />
           <SoundEffectBtn />

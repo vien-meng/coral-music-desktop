@@ -11,6 +11,10 @@ let pendingInitResolve: (() => void) | null = null;
 let pendingInitTimer: NodeJS.Timeout | null = null;
 const requestQueue = new Map();
 const timeouts = new Map<string, NodeJS.Timeout>();
+const canceledResult = {
+  __coralUserApiCancelled: true,
+  message: 'User API 请求已取消。',
+};
 interface InitParams {
   params: {
     status: boolean;
@@ -159,7 +163,7 @@ export const loadApi = async (apiId: string) => {
 export const cancelRequest = (requestKey: string) => {
   if (!requestQueue.has(requestKey)) return;
   const request = requestQueue.get(requestKey);
-  request[1](new Error('Cancel request'));
+  request[0](canceledResult);
   requestQueue.delete(requestKey);
   clearRequestTimeout(requestKey);
 };

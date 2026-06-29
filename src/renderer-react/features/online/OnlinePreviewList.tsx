@@ -2,6 +2,7 @@ import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { Button, Empty, InputNumber, Space, Tooltip, Typography } from 'antd';
 import type { ReactNode } from 'react';
 import { PlainList, PlainListItem, PlainListMeta } from '../../components/base';
+import { getSourceDisplayName } from '../../services/sourceNameService';
 
 const { Text } = Typography;
 
@@ -35,9 +36,8 @@ export interface OnlineSongListPreviewListProps<
   actions?: (item: Item) => ReactNode[];
   emptyText: string;
   list: Item[];
+  onOpen?: (item: Item) => void;
 }
-
-const formatSource = (source: string): string => source.toUpperCase();
 
 export const OnlinePager = ({
   disabled = false,
@@ -51,6 +51,10 @@ export const OnlinePager = ({
   const canGoPrev = !disabled && !loading && page > 1;
   const canGoNext =
     !disabled && !loading && (hasNext ?? (normalizedMaxPage == null || page < normalizedMaxPage));
+  const pageInputWidth = Math.max(
+    96,
+    String(Math.max(page, normalizedMaxPage ?? page)).length * 18 + 56,
+  );
 
   return (
     <Space className="coral-online-pager">
@@ -68,6 +72,7 @@ export const OnlinePager = ({
         max={normalizedMaxPage}
         value={page}
         className="coral-page-input"
+        style={{ width: pageInputWidth }}
         disabled={disabled || loading}
         onChange={(value) => {
           onChange(value ?? 1);
@@ -104,7 +109,7 @@ export const OnlineMusicPreviewList = ({
             <Text
               type="secondary"
               ellipsis
-            >{`${item.singer} · ${formatSource(item.source)} · ${item.interval ?? '--:--'}`}</Text>
+            >{`${item.singer} · ${getSourceDisplayName(item.source)} · ${item.interval ?? '--:--'}`}</Text>
           }
         />
       </PlainListItem>
@@ -116,20 +121,25 @@ export const OnlineSongListPreviewList = <Item extends OnlineSongListPreviewItem
   actions,
   emptyText,
   list,
+  onOpen,
 }: OnlineSongListPreviewListProps<Item>) => (
   <PlainList
     className="coral-result-list"
     items={list}
     empty={<Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyText} />}
     renderItem={(item) => (
-      <PlainListItem key={item.id} actions={actions?.(item)}>
+      <PlainListItem
+        key={item.id}
+        actions={actions?.(item)}
+        onClick={onOpen ? () => onOpen(item) : undefined}
+      >
         <PlainListMeta
           title={<Text ellipsis>{item.name}</Text>}
           description={
             <Text
               type="secondary"
               ellipsis
-            >{`${item.author} · ${formatSource(item.source)} · ${item.play_count}`}</Text>
+            >{`${item.author} · ${getSourceDisplayName(item.source)} · ${item.play_count}`}</Text>
           }
         />
       </PlainListItem>

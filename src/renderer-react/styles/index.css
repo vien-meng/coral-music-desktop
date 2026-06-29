@@ -7,13 +7,16 @@ body,
 }
 
 body {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 248, 246, 0.92),
-    rgba(245, 251, 255, 0.96)
-  );
+  background: linear-gradient(135deg, rgba(255, 248, 246, 0.92), rgba(245, 251, 255, 0.96));
   overflow: hidden;
   user-select: none;
+  -webkit-app-region: no-drag;
+}
+
+#root,
+.coral-shell,
+.coral-shell * {
+  -webkit-app-region: no-drag !important;
 }
 
 .coral-shell {
@@ -22,6 +25,17 @@ body {
   height: 100vh;
   min-height: 0;
   overflow: hidden;
+  position: relative;
+}
+
+.coral-window-drag-strip {
+  height: 18px;
+  left: 0;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 1000;
+  -webkit-app-region: drag !important;
 }
 
 .coral-shell > .ant-layout {
@@ -63,11 +77,7 @@ body {
 }
 
 .coral-sider .ant-menu-item-selected {
-  background: linear-gradient(
-    90deg,
-    rgba(240, 100, 90, 0.14),
-    rgba(79, 166, 190, 0.06)
-  ) !important;
+  background: linear-gradient(90deg, rgba(240, 100, 90, 0.14), rgba(79, 166, 190, 0.06)) !important;
   color: #e85f56;
   font-weight: 650;
 }
@@ -78,7 +88,7 @@ body {
   gap: 12px;
   height: 58px;
   padding: 0 12px 16px;
-  -webkit-app-region: drag;
+  -webkit-app-region: no-drag;
 }
 
 .coral-brand-icon {
@@ -99,13 +109,30 @@ body {
   padding: 12px 24px;
   line-height: 1.4;
   overflow: hidden;
-  -webkit-app-region: drag;
+  -webkit-app-region: no-drag;
+}
+
+.coral-header-row {
+  height: 100%;
+}
+
+.coral-header-search {
+  flex: 0 1 520px;
+  min-width: 220px;
+  -webkit-app-region: no-drag;
 }
 
 .coral-drag-region {
   flex: 1;
   min-width: 0;
-  -webkit-app-region: drag;
+  -webkit-app-region: no-drag;
+}
+
+.coral-header-drag-spacer {
+  flex: 1;
+  min-width: 0;
+  pointer-events: none;
+  -webkit-app-region: no-drag;
 }
 
 .coral-header-actions {
@@ -116,6 +143,8 @@ body {
 .coral-sider .ant-menu,
 .coral-global-search,
 .coral-global-search *,
+.coral-header-search,
+.coral-header-search *,
 .coral-header button,
 .coral-header input,
 .coral-header .ant-dropdown-trigger,
@@ -133,6 +162,14 @@ body {
   border-radius: 10px;
   box-shadow: 0 6px 18px rgba(24, 37, 56, 0.06);
   padding-inline: 10px;
+}
+
+.coral-plain-list-item.is-clickable {
+  cursor: pointer;
+}
+
+.coral-plain-list-item.is-clickable:hover {
+  background: rgba(240, 100, 90, 0.06);
 }
 
 .coral-global-search {
@@ -164,6 +201,22 @@ body {
   overflow: auto;
   padding: 22px 24px;
   scrollbar-gutter: stable;
+  -webkit-app-region: no-drag !important;
+}
+
+.coral-content *,
+.ant-btn,
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-input-number,
+.ant-select,
+.ant-select-selector,
+.ant-segmented,
+.ant-dropdown,
+.ant-dropdown *,
+.ant-popover,
+.ant-popover * {
+  -webkit-app-region: no-drag !important;
 }
 
 .coral-route-loading {
@@ -330,6 +383,10 @@ body {
   -webkit-app-region: drag;
 }
 
+.coral-playdetail.is-open .coral-playdetail-header {
+  -webkit-app-region: drag !important;
+}
+
 .coral-playdetail-heading {
   min-width: 0;
 }
@@ -488,7 +545,11 @@ body {
   line-height: 1.42;
   margin: var(--line-gap, 22px) 0;
   overflow-wrap: anywhere;
-  transition: color 220ms ease, font-size 220ms ease, opacity 220ms ease, transform 220ms ease;
+  transition:
+    color 220ms ease,
+    font-size 220ms ease,
+    opacity 220ms ease,
+    transform 220ms ease;
 }
 
 .coral-playdetail-lyric-lines .line-content.active {
@@ -802,11 +863,11 @@ body {
 }
 
 .coral-source-select {
-  width: 96px;
+  width: 132px;
 }
 
 .coral-sort-select {
-  min-width: 136px;
+  min-width: 168px;
 }
 
 .coral-local-list-select {
@@ -861,13 +922,9 @@ body {
 }
 
 .coral-settings-section h2::after {
-  background: linear-gradient(
-    90deg,
-    rgba(240, 100, 90, 0.22),
-    rgba(79, 166, 190, 0.08)
-  );
+  background: linear-gradient(90deg, rgba(240, 100, 90, 0.22), rgba(79, 166, 190, 0.08));
   border-radius: 999px;
-  content: "";
+  content: '';
   flex: 1 1 auto;
   height: 1px;
 }
@@ -955,11 +1012,7 @@ body {
 
 .coral-local-page .coral-local-primary-controls {
   align-items: center;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.9),
-    rgba(255, 248, 246, 0.8)
-  );
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 248, 246, 0.8));
   position: relative;
 }
 
@@ -1012,7 +1065,7 @@ body {
 }
 
 .coral-local-page .coral-plain-list,
-.coral-local-page [class*="online-preview"],
+.coral-local-page [class*='online-preview'],
 .coral-local-page .ant-list {
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid rgba(112, 128, 144, 0.12);
@@ -1030,21 +1083,128 @@ body {
   background: rgba(240, 100, 90, 0.045);
 }
 
+.coral-search-route {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  -webkit-app-region: no-drag !important;
+}
+
+.coral-search-route * {
+  -webkit-app-region: no-drag !important;
+}
+
+.coral-search-toolbar {
+  flex: none;
+  padding: 8px 15px;
+}
+
+.coral-search-toolbar-inner {
+  align-items: center;
+  width: 100%;
+}
+
 .coral-search-input {
-  width: min(360px, 100%);
+  flex: 1 1 320px;
+  min-width: 240px;
+  width: auto;
 }
 
 .coral-page-input {
-  width: 78px;
+  min-width: 96px;
+}
+
+.coral-page-input .ant-input-number-input {
+  text-align: center;
 }
 
 .coral-online-pager {
   flex: none;
 }
 
+.coral-search-results {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 15px 15px;
+}
+
 .coral-result-list {
   max-height: 360px;
   overflow: auto;
+}
+
+.coral-search-results .coral-result-list {
+  height: 100%;
+  max-height: none;
+}
+
+.coral-leaderboard-route {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.coral-leaderboard-toolbar {
+  flex: none;
+  padding: 8px 15px;
+}
+
+.coral-leaderboard-toolbar-inner {
+  align-items: center;
+  width: 100%;
+}
+
+.coral-leaderboard-body {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 15px;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 15px 15px;
+}
+
+.coral-leaderboard-sidebar {
+  flex: 0 0 180px;
+  min-height: 0;
+}
+
+.coral-leaderboard-sidebar .ant-spin-nested-loading,
+.coral-leaderboard-sidebar .ant-spin-container {
+  height: 100%;
+  min-height: 0;
+}
+
+.coral-leaderboard-detail {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.coral-leaderboard-music-view {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.coral-leaderboard-spin,
+.coral-leaderboard-spin .ant-spin-container {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.coral-leaderboard-detail .coral-result-list {
+  flex: 1 1 auto;
+  max-height: none;
 }
 
 .coral-tag-row {
@@ -1056,16 +1216,6 @@ body {
 .coral-clickable-tag {
   cursor: pointer;
   user-select: none;
-}
-
-.coral-song-list-detail {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.coral-song-list-detail .ant-divider {
-  margin: 4px 0 0;
 }
 
 .coral-board-panel {
@@ -1255,7 +1405,10 @@ body {
 .coral-song-list-card {
   margin-bottom: 4px;
   border-radius: 6px;
+  max-width: 320px;
+  min-width: 220px;
   overflow: hidden;
+  width: 32%;
 }
 
 .coral-song-list-card .ant-card-cover {
@@ -1312,18 +1465,91 @@ body {
   font-size: 12px;
 }
 
-/* ── Detail Section ── */
-.coral-detail-section {
-  border-top: 1px solid var(--color-border, #f0f0f0);
-  padding-top: 8px;
+.coral-song-list-toolbar {
+  flex: none;
+  padding: 8px 15px;
 }
 
-.coral-source-select {
-  width: 80px !important;
+.coral-song-list-toolbar-inner {
+  align-items: center;
+  width: 100%;
 }
 
-.coral-sort-select {
-  min-width: 100px !important;
+.coral-song-list-filter-row {
+  flex: none;
+  padding: 0 15px 8px;
+}
+
+.coral-song-list-tabs {
+  flex: none;
+  padding: 4px 15px 0;
+}
+
+.coral-song-list-tabs .ant-tabs-nav {
+  margin-bottom: 8px;
+}
+
+.coral-toolbar-icon-btn {
+  min-width: 44px;
+}
+
+.coral-toolbar-text-btn {
+  min-width: 112px;
+}
+
+.coral-song-list-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.coral-detail-header {
+  align-items: flex-start;
+  border-bottom: 1px solid rgba(112, 128, 144, 0.12);
+  display: flex;
+  gap: 16px;
+  padding: 4px 0 16px;
+}
+
+.coral-detail-cover {
+  border-radius: 8px;
+  flex: 0 0 96px;
+  height: 96px;
+  overflow: hidden;
+  width: 96px;
+}
+
+.coral-detail-cover .ant-image,
+.coral-detail-cover img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.coral-detail-meta {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.coral-detail-title {
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+.coral-detail-actions {
+  margin-top: 4px;
+}
+
+.coral-song-list-detail-pager {
+  flex: none;
+}
+
+.coral-song-list-detail-page .coral-result-list {
+  /* max-height: none; */
+  overflow: visible;
 }
 
 /* ── Open List Modal ── */

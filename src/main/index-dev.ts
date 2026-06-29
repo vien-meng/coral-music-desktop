@@ -11,6 +11,8 @@ import { openDevTools } from './utils';
 
 const shouldEnableElectronDebug = process.env.CORAL_ENABLE_ELECTRON_DEBUG === 'true';
 const shouldInstallReactDevTools = process.env.CORAL_INSTALL_REACT_DEVTOOLS === 'true';
+const shouldOpenMainDevTools = process.env.CORAL_OPEN_MAIN_DEVTOOLS !== 'false';
+const shouldOpenLyricDevTools = process.env.CORAL_OPEN_LYRIC_DEVTOOLS === 'true';
 
 const maybeInstallReactDevTools = (name: string, win: Electron.BrowserWindow): void => {
   if (!shouldInstallReactDevTools) return;
@@ -38,11 +40,11 @@ if (shouldEnableElectronDebug) {
 
 app.on('ready', () => {
   global.lx.event_app.on('main_window_created', (win) => {
-    openDevTools(win.webContents);
+    if (shouldOpenMainDevTools) openDevTools(win.webContents);
     maybeInstallReactDevTools('main window', win);
   });
   global.lx.event_app.on('desktop_lyric_window_created', (win) => {
-    openDevTools(win.webContents);
+    if (shouldOpenLyricDevTools) openDevTools(win.webContents);
     maybeInstallReactDevTools('lyric window', win);
   });
 });
