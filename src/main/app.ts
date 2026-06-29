@@ -138,7 +138,13 @@ export const setUserDataPath = () => {
       const appDataPath = path.join(portablePath, '/userData');
       if (!existsSync(appDataPath)) mkdirSync(appDataPath);
       app.setPath('userData', appDataPath);
+    } else {
+      // 强制使用 coral-music-desktop 作为 userData 目录名，避免与原版 lx-music-desktop 撞名导致数据串用
+      app.setPath('userData', path.join(app.getPath('appData'), 'coral-music-desktop'));
     }
+  } else {
+    // macOS / Linux 同样强制隔离，避免读取到原版 lx-music-desktop 的 userData
+    app.setPath('userData', path.join(app.getPath('appData'), 'coral-music-desktop'));
   }
 
   const userDataPath = app.getPath('userData');
