@@ -74,7 +74,10 @@ class IpcPlayerRuntimeBridge implements PlayerRuntimeBridge {
 
   playMusic(musicInfo?: PlayerRuntimeMusicInfo, options?: PlayerRuntimePlayOptions): void {
     if (!musicInfo) playMusic();
-    else if (!('progress' in musicInfo)) playMusic(musicInfo);
+    else if (!('progress' in musicInfo)) {
+      // IPC 传输需要普通对象，MobX observable 无法被 structured clone
+      playMusic(JSON.parse(JSON.stringify(musicInfo)) as LX.Music.MusicInfo);
+    }
     this.backend.playMusic(musicInfo, options);
   }
 

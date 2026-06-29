@@ -166,17 +166,70 @@ export class PlayerStore {
 
   get bitrateText(): string {
     const musicInfo = this.displayMusicInfo;
-    if (!musicInfo || musicInfo.source !== 'local') return '';
+    if (!musicInfo) return '';
 
-    const bitrate = musicInfo.meta.bitrate;
-    if (!bitrate || !Number.isFinite(bitrate)) return '';
+    // 本地音乐：使用实际文件元数据
+    if (musicInfo.source === 'local') {
+      const bitrate = musicInfo.meta.bitrate;
+      if (!bitrate || !Number.isFinite(bitrate)) return '';
 
-    const kbps = Math.round(bitrate / 1000);
+      const kbps = Math.round(bitrate / 1000);
+      const details = [
+        `${kbps} kbps`,
+        musicInfo.meta.lossless ? 'Lossless' : '',
+        musicInfo.meta.sampleRate ? `${Math.round(musicInfo.meta.sampleRate / 1000)} kHz` : '',
+        musicInfo.meta.ext ? musicInfo.meta.ext.toUpperCase() : '',
+      ].filter(Boolean);
+
+      return details.join(' · ');
+    }
+
+    // 在线音乐：优先使用探测到的实际采样率/比特率，回退到音质映射
+    const quality = this.actualQuality;
+    if (!quality) return '';
+
+    const probeSampleRate = this.status?.probeSampleRate;
+    const probeBitrate = this.status?.probeBitrate;
+    const probeFormat = this.status?.probeFormat;
+
+    // 音质到理论规格的映射（作为探测失败时的回退）
+    const qualitySpecs: Partial<
+      Record<LX.Quality, { kbps: number; sampleRate: number; lossless: boolean }>
+    > = {
+      '128k': { kbps: 128, sampleRate: 44100, lossless: false },
+      '192k': { kbps: 192, sampleRate: 44100, lossless: false },
+      '320k': { kbps: 320, sampleRate: 44100, lossless: false },
+      flac: { kbps: 900, sampleRate: 44100, lossless: true },
+      flac24bit: { kbps: 2000, sampleRate: 96000, lossless: true },
+      hires: { kbps: 3000, sampleRate: 192000, lossless: true },
+      master: { kbps: 2304, sampleRate: 96000, lossless: true },
+    };
+
+    const spec = qualitySpecs[quality];
+
+    // 探测成功，使用实际值
+    if (probeBitrate || probeSampleRate) {
+      const details = [
+        probeBitrate ? `${Math.round(probeBitrate / 1000)} kbps` : spec ? `${spec.kbps} kbps` : '',
+        probeSampleRate
+          ? `${Math.round(probeSampleRate / 1000)} kHz`
+          : spec
+            ? `${Math.round(spec.sampleRate / 1000)} kHz`
+            : '',
+        probeFormat ? probeFormat.toUpperCase() : '',
+        this.displayQualityText,
+      ].filter(Boolean);
+      return details.join(' · ');
+    }
+
+    // 探测未完成或失败，使用音质映射回退
+    if (!spec) return this.displayQualityText;
+
     const details = [
-      `${kbps} kbps`,
-      musicInfo.meta.lossless ? 'Lossless' : '',
-      musicInfo.meta.sampleRate ? `${Math.round(musicInfo.meta.sampleRate / 1000)} kHz` : '',
-      musicInfo.meta.ext ? musicInfo.meta.ext.toUpperCase() : '',
+      `${spec.kbps} kbps`,
+      spec.lossless ? 'Lossless' : '',
+      `${Math.round(spec.sampleRate / 1000)} kHz`,
+      this.displayQualityText,
     ].filter(Boolean);
 
     return details.join(' · ');
