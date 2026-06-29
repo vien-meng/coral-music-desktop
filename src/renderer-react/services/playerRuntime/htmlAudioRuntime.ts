@@ -484,8 +484,8 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
     try {
       resolved = await resolvePlayableMusicUrl(musicInfo, options);
     } catch (err) {
-      console.error(err);
       if (this.isDisposed || requestId !== this.loadRequestId) return;
+      console.error(err);
 
       this.publish({
         errorText: err instanceof Error ? err.message : String(err),

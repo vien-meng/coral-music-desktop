@@ -46,14 +46,15 @@ export const DownloadQualityModal = ({ musicInfo, listId, onClose }: DownloadQua
     setIsCreating(true);
 
     try {
-      await downloadService.createDownloadTasks(
+      const tasks = await downloadService.createDownloadTasks(
         [musicInfo as LX.Music.MusicInfoOnline],
         quality,
-        '%title% - %artist%',
+        rootStore.settings.appSetting?.['download.fileName'] ?? '歌名 - 歌手',
         { [musicInfo.source]: [quality] },
         listId ?? '',
       );
-      rootStore.download.refreshTasks();
+      await rootStore.download.refreshTasks();
+      await rootStore.download.startTasks(tasks.map((task) => task.id));
     } finally {
       setIsCreating(false);
       onClose();

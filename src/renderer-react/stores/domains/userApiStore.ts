@@ -1,14 +1,6 @@
 import { makeAutoObservable, observable } from 'mobx';
+import { getSourceDisplayName } from '../../services/sourceNameService';
 import { userApiService } from '../../services/userApiService';
-
-const sourceNameMap: Record<string, string> = {
-  git: 'Git',
-  kg: '酷狗',
-  kw: '酷我',
-  mg: '咪咕',
-  tx: 'QQ',
-  wy: '网易',
-};
 
 export const getPlayableUserApiSources = (apiInfo?: LX.UserApi.UserApiInfo | null): string[] =>
   Object.entries(apiInfo?.sources ?? {})
@@ -16,7 +8,7 @@ export const getPlayableUserApiSources = (apiInfo?: LX.UserApi.UserApiInfo | nul
     .map(([source]) => source);
 
 export const getPlayableUserApiSourceNames = (apiInfo?: LX.UserApi.UserApiInfo | null): string[] =>
-  getPlayableUserApiSources(apiInfo).map((source) => sourceNameMap[source] ?? source.toUpperCase());
+  getPlayableUserApiSources(apiInfo).map(getSourceDisplayName);
 
 export const canPlayWithUserApi = (apiInfo?: LX.UserApi.UserApiInfo | null): boolean =>
   getPlayableUserApiSources(apiInfo).length > 0;

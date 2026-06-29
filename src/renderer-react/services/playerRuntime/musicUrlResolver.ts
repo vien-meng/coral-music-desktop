@@ -1,4 +1,3 @@
-import { QUALITYS } from '@common/constants';
 import { encodePath } from '@common/utils/common';
 import {
   isExternalDecoderExtension,
@@ -8,6 +7,7 @@ import {
 import { cacheService } from '../cacheService';
 import { externalDecoderService } from '../externalDecoderService';
 import { musicSdkRuntime } from '../musicSdkRuntime';
+import { getPreferredOnlineMusicQuality } from '../musicQualityService';
 import { checkPath } from '../nodeBridgeService';
 import { settingService } from '../settingService';
 import {
@@ -17,9 +17,6 @@ import {
 } from './localAudioDecodeService';
 import type { PlayerRuntimeMusicInfo } from './types';
 
-const PLAY_QUALITIES: LX.Quality[] = QUALITYS.filter(
-  (quality) => quality !== 'wav' && quality !== 'ape',
-);
 const TOO_MANY_REQUESTS_MESSAGE = 'too many requests';
 
 const pendingOtherSourcePromises = new Map<string, Promise<LX.Music.MusicInfoOnline[]>>();
@@ -323,19 +320,7 @@ export const getPreferredPlayQuality = (
   preferredQuality: LX.Quality,
   musicInfo: LX.Music.MusicInfoOnline,
 ): LX.Quality => {
-  const fallbackQuality = musicInfo.meta._qualitys['128k']
-    ? '128k'
-    : (PLAY_QUALITIES.find((item) => musicInfo.meta._qualitys[item]) ??
-      musicInfo.meta.qualitys[0]?.type ??
-      '128k');
-
-  if (!PLAY_QUALITIES.includes(preferredQuality)) return fallbackQuality;
-
-  const quality = PLAY_QUALITIES.slice(PLAY_QUALITIES.indexOf(preferredQuality)).find(
-    (item) => musicInfo.meta._qualitys[item],
-  );
-
-  return quality ?? fallbackQuality;
+  return getPreferredOnlineMusicQuality(preferredQuality, musicInfo);
 };
 
 const getSourceSdk = (sdk: MusicSdk, source: LX.OnlineSource): MusicSdkSource | null => {
@@ -500,27 +485,33 @@ export const resolvePlayableMusicUrl = async (
   }
 
   if (musicInfo.source === 'local') {
-    const internalDecodedLocal = await resolveInternalDecodedPath(musicInfo.meta.filePath);
-    if (internalDecodedLocal) {
-      return {
-        objectUrl: internalDecodedLocal.objectUrl,
-        decodedAudio: internalDecodedLocal.decodedAudio,
-        musicInfo,
-        quality: '128k',
-        source: 'local',
-        url: internalDecodedLocal.url,
-      };
-    }
+    try {
+      const internalDecodedLocal = await resolveInternalDecodedPath(musicInfo.meta.filePath);
+      if (internalDecodedLocal) {
+        return {
+          objectUrl: internalDecodedLocal.objectUrl,
+          decodedAudio: internalDecodedLocal.decodedAudio,
+          musicInfo,
+          quality: '128k',
+          source: 'local',
+          url: internalDecodedLocal.url,
+        };
+      }
 
-    const decodedLocal = await resolveExternalDecodedLocalMusicUrl(musicInfo);
-    if (decodedLocal) {
-      return {
-        decodedFilePath: decodedLocal.decodedFilePath,
-        musicInfo,
-        quality: '128k',
-        source: 'local',
-        url: decodedLocal.url,
-      };
+      const decodedLocal = await resolveExternalDecodedLocalMusicUrl(musicInfo);
+      if (decodedLocal) {
+        return {
+          decodedFilePath: decodedLocal.decodedFilePath,
+          musicInfo,
+          quality: '128k',
+          source: 'local',
+          url: decodedLocal.url,
+        };
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (/外部解码|FFmpeg/.test(message)) throw error;
+      throw new Error(`本地音频解码失败：${message}`);
     }
     return null;
   }

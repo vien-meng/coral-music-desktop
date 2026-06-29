@@ -3,6 +3,7 @@ import { observer } from 'mobx-react-lite';
 import { useCallback, useEffect, useState } from 'react';
 import { coralProjectLinks } from '@shared/brand';
 import { openUrl } from '../../../services/appService';
+import { getSourceDisplayName } from '../../../services/sourceNameService';
 import { rootStore } from '../../../stores/rootStore';
 
 const { Text } = Typography;
@@ -46,8 +47,8 @@ export const OpenListModal = observer(({ open, onClose }: OpenListModalProps) =>
           <Select
             value={source}
             onChange={setSource}
-            options={songList.sources.map((s) => ({ label: s.toUpperCase(), value: s }))}
-            style={{ width: 80 }}
+            options={songList.sources.map((s) => ({ label: getSourceDisplayName(s), value: s }))}
+            style={{ width: 120 }}
             className="coral-open-list-source-select"
           />
           <Input

@@ -105,17 +105,20 @@ export const toOldMusicInfo = (minfo: LX.Music.MusicInfo) => {
 export const fixNewMusicInfoQuality = (musicInfo: LX.Music.MusicInfo) => {
   if (musicInfo.source == 'local') return musicInfo;
 
-  // @ts-expect-error
-  if (musicInfo.meta._qualitys.flac32bit && !musicInfo.meta._qualitys.flac24bit) {
-    // @ts-expect-error
-    musicInfo.meta._qualitys.flac24bit = musicInfo.meta._qualitys.flac32bit;
-    // @ts-expect-error
-    delete musicInfo.meta._qualitys.flac32bit;
+  const legacyQualitys = musicInfo.meta
+    ._qualitys as LX.Music.MusicInfoOnline['meta']['_qualitys'] & {
+    flac32bit?: LX.Music.MusicInfoOnline['meta']['_qualitys']['flac24bit'];
+  };
+  if (legacyQualitys.flac32bit && !legacyQualitys.flac24bit) {
+    legacyQualitys.flac24bit = legacyQualitys.flac32bit;
+    delete legacyQualitys.flac32bit;
 
     musicInfo.meta.qualitys = musicInfo.meta.qualitys.map((quality) => {
-      // @ts-expect-error
-      if (quality.type == 'flac32bit') quality.type = 'flac24bit';
-      return quality;
+      const legacyQuality = quality as Omit<typeof quality, 'type'> & {
+        type: LX.Quality | 'flac32bit';
+      };
+      if (legacyQuality.type == 'flac32bit') legacyQuality.type = 'flac24bit';
+      return legacyQuality as typeof quality;
     });
   }
 
@@ -148,5 +151,8 @@ export const clipFileNameLength = (name: string) =>
   name.length > MAX_FILE_NAME_LENGTH ? name.substring(0, MAX_FILE_NAME_LENGTH) : name;
 
 export const formatMusicName = (format: string, name: string, singer: string) =>
-  // return format.replace(/歌名|歌手/g, match => match === '歌名' ? name : singer)
-  format.replace('歌手', singer).replace('歌名', name);
+  format
+    .replace(/%title%/gi, name)
+    .replace(/%artist%/gi, singer)
+    .replace(/歌名/g, name)
+    .replace(/歌手/g, singer);

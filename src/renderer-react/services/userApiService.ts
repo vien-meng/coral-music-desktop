@@ -26,10 +26,18 @@ export const setUserApi = async (id: string): Promise<void> => {
 
 export const requestUserApi = async (data: unknown): Promise<unknown> => {
   if (!isElectronRenderer()) throw new Error('User API is unavailable.');
-  return await ipcClient.invoke(ipcChannels.winMain.requestUserApi, {
+  const result = await ipcClient.invoke(ipcChannels.winMain.requestUserApi, {
     data,
     requestKey: `react_user_api_${Date.now()}_${Math.random().toString(16).slice(2)}`,
   });
+  if (
+    typeof result === 'object' &&
+    result != null &&
+    (result as { __coralUserApiCancelled?: boolean }).__coralUserApiCancelled
+  ) {
+    throw new Error((result as { message?: string }).message ?? 'User API 请求已取消。');
+  }
+  return result;
 };
 
 export const removeUserApis = async (ids: string[]): Promise<LX.UserApi.UserApiInfo[]> => {

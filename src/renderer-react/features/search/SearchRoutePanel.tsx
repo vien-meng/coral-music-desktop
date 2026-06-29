@@ -17,7 +17,7 @@ const searchTypeOptions: Array<{ label: string; value: SearchRouteType }> = [
 ];
 
 export const SearchRoutePanel = observer(() => {
-  const { list, search } = rootStore;
+  const { list, search, songList, ui } = rootStore;
   const resultState =
     search.searchType === 'music' ? search.activeMusicList : search.activeSongList;
   const resultMaxPage = resultState.maxPage > 0 ? resultState.maxPage : undefined;
@@ -29,10 +29,10 @@ export const SearchRoutePanel = observer(() => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+    <div className="coral-search-route">
       {/* Controls bar */}
-      <div style={{ padding: '8px 15px', flex: 'none' }}>
-        <Space wrap style={{ width: '100%' }}>
+      <div className="coral-search-toolbar">
+        <Space wrap className="coral-search-toolbar-inner">
           <Segmented
             options={searchTypeOptions}
             value={search.searchType}
@@ -93,7 +93,7 @@ export const SearchRoutePanel = observer(() => {
       ) : null}
 
       {/* Results */}
-      <div className="scroll" style={{ flex: 1, overflowY: 'auto', padding: '0 15px 15px' }}>
+      <div className="coral-search-results scroll">
         {search.searchType === 'music' ? (
           <OnlineMusicPreviewList
             list={search.activeMusicList.list}
@@ -111,6 +111,10 @@ export const SearchRoutePanel = observer(() => {
           <OnlineSongListPreviewList
             list={search.activeSongList.list}
             emptyText={search.hasQuery ? '暂无结果' : '等待搜索'}
+            onOpen={(item) => {
+              ui.setActiveRoute('song-list');
+              songList.loadListDetail(item.id, item.source);
+            }}
           />
         )}
       </div>

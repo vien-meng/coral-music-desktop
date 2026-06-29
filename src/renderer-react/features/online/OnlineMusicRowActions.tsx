@@ -1,6 +1,8 @@
-import { FolderAddOutlined, PlayCircleOutlined } from '@ant-design/icons';
+import { DownloadOutlined, FolderAddOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { Button, Space, Tooltip } from 'antd';
 import { observer } from 'mobx-react-lite';
+import { useState } from 'react';
+import { DownloadQualityModal } from '../../components/player/DownloadQualityModal';
 import { rootStore } from '../../stores/rootStore';
 
 export interface OnlineMusicRowActionsProps {
@@ -12,6 +14,7 @@ export interface OnlineMusicRowActionsProps {
 export const OnlineMusicRowActions = observer(
   ({ musicInfo, queue, queueId = null }: OnlineMusicRowActionsProps) => {
     const { list, player, settings } = rootStore;
+    const [downloadMusicInfo, setDownloadMusicInfo] = useState<LX.Music.MusicInfo | null>(null);
     const addMusicLocationType = settings.appSetting?.['list.addMusicLocationType'] ?? 'top';
 
     const handlePlay = (): void => {
@@ -33,22 +36,42 @@ export const OnlineMusicRowActions = observer(
     };
 
     return (
-      <Space size={4}>
-        <Tooltip title="播放">
-          <Button type="text" size="small" icon={<PlayCircleOutlined />} onClick={handlePlay} />
-        </Tooltip>
-        <Tooltip title="添加到当前列表">
-          <Button
-            type="text"
-            size="small"
-            icon={<FolderAddOutlined />}
-            loading={list.isAddingMusic}
-            onClick={() => {
-              handleAddToList();
-            }}
-          />
-        </Tooltip>
-      </Space>
+      <>
+        <Space size={4}>
+          <Tooltip title="播放">
+            <Button type="text" size="small" icon={<PlayCircleOutlined />} onClick={handlePlay} />
+          </Tooltip>
+          <Tooltip title="添加到当前列表">
+            <Button
+              type="text"
+              size="small"
+              icon={<FolderAddOutlined />}
+              loading={list.isAddingMusic}
+              onClick={() => {
+                handleAddToList();
+              }}
+            />
+          </Tooltip>
+          {musicInfo.source !== 'local' ? (
+            <Tooltip title="下载">
+              <Button
+                type="text"
+                size="small"
+                icon={<DownloadOutlined />}
+                onClick={() => {
+                  setDownloadMusicInfo(musicInfo);
+                }}
+              />
+            </Tooltip>
+          ) : null}
+        </Space>
+        <DownloadQualityModal
+          musicInfo={downloadMusicInfo}
+          onClose={() => {
+            setDownloadMusicInfo(null);
+          }}
+        />
+      </>
     );
   },
 );

@@ -32,7 +32,10 @@ export default defineConfig({
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV ?? 'development'),
   },
   resolve: {
-    alias: aliases,
+    alias: {
+      ...aliases,
+      '@eshaz/web-worker': path.join(projectRoot, 'src/renderer-react/shims/web-worker.ts'),
+    },
     dedupe: [
       'react',
       'react-dom',

@@ -23,6 +23,7 @@ export interface PlainListItemProps {
   actions?: ReactNode[];
   children: ReactNode;
   className?: string;
+  onClick?: () => void;
 }
 
 export interface PlainListMetaProps {
@@ -70,10 +71,14 @@ export const PlainList = <Item,>({
   );
 };
 
-export const PlainListItem = ({ actions, children, className }: PlainListItemProps) => {
+export const PlainListItem = ({ actions, children, className, onClick }: PlainListItemProps) => {
   const visibleActions = actions?.filter(Boolean);
   return (
-    <div className={getClassName('coral-plain-list-item', className)} role="listitem">
+    <div
+      className={getClassName('coral-plain-list-item', onClick && 'is-clickable', className)}
+      role="listitem"
+      onClick={onClick}
+    >
       <div className="coral-plain-list-item-main">{children}</div>
       {visibleActions?.length ? (
         <div className="coral-plain-list-item-actions">{visibleActions}</div>
