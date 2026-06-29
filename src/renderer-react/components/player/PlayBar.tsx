@@ -42,7 +42,7 @@ export const PlayBar = observer(() => {
 
   const handleToggleDesktopLyric = (): void => {
     const enabled = settings.appSetting?.['desktopLyric.enable'] ?? false;
-    void settings.updateAppSetting({ 'desktopLyric.enable': !enabled });
+    settings.updateAppSetting({ 'desktopLyric.enable': !enabled });
   };
 
   return (

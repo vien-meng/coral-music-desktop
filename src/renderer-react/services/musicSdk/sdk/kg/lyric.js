@@ -101,7 +101,7 @@ export default {
 
     return requestObj;
   },
-  getLyric(songInfo, tryNum = 0) {
+  getLyric(songInfo, _tryNum = 0) {
     const requestObj = this.searchLyric(
       songInfo.name,
       songInfo.hash,

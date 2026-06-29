@@ -389,19 +389,19 @@ export class PlayerStore {
 
   setVolume(volume: number): void {
     this.volume = Math.max(0, Math.min(1, volume));
-    void this.settings?.updateAppSetting({ 'player.volume': this.volume });
+    this.settings?.updateAppSetting({ 'player.volume': this.volume });
     this.runtime.setVolume(this.volume);
   }
 
   setMute(isMute: boolean): void {
     this.isMute = isMute;
-    void this.settings?.updateAppSetting({ 'player.isMute': isMute });
+    this.settings?.updateAppSetting({ 'player.isMute': isMute });
     this.runtime.setMute(isMute);
   }
 
   setPlaybackRate(rate: number): void {
     this.playbackRate = Math.max(0.5, Math.min(2, rate));
-    void this.settings?.updateAppSetting({ 'player.playbackRate': this.playbackRate });
+    this.settings?.updateAppSetting({ 'player.playbackRate': this.playbackRate });
     this.runtime.setPlaybackRate(this.playbackRate);
   }
 
@@ -488,7 +488,7 @@ export class PlayerStore {
       this.currentMusic.source === 'local'
     )
       return;
-    void this.settings?.updateAppSetting({ 'player.playQuality': quality });
+    this.settings?.updateAppSetting({ 'player.playQuality': quality });
     this.playMusic(this.currentMusic, {
       isRefresh: true,
       preferredQuality: quality,
@@ -560,7 +560,7 @@ export class PlayerStore {
     if (musicInfo.meta.picUrl && musicInfo.meta.bitrate) return;
 
     const musicId = getRuntimeMusicId(musicInfo);
-    void localAudioService
+    localAudioService
       .enrichLocalMusicInfoWithMetadata(musicInfo)
       .then((enrichedMusicInfo) => {
         if (!this.currentMusic || getRuntimeMusicId(this.currentMusic) !== musicId) return;
@@ -587,7 +587,7 @@ export class PlayerStore {
     const requestId = ++this.enrichRequestId;
     const musicId = getRuntimeMusicId(musicInfo);
 
-    void Promise.allSettled([
+    Promise.allSettled([
       onlineMediaService.getOnlinePicUrl(musicInfo),
       onlineMediaService.getOnlineLyricInfo(musicInfo),
     ])

@@ -240,7 +240,7 @@ export class DownloadStore {
     if (action.action.action === 'refreshUrl') {
       const task = action.task ?? this.getTaskById(action.taskId);
       if (task && this.shouldAutoRetry(task.id)) {
-        void downloadService
+        downloadService
           .startDownloadTask(task, { isRefresh: true, isRetry: true })
           .then((nextTask) => {
             this.upsertTask(nextTask);
@@ -261,7 +261,7 @@ export class DownloadStore {
       action.action.action === 'error' ||
       action.action.action === 'statusText'
     ) {
-      void this.pumpQueue();
+      this.pumpQueue();
     }
   }
 
@@ -292,7 +292,7 @@ export class DownloadStore {
         statusText: '排队中',
       };
       this.upsertTask(queuedTask);
-      void downloadService.updateDownloadTasks([queuedTask]);
+      downloadService.updateDownloadTasks([queuedTask]);
     }
   }
 
@@ -372,7 +372,7 @@ export class DownloadStore {
           statusText: '下载地址刷新失败',
         };
         this.upsertTask(nextTask);
-        void downloadService.updateDownloadTasks([nextTask]);
+        downloadService.updateDownloadTasks([nextTask]);
       }
       return false;
     }

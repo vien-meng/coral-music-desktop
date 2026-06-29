@@ -219,7 +219,7 @@ export const HotKeySection = observer(() => {
       }
       await refreshStatus();
     };
-    void init();
+    init();
   }, []);
 
   const handleSaveConfig = async (): Promise<void> => {

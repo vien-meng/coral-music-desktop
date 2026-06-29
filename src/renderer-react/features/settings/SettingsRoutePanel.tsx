@@ -180,7 +180,7 @@ const OnlineImportModal = ({ loading, onClose, onSubmit, open }: OnlineImportMod
   const handleSubmit = () => {
     const trimmed = url.trim();
     if (!/^https?:\/\//.test(trimmed)) return;
-    void onSubmit(trimmed);
+    onSubmit(trimmed);
   };
 
   return (
@@ -406,7 +406,7 @@ export const SettingsRoutePanel = observer(() => {
 
     if (!ui.consumeQuickAction('importUserApiFile')) return;
 
-    void (async () => {
+    (async () => {
       if (userApi.userApis.length > 20) {
         Modal.warning({ title: '提示', content: '最多支持 20 个自定义源' });
         return;
@@ -433,7 +433,7 @@ export const SettingsRoutePanel = observer(() => {
   }
 
   const applySetting = (setting: Partial<LX.AppSetting>): void => {
-    void settings.updateAppSetting(setting);
+    settings.updateAppSetting(setting);
   };
 
   const syncServerDevices = sync.serverDevices ?? [];
@@ -621,7 +621,7 @@ export const SettingsRoutePanel = observer(() => {
                 { label: '深色', value: 'dark' },
               ]}
               onChange={(event) => {
-                void theme.setThemeMode(event.target.value);
+                theme.setThemeMode(event.target.value);
               }}
             />
           </Form.Item>
@@ -890,7 +890,7 @@ export const SettingsRoutePanel = observer(() => {
                 <Button
                   icon={<FolderOpenOutlined />}
                   onClick={() => {
-                    void handleSelectDecoderExecutable();
+                    handleSelectDecoderExecutable();
                   }}
                 />
               </Space.Compact>
@@ -932,7 +932,7 @@ export const SettingsRoutePanel = observer(() => {
                     size="small"
                     icon={<FolderOpenOutlined />}
                     onClick={() => {
-                      void handleSelectDecoderPluginDirs();
+                      handleSelectDecoderPluginDirs();
                     }}
                   >
                     添加目录
@@ -942,7 +942,7 @@ export const SettingsRoutePanel = observer(() => {
                     icon={<ReloadOutlined />}
                     loading={isProbingDecoder}
                     onClick={() => {
-                      void handleProbeExternalDecoder();
+                      handleProbeExternalDecoder();
                     }}
                   >
                     探测配置
@@ -1460,7 +1460,7 @@ export const SettingsRoutePanel = observer(() => {
                   icon={<ReloadOutlined />}
                   loading={sync.isHydrating}
                   onClick={() => {
-                    void sync.refreshServerDevices();
+                    sync.refreshServerDevices();
                   }}
                 >
                   刷新
@@ -1469,7 +1469,7 @@ export const SettingsRoutePanel = observer(() => {
                   icon={<KeyOutlined />}
                   loading={sync.isMutating}
                   onClick={() => {
-                    void sync.generateCode();
+                    sync.generateCode();
                   }}
                 >
                   配对码
@@ -1489,7 +1489,7 @@ export const SettingsRoutePanel = observer(() => {
                         okText="移除"
                         cancelText="取消"
                         onConfirm={() => {
-                          void sync.removeServerDevice(device.clientId);
+                          sync.removeServerDevice(device.clientId);
                         }}
                       >
                         <Button
@@ -1593,9 +1593,9 @@ export const SettingsRoutePanel = observer(() => {
                 onClick={() => {
                   const currentApiId = appSetting['common.apiSource'];
                   if (currentApiId?.startsWith('user_api')) {
-                    void userApi.setUserApi(currentApiId);
+                    userApi.setUserApi(currentApiId);
                   } else {
-                    void userApi.refreshUserApis();
+                    userApi.refreshUserApis();
                   }
                 }}
               >
@@ -1605,7 +1605,7 @@ export const SettingsRoutePanel = observer(() => {
                 icon={<UploadOutlined />}
                 loading={userApi.isMutating}
                 onClick={() => {
-                  void handleImportFile();
+                  handleImportFile();
                 }}
               >
                 导入文件
@@ -1624,7 +1624,7 @@ export const SettingsRoutePanel = observer(() => {
                 size="small"
                 onClick={() => {
                   if (coralProjectLinks.customSourceDocs) {
-                    void appService.openUrl(coralProjectLinks.customSourceDocs);
+                    appService.openUrl(coralProjectLinks.customSourceDocs);
                   }
                 }}
                 disabled={!coralProjectLinks.customSourceDocs}
@@ -1656,7 +1656,7 @@ export const SettingsRoutePanel = observer(() => {
                         }
                         loading={userApi.isMutating}
                         onClick={() => {
-                          void handleSetCurrentApi(api);
+                          handleSetCurrentApi(api);
                         }}
                       >
                         {api.id === appSetting['common.apiSource'] ? '当前' : '设为当前'}
@@ -1668,7 +1668,7 @@ export const SettingsRoutePanel = observer(() => {
                           checked={api.allowShowUpdateAlert}
                           loading={userApi.isMutating}
                           onChange={(checked) => {
-                            void userApi.setAllowUpdateAlert(api.id, checked);
+                            userApi.setAllowUpdateAlert(api.id, checked);
                           }}
                         />
                       </Space>,
@@ -1679,7 +1679,7 @@ export const SettingsRoutePanel = observer(() => {
                         okText="删除"
                         cancelText="取消"
                         onConfirm={() => {
-                          void removeUserApi(api);
+                          removeUserApi(api);
                         }}
                       >
                         <Button
@@ -2083,7 +2083,7 @@ export const SettingsRoutePanel = observer(() => {
               type="link"
               onClick={() => {
                 if (coralProjectLinks.projectRepository) {
-                  void appService.openUrl(coralProjectLinks.projectRepository);
+                  appService.openUrl(coralProjectLinks.projectRepository);
                 }
               }}
               disabled={!coralProjectLinks.projectRepository}
@@ -2096,7 +2096,7 @@ export const SettingsRoutePanel = observer(() => {
               type="link"
               onClick={() => {
                 if (coralProjectLinks.projectReleases) {
-                  void appService.openUrl(coralProjectLinks.projectReleases);
+                  appService.openUrl(coralProjectLinks.projectReleases);
                 }
               }}
               disabled={!coralProjectLinks.projectReleases}
@@ -2109,7 +2109,7 @@ export const SettingsRoutePanel = observer(() => {
               type="link"
               onClick={() => {
                 if (coralProjectLinks.projectFaq) {
-                  void appService.openUrl(coralProjectLinks.projectFaq);
+                  appService.openUrl(coralProjectLinks.projectFaq);
                 }
               }}
               disabled={!coralProjectLinks.projectFaq}
@@ -2122,7 +2122,7 @@ export const SettingsRoutePanel = observer(() => {
               type="link"
               onClick={() => {
                 if (coralProjectLinks.projectIssues) {
-                  void appService.openUrl(coralProjectLinks.projectIssues);
+                  appService.openUrl(coralProjectLinks.projectIssues);
                 }
               }}
               disabled={!coralProjectLinks.projectIssues}
@@ -2164,13 +2164,13 @@ export const SettingsRoutePanel = observer(() => {
             setIsThemeEditOpen(true);
           }}
           onRemove={(id) => {
-            void theme.removeUserTheme(id);
+            theme.removeUserTheme(id);
           }}
           onSelectDark={(id) => {
-            void theme.setDarkThemeId(id);
+            theme.setDarkThemeId(id);
           }}
           onSelectLight={(id) => {
-            void theme.setLightThemeId(id);
+            theme.setLightThemeId(id);
           }}
         />
 

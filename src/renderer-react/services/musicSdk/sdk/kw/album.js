@@ -9,7 +9,7 @@ export default {
   filterListDetail(rawList, albumName, albumId) {
     // console.log(rawList)
     // console.log(rawList.length, rawList2.length)
-    return rawList.map((item, inedx) => {
+    return rawList.map((item, _inedx) => {
       const formats = item.formats.split('|');
       const types = [];
       const _types = {};

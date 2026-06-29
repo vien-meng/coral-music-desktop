@@ -24,7 +24,7 @@ const maybeInstallReactDevTools = (name: string, win: Electron.BrowserWindow): v
     })
 }
 if (shouldEnableElectronDebug) {
-  void import('electron-debug')
+  import('electron-debug')
     .then(({ default: electronDebug }) => {
       electronDebug({
         showDevTools: false,

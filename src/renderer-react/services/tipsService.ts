@@ -1,23 +1,23 @@
 import { message, notification } from 'antd';
 
 const success = (content: string, duration = 3): void => {
-  void message.success(content, duration);
+  message.success(content, duration);
 };
 
 const error = (content: string, duration = 3): void => {
-  void message.error(content, duration);
+  message.error(content, duration);
 };
 
 const info = (content: string, duration = 3): void => {
-  void message.info(content, duration);
+  message.info(content, duration);
 };
 
 const warning = (content: string, duration = 3): void => {
-  void message.warning(content, duration);
+  message.warning(content, duration);
 };
 
 const loading = (content: string, duration = 0): void => {
-  void message.loading(content, duration);
+  message.loading(content, duration);
 };
 
 interface NotifyOptions {

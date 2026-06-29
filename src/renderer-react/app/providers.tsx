@@ -7,7 +7,7 @@ import { rootStore } from '../stores/rootStore';
 
 export const AppProviders = observer(({ children }: PropsWithChildren) => {
   useEffect(() => {
-    void rootStore.initialize();
+    rootStore.initialize();
   }, []);
 
   return (

@@ -251,7 +251,7 @@ export default {
         // console.log(Buffer.from(base64Data, 'base64').toString())
         try {
           lrcInfo = this.parseLrc(Buffer.from(base64Data, 'base64').toString());
-        } catch (err) {
+        } catch {
           return Promise.reject(new Error('Get lyric failed'));
         }
         // console.log(lrcInfo)

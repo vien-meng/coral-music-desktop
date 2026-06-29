@@ -41,7 +41,7 @@ export const WindowControlBtns = ({
         <button
           aria-label="关闭"
           onClick={() => {
-            void appService.closeWindow();
+            appService.closeWindow();
           }}
           style={{
             width: 12,
@@ -63,7 +63,7 @@ export const WindowControlBtns = ({
         <button
           aria-label="最小化"
           onClick={() => {
-            void appService.minWindow();
+            appService.minWindow();
           }}
           style={{
             width: 12,
@@ -85,7 +85,7 @@ export const WindowControlBtns = ({
         <button
           aria-label={isMaximized ? '还原' : '最大化'}
           onClick={() => {
-            void appService.maximizeWindow().then(setIsMaximized);
+            appService.maximizeWindow().then(setIsMaximized);
           }}
           style={{
             width: 12,
@@ -116,7 +116,7 @@ export const WindowControlBtns = ({
       <button
         aria-label="最小化"
         onClick={() => {
-          void appService.minWindow();
+          appService.minWindow();
         }}
         onMouseEnter={(event) => {
           event.currentTarget.style.background = 'rgba(0, 0, 0, 0.1)';
@@ -141,7 +141,7 @@ export const WindowControlBtns = ({
       <button
         aria-label={isMaximized ? '还原' : '最大化'}
         onClick={() => {
-          void appService.maximizeWindow().then(setIsMaximized);
+          appService.maximizeWindow().then(setIsMaximized);
         }}
         onMouseEnter={(event) => {
           event.currentTarget.style.background = 'rgba(0, 0, 0, 0.1)';
@@ -166,7 +166,7 @@ export const WindowControlBtns = ({
       <button
         aria-label="关闭"
         onClick={() => {
-          void appService.closeWindow();
+          appService.closeWindow();
         }}
         onMouseEnter={(event) => {
           event.currentTarget.style.background = '#ff5f56';

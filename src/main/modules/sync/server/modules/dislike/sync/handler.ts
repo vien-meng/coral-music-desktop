@@ -20,7 +20,7 @@ const handler: LX.Sync.ServerSyncHandlerDislikeActions<LX.Sync.Server.Socket> = 
     const currentId = socket.keyInfo.clientId
     socket.broadcast((client) => {
       if (client.keyInfo.clientId == currentId || !client.moduleReadys?.dislike || client.userInfo.name != currentUserName) return
-      void client.remoteQueueDislike.onDislikeSyncAction(action).then(async() => {
+      client.remoteQueueDislike.onDislikeSyncAction(action).then(async() => {
         return userSpace.dislikeManage.updateDeviceSnapshotKey(client.keyInfo.clientId, key)
       }).catch(err => {
       // TODO send status

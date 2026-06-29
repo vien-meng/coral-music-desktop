@@ -151,7 +151,7 @@ class Task extends EventEmitter {
           this.emit('fail', response)
           this.__clearTimeout()
           this.__closeRequest()
-          void this.__closeWriteStream()
+          this.__closeWriteStream()
           return
         }
         this.emit('response', response)
@@ -171,14 +171,14 @@ class Task extends EventEmitter {
               this.__handleComplete()
             } else {
               // this.__handleError(new Error('The connection was terminated while the message was still being sent'))
-              void this.stop()
+              this.stop()
             }
           })
       })
       .on('error', err => { this.__handleError(err) })
       .on('close', () => {
         if (redirected) return
-        void this.__closeWriteStream()
+        this.__closeWriteStream()
       })
       .end()
   }
@@ -214,7 +214,7 @@ class Task extends EventEmitter {
 
     this.ws.on('finish', () => {
       if (this.closeWaiting) return
-      void this.__closeWriteStream()
+      this.__closeWriteStream()
     })
     this.ws.on('error', err => {
       fs.unlink(this.chunkInfo.path, (unlinkErr: any) => {
@@ -235,7 +235,7 @@ class Task extends EventEmitter {
       this.emit('error', new Error('Progress is 0, download failed.'))
       return
     }
-    void this.__closeWriteStream().then(() => {
+    this.__closeWriteStream().then(() => {
       if (this.progress.downloaded == this.progress.total) {
         this.status = STATUS.completed
         this.emit('completed')
@@ -252,7 +252,7 @@ class Task extends EventEmitter {
     this.status = STATUS.error
     this.__clearTimeout()
     this.__closeRequest()
-    void this.__closeWriteStream()
+    this.__closeWriteStream()
     if (error.message == 'aborted') return
     this.emit('error', error)
   }
@@ -294,7 +294,7 @@ class Task extends EventEmitter {
       const result = this.__handleDiffChunk(chunk)
       if (result) chunk = result
       else {
-        void this.__handleStop().finally(() => {
+        this.__handleStop().finally(() => {
           // this.__handleError(new Error('Resume failed, response chunk does not match.'))
           // Resume failed, response chunk does not match, remove file and restart download
           console.log('Resume failed, response chunk does not match.')
@@ -306,7 +306,7 @@ class Task extends EventEmitter {
               this.__handleError(unlinkErr)
               return
             }
-            void this.start()
+            this.start()
           })
         })
         return

@@ -109,7 +109,7 @@ export const createWindow = () => {
   const winURL = process.env.NODE_ENV !== 'production'
     ? process.env.CORAL_RENDERER_DEV_URL ?? 'http://localhost:9080'
     : `file://${path.join(encodePath(__dirname), 'index.html')}`
-  void browserWindow.loadURL(winURL + `?os=${getPlatform()}&dt=${global.envParams.cmdParams.dt}&dark=${shouldUseDarkColors}&theme=${encodeURIComponent(JSON.stringify(theme))}`)
+  browserWindow.loadURL(winURL + `?os=${getPlatform()}&dt=${global.envParams.cmdParams.dt}&dark=${shouldUseDarkColors}&theme=${encodeURIComponent(JSON.stringify(theme))}`)
 
   winEvent()
 
@@ -133,12 +133,12 @@ export const closeWindow = () => {
 
 const setSesProxy = (ses: Electron.Session, host?: string, port?: string | number) => {
   if (host) {
-    void ses.setProxy({
+    ses.setProxy({
       mode: 'fixed_servers',
       proxyRules: `http://${host}:${port}`,
     })
   } else {
-    void ses.setProxy({
+    ses.setProxy({
       mode: 'direct',
     })
   }

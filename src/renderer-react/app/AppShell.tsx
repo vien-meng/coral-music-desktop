@@ -68,7 +68,7 @@ export const AppShell = observer(() => {
                 className="coral-header-action-btn"
                 icon={theme.themeMode === 'light' ? <MoonOutlined /> : <SunOutlined />}
                 onClick={() => {
-                  void theme.setThemeMode(theme.themeMode === 'light' ? 'dark' : 'light');
+                  theme.setThemeMode(theme.themeMode === 'light' ? 'dark' : 'light');
                 }}
               >
                 {theme.themeMode === 'light' ? '深色' : '浅色'}

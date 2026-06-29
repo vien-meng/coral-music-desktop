@@ -23,7 +23,7 @@ export const PlaybackRateBtn = observer(() => {
   };
 
   const handlePreservesPitch = (checked: boolean): void => {
-    void settings.updateAppSetting({ 'player.preservesPitch': checked });
+    settings.updateAppSetting({ 'player.preservesPitch': checked });
   };
 
   const content = (

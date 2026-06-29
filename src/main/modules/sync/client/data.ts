@@ -25,7 +25,7 @@ export const initClientInfo = async() => {
     if (!await exists(syncDataPath)) {
       await fs.promises.mkdir(syncDataPath, { recursive: true })
     }
-    void saveSyncAuthKeys()
+    saveSyncAuthKeys()
   }
 }
 
@@ -36,7 +36,7 @@ export const getSyncAuthKey = async(serverId: string) => {
 export const setSyncAuthKey = async(serverId: string, info: LX.Sync.ClientKeyInfo) => {
   await initClientInfo()
   syncAuthKeys[serverId] = info
-  void saveSyncAuthKeys()
+  saveSyncAuthKeys()
 }
 
 // let syncHost: string

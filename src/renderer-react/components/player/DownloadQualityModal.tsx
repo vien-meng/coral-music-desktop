@@ -36,7 +36,7 @@ export const DownloadQualityModal = ({ musicInfo, listId, onClose }: DownloadQua
     const rightIndex = QUALITYS.indexOf(right.type);
     return (
       (leftIndex < 0 ? QUALITYS.length : leftIndex) -
-      (rightIndex < 0 ? QUALITYS.length : rightIndex);
+      (rightIndex < 0 ? QUALITYS.length : rightIndex)
     );
   });
 
@@ -53,7 +53,7 @@ export const DownloadQualityModal = ({ musicInfo, listId, onClose }: DownloadQua
         { [musicInfo.source]: [quality] },
         listId ?? '',
       );
-      void rootStore.download.refreshTasks();
+      rootStore.download.refreshTasks();
     } finally {
       setIsCreating(false);
       onClose();
@@ -79,7 +79,7 @@ export const DownloadQualityModal = ({ musicInfo, listId, onClose }: DownloadQua
               icon={<DownloadOutlined />}
               loading={isCreating}
               onClick={() => {
-                void handleDownload(quality.type as LX.Quality);
+                handleDownload(quality.type as LX.Quality);
               }}
             >
               {qualityLabels[quality.type as LX.Quality] ?? quality.type}

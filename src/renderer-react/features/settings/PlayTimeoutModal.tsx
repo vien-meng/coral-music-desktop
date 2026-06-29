@@ -54,7 +54,7 @@ export const PlayTimeoutModal = observer(({ onClose, open }: PlayTimeoutModalPro
       timeoutStopService.start(verified * 60);
       onClose();
     } catch (err) {
-      void message.error(`设置失败：${err instanceof Error ? err.message : String(err)}`);
+      message.error(`设置失败：${err instanceof Error ? err.message : String(err)}`);
     }
   };
 
@@ -97,7 +97,7 @@ export const PlayTimeoutModal = observer(({ onClose, open }: PlayTimeoutModalPro
           checked={appSetting?.['player.waitPlayEndStop'] ?? false}
           onChange={(event) => {
             if (appSetting) {
-              void settings.updateAppSetting({ 'player.waitPlayEndStop': event.target.checked });
+              settings.updateAppSetting({ 'player.waitPlayEndStop': event.target.checked });
             }
           }}
         >

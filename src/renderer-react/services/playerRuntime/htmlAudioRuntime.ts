@@ -102,7 +102,7 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
     if (musicInfo) {
       this.currentMusic = musicInfo;
       this.publishMusicInfo(musicInfo);
-      void this.loadAndPlayMusic(musicInfo, ++this.loadRequestId, options);
+      this.loadAndPlayMusic(musicInfo, ++this.loadRequestId, options);
       return;
     }
 
@@ -221,7 +221,7 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
     this.clearDecodedAudio();
     this.clearDecodedFile();
     this.clearObjectUrl();
-    void this.audioContext?.close();
+    this.audioContext?.close();
     this.audioContext = null;
     this.biquadFilters = [];
     this.mediaSource = null;
@@ -287,7 +287,7 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
     if (!filePath || filePath === exceptPath) return;
 
     this.currentDecodedFilePath = null;
-    void removeFile(filePath);
+    removeFile(filePath);
   }
 
   private clearObjectUrl(exceptUrl?: string): void {
@@ -423,7 +423,7 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
       });
     };
     if (this.audioContext.state === 'suspended') {
-      void this.audioContext.resume();
+      this.audioContext.resume();
     }
     source.start(0, this.decodedStartOffset);
     this.startDecodedProgressTimer();
@@ -495,7 +495,7 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
     }
 
     if (this.isDisposed || requestId !== this.loadRequestId) {
-      if (resolved?.decodedFilePath) void removeFile(resolved.decodedFilePath);
+      if (resolved?.decodedFilePath) removeFile(resolved.decodedFilePath);
       if (resolved?.objectUrl) globalThis.URL?.revokeObjectURL(resolved.objectUrl);
       return;
     }
@@ -553,10 +553,10 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
 
     this.ensureAudioGraph();
     if (this.audioContext?.state === 'suspended') {
-      void this.audioContext.resume();
+      this.audioContext.resume();
     }
 
-    void audio
+    audio
       .play()
       .then(() => {
         this.publishAudioSnapshot({

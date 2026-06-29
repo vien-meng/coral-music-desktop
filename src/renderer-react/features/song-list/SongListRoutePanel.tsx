@@ -79,7 +79,7 @@ export const SongListRoutePanel = observer(() => {
 
   // Handlers
   const loadCurrentList = useCallback(() => {
-    void songList.loadList(
+    songList.loadList(
       songList.activeSource,
       songList.listInfo.tagId,
       songList.listInfo.sortId,
@@ -90,7 +90,7 @@ export const SongListRoutePanel = observer(() => {
   const handlePageChange = useCallback(
     (page: number) => {
       songList.setListInfo({ page });
-      void songList.loadList(
+      songList.loadList(
         songList.activeSource,
         songList.listInfo.tagId,
         songList.listInfo.sortId,
@@ -103,18 +103,14 @@ export const SongListRoutePanel = observer(() => {
   const handleDetailPageChange = useCallback(
     (page: number) => {
       if (!songList.listDetailInfo.id) return;
-      void songList.loadListDetail(
-        songList.listDetailInfo.id,
-        songList.listDetailInfo.source,
-        page,
-      );
+      songList.loadListDetail(songList.listDetailInfo.id, songList.listDetailInfo.source, page);
     },
     [songList],
   );
 
   const handleSelectSongList = useCallback(
     (item: { id: string; source: LX.OnlineSource }) => {
-      void songList.loadListDetail(item.id, item.source);
+      songList.loadListDetail(item.id, item.source);
     },
     [songList],
   );
@@ -136,7 +132,7 @@ export const SongListRoutePanel = observer(() => {
   }, [songList.listDetailInfo.id, songList.listDetailInfo.list.length]);
 
   const handleLoadAllTags = useCallback(() => {
-    void songList.loadTags();
+    songList.loadTags();
   }, [songList]);
 
   // Scroll position save/restore
@@ -172,7 +168,7 @@ export const SongListRoutePanel = observer(() => {
             value={songList.activeSource}
             onChange={(source) => {
               songList.setListInfo({ page: 1, source, sortId: '', tagId: '' });
-              void songList.loadTags(source);
+              songList.loadTags(source);
             }}
             options={songList.sources.map((s) => ({ label: formatSource(s), value: s }))}
             className="coral-source-select"
@@ -263,7 +259,7 @@ export const SongListRoutePanel = observer(() => {
             groupedTags={groupedTags}
             onSelect={(tag) => {
               songList.setListInfo({ page: 1, tagId: tag.id });
-              void songList.loadList(songList.activeSource, tag.id, songList.listInfo.sortId, 1);
+              songList.loadList(songList.activeSource, tag.id, songList.listInfo.sortId, 1);
             }}
           />
         </Space>

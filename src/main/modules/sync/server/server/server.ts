@@ -34,7 +34,7 @@ const codeTools: {
   start() {
     this.stop()
     this.timeout = setInterval(() => {
-      void handleGenerateCode()
+      handleGenerateCode()
     }, 60 * 3 * 1000)
   },
   stop() {
@@ -138,7 +138,7 @@ const handleStartServer = async(port = 9527, ip = '0.0.0.0') => await new Promis
         msg = SYNC_CODE.idPrefix + getServerId()
         break
       case '/ah':
-        void authCode(req, res, status.code)
+        authCode(req, res, status.code)
         break
       default:
         code = 401
@@ -178,7 +178,7 @@ const handleStartServer = async(port = 9527, ip = '0.0.0.0') => await new Promis
       timeout: 120 * 1000,
       sendMessage(data) {
         if (disconnected) throw new Error('disconnected')
-        void encryptMsg(socket.keyInfo, JSON.stringify(data)).then((data) => {
+        encryptMsg(socket.keyInfo, JSON.stringify(data)).then((data) => {
           // console.log('sendData', eventName)
           socket.send(data)
         }).catch(err => {
@@ -203,7 +203,7 @@ const handleStartServer = async(port = 9527, ip = '0.0.0.0') => await new Promis
     socket.remoteQueueDislike = msg2call.createQueueRemote('dislike')
     socket.addEventListener('message', ({ data }) => {
       if (typeof data != 'string') return
-      void decryptMsg(socket.keyInfo, data).then((data) => {
+      decryptMsg(socket.keyInfo, data).then((data) => {
         let syncData: any
         try {
           syncData = JSON.parse(data)
@@ -222,7 +222,7 @@ const handleStartServer = async(port = 9527, ip = '0.0.0.0') => await new Promis
     socket.addEventListener('close', () => {
       const err = new Error('closed')
       try {
-        for (const handler of closeEvents) void handler(err)
+        for (const handler of closeEvents) handler(err)
       } catch (err: any) {
         log.error(err?.message)
       }
@@ -249,7 +249,7 @@ const handleStartServer = async(port = 9527, ip = '0.0.0.0') => await new Promis
       for (const client of wss.clients) handler(client)
     }
 
-    void handleConnection(socket, request)
+    handleConnection(socket, request)
   })
 
   httpServer.on('upgrade', function upgrade(request, socket, head) {
@@ -309,7 +309,7 @@ const handleStartServer = async(port = 9527, ip = '0.0.0.0') => await new Promis
     const bind = typeof addr == 'string' ? `pipe ${addr}` : `port ${addr.port}`
     log.info(`Listening on ${ip} ${bind}`)
     resolve(null)
-    void registerLocalSyncEvent(wss!)
+    registerLocalSyncEvent(wss!)
   })
 
   host = `http://${ip}:${port}`
@@ -378,7 +378,7 @@ export const startServer = async(port: number) => {
     status.message = ''
     status.address = getAddress()
 
-    void generateCode()
+    generateCode()
     codeTools.start()
   }).catch(err => {
     console.log(err)

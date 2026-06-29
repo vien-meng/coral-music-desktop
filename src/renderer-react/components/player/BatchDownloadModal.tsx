@@ -61,7 +61,7 @@ export const BatchDownloadModal = ({ musics, onClose }: BatchDownloadModalProps)
         qualityList,
         '',
       );
-      void rootStore.download.refreshTasks();
+      rootStore.download.refreshTasks();
     } finally {
       setIsCreating(false);
       onClose();
@@ -96,7 +96,7 @@ export const BatchDownloadModal = ({ musics, onClose }: BatchDownloadModalProps)
                 icon={<DownloadOutlined />}
                 loading={isCreating}
                 onClick={() => {
-                  void handleDownloadAll(quality);
+                  handleDownloadAll(quality);
                 }}
               >
                 {qualityLabels[quality as string] ?? quality}

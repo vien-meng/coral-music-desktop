@@ -34,7 +34,7 @@ export const DislikeListModal = observer(({ onClose, onSaved, open }: DislikeLis
       onSaved?.();
       onClose();
     } catch (err) {
-      void message.error(`保存失败：${err instanceof Error ? err.message : String(err)}`);
+      message.error(`保存失败：${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsSaving(false);
     }

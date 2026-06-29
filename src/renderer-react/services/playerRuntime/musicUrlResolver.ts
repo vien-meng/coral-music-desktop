@@ -395,7 +395,7 @@ const fetchOtherSourceMusicList = async (
 
       if (otherSourceCache.size > 10) otherSourceCache.clear();
       otherSourceCache.set(cacheKey, list);
-      if (list.length) void cacheService.saveCachedOtherSource(musicInfo.id, list);
+      if (list.length) cacheService.saveCachedOtherSource(musicInfo.id, list);
       return list;
     })
     .finally(() => {

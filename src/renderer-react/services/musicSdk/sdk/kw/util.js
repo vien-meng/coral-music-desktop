@@ -39,7 +39,7 @@ export const formatSinger = (rawData) => rawData.replace(/&/g, '、');
 export const matchToken = (headers) => {
   try {
     return headers['set-cookie'][0].match(/kw_token=(\w+)/)[1];
-  } catch (err) {
+  } catch {
     return null;
   }
 };

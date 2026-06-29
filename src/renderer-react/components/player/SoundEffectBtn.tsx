@@ -25,7 +25,7 @@ export const SoundEffectBtn = observer(() => {
   );
 
   const updateSetting = (setting: Partial<LX.AppSetting>): void => {
-    void settings.updateAppSetting(setting);
+    settings.updateAppSetting(setting);
   };
 
   const resetEq = (): void => {

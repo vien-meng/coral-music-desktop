@@ -218,7 +218,7 @@ const VirtualizedListInner = <T,>(
       if (!container) return;
 
       if (onScrollEnd) {
-        void new Promise<void>((resolve) => {
+        new Promise<void>((resolve) => {
           if (cancelScrollRef.current) {
             cancelScrollRef.current(resolve);
           } else {

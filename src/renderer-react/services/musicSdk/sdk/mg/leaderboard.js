@@ -136,7 +136,7 @@ export default {
       bangid: '23604032',
     },
   ],
-  getUrl(id, page) {
+  getUrl(id, _page) {
     return `https://app.c.nf.migu.cn/MIGUM2.0/v1.0/content/querycontentbyId.do?columnId=${id}&needAll=0`;
     // return `http://m.music.migu.cn/migu/remoting/cms_list_tag?nid=${id}&pageSize=${this.limit}&pageNo=${page - 1}`
   },
@@ -192,7 +192,7 @@ export default {
   //   }
   //   return list
   // },
-  async getBoards(retryNum = 0) {
+  async getBoards(_retryNum = 0) {
     // if (++retryNum > 3) return Promise.reject(new Error('try max num'))
     // let response
     // try {

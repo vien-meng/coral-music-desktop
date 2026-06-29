@@ -117,12 +117,12 @@ const importNewListData = async (lists: BackupListInfo[]): Promise<void> => {
 const importOldSettingData = (setting: Record<string, unknown>): void => {
   const migrated = migrateSetting(setting);
   migrated['common.isAgreePact'] = false;
-  void settingService.updateAppSetting(migrated);
+  settingService.updateAppSetting(migrated);
 };
 
 const importNewSettingData = (setting: Partial<LX.AppSetting>): void => {
   setting['common.isAgreePact'] = false;
-  void settingService.updateAppSetting(setting);
+  settingService.updateAppSetting(setting);
 };
 
 export const importAllData = async (path: string): Promise<void> => {
@@ -153,7 +153,7 @@ export const importAllData = async (path: string): Promise<void> => {
         break;
     }
   } catch (err) {
-    void message.error(`导入失败：${err instanceof Error ? err.message : String(err)}`);
+    message.error(`导入失败：${err instanceof Error ? err.message : String(err)}`);
   }
 };
 
@@ -167,7 +167,7 @@ export const exportAllData = async (path: string, appSetting: LX.AppSetting): Pr
     };
     await saveLxConfigFile(path, allData);
   } catch (err) {
-    void message.error(`导出失败：${err instanceof Error ? err.message : String(err)}`);
+    message.error(`导出失败：${err instanceof Error ? err.message : String(err)}`);
   }
 };
 
@@ -188,7 +188,7 @@ export const importSetting = async (path: string): Promise<void> => {
         break;
     }
   } catch (err) {
-    void message.error(`导入失败：${err instanceof Error ? err.message : String(err)}`);
+    message.error(`导入失败：${err instanceof Error ? err.message : String(err)}`);
   }
 };
 
@@ -201,7 +201,7 @@ export const exportSetting = async (path: string, appSetting: LX.AppSetting): Pr
     };
     await saveLxConfigFile(path, data);
   } catch (err) {
-    void message.error(`导出失败：${err instanceof Error ? err.message : String(err)}`);
+    message.error(`导出失败：${err instanceof Error ? err.message : String(err)}`);
   }
 };
 
@@ -230,7 +230,7 @@ export const importPlayList = async (path: string): Promise<void> => {
         break;
     }
   } catch (err) {
-    void message.error(`导入失败：${err instanceof Error ? err.message : String(err)}`);
+    message.error(`导入失败：${err instanceof Error ? err.message : String(err)}`);
   }
 };
 
@@ -243,7 +243,7 @@ export const exportPlayList = async (path: string): Promise<void> => {
     };
     await saveLxConfigFile(path, data);
   } catch (err) {
-    void message.error(`导出失败：${err instanceof Error ? err.message : String(err)}`);
+    message.error(`导出失败：${err instanceof Error ? err.message : String(err)}`);
   }
 };
 
@@ -267,7 +267,7 @@ export const exportPlayListToText = async (savePath: string, isMerge: boolean): 
       }
     }
   } catch (err) {
-    void message.error(`导出失败：${err instanceof Error ? err.message : String(err)}`);
+    message.error(`导出失败：${err instanceof Error ? err.message : String(err)}`);
   }
 };
 
@@ -314,7 +314,7 @@ export const exportPlayListToCsv = async (
       }
     }
   } catch (err) {
-    void message.error(`导出失败：${err instanceof Error ? err.message : String(err)}`);
+    message.error(`导出失败：${err instanceof Error ? err.message : String(err)}`);
   }
 };
 

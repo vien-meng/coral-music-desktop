@@ -111,7 +111,7 @@ export default () => {
 
   mainOn(WIN_MAIN_RENDERER_EVENT_NAME.update_download_update, () => {
     if (!autoUpdater.isUpdaterActive()) return
-    void autoUpdater.downloadUpdate()
+    autoUpdater.downloadUpdate()
   })
 
   mainOn(WIN_MAIN_RENDERER_EVENT_NAME.quit_update, () => {
@@ -142,6 +142,6 @@ const checkUpdate = () => {
     handleSendEvent({ type: WIN_MAIN_RENDERER_EVENT_NAME.update_error, info: 'failed' })
   } else {
     autoUpdater.autoDownload = global.lx.appSetting['common.tryAutoUpdate']
-    void autoUpdater.checkForUpdates()
+    autoUpdater.checkForUpdates()
   }
 }

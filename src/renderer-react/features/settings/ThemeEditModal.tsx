@@ -310,7 +310,7 @@ export const ThemeEditModal = observer(
         previewSnapshotRef.current = null;
       }
       if (tempBgRef.current) {
-        void removeFile(tempBgRef.current).catch(() => {});
+        removeFile(tempBgRef.current).catch(() => {});
         tempBgRef.current = null;
       }
       setPreview(false);
@@ -349,7 +349,7 @@ export const ThemeEditModal = observer(
         tempBgRef.current = destPath;
         setBgPath(destPath);
       } catch (err) {
-        void message.error(`选择图片失败：${err instanceof Error ? err.message : String(err)}`);
+        message.error(`选择图片失败：${err instanceof Error ? err.message : String(err)}`);
       }
     };
 
@@ -416,7 +416,7 @@ export const ThemeEditModal = observer(
 
     const handleSave = async (): Promise<void> => {
       if (!themeName.trim()) {
-        void message.warning('请输入主题名称');
+        message.warning('请输入主题名称');
         return;
       }
 
@@ -451,13 +451,13 @@ export const ThemeEditModal = observer(
         onSaved?.();
         onClose();
       } catch (err) {
-        void message.error(`保存失败：${err instanceof Error ? err.message : String(err)}`);
+        message.error(`保存失败：${err instanceof Error ? err.message : String(err)}`);
       }
     };
 
     const handleSaveNew = async (): Promise<void> => {
       if (!themeName.trim()) {
-        void message.warning('请输入主题名称');
+        message.warning('请输入主题名称');
         return;
       }
 
@@ -477,7 +477,7 @@ export const ThemeEditModal = observer(
         onSaved?.();
         onClose();
       } catch (err) {
-        void message.error(`另存失败：${err instanceof Error ? err.message : String(err)}`);
+        message.error(`另存失败：${err instanceof Error ? err.message : String(err)}`);
       }
     };
 
@@ -495,7 +495,7 @@ export const ThemeEditModal = observer(
             await theme.removeUserTheme(themeId);
             onClose();
           } catch (err) {
-            void message.error(`删除失败：${err instanceof Error ? err.message : String(err)}`);
+            message.error(`删除失败：${err instanceof Error ? err.message : String(err)}`);
           }
         },
       });

@@ -225,23 +225,23 @@ export const LocalListRoutePanel = observer(() => {
   }, [list.selectedMusics]);
 
   const loadSelectedList = (): void => {
-    void list.loadSelectedListMusics();
+    list.loadSelectedListMusics();
   };
 
   const handleCreateList = (): void => {
     const name = createName.trim();
     if (!name) return;
     setCreateName('');
-    void list.createUserList(name);
+    list.createUserList(name);
   };
 
   const handleCreateLocalList = (): void => {
     setCreateName('');
-    void list.createUserList('本地音乐');
+    list.createUserList('本地音乐');
   };
 
   const handleRenameList = (): void => {
-    void list.renameSelectedList(renameName);
+    list.renameSelectedList(renameName);
   };
 
   const handleRemoveList = (): void => {
@@ -314,7 +314,7 @@ export const LocalListRoutePanel = observer(() => {
 
   const handleCopySelectedMusics = (): void => {
     if (!targetListId || !selectedMusics.length) return;
-    void list.copyMusicsToList(targetListId, selectedMusics, addMusicLocationType);
+    list.copyMusicsToList(targetListId, selectedMusics, addMusicLocationType);
   };
 
   const handleMoveSelectedMusics = (): void => {
@@ -334,7 +334,7 @@ export const LocalListRoutePanel = observer(() => {
   const handleMoveSelectedMusicsToPosition = (position: number): void => {
     if (!selectedMusics.length) return;
 
-    void list.moveSelectedMusicsToPosition(position, selectedMusics).then(() => {
+    list.moveSelectedMusicsToPosition(position, selectedMusics).then(() => {
       setSelectedMusicIds([]);
       setMoveTargetPosition(null);
     });
@@ -348,15 +348,13 @@ export const LocalListRoutePanel = observer(() => {
   const handleSaveCurrentSort = (): void => {
     if (!list.selectedMusics.length) return;
 
-    void list.replaceSelectedMusicOrder(
-      sortMusicInfos(list.selectedMusics, sortField, sortDirection),
-    );
+    list.replaceSelectedMusicOrder(sortMusicInfos(list.selectedMusics, sortField, sortDirection));
   };
 
   const handleShuffleSelectedList = (): void => {
     if (list.selectedMusics.length < 2) return;
 
-    void list.replaceSelectedMusicOrder(shuffleMusicInfos(list.selectedMusics));
+    list.replaceSelectedMusicOrder(shuffleMusicInfos(list.selectedMusics));
   };
 
   const handleDragReorder = (fromIndex: number, toIndex: number): void => {
@@ -368,7 +366,7 @@ export const LocalListRoutePanel = observer(() => {
 
   const handleSaveDragOrder = (): void => {
     if (!dragList.length || dragList.length !== list.selectedMusics.length) return;
-    void list.replaceSelectedMusicOrder(dragList);
+    list.replaceSelectedMusicOrder(dragList);
     setIsDraggingMode(false);
     setDragList([]);
   };
@@ -415,11 +413,11 @@ export const LocalListRoutePanel = observer(() => {
       .map((item) => item.musicInfo.id);
     if (!removalIds.length) return;
 
-    void handleRemoveDuplicateIds(removalIds);
+    handleRemoveDuplicateIds(removalIds);
   };
 
   const handleImportListPart = (): void => {
-    void appService
+    appService
       .showSelectDialog({
         filters: [
           { extensions: ['json', 'lxmc'], name: 'Play List Part' },
@@ -450,7 +448,7 @@ export const LocalListRoutePanel = observer(() => {
 
   const handleImportLocalAudio = async (): Promise<void> => {
     if (appSetting && !appSetting['player.localAudio.enabled']) {
-      void message.warning('本地音频导入已关闭，请在“设置 > 本地解码”开启。');
+      message.warning('本地音频导入已关闭，请在“设置 > 本地解码”开启。');
       ui.setActiveRoute('setting');
       ui.requestQuickAction('configureExternalDecoder');
       return;
@@ -463,7 +461,7 @@ export const LocalListRoutePanel = observer(() => {
 
     const hasTargetList = await ensureLocalAudioTargetList();
     if (!hasTargetList) {
-      void message.warning('请先创建一个列表');
+      message.warning('请先创建一个列表');
       return;
     }
 
@@ -484,7 +482,7 @@ export const LocalListRoutePanel = observer(() => {
     if (!importResult) return;
     setSelectedMusicIds([]);
     if (!importResult.importedMusics.length) {
-      void message.warning(
+      message.warning(
         importResult.candidateCount
           ? `已跳过 ${importResult.duplicateCount} 首重复本地音频`
           : '未发现支持的本地音频文件',
@@ -495,13 +493,13 @@ export const LocalListRoutePanel = observer(() => {
     const duplicateText = importResult.duplicateCount
       ? `，跳过重复 ${importResult.duplicateCount} 首`
       : '';
-    void message.success(`已导入 ${importResult.importedMusics.length} 首本地音频${duplicateText}`);
+    message.success(`已导入 ${importResult.importedMusics.length} 首本地音频${duplicateText}`);
   };
 
   const handleExportListPart = (): void => {
     if (!list.selectedList) return;
 
-    void appService
+    appService
       .showSaveDialog({
         defaultPath: `coral_list_part_${filterFileName(list.selectedList.name)}.lxmc`,
         title: '导出列表',
@@ -515,10 +513,10 @@ export const LocalListRoutePanel = observer(() => {
   const handleCopyMusicName = (musicInfo: LX.Music.MusicInfo): void => {
     const musicName = `${musicInfo.name}${musicInfo.singer ? ` - ${musicInfo.singer}` : ''}`;
 
-    void navigator.clipboard
+    navigator.clipboard
       .writeText(musicName)
       .then(() => {
-        void message.success('已复制歌曲名');
+        message.success('已复制歌曲名');
       })
       .catch((error) => {
         list.setActionError(error instanceof Error ? error.message : String(error));
@@ -534,7 +532,7 @@ export const LocalListRoutePanel = observer(() => {
     search.setSearchType('music');
     search.setSearchText(searchText);
     ui.setActiveRoute('search');
-    void search.submitSearch();
+    search.submitSearch();
   };
 
   const searchSourceToggleCandidates = async (text: string): Promise<void> => {
@@ -560,7 +558,7 @@ export const LocalListRoutePanel = observer(() => {
     setSourceToggleSearchText(searchText);
     setSourceToggleCandidates([]);
     setIsSourceToggleOpen(true);
-    void searchSourceToggleCandidates(searchText);
+    searchSourceToggleCandidates(searchText);
   };
 
   const handleDownload = (musicInfo: LX.Music.MusicInfo): void => {
@@ -573,7 +571,7 @@ export const LocalListRoutePanel = observer(() => {
   };
 
   const handleOpenSourceDetail = (musicInfo: LX.Music.MusicInfo): void => {
-    void musicDetailService.openMusicDetail(musicInfo);
+    musicDetailService.openMusicDetail(musicInfo);
   };
 
   const handleConfirmSourceToggle = (targetMusicInfo: LX.Music.MusicInfo): void => {
@@ -594,7 +592,7 @@ export const LocalListRoutePanel = observer(() => {
     };
 
     if (!duplicateTarget) {
-      void replaceMusic(false);
+      replaceMusic(false);
       return;
     }
 
@@ -610,7 +608,7 @@ export const LocalListRoutePanel = observer(() => {
 
   useEffect(() => {
     if (!ui.consumeQuickAction('importLocalAudio')) return;
-    void handleImportLocalAudio();
+    handleImportLocalAudio();
   }, [ui.pendingQuickAction]);
 
   return (
@@ -626,7 +624,7 @@ export const LocalListRoutePanel = observer(() => {
             value: userList.id,
           }))}
           onChange={(listId) => {
-            void list.loadSelectedListMusics(listId);
+            list.loadSelectedListMusics(listId);
           }}
         />
         <Button icon={<ReloadOutlined />} loading={list.isLoadingMusics} onClick={loadSelectedList}>
@@ -645,7 +643,7 @@ export const LocalListRoutePanel = observer(() => {
           disabled={list.isHydrating}
           loading={list.isImportingLocalAudio}
           onClick={() => {
-            void handleImportLocalAudio();
+            handleImportLocalAudio();
           }}
         >
           本地音频
@@ -689,8 +687,8 @@ export const LocalListRoutePanel = observer(() => {
               },
             ],
             onClick: ({ key }) => {
-              if (key === 'listTop') void list.moveSelectedListToPosition(0);
-              if (key === 'listBottom') void list.moveSelectedListToPosition(list.userLists.length);
+              if (key === 'listTop') list.moveSelectedListToPosition(0);
+              if (key === 'listBottom') list.moveSelectedListToPosition(list.userLists.length);
               if (key === 'duplicate') handleRemoveDuplicateMusics();
               if (key === 'clear') handleClearMusics();
             },
@@ -955,7 +953,7 @@ export const LocalListRoutePanel = observer(() => {
                     icon={<FileAddOutlined />}
                     loading={list.isImportingLocalAudio}
                     onClick={() => {
-                      void handleImportLocalAudio();
+                      handleImportLocalAudio();
                     }}
                   >
                     导入本地音频
@@ -997,7 +995,7 @@ export const LocalListRoutePanel = observer(() => {
                   icon={<DeleteOutlined />}
                   loading={list.isMutatingMusic}
                   onClick={() => {
-                    void list.removeMusicFromSelectedList(item.id);
+                    list.removeMusicFromSelectedList(item.id);
                   }}
                 />
               </Tooltip>,
@@ -1075,7 +1073,7 @@ export const LocalListRoutePanel = observer(() => {
                 }}
                 onSearch={(value) => {
                   setSourceToggleSearchText(value);
-                  void searchSourceToggleCandidates(value);
+                  searchSourceToggleCandidates(value);
                 }}
               />
               <OnlineMusicPreviewList
@@ -1134,7 +1132,7 @@ export const LocalListRoutePanel = observer(() => {
                         size="small"
                         loading={list.isMutatingMusic}
                         onClick={() => {
-                          void handleRemoveDuplicateIds([item.musicInfo.id]);
+                          handleRemoveDuplicateIds([item.musicInfo.id]);
                         }}
                       >
                         移除

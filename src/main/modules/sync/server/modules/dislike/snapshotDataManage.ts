@@ -128,7 +128,7 @@ export class SnapshotDataManage {
     this.saveSnapshotInfoThrottle = throttle(() => {
       fs.writeFile(this.snapshotInfoFilePath, JSON.stringify(this.snapshotInfo), 'utf8', (err) => {
         if (err) console.error(err)
-        void this.clearOldSnapshot()
+        this.clearOldSnapshot()
       })
     })
 

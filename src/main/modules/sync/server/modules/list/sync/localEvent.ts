@@ -14,7 +14,7 @@ const sendListAction = async(wss: LX.Sync.Server.SocketServer, action: LX.Sync.L
     if (!client.moduleReadys?.list) continue
     // eslint-disable-next-line require-atomic-updates
     if (!key) key = await userSpace.listManage.createSnapshot()
-    void client.remoteQueueList.onListSyncAction(action).then(async() => {
+    client.remoteQueueList.onListSyncAction(action).then(async() => {
       return userSpace.listManage.updateDeviceSnapshotKey(client.keyInfo.clientId, key)
     }).catch(err => {
       // TODO send status
@@ -33,7 +33,7 @@ export const registerEvent = (wss: LX.Sync.Server.SocketServer) => {
   // })
   unregisterEvent()
   unregisterLocalListAction = registerListActionEvent((action) => {
-    void sendListAction(wss, action)
+    sendListAction(wss, action)
   })
 }
 

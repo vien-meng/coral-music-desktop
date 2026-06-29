@@ -131,7 +131,7 @@ export default {
       ),
     );
   },
-  async getBoards(retryNum = 0) {
+  async getBoards(_retryNum = 0) {
     this.list = boardList;
     return {
       list: boardList,

@@ -18,7 +18,7 @@ export const LyricSelectionPanel = observer(() => {
 
   const handleCopyAll = async (): Promise<void> => {
     await copyText(lyricText);
-    void message.success('歌词已复制');
+    message.success('歌词已复制');
   };
 
   const handleCopySelected = (event: React.MouseEvent<HTMLDivElement>): void => {
@@ -26,8 +26,8 @@ export const LyricSelectionPanel = observer(() => {
     if (!selectedText) return;
 
     event.preventDefault();
-    void copyText(selectedText).then(() => {
-      void message.success('已复制选中歌词');
+    copyText(selectedText).then(() => {
+      message.success('已复制选中歌词');
     });
   };
 
@@ -45,7 +45,7 @@ export const LyricSelectionPanel = observer(() => {
             icon={<CopyOutlined />}
             shape="circle"
             onClick={() => {
-              void handleCopyAll();
+              handleCopyAll();
             }}
           />
           <Button
@@ -60,8 +60,8 @@ export const LyricSelectionPanel = observer(() => {
       </Flex>
       {player.lyricSelectionLines.length ? (
         <div className="coral-playdetail-lyric-select-content" onContextMenu={handleCopySelected}>
-          {player.lyricSelectionLines.map((line, index) => (
-            <p key={`${index}-${line}`}>{line}</p>
+          {player.lyricSelectionLines.map((line) => (
+            <p key={line}>{line}</p>
           ))}
         </div>
       ) : (

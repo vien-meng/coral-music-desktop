@@ -35,7 +35,7 @@ export const TogglePlayModeBtn = observer(() => {
   const currentMode = (settings.appSetting?.['player.togglePlayMethod'] ?? 'listLoop') as PlayMode;
 
   const handleSetMode = (mode: PlayMode): void => {
-    void settings.updateAppSetting({ 'player.togglePlayMethod': mode });
+    settings.updateAppSetting({ 'player.togglePlayMethod': mode });
   };
 
   const content = (

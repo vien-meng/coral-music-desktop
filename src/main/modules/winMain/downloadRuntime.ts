@@ -75,16 +75,16 @@ const completeExistingFile = async(task: LX.Download.ListItem, filePath: string)
   task.progress = 100
   task.writeQueue = 0
   setTaskStatus(task, DOWNLOAD_STATUS.COMPLETED, '文件已存在')
-  void saveTask(task)
+  saveTask(task)
   emitAction(task, { action: 'complete' })
-  void runCompleteSideEffects(task)
+  runCompleteSideEffects(task)
   return task
 }
 
 const markTaskError = (task: LX.Download.ListItem, error: unknown): LX.Download.ListItem => {
   const message = error instanceof Error ? error.message : String(error)
   setTaskStatus(task, DOWNLOAD_STATUS.ERROR, message || '下载失败')
-  void saveTask(task)
+  saveTask(task)
   emitAction(task, {
     action: 'error',
     data: { message: task.statusText },
@@ -227,14 +227,14 @@ export const startDownloadTask = async({ task: rawTask, url, isRetry = false }: 
       forceResume: true,
       onCompleted: () => {
         activeDownloads.delete(task.id)
-        void completeDownloadTask(task, '下载完成')
+        completeDownloadTask(task, '下载完成')
       },
       onError: (error) => {
         activeDownloads.delete(task.id)
         const message = error instanceof Error ? error.message : String(error)
         if (/ENOTFOUND|ECONNRESET|ETIMEDOUT|403|404|416|aborted/i.test(message)) {
           setTaskStatus(task, DOWNLOAD_STATUS.ERROR, '下载地址失效')
-          void saveTask(task)
+          saveTask(task)
           emitAction(task, { action: 'refreshUrl' })
           return
         }
@@ -244,7 +244,7 @@ export const startDownloadTask = async({ task: rawTask, url, isRetry = false }: 
         activeDownloads.delete(task.id)
         if (response.statusCode === 403 || response.statusCode === 404 || response.statusCode === 416) {
           setTaskStatus(task, DOWNLOAD_STATUS.ERROR, '下载地址失效')
-          void saveTask(task)
+          saveTask(task)
           emitAction(task, { action: 'refreshUrl' })
           return
         }
@@ -256,14 +256,14 @@ export const startDownloadTask = async({ task: rawTask, url, isRetry = false }: 
         task.progress = progress.progress
         task.speed = progress.speed
         task.writeQueue = progress.writeQueue
-        void saveTask(task)
+        saveTask(task)
         emitAction(task, { action: 'progress', data: progress })
       },
       onStop: () => {
         activeDownloads.delete(task.id)
         if (task.status === DOWNLOAD_STATUS.COMPLETED || task.status === DOWNLOAD_STATUS.ERROR) return
         setTaskStatus(task, DOWNLOAD_STATUS.PAUSE, '已暂停')
-        void saveTask(task)
+        saveTask(task)
         emitAction(task, { action: 'statusText', data: task.statusText })
       },
     })

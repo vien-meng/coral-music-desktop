@@ -44,6 +44,6 @@ export default () => {
   init()
 
   global.lx.event_app.on('main_window_close', () => {
-    void closeWindow()
+    closeWindow()
   })
 }

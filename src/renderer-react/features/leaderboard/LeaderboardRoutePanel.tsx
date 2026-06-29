@@ -25,7 +25,7 @@ export const LeaderboardRoutePanel = observer(() => {
 
   const handlePageChange = (page: number): void => {
     if (!activeBoardId) return;
-    void leaderboard.loadListDetail(activeBoardId, page);
+    leaderboard.loadListDetail(activeBoardId, page);
   };
 
   const boardListOptions = useMemo(
@@ -45,7 +45,7 @@ export const LeaderboardRoutePanel = observer(() => {
             value={leaderboard.source}
             onChange={(source) => {
               leaderboard.setRouteState(source, null);
-              void leaderboard.loadBoards(source);
+              leaderboard.loadBoards(source);
             }}
             sources={leaderboard.sources}
           />
@@ -108,7 +108,7 @@ export const LeaderboardRoutePanel = observer(() => {
               activeBoardId={leaderboard.boardId}
               boards={leaderboard.activeBoardList}
               onSelect={(board) => {
-                void leaderboard.loadListDetail(board.id);
+                leaderboard.loadListDetail(board.id);
                 setViewMode('music');
               }}
             />

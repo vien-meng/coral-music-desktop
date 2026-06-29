@@ -119,7 +119,7 @@ const sendRequest = (
         body = resp.body = resp.raw.toString();
         try {
           resp.body = JSON.parse(resp.body as string);
-        } catch (_) {}
+        } catch {}
         body = resp.body;
       }
       callback(err, resp as HttpResponse | null, body);

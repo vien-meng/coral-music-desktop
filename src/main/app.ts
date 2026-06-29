@@ -181,7 +181,7 @@ export const listenerAppEvent = (startApp: () => void) => {
     })
     contents.setWindowOpenHandler(({ url }) => {
       if (!/^devtools/.test(url) && /^https?:\/\//.test(url)) {
-        void shell.openExternal(url)
+        shell.openExternal(url)
       }
       console.log(url)
       return { action: 'deny' }

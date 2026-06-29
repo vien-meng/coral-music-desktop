@@ -4,14 +4,9 @@ import {
   isNativeLocalAudioExtension,
   nativeLocalAudioExtensions,
   normalizeAudioExtension,
-} from '@shared/playbackCapabilities'
-import type { IAudioMetadata, parseFile } from 'music-metadata'
-import {
-  basename,
-  extname,
-  isDirectory,
-  readDirectory,
-} from './nodeBridgeService'
+} from '@shared/playbackCapabilities';
+import type { IAudioMetadata, parseFile } from 'music-metadata';
+import { basename, extname, isDirectory, readDirectory } from './nodeBridgeService';
 
 interface MusicMetadataModule {
   parseFile: typeof parseFile;
@@ -33,10 +28,15 @@ export interface LocalAudioImportOptions {
   nativeExtensions?: readonly string[];
 }
 
-const createExtensionSet = (options: LocalAudioImportOptions = {}): Set<string> => new Set([
-    ...(options.nativeExtensions?.length ? options.nativeExtensions : nativeLocalAudioExtensions),
-    ...(options.externalExtensions?.length ? options.externalExtensions : externalDecoderExtensions),
-  ].map(normalizeAudioExtension))
+const createExtensionSet = (options: LocalAudioImportOptions = {}): Set<string> =>
+  new Set(
+    [
+      ...(options.nativeExtensions?.length ? options.nativeExtensions : nativeLocalAudioExtensions),
+      ...(options.externalExtensions?.length
+        ? options.externalExtensions
+        : externalDecoderExtensions),
+    ].map(normalizeAudioExtension),
+  );
 
 const isSupportedLocalAudioFile = (filePath: string, extensionSet: Set<string>): boolean => {
   const ext = normalizeAudioExtension(extname(filePath));
@@ -85,7 +85,7 @@ const parseLocalAudioName = (filePath: string): { name: string; singer: string }
 const getMusicMetadataModule = (): MusicMetadataModule | null => {
   try {
     return (
-      (globalThis as typeof globalThis & MusicMetadataGlobal).require?.('music-metadata') ?? null;
+      (globalThis as typeof globalThis & MusicMetadataGlobal).require?.('music-metadata') ?? null
     );
   } catch {
     return null;
@@ -191,7 +191,8 @@ export const enrichLocalMusicInfoWithMetadata = async (
 
 export const createLocalMusicInfoWithMetadata = async (
   filePath: string,
-): Promise<LX.Music.MusicInfoLocal> => await enrichLocalMusicInfoWithMetadata(createLocalMusicInfo(filePath))
+): Promise<LX.Music.MusicInfoLocal> =>
+  await enrichLocalMusicInfoWithMetadata(createLocalMusicInfo(filePath));
 
 export const createLocalMusicInfosFromPaths = async (
   inputPaths: string[],
@@ -205,7 +206,8 @@ export const createLocalMusicInfosFromPaths = async (
   return await Promise.all(uniquePaths.map(createLocalMusicInfoWithMetadata));
 };
 
-export const isLocalAudioDecoderCandidate = (ext: string): boolean => isNativeLocalAudioExtension(ext) || isExternalDecoderExtension(ext)
+export const isLocalAudioDecoderCandidate = (ext: string): boolean =>
+  isNativeLocalAudioExtension(ext) || isExternalDecoderExtension(ext);
 
 export const localAudioService = {
   createLocalMusicInfo,

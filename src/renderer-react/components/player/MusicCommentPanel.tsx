@@ -90,7 +90,7 @@ export const MusicCommentPanel = observer(() => {
           error: messageText,
           isLoading: false,
         }));
-        void message.warning(`评论读取失败：${messageText}`);
+        message.warning(`评论读取失败：${messageText}`);
       }
     },
     [musicInfo],
@@ -103,10 +103,10 @@ export const MusicCommentPanel = observer(() => {
     setHotComment(createCommentState());
     setNewComment(createCommentState());
 
-    void musicCommentService.hasComment(musicInfo).then((hasComment) => {
+    musicCommentService.hasComment(musicInfo).then((hasComment) => {
       if (!isActive) return;
       setIsAvailable(hasComment);
-      if (hasComment) void loadComments(activeKind, 1);
+      if (hasComment) loadComments(activeKind, 1);
     });
 
     return () => {
@@ -126,7 +126,7 @@ export const MusicCommentPanel = observer(() => {
         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="评论读取失败">
           <Button
             onClick={() => {
-              void loadComments(activeKind, state.page);
+              loadComments(activeKind, state.page);
             }}
           >
             重试
@@ -150,7 +150,7 @@ export const MusicCommentPanel = observer(() => {
                 size: 'small',
                 total: state.total,
                 onChange: (page) => {
-                  void loadComments(activeKind, page);
+                  loadComments(activeKind, page);
                 },
               }
             : undefined
@@ -182,7 +182,7 @@ export const MusicCommentPanel = observer(() => {
             icon={<ReloadOutlined />}
             shape="circle"
             onClick={() => {
-              void loadComments(activeKind, state.page);
+              loadComments(activeKind, state.page);
             }}
           />
           <Button
@@ -206,7 +206,7 @@ export const MusicCommentPanel = observer(() => {
           const kind = key as MusicCommentKind;
           setActiveKind(kind);
           const targetState = kind === 'hot' ? hotComment : newComment;
-          if (!targetState.comments.length) void loadComments(kind, 1);
+          if (!targetState.comments.length) loadComments(kind, 1);
         }}
       />
       <div className="coral-playdetail-comments-body">{renderList()}</div>

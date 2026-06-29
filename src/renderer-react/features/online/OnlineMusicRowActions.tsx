@@ -44,7 +44,7 @@ export const OnlineMusicRowActions = observer(
             icon={<FolderAddOutlined />}
             loading={list.isAddingMusic}
             onClick={() => {
-              void handleAddToList();
+              handleAddToList();
             }}
           />
         </Tooltip>

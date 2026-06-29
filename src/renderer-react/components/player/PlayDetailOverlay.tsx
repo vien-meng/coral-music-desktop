@@ -75,15 +75,15 @@ export const PlayDetailOverlay = observer(() => {
   };
 
   const handleMinWindow = (): void => {
-    void appService.minWindow();
+    appService.minWindow();
   };
 
   const handleMaxWindow = (): void => {
-    void appService.maximizeWindow().then(setIsMaximized);
+    appService.maximizeWindow().then(setIsMaximized);
   };
 
   const handleCloseWindow = (): void => {
-    void appService.closeWindow();
+    appService.closeWindow();
   };
 
   useEffect(() => {
@@ -94,14 +94,14 @@ export const PlayDetailOverlay = observer(() => {
 
       if (event.key === 'F11') {
         event.preventDefault();
-        void applyFullscreen(!isFullscreen);
+        applyFullscreen(!isFullscreen);
         return;
       }
 
       if (event.key !== 'Escape') return;
       event.preventDefault();
       if (isFullscreen) {
-        void applyFullscreen(false);
+        applyFullscreen(false);
         return;
       }
       player.closePlayDetail();
@@ -116,7 +116,7 @@ export const PlayDetailOverlay = observer(() => {
   const coverNode = player.coverUrl ? (
     <img src={player.coverUrl} alt={player.displayName} className="coral-playdetail-cover-img" />
   ) : (
-    <CustomerServiceOutlined className="coral-playdetail-cover-icon" />;
+    <CustomerServiceOutlined className="coral-playdetail-cover-icon" />
   );
 
   let centerNode = (
@@ -178,7 +178,7 @@ export const PlayDetailOverlay = observer(() => {
             icon={isFullscreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
             shape="circle"
             onClick={() => {
-              void handleFullscreen();
+              handleFullscreen();
             }}
           />
           {!isFullscreen ? (

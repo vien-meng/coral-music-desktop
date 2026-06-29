@@ -100,7 +100,7 @@ export const LyricMenu = observer(() => {
       setOffset(getOffset(activeLyric.lyric));
       setOriginOffset(getOffset(rawLyric.lyric || fallbackLyric.lyric));
     } catch (error) {
-      void message.warning(
+      message.warning(
         `歌词信息读取失败：${error instanceof Error ? error.message : String(error)}`,
       );
       setDraftLyric(fallbackLyric);
@@ -113,17 +113,17 @@ export const LyricMenu = observer(() => {
 
   const handleOpenChange = (nextIsOpen: boolean): void => {
     setIsOpen(nextIsOpen);
-    if (nextIsOpen) void loadLyricInfo();
+    if (nextIsOpen) loadLyricInfo();
   };
 
   const setFontSize = (nextFontSize: number): void => {
-    void settings.updateAppSetting({
+    settings.updateAppSetting({
       'playDetail.style.fontSize': clamp(nextFontSize, 70, 200),
     });
   };
 
   const setAlign = (nextAlign: LX.AppSetting['playDetail.style.align']): void => {
-    void settings.updateAppSetting({
+    settings.updateAppSetting({
       'playDetail.style.align': nextAlign,
     });
   };
@@ -146,9 +146,7 @@ export const LyricMenu = observer(() => {
         await lyricService.saveLyricEdited(musicInfo, nextLyric);
       }
     } catch (error) {
-      void message.error(
-        `歌词偏移保存失败：${error instanceof Error ? error.message : String(error)}`,
-      );
+      message.error(`歌词偏移保存失败：${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsSaving(false);
     }
@@ -227,7 +225,7 @@ export const LyricMenu = observer(() => {
           loading={isSaving}
           size="small"
           onClick={() => {
-            void saveOffset(originOffset);
+            saveOffset(originOffset);
           }}
         />
       </Flex>
@@ -235,7 +233,7 @@ export const LyricMenu = observer(() => {
         <Button
           disabled={!canEditOffset || isLoading || isSaving}
           onClick={() => {
-            void saveOffset(offset - 10);
+            saveOffset(offset - 10);
           }}
         >
           -10ms
@@ -243,7 +241,7 @@ export const LyricMenu = observer(() => {
         <Button
           disabled={!canEditOffset || isLoading || isSaving}
           onClick={() => {
-            void saveOffset(offset + 10);
+            saveOffset(offset + 10);
           }}
         >
           +10ms
@@ -253,7 +251,7 @@ export const LyricMenu = observer(() => {
         <Button
           disabled={!canEditOffset || isLoading || isSaving}
           onClick={() => {
-            void saveOffset(offset - 100);
+            saveOffset(offset - 100);
           }}
         >
           -100ms
@@ -261,7 +259,7 @@ export const LyricMenu = observer(() => {
         <Button
           disabled={!canEditOffset || isLoading || isSaving}
           onClick={() => {
-            void saveOffset(offset + 100);
+            saveOffset(offset + 100);
           }}
         >
           +100ms

@@ -306,7 +306,7 @@ const runSmoke = async(): Promise<void> => {
 export const runDownloadSmokeIfEnabled = (): void => {
   if (!SMOKE_ENABLED) return
 
-  void runSmoke()
+  runSmoke()
     .then(() => {
       global.lx.isSkipTrayQuit = true
       app.quit()

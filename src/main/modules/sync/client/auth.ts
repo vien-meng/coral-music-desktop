@@ -55,7 +55,7 @@ const codeAuth = async(urlInfo: LX.Sync.Client.UrlInfo, serverId: string, authCo
     // console.log(msg)
     if (!msg) return Promise.reject(new Error(SYNC_CODE.authFailed))
     const info = JSON.parse(msg) as LX.Sync.ClientKeyInfo
-    void setSyncAuthKey(serverId, info)
+    setSyncAuthKey(serverId, info)
     return info
   })
 }

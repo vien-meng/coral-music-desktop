@@ -143,7 +143,7 @@ export const DownloadRoutePanel = observer(() => {
     search.setSearchType('music');
     search.setSearchText(searchText);
     ui.setActiveRoute('search');
-    void search.submitSearch();
+    search.submitSearch();
   };
 
   return (

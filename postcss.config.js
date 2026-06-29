@@ -1,5 +1,5 @@
 // const autoprefixer = require('autoprefixer')
-const pxtorem = require('postcss-pxtorem')
+const pxtorem = require('postcss-pxtorem');
 
 module.exports = {
   plugins: [
@@ -7,15 +7,25 @@ module.exports = {
       rootValue: 16,
       unitPrecision: 5,
       propList: [
-        'font', 'font-size',
+        'font',
+        'font-size',
         'letter-spacing',
-        'padding', 'margin',
-        'padding-*', 'margin-*',
-        'height', 'width',
-        '*-height', '*-width',
-        'flex', '::-webkit-scrollbar',
-        'top', 'left', 'bottom', 'right',
-        'border-radius', 'gap',
+        'padding',
+        'margin',
+        'padding-*',
+        'margin-*',
+        'height',
+        'width',
+        '*-height',
+        '*-width',
+        'flex',
+        '::-webkit-scrollbar',
+        'top',
+        'left',
+        'bottom',
+        'right',
+        'border-radius',
+        'gap',
       ],
       selectorBlackList: ['html', 'ignore-to-rem'],
       replace: true,
@@ -25,4 +35,4 @@ module.exports = {
     }),
     // autoprefixer(),
   ],
-}
+};
