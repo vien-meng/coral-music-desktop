@@ -64,16 +64,22 @@ This note records the practical implementation history from the recent Codex ses
 
 - Default route changed from Search to Leaderboard so app startup shows useful content instead of an empty search page.
 - Added short route-transition lock in `UiStore` to prevent rapid repeated route switching.
+- Added `UiStore` global loading state and `withGlobalLoading` wrapper for interactions that should block repeated clicks.
+- Left sidebar route switching now shows a full-app loading overlay instead of silently changing route state.
 - Sidebar menu and header quick actions are disabled during this transition.
 - Header global search ignores submissions while route transition is active.
+- Header global search now switches to Search and immediately submits the query instead of only filling the route-local search input.
+- Search route type/source/page changes now re-submit automatically when a query already exists, so switching between music and song-list results does not require pressing Search again.
 
 ## Search, Song List, And Leaderboard
 
 - Search result source labels now use Chinese names.
 - Search results and leaderboard/song-list lists were expanded to fill available page height instead of being capped at `360px`.
+- Song-list search results now use the same card grid visual pattern as Song List Square.
 - Page input width was reduced for default pages and still expands for multi-digit pages; text is centered.
 - Song List Square now auto-loads default hot/recommended lists on first entry.
 - Song list detail opens as its own tab-like detail view rather than expanding below the grid.
+- Song list card selection now uses the full-app loading overlay instead of turning the clicked card into a local skeleton.
 - Song list detail "播放全部" now really replaces the current play queue and starts from the first song on the currently loaded page.
 - Leaderboard now auto-loads default boards and first board detail.
 - Leaderboard board title shows the readable board name instead of internal IDs such as `kw__93`.

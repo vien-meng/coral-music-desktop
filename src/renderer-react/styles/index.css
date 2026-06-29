@@ -227,6 +227,27 @@ body {
   min-height: 160px;
 }
 
+.coral-global-loading {
+  align-items: center;
+  backdrop-filter: blur(5px);
+  background: rgba(255, 255, 255, 0.48);
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  left: 0;
+  pointer-events: auto;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 2100;
+  -webkit-app-region: no-drag !important;
+}
+
+.coral-global-loading-tip {
+  height: 56px;
+  width: 180px;
+}
+
 .coral-player-slot {
   background: rgba(255, 255, 255, 0.82);
   border-top: 1px solid rgba(240, 100, 90, 0.08);
@@ -1139,6 +1160,11 @@ body {
 .coral-search-results .coral-result-list {
   height: 100%;
   max-height: none;
+}
+
+.coral-search-song-list-grid {
+  align-content: flex-start;
+  padding-bottom: 16px;
 }
 
 .coral-leaderboard-route {

@@ -40,11 +40,10 @@ const formatPlayCount = (count: string): string => {
 };
 
 export const SongListRoutePanel = observer(() => {
-  const { player, songList } = rootStore;
+  const { player, songList, ui } = rootStore;
   const [isOpenListOpen, setIsOpenListOpen] = useState(false);
   const [isDetailPlayLoading, setIsDetailPlayLoading] = useState(false);
   const [isDetailCollectLoading, setIsDetailCollectLoading] = useState(false);
-  const [loadingSongListKey, setLoadingSongListKey] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
   // Derived data
@@ -112,13 +111,13 @@ export const SongListRoutePanel = observer(() => {
 
   const handleSelectSongList = useCallback(
     (item: { id: string; source: LX.OnlineSource }) => {
-      if (songList.isLoadingDetail) return;
-      setLoadingSongListKey(`${item.source}__${item.id}`);
-      songList.loadListDetail(item.id, item.source).finally(() => {
-        setLoadingSongListKey(null);
-      });
+      if (songList.isLoadingDetail || ui.isGlobalLoading) return;
+      void ui.withGlobalLoading(
+        () => songList.loadListDetail(item.id, item.source),
+        '正在打开歌单...',
+      );
     },
-    [songList],
+    [songList, ui],
   );
 
   const handlePlayDetail = useCallback(() => {
@@ -328,10 +327,9 @@ export const SongListRoutePanel = observer(() => {
                     key={`${item.source}__${item.id}`}
                     size="small"
                     hoverable
-                    loading={loadingSongListKey === `${item.source}__${item.id}`}
                     className="coral-song-list-card"
                     onClick={() => {
-                      if (songList.isLoadingDetail) return;
+                      if (songList.isLoadingDetail || ui.isGlobalLoading) return;
                       handleSelectSongList(item);
                     }}
                     cover={

@@ -6,7 +6,7 @@ import {
   SunOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
-import { Button, Dropdown, Flex, Layout, Menu, Space, Typography } from 'antd';
+import { Button, Dropdown, Flex, Layout, Menu, Space, Spin, Typography } from 'antd';
 import { observer } from 'mobx-react-lite';
 import { coralBrand } from '@shared/brand';
 import { SearchInput, WindowControlBtns } from '../components/layout';
@@ -63,6 +63,7 @@ export const AppShell = observer(() => {
                   if (ui.isRouteTransitioning) return;
                   ui.setActiveRoute('search');
                   rootStore.search.setSearchText(text);
+                  void ui.withGlobalLoading(() => rootStore.search.submitSearch(), '搜索中...');
                 }}
               />
             </div>
@@ -133,6 +134,13 @@ export const AppShell = observer(() => {
           <PlayBar />
         </Footer>
       </Layout>
+      {ui.isGlobalLoading ? (
+        <div className="coral-global-loading" aria-live="polite" aria-busy="true">
+          <Spin size="large" tip={ui.globalLoadingText || '加载中...'}>
+            <div className="coral-global-loading-tip" />
+          </Spin>
+        </div>
+      ) : null}
     </Layout>
   );
 });
