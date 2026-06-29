@@ -25,7 +25,7 @@ export const SearchRoutePanel = observer(() => {
 
   const handlePageChange = (page: number): void => {
     search.setPage(page);
-    if (search.hasQuery) void search.submitSearch();
+    if (search.hasQuery) search.submitSearch();
   };
 
   return (
@@ -58,7 +58,7 @@ export const SearchRoutePanel = observer(() => {
               search.setSearchText(event.target.value);
             }}
             onSearch={() => {
-              void search.submitSearch();
+              search.submitSearch();
             }}
           />
           <OnlinePager
