@@ -1,10 +1,8 @@
-import { AppShell } from './app/AppShell'
-import { AppProviders } from './app/providers'
+import { AppShell } from './app/AppShell';
+import { AppProviders } from './app/providers';
 
-export const App = () => {
-  return (
-    <AppProviders>
-      <AppShell />
-    </AppProviders>
-  )
-}
+export const App = () => (
+  <AppProviders>
+    <AppShell />
+  </AppProviders>
+);

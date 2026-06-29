@@ -3,4 +3,4 @@ export const requestMsg = {
   notConnectNetwork: 'network unavailable',
   timeout: 'request timeout',
   unachievable: 'request unavailable',
-}
+};

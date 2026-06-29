@@ -1,9 +1,7 @@
-import { LyricLineList } from './LyricLineList'
+import { LyricLineList } from './LyricLineList';
 
-export const LyricHorizontal = () => {
-  return (
-    <section className="lyric-display lyric-display-horizontal">
-      <LyricLineList />
-    </section>
-  )
-}
+export const LyricHorizontal = () => (
+  <section className="lyric-display lyric-display-horizontal">
+    <LyricLineList />
+  </section>
+);

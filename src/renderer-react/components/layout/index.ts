@@ -1,2 +1,2 @@
-export { SearchInput } from './SearchInput'
-export { WindowControlBtns } from './WindowControlBtns'
+export { SearchInput } from './SearchInput';
+export { WindowControlBtns } from './WindowControlBtns';

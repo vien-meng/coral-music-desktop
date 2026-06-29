@@ -1,11 +1,11 @@
-import { DownloadOutlined, CloseOutlined } from '@ant-design/icons'
-import { QUALITYS } from '@common/constants'
-import { Button, Modal, Space, Typography } from 'antd'
-import { useState } from 'react'
-import * as downloadService from '../../services/downloadService'
-import { rootStore } from '../../stores/rootStore'
+import { DownloadOutlined, CloseOutlined } from '@ant-design/icons';
+import { QUALITYS } from '@common/constants';
+import { Button, Modal, Space, Typography } from 'antd';
+import { useState } from 'react';
+import * as downloadService from '../../services/downloadService';
+import { rootStore } from '../../stores/rootStore';
 
-const { Text } = Typography
+const { Text } = Typography;
 
 const qualityLabels: Record<LX.Quality, string> = {
   flac24bit: 'FLAC Hires',
@@ -19,31 +19,31 @@ const qualityLabels: Record<LX.Quality, string> = {
   '320k': '320k MP3',
   '192k': '192k MP3',
   '128k': '128k MP3',
-}
+};
 
 export interface DownloadQualityModalProps {
-  musicInfo: LX.Music.MusicInfo | null
-  listId?: string
-  onClose: () => void
+  musicInfo: LX.Music.MusicInfo | null;
+  listId?: string;
+  onClose: () => void;
 }
 
 export const DownloadQualityModal = ({ musicInfo, listId, onClose }: DownloadQualityModalProps) => {
-  const [isCreating, setIsCreating] = useState(false)
+  const [isCreating, setIsCreating] = useState(false);
 
-  const sourceQualities = musicInfo?.source === 'local' ? [] : musicInfo?.meta.qualitys ?? []
-  const availableQualities = sourceQualities
-    .slice()
-    .sort((left, right) => {
-      const leftIndex = QUALITYS.indexOf(left.type)
-      const rightIndex = QUALITYS.indexOf(right.type)
-      return (leftIndex < 0 ? QUALITYS.length : leftIndex) -
-        (rightIndex < 0 ? QUALITYS.length : rightIndex)
-    })
+  const sourceQualities = musicInfo?.source === 'local' ? [] : (musicInfo?.meta.qualitys ?? []);
+  const availableQualities = sourceQualities.slice().sort((left, right) => {
+    const leftIndex = QUALITYS.indexOf(left.type);
+    const rightIndex = QUALITYS.indexOf(right.type);
+    return (
+      (leftIndex < 0 ? QUALITYS.length : leftIndex) -
+      (rightIndex < 0 ? QUALITYS.length : rightIndex);
+    );
+  });
 
-  const handleDownload = async(quality: LX.Quality): Promise<void> => {
-    if (!musicInfo) return
+  const handleDownload = async (quality: LX.Quality): Promise<void> => {
+    if (!musicInfo) return;
 
-    setIsCreating(true)
+    setIsCreating(true);
 
     try {
       await downloadService.createDownloadTasks(
@@ -52,13 +52,13 @@ export const DownloadQualityModal = ({ musicInfo, listId, onClose }: DownloadQua
         '%title% - %artist%',
         { [musicInfo.source]: [quality] },
         listId ?? '',
-      )
-      void rootStore.download.refreshTasks()
+      );
+      void rootStore.download.refreshTasks();
     } finally {
-      setIsCreating(false)
-      onClose()
+      setIsCreating(false);
+      onClose();
     }
-  }
+  };
 
   return (
     <Modal
@@ -69,23 +69,25 @@ export const DownloadQualityModal = ({ musicInfo, listId, onClose }: DownloadQua
       onCancel={onClose}
     >
       <Space direction="vertical" size="small" className="coral-wide">
-        {availableQualities.length === 0
-          ? <Text type="secondary">暂无可用音质</Text>
-          : availableQualities.map(quality => (
+        {availableQualities.length === 0 ? (
+          <Text type="secondary">暂无可用音质</Text>
+        ) : (
+          availableQualities.map((quality) => (
             <Button
               key={quality.type}
               block
               icon={<DownloadOutlined />}
               loading={isCreating}
               onClick={() => {
-                void handleDownload(quality.type as LX.Quality)
+                void handleDownload(quality.type as LX.Quality);
               }}
             >
               {qualityLabels[quality.type as LX.Quality] ?? quality.type}
               {quality.size ? ` - ${quality.size.toUpperCase()}` : ''}
             </Button>
-          ))}
+          ))
+        )}
       </Space>
     </Modal>
-  )
-}
+  );
+};

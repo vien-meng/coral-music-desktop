@@ -1,43 +1,45 @@
-import { DOWNLOAD_STATUS, QUALITYS } from '@common/constants'
-import { filterFileName } from '@common/utils/common'
-import { clipFileNameLength, clipNameLength, formatMusicName } from '@common/utils/tools'
+import { DOWNLOAD_STATUS, QUALITYS } from '@common/constants';
+import { filterFileName } from '@common/utils/common';
+import { clipFileNameLength, clipNameLength, formatMusicName } from '@common/utils/tools';
 
 export const getDownloadFileExt = (type: string): LX.Download.FileExt => {
   switch (type) {
     case 'ape':
-      return 'ape'
+      return 'ape';
     case 'flac':
     case 'flac24bit':
     case 'hires':
     case 'atmos':
     case 'atmos_plus':
     case 'master':
-      return 'flac'
+      return 'flac';
     case 'wav':
-      return 'wav'
+      return 'wav';
     case '128k':
     case '192k':
     case '320k':
     default:
-      return 'mp3'
+      return 'mp3';
   }
-}
+};
 
 export const getDownloadMusicQuality = (
   musicInfo: LX.Music.MusicInfoOnline,
   type: LX.Quality,
   qualityList: LX.QualityList,
 ): LX.Quality => {
-  const sourceQualityList = qualityList[musicInfo.source]
-  if (!sourceQualityList?.length) return musicInfo.meta._qualitys[type] ? type : '128k'
+  const sourceQualityList = qualityList[musicInfo.source];
+  if (!sourceQualityList?.length) return musicInfo.meta._qualitys[type] ? type : '128k';
 
-  const preferredType = sourceQualityList.includes(type) ? type : sourceQualityList[sourceQualityList.length - 1]
-  const rangeType = QUALITYS.slice(QUALITYS.indexOf(preferredType))
+  const preferredType = sourceQualityList.includes(type)
+    ? type
+    : sourceQualityList[sourceQualityList.length - 1];
+  const rangeType = QUALITYS.slice(QUALITYS.indexOf(preferredType));
   for (const quality of rangeType) {
-    if (musicInfo.meta._qualitys[quality]) return quality
+    if (musicInfo.meta._qualitys[quality]) return quality;
   }
-  return '128k'
-}
+  return '128k';
+};
 
 export const createDownloadInfo = (
   musicInfo: LX.Music.MusicInfoOnline,
@@ -46,9 +48,9 @@ export const createDownloadInfo = (
   qualityList: LX.QualityList,
   listId?: string,
 ): LX.Download.ListItem => {
-  const quality = getDownloadMusicQuality(musicInfo, type, qualityList)
-  const ext = getDownloadFileExt(quality)
-  const key = `${musicInfo.id}_${quality}_${ext}`
+  const quality = getDownloadMusicQuality(musicInfo, type, qualityList);
+  const ext = getDownloadFileExt(quality);
+  const key = `${musicInfo.id}_${quality}_${ext}`;
 
   return {
     id: key,
@@ -67,14 +69,14 @@ export const createDownloadInfo = (
       ext,
       filePath: '',
       listId,
-      fileName: filterFileName(`${clipFileNameLength(formatMusicName(
-        fileNameFormat,
-        musicInfo.name,
-        clipNameLength(musicInfo.singer),
-      ))}.${ext}`),
+      fileName: filterFileName(
+        `${clipFileNameLength(
+          formatMusicName(fileNameFormat, musicInfo.name, clipNameLength(musicInfo.singer)),
+        )}.${ext}`,
+      ),
     },
-  }
-}
+  };
+};
 
 export const createDownloadTaskList = (
   list: LX.Music.MusicInfoOnline[],
@@ -82,6 +84,7 @@ export const createDownloadTaskList = (
   fileNameFormat: string,
   qualityList: LX.QualityList,
   listId?: string,
-): LX.Download.ListItem[] => {
-  return list.map(musicInfo => createDownloadInfo(musicInfo, quality, fileNameFormat, qualityList, listId))
-}
+): LX.Download.ListItem[] =>
+  list.map((musicInfo) =>
+    createDownloadInfo(musicInfo, quality, fileNameFormat, qualityList, listId),
+  );

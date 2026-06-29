@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface ProgressBarProps {
-  progress: number
-  maxPlayTime: number
-  isActiveTransition: boolean
-  onSeek: (seconds: number) => void
-  onTransitionEnd?: () => void
-  className?: string
+  progress: number;
+  maxPlayTime: number;
+  isActiveTransition: boolean;
+  onSeek: (seconds: number) => void;
+  onTransitionEnd?: () => void;
+  className?: string;
 }
 
 export const ProgressBar = ({
@@ -17,67 +17,70 @@ export const ProgressBar = ({
   onTransitionEnd,
   className,
 }: ProgressBarProps) => {
-  const [dragProgress, setDragProgress] = useState<number | null>(null)
-  const [isDragging, setIsDragging] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const dragStateRef = useRef({ isMsDown: false, msDownX: 0, msDownRatio: 0 })
+  const [dragProgress, setDragProgress] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const dragStateRef = useRef({ isMsDown: false, msDownX: 0, msDownRatio: 0 });
 
-  const currentProgress = dragProgress ?? progress
+  const currentProgress = dragProgress ?? progress;
 
   const getRatioFromEvent = useCallback((clientX: number): number => {
-    const container = containerRef.current
-    if (!container) return 0
-    const rect = container.getBoundingClientRect()
-    const x = clientX - rect.left
-    return Math.max(0, Math.min(1, x / rect.width))
-  }, [])
+    const container = containerRef.current;
+    if (!container) return 0;
+    const rect = container.getBoundingClientRect();
+    const x = clientX - rect.left;
+    return Math.max(0, Math.min(1, x / rect.width));
+  }, []);
 
-  const handleMouseDown = useCallback((event: React.MouseEvent) => {
-    const ratio = getRatioFromEvent(event.clientX)
-    dragStateRef.current = { isMsDown: true, msDownX: event.clientX, msDownRatio: ratio }
-    setDragProgress(ratio)
-    setIsDragging(true)
-  }, [getRatioFromEvent])
+  const handleMouseDown = useCallback(
+    (event: React.MouseEvent) => {
+      const ratio = getRatioFromEvent(event.clientX);
+      dragStateRef.current = { isMsDown: true, msDownX: event.clientX, msDownRatio: ratio };
+      setDragProgress(ratio);
+      setIsDragging(true);
+    },
+    [getRatioFromEvent],
+  );
 
   useEffect(() => {
-    if (!isDragging) return
+    if (!isDragging) return;
 
     const handleMouseMove = (event: MouseEvent): void => {
-      if (!dragStateRef.current.isMsDown) return
-      const ratio = getRatioFromEvent(event.clientX)
-      setDragProgress(ratio)
-    }
+      if (!dragStateRef.current.isMsDown) return;
+      const ratio = getRatioFromEvent(event.clientX);
+      setDragProgress(ratio);
+    };
 
     const handleMouseUp = (): void => {
-      if (!dragStateRef.current.isMsDown) return
-      dragStateRef.current.isMsDown = false
-      const finalRatio = dragProgress
+      if (!dragStateRef.current.isMsDown) return;
+      dragStateRef.current.isMsDown = false;
+      const finalRatio = dragProgress;
       if (finalRatio !== null && maxPlayTime > 0) {
-        onSeek(finalRatio * maxPlayTime)
+        onSeek(finalRatio * maxPlayTime);
       }
-      setDragProgress(null)
-      setIsDragging(false)
-    }
+      setDragProgress(null);
+      setIsDragging(false);
+    };
 
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
-    }
-  }, [isDragging, dragProgress, maxPlayTime, onSeek, getRatioFromEvent])
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, dragProgress, maxPlayTime, onSeek, getRatioFromEvent]);
 
   useEffect(() => {
-    if (!isActiveTransition || isDragging) return
+    if (!isActiveTransition || isDragging) return;
     const timer = setTimeout(() => {
-      onTransitionEnd?.()
-    }, 300)
+      onTransitionEnd?.();
+    }, 300);
     return () => {
-      clearTimeout(timer)
-    }
-  }, [isActiveTransition, isDragging, onTransitionEnd])
+      clearTimeout(timer);
+    };
+  }, [isActiveTransition, isDragging, onTransitionEnd]);
 
-  const percent = `${currentProgress * 100}%`
+  const percent = `${currentProgress * 100}%`;
 
   return (
     <div
@@ -117,21 +120,19 @@ export const ProgressBar = ({
             transition: isActiveTransition && !isDragging ? 'width 0.3s ease' : 'none',
           }}
         />
-        {dragProgress !== null
-          ? (
-            <div
-              style={{
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                height: '100%',
-                width: `${dragProgress * 100}%`,
-                background: 'rgba(240, 100, 90, 0.28)',
-                borderRadius: 999,
-              }}
-            />
-            )
-          : null}
+        {dragProgress !== null ? (
+          <div
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              height: '100%',
+              width: `${dragProgress * 100}%`,
+              background: 'rgba(240, 100, 90, 0.28)',
+              borderRadius: 999,
+            }}
+          />
+        ) : null}
         <div
           style={{
             position: 'absolute',
@@ -149,5 +150,5 @@ export const ProgressBar = ({
         />
       </div>
     </div>
-  )
-}
+  );
+};

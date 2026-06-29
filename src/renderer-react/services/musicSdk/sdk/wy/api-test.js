@@ -1,7 +1,7 @@
-import { httpFetch } from '../../request'
-import { requestMsg } from '../../message'
-import { headers, timeout } from '../options'
-import { dnsLookup } from '../utils'
+import { httpFetch } from '../../request';
+import { requestMsg } from '../../message';
+import { headers, timeout } from '../options';
+import { dnsLookup } from '../utils';
 
 const api_test = {
   getMusicUrl(songInfo, type) {
@@ -11,17 +11,19 @@ const api_test = {
       headers,
       lookup: dnsLookup,
       family: 4,
-    })
+    });
     requestObj.promise = requestObj.promise.then(({ statusCode, body }) => {
-      if (statusCode == 429) return Promise.reject(new Error(requestMsg.tooManyRequests))
+      if (statusCode == 429) return Promise.reject(new Error(requestMsg.tooManyRequests));
       switch (body.code) {
-        case 0: return Promise.resolve({ type, url: body.data })
-        default: return Promise.reject(new Error(requestMsg.fail))
+        case 0:
+          return Promise.resolve({ type, url: body.data });
+        default:
+          return Promise.reject(new Error(requestMsg.fail));
       }
-    })
-    return requestObj
+    });
+    return requestObj;
   },
-/*   getPic(songInfo) {
+  /*   getPic(songInfo) {
     const requestObj = httpFetch(`http://localhost:3100/pic/wy/${songInfo.songmid}`, {
       method: 'get',
       timeout,
@@ -45,6 +47,6 @@ const api_test = {
     })
     return requestObj
   }, */
-}
+};
 
-export default api_test
+export default api_test;

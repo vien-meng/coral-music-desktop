@@ -4,15 +4,15 @@ import {
   ReloadOutlined,
   SwapOutlined,
   StopOutlined,
-} from '@ant-design/icons'
-import { Popover, Typography } from 'antd'
-import { observer } from 'mobx-react-lite'
-import type { ReactNode } from 'react'
-import { rootStore } from '../../stores/rootStore'
+} from '@ant-design/icons';
+import { Popover, Typography } from 'antd';
+import { observer } from 'mobx-react-lite';
+import type { ReactNode } from 'react';
+import { rootStore } from '../../stores/rootStore';
 
-const { Text } = Typography
+const { Text } = Typography;
 
-type PlayMode = 'listLoop' | 'random' | 'list' | 'singleLoop' | 'none'
+type PlayMode = 'listLoop' | 'random' | 'list' | 'singleLoop' | 'none';
 
 const PLAY_MODE_ICONS: Record<PlayMode, ReactNode> = {
   listLoop: <RetweetOutlined />,
@@ -20,7 +20,7 @@ const PLAY_MODE_ICONS: Record<PlayMode, ReactNode> = {
   list: <OrderedListOutlined />,
   singleLoop: <ReloadOutlined />,
   none: <StopOutlined />,
-}
+};
 
 const PLAY_MODE_LABELS: Record<PlayMode, string> = {
   listLoop: '列表循环',
@@ -28,22 +28,24 @@ const PLAY_MODE_LABELS: Record<PlayMode, string> = {
   list: '顺序播放',
   singleLoop: '单曲循环',
   none: '关闭',
-}
+};
 
 export const TogglePlayModeBtn = observer(() => {
-  const { settings } = rootStore
-  const currentMode = (settings.appSetting?.['player.togglePlayMethod'] ?? 'listLoop') as PlayMode
+  const { settings } = rootStore;
+  const currentMode = (settings.appSetting?.['player.togglePlayMethod'] ?? 'listLoop') as PlayMode;
 
   const handleSetMode = (mode: PlayMode): void => {
-    void settings.updateAppSetting({ 'player.togglePlayMethod': mode })
-  }
+    void settings.updateAppSetting({ 'player.togglePlayMethod': mode });
+  };
 
   const content = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '4px 0' }}>
-      {(Object.keys(PLAY_MODE_LABELS) as PlayMode[]).map(mode => (
+      {(Object.keys(PLAY_MODE_LABELS) as PlayMode[]).map((mode) => (
         <button
           key={mode}
-          onClick={() => { handleSetMode(mode) }}
+          onClick={() => {
+            handleSetMode(mode);
+          }}
           style={{
             border: 'none',
             background: mode === currentMode ? 'var(--color-primary-alpha-100)' : 'transparent',
@@ -63,7 +65,7 @@ export const TogglePlayModeBtn = observer(() => {
         </button>
       ))}
     </div>
-  )
+  );
 
   return (
     <Popover content={content} trigger="click" placement="topRight">
@@ -83,5 +85,5 @@ export const TogglePlayModeBtn = observer(() => {
         {PLAY_MODE_ICONS[currentMode]}
       </button>
     </Popover>
-  )
-})
+  );
+});

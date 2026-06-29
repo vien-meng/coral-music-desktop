@@ -17,26 +17,26 @@ const xm = {
   // closeVerifyModal,
   comment: {
     getComment() {
-      return Promise.reject(new Error('fail'))
+      return Promise.reject(new Error('fail'));
     },
     getHotComment() {
-      return Promise.reject(new Error('fail'))
+      return Promise.reject(new Error('fail'));
     },
   },
   getMusicUrl(songInfo, type) {
     return {
       promise: Promise.reject(new Error('fail')),
-    }
+    };
     // return apis('xm').getMusicUrl(songInfo, type)
   },
   getLyric(songInfo) {
     return {
       promise: Promise.reject(new Error('fail')),
-    }
+    };
     // return lyric.getLyric(songInfo)
   },
   getPic(songInfo) {
-    return Promise.reject(new Error('fail'))
+    return Promise.reject(new Error('fail'));
     // return pic.getPic(songInfo)
   },
   // getMusicDetailPageUrl(songInfo) {
@@ -50,6 +50,6 @@ const xm = {
   // init() {
   //   getToken()
   // },
-}
+};
 
-export default xm
+export default xm;

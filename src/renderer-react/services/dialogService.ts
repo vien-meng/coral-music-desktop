@@ -1,18 +1,18 @@
-import { Modal } from 'antd'
+import { Modal } from 'antd';
 
 interface DialogOptions {
-  message: string
-  showCancel?: boolean
-  cancelButtonText?: string
-  confirmButtonText?: string
-  title?: string
+  message: string;
+  showCancel?: boolean;
+  cancelButtonText?: string;
+  confirmButtonText?: string;
+  title?: string;
 }
 
-const confirm = async(options: DialogOptions | string): Promise<boolean> => {
-  const opts = typeof options === 'string' ? { message: options } : options
-  const { message, showCancel = true, cancelButtonText, confirmButtonText, title } = opts
+const confirm = async (options: DialogOptions | string): Promise<boolean> => {
+  const opts = typeof options === 'string' ? { message: options } : options;
+  const { message, showCancel = true, cancelButtonText, confirmButtonText, title } = opts;
 
-  return new Promise<boolean>(resolve => {
+  return new Promise<boolean>((resolve) => {
     Modal.confirm({
       title: title ?? message,
       content: title ? message : undefined,
@@ -20,37 +20,37 @@ const confirm = async(options: DialogOptions | string): Promise<boolean> => {
       cancelText: cancelButtonText ?? '取消',
       okCancel: showCancel,
       onOk: () => {
-        resolve(true)
+        resolve(true);
       },
       onCancel: () => {
-        resolve(false)
+        resolve(false);
       },
-    })
-  })
-}
+    });
+  });
+};
 
-const dialog = async(options: DialogOptions | string): Promise<boolean> => {
-  const opts = typeof options === 'string' ? { message: options } : options
-  return confirm({ ...opts, showCancel: opts.showCancel ?? false })
-}
+const dialog = async (options: DialogOptions | string): Promise<boolean> => {
+  const opts = typeof options === 'string' ? { message: options } : options;
+  return confirm({ ...opts, showCancel: opts.showCancel ?? false });
+};
 
-dialog.confirm = confirm
+dialog.confirm = confirm;
 
 const info = (message: string): void => {
-  Modal.info({ content: message })
-}
+  Modal.info({ content: message });
+};
 
 const warning = (message: string): void => {
-  Modal.warning({ content: message })
-}
+  Modal.warning({ content: message });
+};
 
 const error = (message: string): void => {
-  Modal.error({ content: message })
-}
+  Modal.error({ content: message });
+};
 
 const success = (message: string): void => {
-  Modal.success({ content: message })
-}
+  Modal.success({ content: message });
+};
 
 export const dialogService = {
   confirm,
@@ -59,6 +59,6 @@ export const dialogService = {
   info,
   success,
   warning,
-}
+};
 
-export type { DialogOptions }
+export type { DialogOptions };

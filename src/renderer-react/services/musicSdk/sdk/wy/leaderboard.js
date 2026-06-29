@@ -1,8 +1,9 @@
-import { weapi } from './utils/crypto'
-import { httpFetch } from '../../request'
-import musicDetailApi from './musicDetail'
+import { weapi } from './utils/crypto';
+import { httpFetch } from '../../request';
+import musicDetailApi from './musicDetail';
 
-const topList = [{ id: 'wy__19723756', name: '飙升榜', bangid: '19723756' },
+const topList = [
+  { id: 'wy__19723756', name: '飙升榜', bangid: '19723756' },
   { id: 'wy__3779629', name: '新歌榜', bangid: '3779629' },
   { id: 'wy__2884035', name: '原创榜', bangid: '2884035' },
   { id: 'wy__3778678', name: '热歌榜', bangid: '3778678' },
@@ -38,13 +39,17 @@ const topList = [{ id: 'wy__19723756', name: '飙升榜', bangid: '19723756' },
   { id: 'wy__6939992364', name: '俄罗斯top hit流行音乐榜', bangid: '6939992364' },
   { id: 'wy__7095271308', name: '泰语榜', bangid: '7095271308' },
   { id: 'wy__7356827205', name: 'BEAT排行榜', bangid: '7356827205' },
-  { id: 'wy__7325478166', name: '编辑推荐榜VOL.44 天才女子摇滚乐队boygenius剖白卑微心迹', bangid: '7325478166' },
+  {
+    id: 'wy__7325478166',
+    name: '编辑推荐榜VOL.44 天才女子摇滚乐队boygenius剖白卑微心迹',
+    bangid: '7325478166',
+  },
   { id: 'wy__7603212484', name: 'LOOK直播歌曲榜', bangid: '7603212484' },
   { id: 'wy__7775163417', name: '赏音榜', bangid: '7775163417' },
   { id: 'wy__7785123708', name: '黑胶VIP新歌榜', bangid: '7785123708' },
   { id: 'wy__7785066739', name: '黑胶VIP热歌榜', bangid: '7785066739' },
   { id: 'wy__7785091694', name: '黑胶VIP爱搜榜', bangid: '7785091694' },
-]
+];
 
 export default {
   limit: 100000,
@@ -101,19 +106,19 @@ export default {
     },
   ],
   getUrl(id) {
-    return `https://music.163.com/discover/toplist?id=${id}`
+    return `https://music.163.com/discover/toplist?id=${id}`;
   },
   regExps: {
     list: /<textarea id="song-list-pre-data" style="display:none;">(.+?)<\/textarea>/,
   },
   _requestBoardsObj: null,
   getBoardsData() {
-    if (this._requestBoardsObj) this._requestBoardsObj.cancelHttp()
+    if (this._requestBoardsObj) this._requestBoardsObj.cancelHttp();
     this._requestBoardsObj = httpFetch('https://music.163.com/weapi/toplist', {
       method: 'post',
       form: weapi({}),
-    })
-    return this._requestBoardsObj.promise
+    });
+    return this._requestBoardsObj.promise;
   },
   getData(id) {
     const requestBoardsDetailObj = httpFetch('https://music.163.com/weapi/v3/playlist/detail', {
@@ -123,23 +128,23 @@ export default {
         n: 100000,
         p: 1,
       }),
-    })
-    return requestBoardsDetailObj.promise
+    });
+    return requestBoardsDetailObj.promise;
   },
 
   filterBoardsData(rawList) {
     // console.log(rawList)
-    let list = []
+    const list = [];
     for (const board of rawList) {
       // 排除 MV榜
       // if (board.id == 201) continue
       list.push({
-        id: 'wy__' + board.id,
+        id: `wy__${board.id}`,
         name: board.name,
         bangid: String(board.id),
-      })
+      });
     }
-    return list
+    return list;
   },
   async getBoards(retryNum = 0) {
     // if (++retryNum > 3) return Promise.reject(new Error('try max num'))
@@ -159,36 +164,39 @@ export default {
     //   list,
     //   source: 'wy',
     // }
-    this.list = topList
+    this.list = topList;
     return {
       list: topList,
       source: 'wy',
-    }
+    };
   },
   async getList(bangid, page, retryNum = 0) {
-    if (++retryNum > 6) return Promise.reject(new Error('try max num'))
+    if (++retryNum > 6) return Promise.reject(new Error('try max num'));
     // console.log(bangid)
-    let resp
+    let resp;
     try {
-      resp = await this.getData(bangid)
+      resp = await this.getData(bangid);
     } catch (err) {
       if (err.message == 'try max num') {
-        throw err
+        throw err;
       } else {
-        return this.getList(bangid, page, retryNum)
+        return this.getList(bangid, page, retryNum);
       }
     }
-    if (resp.statusCode !== 200 || resp.body.code !== 200) return this.getList(bangid, page, retryNum)
+    if (resp.statusCode !== 200 || resp.body.code !== 200)
+      return this.getList(bangid, page, retryNum);
     // console.log(resp.body)
-    let musicDetail
+    let musicDetail;
     try {
-      musicDetail = await musicDetailApi.getList(resp.body.playlist.trackIds.map(trackId => trackId.id))
+      musicDetail = await musicDetailApi.getList(
+        resp.body.playlist.trackIds.map((trackId) => trackId.id),
+      );
     } catch (err) {
-      console.log(err)
+      console.log(err);
       if (err.message == 'try max num') {
-        throw err
+        throw err;
       } else {
-        return this.getList(bangid, page, retryNum)
+        return this.getList(bangid, page, retryNum);
       }
     }
     // console.log(musicDetail)
@@ -198,11 +206,11 @@ export default {
       limit: this.limit,
       page,
       source: 'wy',
-    }
+    };
   },
 
   getDetailPageUrl(id) {
-    if (typeof id == 'string') id = id.replace('wy__', '')
-    return `https://music.163.com/#/discover/toplist?id=${id}`
+    if (typeof id === 'string') id = id.replace('wy__', '');
+    return `https://music.163.com/#/discover/toplist?id=${id}`;
   },
-}
+};

@@ -1,8 +1,8 @@
-import path from 'node:path'
+import path from 'node:path';
 
-const root = path.resolve(__dirname, '../..')
+const root = path.resolve(__dirname, '../..');
 
-export const projectRoot = root
+export const projectRoot = root;
 
 export const aliases = {
   '@root': path.join(root, 'src'),
@@ -14,4 +14,4 @@ export const aliases = {
   '@static': path.join(root, 'src/static'),
   '@common': path.join(root, 'src/common'),
   '@shared': path.join(root, 'src/shared'),
-}
+};

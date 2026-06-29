@@ -1,69 +1,69 @@
-import { Button, Checkbox, InputNumber, message, Modal, Typography } from 'antd'
-import { observer } from 'mobx-react-lite'
-import { useEffect, useState } from 'react'
-import { rootStore } from '../../stores/rootStore'
-import { timeoutStopService } from '../../services/timeoutStopService'
+import { Button, Checkbox, InputNumber, message, Modal, Typography } from 'antd';
+import { observer } from 'mobx-react-lite';
+import { useEffect, useState } from 'react';
+import { rootStore } from '../../stores/rootStore';
+import { timeoutStopService } from '../../services/timeoutStopService';
 
-const { Text } = Typography
+const { Text } = Typography;
 
-const MAX_MIN = 1440
-const RXP = /([1-9]\d*)/
+const MAX_MIN = 1440;
+const RXP = /([1-9]\d*)/;
 
 interface PlayTimeoutModalProps {
-  onClose: () => void
-  open: boolean
+  onClose: () => void;
+  open: boolean;
 }
 
 export const PlayTimeoutModal = observer(({ onClose, open }: PlayTimeoutModalProps) => {
-  const { settings } = rootStore
-  const appSetting = settings.appSetting
-  const [time, setTime] = useState<number | null>(0)
+  const { settings } = rootStore;
+  const appSetting = settings.appSetting;
+  const [time, setTime] = useState<number | null>(0);
 
   useEffect(() => {
-    if (!open || !appSetting) return
-    setTime(appSetting['player.waitPlayEndStopTime'])
-  }, [appSetting, open])
+    if (!open || !appSetting) return;
+    setTime(appSetting['player.waitPlayEndStopTime']);
+  }, [appSetting, open]);
 
-  const timeLabel = timeoutStopService.store.timeLabel
+  const timeLabel = timeoutStopService.store.timeLabel;
 
   const verify = (): number | '' => {
-    if (time == null) return ''
-    const orgText = String(time)
-    let text = orgText
-    const match = text.match(RXP)
+    if (time == null) return '';
+    const orgText = String(time);
+    let text = orgText;
+    const match = text.match(RXP);
     if (match) {
-      text = match[1]
+      text = match[1];
       if (parseInt(text, 10) > MAX_MIN) {
-        text = String(MAX_MIN)
+        text = String(MAX_MIN);
       }
     } else {
-      text = ''
+      text = '';
     }
-    const parsed = text ? parseInt(text, 10) : null
-    setTime(parsed)
-    return text && orgText === text ? parseInt(text, 10) : ''
-  }
+    const parsed = text ? parseInt(text, 10) : null;
+    setTime(parsed);
+    return text && orgText === text ? parseInt(text, 10) : '';
+  };
 
-  const handleConfirm = async(): Promise<void> => {
+  const handleConfirm = async (): Promise<void> => {
     try {
-      const verified = verify()
-      if (verified === '') return
+      const verified = verify();
+      if (verified === '') return;
       if (appSetting && appSetting['player.waitPlayEndStopTime'] !== verified) {
-        await settings.updateAppSetting({ 'player.waitPlayEndStopTime': verified })
+        await settings.updateAppSetting({ 'player.waitPlayEndStopTime': verified });
       }
-      timeoutStopService.start(verified * 60)
-      onClose()
+      timeoutStopService.start(verified * 60);
+      onClose();
     } catch (err) {
-      void message.error(`设置失败：${err instanceof Error ? err.message : String(err)}`)
+      void message.error(`设置失败：${err instanceof Error ? err.message : String(err)}`);
     }
-  }
+  };
 
   const handleCancel = (): void => {
     if (timeLabel) {
-      timeoutStopService.stop()
+      timeoutStopService.stop();
     }
-    onClose()
-  }
+    onClose();
+  };
 
   return (
     <Modal
@@ -86,8 +86,8 @@ export const PlayTimeoutModal = observer(({ onClose, open }: PlayTimeoutModalPro
             min={1}
             max={MAX_MIN}
             value={time}
-            onChange={value => {
-              setTime(value)
+            onChange={(value) => {
+              setTime(value);
             }}
             style={{ flex: 'auto' }}
           />
@@ -95,22 +95,16 @@ export const PlayTimeoutModal = observer(({ onClose, open }: PlayTimeoutModalPro
         </div>
         <Checkbox
           checked={appSetting?.['player.waitPlayEndStop'] ?? false}
-          onChange={event => {
+          onChange={(event) => {
             if (appSetting) {
-              void settings.updateAppSetting({ 'player.waitPlayEndStop': event.target.checked })
+              void settings.updateAppSetting({ 'player.waitPlayEndStop': event.target.checked });
             }
           }}
         >
           等待播放结束再停止
         </Checkbox>
-        {timeLabel
-          ? (
-            <Text type="secondary">
-              剩余 {timeLabel}
-            </Text>
-            )
-          : null}
+        {timeLabel ? <Text type="secondary">剩余 {timeLabel}</Text> : null}
       </div>
     </Modal>
-  )
-})
+  );
+});

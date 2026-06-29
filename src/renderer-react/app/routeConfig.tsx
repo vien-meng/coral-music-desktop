@@ -5,24 +5,37 @@ import {
   SearchOutlined,
   SettingOutlined,
   UnorderedListOutlined,
-} from '@ant-design/icons'
-import { lazy, type ReactNode } from 'react'
+} from '@ant-design/icons';
+import { lazy, type ReactNode } from 'react';
 
-const SearchRoutePanel = lazy(async() => ({ default: (await import('../features/search/SearchRoutePanel')).SearchRoutePanel }))
-const SongListRoutePanel = lazy(async() => ({ default: (await import('../features/song-list/SongListRoutePanel')).SongListRoutePanel }))
-const LeaderboardRoutePanel = lazy(async() => ({ default: (await import('../features/leaderboard/LeaderboardRoutePanel')).LeaderboardRoutePanel }))
-const LocalListRoutePanel = lazy(async() => ({ default: (await import('../features/list/LocalListRoutePanel')).LocalListRoutePanel }))
-const DownloadRoutePanel = lazy(async() => ({ default: (await import('../features/download/DownloadRoutePanel')).DownloadRoutePanel }))
-const SettingsRoutePanel = lazy(async() => ({ default: (await import('../features/settings/SettingsRoutePanel')).SettingsRoutePanel }))
+const SearchRoutePanel = lazy(async () => ({
+  default: (await import('../features/search/SearchRoutePanel')).SearchRoutePanel,
+}));
+const SongListRoutePanel = lazy(async () => ({
+  default: (await import('../features/song-list/SongListRoutePanel')).SongListRoutePanel,
+}));
+const LeaderboardRoutePanel = lazy(async () => ({
+  default: (await import('../features/leaderboard/LeaderboardRoutePanel')).LeaderboardRoutePanel,
+}));
+const LocalListRoutePanel = lazy(async () => ({
+  default: (await import('../features/list/LocalListRoutePanel')).LocalListRoutePanel,
+}));
+const DownloadRoutePanel = lazy(async () => ({
+  default: (await import('../features/download/DownloadRoutePanel')).DownloadRoutePanel,
+}));
+const SettingsRoutePanel = lazy(async () => ({
+  default: (await import('../features/settings/SettingsRoutePanel')).SettingsRoutePanel,
+}));
 
-export type RendererRouteKey = 'search' | 'song-list' | 'leaderboard' | 'list' | 'download' | 'setting'
+export type RendererRouteKey =
+  'search' | 'song-list' | 'leaderboard' | 'list' | 'download' | 'setting';
 
 export interface RendererRoute {
-  key: RendererRouteKey
-  path: string
-  label: string
-  icon: ReactNode
-  element: ReactNode
+  key: RendererRouteKey;
+  path: string;
+  label: string;
+  icon: ReactNode;
+  element: ReactNode;
 }
 
 export const rendererRoutes: RendererRoute[] = [
@@ -68,8 +81,7 @@ export const rendererRoutes: RendererRoute[] = [
     icon: <SettingOutlined />,
     element: <SettingsRoutePanel />,
   },
-]
+];
 
-export const getRouteByKey = (key: string): RendererRoute => {
-  return rendererRoutes.find(route => route.key === key) ?? rendererRoutes[0]
-}
+export const getRouteByKey = (key: string): RendererRoute =>
+  rendererRoutes.find((route) => route.key === key) ?? rendererRoutes[0];

@@ -9,26 +9,26 @@ import {
   PlusOutlined,
   PushpinOutlined,
   UnlockOutlined,
-} from '@ant-design/icons'
-import { Button, Segmented, Space, Tag, Tooltip } from 'antd'
-import { observer } from 'mobx-react-lite'
-import { lyricRootStore } from '../../stores/lyricRootStore'
+} from '@ant-design/icons';
+import { Button, Segmented, Space, Tag, Tooltip } from 'antd';
+import { observer } from 'mobx-react-lite';
+import { lyricRootStore } from '../../stores/lyricRootStore';
 
 const stopContextMenu = (event: React.MouseEvent): void => {
-  event.preventDefault()
-}
+  event.preventDefault();
+};
 
 export const ControlBar = observer(() => {
-  const { config } = lyricRootStore
+  const { config } = lyricRootStore;
 
   return (
     <div
       className="lyric-control-bar"
-      onMouseDown={event => {
-        event.stopPropagation()
+      onMouseDown={(event) => {
+        event.stopPropagation();
       }}
-      onTouchStart={event => {
-        event.stopPropagation()
+      onTouchStart={(event) => {
+        event.stopPropagation();
       }}
     >
       <Space size={4} wrap>
@@ -38,7 +38,7 @@ export const ControlBar = observer(() => {
             type="text"
             icon={<CloseOutlined />}
             onClick={() => {
-              void lyricRootStore.setEnabled(false)
+              void lyricRootStore.setEnabled(false);
             }}
           />
         </Tooltip>
@@ -48,7 +48,7 @@ export const ControlBar = observer(() => {
             type="text"
             icon={lyricRootStore.isLocked ? <UnlockOutlined /> : <LockOutlined />}
             onClick={() => {
-              void lyricRootStore.toggleLock()
+              void lyricRootStore.toggleLock();
             }}
           />
         </Tooltip>
@@ -58,7 +58,7 @@ export const ControlBar = observer(() => {
               type="text"
               icon={<MinusOutlined />}
               onClick={() => {
-                void lyricRootStore.changeFontSize(-1)
+                void lyricRootStore.changeFontSize(-1);
               }}
             />
           </Tooltip>
@@ -68,7 +68,7 @@ export const ControlBar = observer(() => {
               type="text"
               icon={<PlusOutlined />}
               onClick={() => {
-                void lyricRootStore.changeFontSize(1)
+                void lyricRootStore.changeFontSize(1);
               }}
             />
           </Tooltip>
@@ -79,11 +79,11 @@ export const ControlBar = observer(() => {
               type="text"
               icon={<EyeInvisibleOutlined />}
               onClick={() => {
-                void lyricRootStore.changeOpacity(-10)
+                void lyricRootStore.changeOpacity(-10);
               }}
-              onContextMenu={event => {
-                stopContextMenu(event)
-                void lyricRootStore.changeOpacity(-2)
+              onContextMenu={(event) => {
+                stopContextMenu(event);
+                void lyricRootStore.changeOpacity(-2);
               }}
             />
           </Tooltip>
@@ -92,23 +92,25 @@ export const ControlBar = observer(() => {
               type="text"
               icon={<EyeOutlined />}
               onClick={() => {
-                void lyricRootStore.changeOpacity(10)
+                void lyricRootStore.changeOpacity(10);
               }}
-              onContextMenu={event => {
-                stopContextMenu(event)
-                void lyricRootStore.changeOpacity(2)
+              onContextMenu={(event) => {
+                stopContextMenu(event);
+                void lyricRootStore.changeOpacity(2);
               }}
             />
           </Tooltip>
         </Space.Compact>
-        <Tooltip title={config['desktopLyric.style.isZoomActiveLrc'] ? '关闭当前行放大' : '开启当前行放大'}>
+        <Tooltip
+          title={config['desktopLyric.style.isZoomActiveLrc'] ? '关闭当前行放大' : '开启当前行放大'}
+        >
           <Button
             size="small"
             type="text"
             icon={<CompressOutlined />}
             className={config['desktopLyric.style.isZoomActiveLrc'] ? 'is-active' : undefined}
             onClick={() => {
-              void lyricRootStore.toggleActiveLyricZoom()
+              void lyricRootStore.toggleActiveLyricZoom();
             }}
           />
         </Tooltip>
@@ -119,7 +121,7 @@ export const ControlBar = observer(() => {
             icon={<PushpinOutlined />}
             className={config['desktopLyric.isAlwaysOnTop'] ? 'is-active' : undefined}
             onClick={() => {
-              void lyricRootStore.toggleAlwaysOnTop()
+              void lyricRootStore.toggleAlwaysOnTop();
             }}
           />
         </Tooltip>
@@ -131,7 +133,9 @@ export const ControlBar = observer(() => {
             { label: '竖向', value: 'vertical' },
           ]}
           onChange={(value) => {
-            void lyricRootStore.setDirection(value as LX.DesktopLyric.Config['desktopLyric.direction'])
+            void lyricRootStore.setDirection(
+              value as LX.DesktopLyric.Config['desktopLyric.direction'],
+            );
           }}
         />
         <Tag color={lyricRootStore.isConnectedToMainWindow ? 'green' : 'default'}>
@@ -139,5 +143,5 @@ export const ControlBar = observer(() => {
         </Tag>
       </Space>
     </div>
-  )
-})
+  );
+});

@@ -1,16 +1,122 @@
-const { base, typescript } = require('./.eslintrc.base.cjs')
-
 module.exports = {
-  root: true,
-  ...base,
-  overrides: [
-    {
-      ...typescript,
-      parserOptions: {
-        project: './tsconfig.json',
-      },
-    },
+  env: {
+    browser: true,
+    node: true,
+    es6: true,
+    jest: true,
+  },
+  globals: {
+    __DEV__: 'readonly',
+  },
+  extends: [
+    'eslint-config-airbnb',
+    'prettier',
+    'plugin:import/errors',
+    'plugin:import/warnings',
+    'plugin:import/typescript',
+    'plugin:react/recommended',
+    'plugin:@typescript-eslint/recommended',
   ],
+  parser: '@typescript-eslint/parser',
+  parserOptions: {
+    ecmaFeatures: {
+      jsx: true,
+    },
+    ecmaVersion: 2020,
+    sourceType: 'module',
+  },
+  plugins: ['import', 'prettier', 'react', 'react-hooks'],
+  settings: {
+    react: {
+      version: 'detect',
+    },
+    'import/extensions': ['.js', '.jsx', '.ts', '.tsx'],
+  },
+  rules: {
+    'global-require': 0, // 底层 obs 需求(vite)
+    'class-methods-use-this': 'off',
+    'func-names': 'off',
+    'guard-for-in': 'off',
+    'linebreak-style': ['error', 'unix'],
+    'max-classes-per-file': 'off',
+    'no-cond-assign': ['error', 'except-parens'],
+    'no-console': 'off',
+    'no-continue': 'off',
+    'no-nested-ternary': 'off',
+    'no-param-reassign': 'off',
+    'no-restricted-exports': 'off',
+    'no-restricted-syntax': 'off',
+    'no-shadow': 'off',
+    'react/no-unstable-nested-components': 'off',
+    'no-underscore-dangle': [
+      'error',
+      {
+        allow: ['__DEV__'],
+      },
+    ],
+    'no-unused-expressions': [
+      'error',
+      {
+        allowTernary: true,
+        allowShortCircuit: true,
+        allowTaggedTemplates: true,
+      },
+    ],
+    'no-unused-vars': 'off', // handle by `@typescript-eslint/no-unused-vars`
+    'no-use-before-define': 'off',
+    'prefer-destructuring': 'off',
+    'prettier/prettier': 'error',
+    quotes: ['error', 'single'],
+    semi: ['error', 'always'],
+    'spaced-comment': ['error', 'always', { markers: ['/'] }],
+    'import/extensions': [
+      'error',
+      'never',
+      {
+        json: 'always',
+        css: 'always',
+        svg: 'always',
+        jpeg: 'always',
+        jpg: 'always',
+        png: 'always',
+        less: 'always',
+        gif: 'always',
+        webp: 'always',
+      },
+    ],
+    'import/prefer-default-export': 'off',
+    'import/no-cycle': 'off',
+    'import/no-extraneous-dependencies': 'off',
+    'import/no-unresolved': 'off',
+    'jsx-a11y/click-events-have-key-events': 'off',
+    'jsx-a11y/control-has-associated-label': 'off',
+    'jsx-a11y/label-has-associated-control': 'off',
+    'jsx-a11y/media-has-caption': 'off',
+    'jsx-a11y/no-noninteractive-element-interactions': 'off',
+    'react/function-component-definition': 'off',
+    'react/react-in-jsx-scope': 'off',
+    'react/jsx-filename-extension': ['error', { extensions: ['.jsx', '.tsx'] }],
+    'react/jsx-props-no-spreading': 'off',
+    'react/no-unused-prop-types': 'off',
+    'react/require-default-props': 'off',
+    '@typescript-eslint/no-empty-interface': 'off',
+    // "@typescript-eslint/no-explicit-any": "off",
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      {
+        vars: 'all',
+        args: 'after-used',
+        caughtErrors: 'all',
+        ignoreRestSiblings: true,
+        argsIgnorePattern: '^_',
+      },
+    ],
+    '@typescript-eslint/no-var-requires': 'off',
+    '@typescript-eslint/no-non-null-assertion': 'off',
+    'jsx-a11y/no-static-element-interactions': 'off',
+    'react/destructuring-assignment': 'off',
+    'react/no-array-index-key': 'error',
+  },
   ignorePatterns: [
     'node_modules',
     '*.min.js',
@@ -20,4 +126,4 @@ module.exports = {
     'src/renderer',
     'src/renderer-lyric',
   ],
-}
+};

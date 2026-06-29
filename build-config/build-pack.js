@@ -1,21 +1,24 @@
 /* eslint-disable no-template-curly-in-string */
 
-const builder = require('electron-builder')
-const beforePack = require('./build-before-pack')
-const afterPack = require('./build-after-pack')
+const builder = require('electron-builder');
+const beforePack = require('./build-before-pack');
+const afterPack = require('./build-after-pack');
 
-const publishConfig = process.env.CORAL_PUBLISH_OWNER && process.env.CORAL_PUBLISH_REPO
-  ? [{
-      provider: 'github',
-      owner: process.env.CORAL_PUBLISH_OWNER,
-      repo: process.env.CORAL_PUBLISH_REPO,
-    }]
-  : undefined
+const publishConfig =
+  process.env.CORAL_PUBLISH_OWNER && process.env.CORAL_PUBLISH_REPO
+    ? [
+        {
+          provider: 'github',
+          owner: process.env.CORAL_PUBLISH_OWNER,
+          repo: process.env.CORAL_PUBLISH_REPO,
+        },
+      ]
+    : undefined;
 
 /**
-* @type {import('electron-builder').Configuration}
-* @see https://www.electron.build/configuration/configuration
-*/
+ * @type {import('electron-builder').Configuration}
+ * @see https://www.electron.build/configuration/configuration
+ */
 const options = {
   appId: 'cn.coral.music.desktop',
   productName: 'Coral Music',
@@ -23,9 +26,7 @@ const options = {
   afterPack,
   protocols: {
     name: 'coral-music-protocol',
-    schemes: [
-      'coralmusic',
-    ],
+    schemes: ['coralmusic'],
   },
   directories: {
     buildResources: './resources',
@@ -49,11 +50,9 @@ const options = {
   asar: {
     smartUnpack: false,
   },
-  extraResources: [
-    './licenses',
-  ],
+  extraResources: ['./licenses'],
   ...(publishConfig ? { publish: publishConfig } : {}),
-}
+};
 /**
  * @type {import('electron-builder').Configuration}
  * @see https://www.electron.build/configuration/configuration
@@ -72,7 +71,7 @@ const winOptions = {
     license: './licenses/license.rtf',
     shortcutName: 'Coral Music',
   },
-}
+};
 /**
  * @type {import('electron-builder').Configuration}
  * @see https://www.electron.build/configuration/configuration
@@ -102,7 +101,7 @@ const linuxOptions = {
     license: './licenses/license_zh.txt',
     category: 'Utility;AudioVideo;Audio;Player;Music;',
   },
-}
+};
 /**
  * @type {import('electron-builder').Configuration}
  * @see https://www.electron.build/configuration/configuration
@@ -132,7 +131,7 @@ const macOptions = {
     ],
     title: 'Coral Music v${version}',
   },
-}
+};
 
 // win: {
 // tagret: {
@@ -176,36 +175,37 @@ const createTarget = {
   win(arch, packageType) {
     switch (packageType) {
       case 'setup':
-        winOptions.artifactName = `\${productName}-v\${version}-${arch}-Setup.\${ext}`
+        winOptions.artifactName = `\${productName}-v\${version}-${arch}-Setup.\${ext}`;
         return {
           buildOptions: { win: ['nsis'] },
           options: winOptions,
-        }
+        };
       case 'green':
-        winOptions.artifactName = `\${productName}-v\${version}-win_${arch}-green.\${ext}`
+        winOptions.artifactName = `\${productName}-v\${version}-win_${arch}-green.\${ext}`;
         return {
           buildOptions: { win: ['7z'] },
           options: winOptions,
-        }
+        };
       case 'win7_setup':
-        winOptions.artifactName = `\${productName}-v\${version}-win7_${arch}-Setup.\${ext}`
+        winOptions.artifactName = `\${productName}-v\${version}-win7_${arch}-Setup.\${ext}`;
         return {
           buildOptions: { win: ['nsis'] },
           options: winOptions,
-        }
+        };
       case 'win7_green':
-        winOptions.artifactName = `\${productName}-v\${version}-win7_${arch}-green.\${ext}`
+        winOptions.artifactName = `\${productName}-v\${version}-win7_${arch}-green.\${ext}`;
         return {
           buildOptions: { win: ['7z'] },
           options: winOptions,
-        }
+        };
       case 'portable':
-        winOptions.artifactName = `\${productName}-v\${version}-${arch}-portable.\${ext}`
+        winOptions.artifactName = `\${productName}-v\${version}-${arch}-portable.\${ext}`;
         return {
           buildOptions: { win: ['portable'] },
           options: winOptions,
-        }
-      default: throw new Error('Unknown package type: ' + packageType)
+        };
+      default:
+        throw new Error(`Unknown package type: ${packageType}`);
     }
   },
   /**
@@ -217,30 +217,31 @@ const createTarget = {
   linux(arch, packageType) {
     switch (packageType) {
       case 'deb':
-        linuxOptions.artifactName = `\${productName}_\${version}_${arch == 'x64' ? 'amd64' : arch}.\${ext}`
+        linuxOptions.artifactName = `\${productName}_\${version}_${arch == 'x64' ? 'amd64' : arch}.\${ext}`;
         return {
           buildOptions: { linux: ['deb'] },
           options: linuxOptions,
-        }
+        };
       case 'appImage':
-        linuxOptions.artifactName = `\${productName}_\${version}_${arch}.\${ext}`
+        linuxOptions.artifactName = `\${productName}_\${version}_${arch}.\${ext}`;
         return {
           buildOptions: { linux: ['AppImage'] },
           options: linuxOptions,
-        }
+        };
       case 'pacman':
-        linuxOptions.artifactName = `\${productName}_\${version}_${arch}.\${ext}`
+        linuxOptions.artifactName = `\${productName}_\${version}_${arch}.\${ext}`;
         return {
           buildOptions: { linux: ['pacman'] },
           options: linuxOptions,
-        }
+        };
       case 'rpm':
-        linuxOptions.artifactName = `\${productName}-\${version}.${arch}.\${ext}`
+        linuxOptions.artifactName = `\${productName}-\${version}.${arch}.\${ext}`;
         return {
           buildOptions: { linux: ['rpm'] },
           options: linuxOptions,
-        }
-      default: throw new Error('Unknown package type: ' + packageType)
+        };
+      default:
+        throw new Error(`Unknown package type: ${packageType}`);
     }
   },
   /**
@@ -252,15 +253,16 @@ const createTarget = {
   mac(arch, packageType) {
     switch (packageType) {
       case 'dmg':
-        macOptions.artifactName = `\${productName}-\${version}-${arch}.\${ext}`
+        macOptions.artifactName = `\${productName}-\${version}-${arch}.\${ext}`;
         return {
           buildOptions: { mac: ['dmg'] },
           options: macOptions,
-        }
-      default: throw new Error('Unknown package type: ' + packageType)
+        };
+      default:
+        throw new Error(`Unknown package type: ${packageType}`);
     }
   },
-}
+};
 
 /**
  *
@@ -269,18 +271,18 @@ const createTarget = {
  * @param {*} packageType 包类型
  * @param {'onTagOrDraft' | 'always' | 'never'} publishType 发布类型
  */
-const build = async(target, arch, packageType, publishType) => {
+const build = async (target, arch, packageType, publishType) => {
   if (publishType && publishType !== 'never' && !publishConfig) {
-    throw new Error('Missing CORAL_PUBLISH_OWNER/CORAL_PUBLISH_REPO for publish build')
+    throw new Error('Missing CORAL_PUBLISH_OWNER/CORAL_PUBLISH_REPO for publish build');
   }
   if (target == 'dir') {
     await builder.build({
       dir: true,
       config: { ...options, ...winOptions, ...linuxOptions, ...macOptions },
-    })
-    return
+    });
+    return;
   }
-  const targetInfo = createTarget[target](arch, packageType)
+  const targetInfo = createTarget[target](arch, packageType);
   // Promise is returned
   await builder.build({
     ...targetInfo.buildOptions,
@@ -290,25 +292,25 @@ const build = async(target, arch, packageType, publishType) => {
     arm64: arch == 'arm64',
     armv7l: arch == 'armv7l',
     config: { ...options, ...targetInfo.options },
-  })
+  });
   // .then((result) => {
   //   console.log(JSON.stringify(result))
   // })
   // .catch((error) => {
   //   console.error(error)
   // })
-}
+};
 
-const params = {}
+const params = {};
 
 for (const param of process.argv.slice(2)) {
-  const [name, value] = param.split('=')
-  params[name] = value
+  const [name, value] = param.split('=');
+  params[name] = value;
 }
 
-if (params.target == null) throw new Error('Missing target')
-if (params.target != 'dir' && params.arch == null) throw new Error('Missing arch')
-if (params.target != 'dir' && params.type == null) throw new Error('Missing type')
+if (params.target == null) throw new Error('Missing target');
+if (params.target != 'dir' && params.arch == null) throw new Error('Missing arch');
+if (params.target != 'dir' && params.type == null) throw new Error('Missing type');
 
-console.log(params.target, params.arch, params.type, params.publish ?? '')
-build(params.target, params.arch, params.type, params.publish)
+console.log(params.target, params.arch, params.type, params.publish ?? '');
+build(params.target, params.arch, params.type, params.publish);
