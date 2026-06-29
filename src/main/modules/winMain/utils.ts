@@ -1,29 +1,24 @@
 // import fs from 'fs'
-import path from 'node:path'
-import { type WindowSize, windowSizeList } from '@common/config'
-import { nativeImage } from 'electron'
+import path from 'node:path';
+import { type WindowSize, windowSizeList } from '@common/config';
+import { nativeImage } from 'electron';
 
-export const getWindowSizeInfo = (windowSizeId: number | string): WindowSize => {
-  return windowSizeList.find(i => i.id == windowSizeId) ?? windowSizeList[0]
-}
+export const getWindowSizeInfo = (windowSizeId: number | string): WindowSize =>
+  windowSizeList.find((i) => i.id == windowSizeId) ?? windowSizeList[0];
 
-const getIconPath = (name: string): Electron.NativeImage => {
-  return nativeImage.createFromPath(path.join(global.staticPath, 'images/taskbar', name + '.png'))
-}
+const getIconPath = (name: string): Electron.NativeImage =>
+  nativeImage.createFromPath(path.join(global.staticPath, 'images/taskbar', `${name}.png`));
 
-export const createTaskBarButtons = ({
-  empty = false,
-  collect = false,
-  play = false,
-  next = true,
-  prev = true,
-}: LX.TaskBarButtonFlags, onClick: (action: LX.Player.StatusButtonActions) => void): Electron.ThumbarButton[] => {
+export const createTaskBarButtons = (
+  { empty = false, collect = false, play = false, next = true, prev = true }: LX.TaskBarButtonFlags,
+  onClick: (action: LX.Player.StatusButtonActions) => void,
+): Electron.ThumbarButton[] => {
   const buttons: Electron.ThumbarButton[] = [
     collect
       ? {
           icon: getIconPath('collected'),
           click() {
-            onClick('unCollect')
+            onClick('unCollect');
           },
           tooltip: '取消收藏',
           flags: ['nobackground'],
@@ -31,7 +26,7 @@ export const createTaskBarButtons = ({
       : {
           icon: getIconPath('collect'),
           click() {
-            onClick('collect')
+            onClick('collect');
           },
           tooltip: '收藏',
           flags: ['nobackground'],
@@ -39,7 +34,7 @@ export const createTaskBarButtons = ({
     {
       icon: getIconPath('prev'),
       click() {
-        onClick('prev')
+        onClick('prev');
       },
       tooltip: '上一曲',
       flags: prev ? ['nobackground'] : ['nobackground', 'disabled'],
@@ -48,7 +43,7 @@ export const createTaskBarButtons = ({
       ? {
           icon: getIconPath('pause'),
           click() {
-            onClick('pause')
+            onClick('pause');
           },
           tooltip: '暂停',
           flags: ['nobackground'],
@@ -56,7 +51,7 @@ export const createTaskBarButtons = ({
       : {
           icon: getIconPath('play'),
           click() {
-            onClick('play')
+            onClick('play');
           },
           tooltip: '播放',
           flags: ['nobackground'],
@@ -64,16 +59,16 @@ export const createTaskBarButtons = ({
     {
       icon: getIconPath('next'),
       click() {
-        onClick('next')
+        onClick('next');
       },
       tooltip: '下一曲',
       flags: next ? ['nobackground'] : ['nobackground', 'disabled'],
     },
-  ]
+  ];
   if (empty) {
     for (const button of buttons) {
-      button.flags = ['nobackground', 'disabled']
+      button.flags = ['nobackground', 'disabled'];
     }
   }
-  return buttons
-}
+  return buttons;
+};

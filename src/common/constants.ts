@@ -1,9 +1,9 @@
-export const URL_SCHEME_RXP = /^coralmusic:\/\//
+export const URL_SCHEME_RXP = /^coralmusic:\/\//;
 
 export const SPLIT_CHAR = {
   DISLIKE_NAME: '@',
   DISLIKE_NAME_ALIAS: '#',
-} as const
+} as const;
 
 export const STORE_NAMES = {
   APP_SETTINGS: 'config_v2',
@@ -15,13 +15,13 @@ export const STORE_NAMES = {
   LRC_EDITED: 'lyrics_edited',
   THEME: 'theme',
   SOUND_EFFECT: 'sound_effect',
-} as const
+} as const;
 
 export const APP_EVENT_NAMES = {
   winMainName: 'win_main',
   winLyricName: 'win_lyric',
   trayName: 'tray',
-} as const
+} as const;
 
 export const LIST_IDS = {
   DEFAULT: 'default',
@@ -29,7 +29,7 @@ export const LIST_IDS = {
   TEMP: 'temp',
   DOWNLOAD: 'download',
   PLAY_LATER: null,
-} as const
+} as const;
 
 export const DATA_KEYS = {
   viewPrevState: 'viewPrevState',
@@ -45,7 +45,7 @@ export const DATA_KEYS = {
   searchSetting: 'searchSetting',
 
   lastStartInfo: 'lastStartInfo',
-} as const
+} as const;
 
 export const DEFAULT_SETTING = {
   leaderboard: {
@@ -69,7 +69,7 @@ export const DEFAULT_SETTING = {
     url: '/search',
     query: {},
   },
-}
+};
 
 export const DOWNLOAD_STATUS = {
   RUN: 'run',
@@ -77,8 +77,20 @@ export const DOWNLOAD_STATUS = {
   PAUSE: 'pause',
   ERROR: 'error',
   COMPLETED: 'completed',
-} as const
+} as const;
 
-export const QUALITYS = ['master', 'atmos_plus', 'atmos', 'hires', 'flac24bit', 'flac', 'wav', 'ape', '320k', '192k', '128k'] as const
+export const QUALITYS = [
+  'master',
+  'atmos_plus',
+  'atmos',
+  'hires',
+  'flac24bit',
+  'flac',
+  'wav',
+  'ape',
+  '320k',
+  '192k',
+  '128k',
+] as const;
 
-export const TRAY_AUTO_ID = -1
+export const TRAY_AUTO_ID = -1;

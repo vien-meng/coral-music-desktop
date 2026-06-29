@@ -5,46 +5,45 @@ import {
   PlayCircleOutlined,
   StepBackwardOutlined,
   StepForwardOutlined,
-} from '@ant-design/icons'
-import { Button, Flex, Space, Tooltip, Typography } from 'antd'
-import { observer } from 'mobx-react-lite'
-import { rootStore } from '../../stores/rootStore'
-import { PlaybackRateBtn } from './PlaybackRateBtn'
-import { PlayDetailOverlay } from './PlayDetailOverlay'
-import { ProgressBar } from './ProgressBar'
-import { SoundEffectBtn } from './SoundEffectBtn'
-import { TogglePlayModeBtn } from './TogglePlayModeBtn'
-import { VolumeBtn } from './VolumeBtn'
+} from '@ant-design/icons';
+import { Button, Flex, Space, Tooltip, Typography } from 'antd';
+import { observer } from 'mobx-react-lite';
+import { rootStore } from '../../stores/rootStore';
+import { PlaybackRateBtn } from './PlaybackRateBtn';
+import { PlayDetailOverlay } from './PlayDetailOverlay';
+import { ProgressBar } from './ProgressBar';
+import { SoundEffectBtn } from './SoundEffectBtn';
+import { TogglePlayModeBtn } from './TogglePlayModeBtn';
+import { VolumeBtn } from './VolumeBtn';
 
-const { Text } = Typography
+const { Text } = Typography;
 
 const formatTime = (seconds: number): string => {
-  if (!Number.isFinite(seconds) || seconds < 0) return '00:00'
-  const mins = Math.floor(seconds / 60)
-  const secs = Math.floor(seconds % 60)
-  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
-}
+  if (!Number.isFinite(seconds) || seconds < 0) return '00:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+};
 
 export const PlayBar = observer(() => {
-  const { player, settings, ui } = rootStore
-  const isPlaying = player.isPlaying
-  const statusText = player.errorText || player.statusText
-  const subtitleText = [
-    statusText || player.displaySinger,
-    player.queuePositionText,
-  ].filter(Boolean).join(' · ')
+  const { player, settings, ui } = rootStore;
+  const isPlaying = player.isPlaying;
+  const statusText = player.errorText || player.statusText;
+  const subtitleText = [statusText || player.displaySinger, player.queuePositionText]
+    .filter(Boolean)
+    .join(' · ');
 
-  const nowPlayTimeStr = formatTime(player.currentTime)
-  const maxPlayTimeStr = formatTime(player.maxPlayTime)
+  const nowPlayTimeStr = formatTime(player.currentTime);
+  const maxPlayTimeStr = formatTime(player.maxPlayTime);
 
   const handleSeek = (seconds: number): void => {
-    player.seek(seconds)
-  }
+    player.seek(seconds);
+  };
 
   const handleToggleDesktopLyric = (): void => {
-    const enabled = settings.appSetting?.['desktopLyric.enable'] ?? false
-    void settings.updateAppSetting({ 'desktopLyric.enable': !enabled })
-  }
+    const enabled = settings.appSetting?.['desktopLyric.enable'] ?? false;
+    settings.updateAppSetting({ 'desktopLyric.enable': !enabled });
+  };
 
   return (
     <div className="coral-playbar">
@@ -53,18 +52,20 @@ export const PlayBar = observer(() => {
           type="button"
           className="coral-playbar-info-button"
           aria-label="打开播放详情"
-          onClick={() => { player.openPlayDetail() }}
+          onClick={() => {
+            player.openPlayDetail();
+          }}
         >
           <span className="coral-playbar-cover">
-            {player.coverUrl
-              ? (
-                <img
-                  src={player.coverUrl}
-                  alt={player.displayName}
-                  className="coral-playbar-cover-img"
-                />
-                )
-              : <CustomerServiceOutlined className="coral-playbar-cover-icon" />}
+            {player.coverUrl ? (
+              <img
+                src={player.coverUrl}
+                alt={player.displayName}
+                className="coral-playbar-cover-img"
+              />
+            ) : (
+              <CustomerServiceOutlined className="coral-playbar-cover-icon" />
+            )}
           </span>
           <span className="coral-playbar-meta">
             <Text ellipsis className="coral-playbar-title">
@@ -101,7 +102,9 @@ export const PlayBar = observer(() => {
             aria-label="上一首"
             icon={<StepBackwardOutlined />}
             shape="circle"
-            onClick={() => { player.playPrev() }}
+            onClick={() => {
+              player.playPrev();
+            }}
           />
           <Button
             aria-label={isPlaying ? '暂停' : '播放'}
@@ -109,13 +112,17 @@ export const PlayBar = observer(() => {
             shape="circle"
             type="primary"
             size="large"
-            onClick={() => { player.togglePlay() }}
+            onClick={() => {
+              player.togglePlay();
+            }}
           />
           <Button
             aria-label="下一首"
             icon={<StepForwardOutlined />}
             shape="circle"
-            onClick={() => { player.playNext() }}
+            onClick={() => {
+              player.playNext();
+            }}
           />
           <Tooltip title="桌面歌词">
             <Button
@@ -135,8 +142,8 @@ export const PlayBar = observer(() => {
               size="small"
               type="primary"
               onClick={() => {
-                ui.setActiveRoute('setting')
-                ui.requestQuickAction('importUserApiFile')
+                ui.setActiveRoute('setting');
+                ui.requestQuickAction('importUserApiFile');
               }}
             >
               添加音源
@@ -147,8 +154,8 @@ export const PlayBar = observer(() => {
               size="small"
               type="primary"
               onClick={() => {
-                ui.setActiveRoute('setting')
-                ui.requestQuickAction('configureExternalDecoder')
+                ui.setActiveRoute('setting');
+                ui.requestQuickAction('configureExternalDecoder');
               }}
             >
               配置解码器
@@ -158,5 +165,5 @@ export const PlayBar = observer(() => {
       </Flex>
       <PlayDetailOverlay />
     </div>
-  )
-})
+  );
+});

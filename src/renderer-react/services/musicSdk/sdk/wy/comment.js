@@ -1,6 +1,6 @@
-import { httpFetch } from '../../request'
-import { weapi } from './utils/crypto'
-import { dateFormat2 } from '../../index'
+import { httpFetch } from '../../request';
+import { weapi } from './utils/crypto';
+import { dateFormat2 } from '../../index';
 
 const emojis = [
   ['大笑', '😃'],
@@ -63,71 +63,72 @@ const emojis = [
   ['18', '🔞'],
   ['圈', '⭕'],
   ['叉', '❌'],
-]
+];
 
-const applyEmoji = text => {
-  for (const e of emojis) text = text.replaceAll(`[${e[0]}]`, e[1])
-  return text
-}
+const applyEmoji = (text) => {
+  for (const e of emojis) text = text.replaceAll(`[${e[0]}]`, e[1]);
+  return text;
+};
 
-let cursorTools = {
+const cursorTools = {
   cache: {},
   getCursor(id, page, limit) {
-    let cacheData = this.cache[id]
-    if (!cacheData) cacheData = this.cache[id] = {}
-    let orderType
-    let cursor
-    let offset
+    let cacheData = this.cache[id];
+    if (!cacheData) cacheData = this.cache[id] = {};
+    let orderType;
+    let cursor;
+    let offset;
     if (page == 1) {
-      cacheData.page = 1
-      cursor = cacheData.cursor = cacheData.prevCursor = Date.now()
-      orderType = 1
-      offset = 0
+      cacheData.page = 1;
+      cursor = cacheData.cursor = cacheData.prevCursor = Date.now();
+      orderType = 1;
+      offset = 0;
     } else if (cacheData.page) {
-      cursor = cacheData.cursor
+      cursor = cacheData.cursor;
       if (page > cacheData.page) {
-        orderType = 1
-        offset = (page - cacheData.page - 1) * limit
+        orderType = 1;
+        offset = (page - cacheData.page - 1) * limit;
       } else if (page < cacheData.page) {
-        orderType = 0
-        offset = (cacheData.page - page - 1) * limit
+        orderType = 0;
+        offset = (cacheData.page - page - 1) * limit;
       } else {
-        cursor = cacheData.cursor = cacheData.prevCursor
-        offset = cacheData.offset
-        orderType = cacheData.orderType
+        cursor = cacheData.cursor = cacheData.prevCursor;
+        offset = cacheData.offset;
+        orderType = cacheData.orderType;
       }
     }
     return {
       orderType,
       cursor,
       offset,
-    }
+    };
   },
   setCursor(id, cursor, orderType, offset, page) {
-    let cacheData = this.cache[id]
-    if (!cacheData) cacheData = this.cache[id] = {}
-    cacheData.prevCursor = cacheData.cursor
-    cacheData.cursor = cursor
-    cacheData.orderType = orderType
-    cacheData.offset = offset
-    cacheData.page = page
+    let cacheData = this.cache[id];
+    if (!cacheData) cacheData = this.cache[id] = {};
+    cacheData.prevCursor = cacheData.cursor;
+    cacheData.cursor = cursor;
+    cacheData.orderType = orderType;
+    cacheData.offset = offset;
+    cacheData.page = page;
   },
-}
+};
 
 export default {
   _requestObj: null,
   _requestObj2: null,
   async getComment({ songmid }, page = 1, limit = 20) {
-    if (this._requestObj) this._requestObj.cancelHttp()
+    if (this._requestObj) this._requestObj.cancelHttp();
 
-    const id = 'R_SO_4_' + songmid
+    const id = `R_SO_4_${songmid}`;
 
-    const cursorInfo = cursorTools.getCursor(songmid, page, limit)
+    const cursorInfo = cursorTools.getCursor(songmid, page, limit);
 
     const _requestObj = httpFetch('https://music.163.com/weapi/comment/resource/comments/get', {
       method: 'post',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36',
+        'User-Agent':
+          'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36',
         origin: 'https://music.163.com',
         Refere: 'http://music.163.com/',
       },
@@ -140,23 +141,31 @@ export default {
         rid: id,
         threadId: id,
       }),
-    })
-    const { body, statusCode } = await _requestObj.promise
+    });
+    const { body, statusCode } = await _requestObj.promise;
     // console.log(body)
-    if (statusCode != 200 || body.code !== 200) throw new Error('获取评论失败')
-    cursorTools.setCursor(songmid, body.data.cursor, cursorInfo.orderType, cursorInfo.offset, page)
-    return { source: 'wy', comments: this.filterComment(body.data.comments), total: body.data.totalCount, page, limit, maxPage: Math.ceil(body.data.totalCount / limit) || 1 }
+    if (statusCode != 200 || body.code !== 200) throw new Error('获取评论失败');
+    cursorTools.setCursor(songmid, body.data.cursor, cursorInfo.orderType, cursorInfo.offset, page);
+    return {
+      source: 'wy',
+      comments: this.filterComment(body.data.comments),
+      total: body.data.totalCount,
+      page,
+      limit,
+      maxPage: Math.ceil(body.data.totalCount / limit) || 1,
+    };
   },
   async getHotComment({ songmid }, page = 1, limit = 100) {
-    if (this._requestObj2) this._requestObj2.cancelHttp()
+    if (this._requestObj2) this._requestObj2.cancelHttp();
 
-    const id = 'R_SO_4_' + songmid
-    page = page - 1
+    const id = `R_SO_4_${songmid}`;
+    page -= 1;
 
     const _requestObj2 = httpFetch(`https://music.163.com/weapi/v1/resource/hotcomments/${id}`, {
       method: 'post',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36',
+        'User-Agent':
+          'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36',
         origin: 'https://music.163.com',
         Refere: 'http://music.163.com/',
       },
@@ -166,15 +175,22 @@ export default {
         offset: limit * page,
         beforeTime: Date.now().toString(),
       }),
-    })
-    const { body, statusCode } = await _requestObj2.promise
-    if (statusCode != 200 || body.code !== 200) throw new Error('获取热门评论失败')
-    const total = body.total ?? 0
-    return { source: 'wy', comments: this.filterComment(body.hotComments), total, page, limit, maxPage: Math.ceil(total / limit) || 1 }
+    });
+    const { body, statusCode } = await _requestObj2.promise;
+    if (statusCode != 200 || body.code !== 200) throw new Error('获取热门评论失败');
+    const total = body.total ?? 0;
+    return {
+      source: 'wy',
+      comments: this.filterComment(body.hotComments),
+      total,
+      page,
+      limit,
+      maxPage: Math.ceil(total / limit) || 1,
+    };
   },
   filterComment(rawList) {
-    return rawList.map(item => {
-      let data = {
+    return rawList.map((item) => {
+      const data = {
         id: item.commentId,
         text: item.content ? applyEmoji(item.content) : '',
         time: item.time ? item.time : '',
@@ -185,9 +201,9 @@ export default {
         userId: item.user.userId,
         likedCount: item.likedCount,
         reply: [],
-      }
+      };
 
-      let replyData = item.beReplied && item.beReplied[0]
+      const replyData = item.beReplied && item.beReplied[0];
       return replyData
         ? {
             id: item.commentId,
@@ -202,7 +218,7 @@ export default {
             likedCount: null,
             reply: [data],
           }
-        : data
-    })
+        : data;
+    });
   },
-}
+};

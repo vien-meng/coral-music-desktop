@@ -1,30 +1,27 @@
-import { simplified, traditional } from './chinese'
+import { simplified, traditional } from './chinese';
 
-const stMap = new Map()
-const tsMap = new Map()
+const stMap = new Map();
+const tsMap = new Map();
 
 simplified.split('').forEach((char, index) => {
-  stMap.set(char, traditional[index])
-  tsMap.set(traditional[index], char)
-})
+  stMap.set(char, traditional[index]);
+  tsMap.set(traditional[index], char);
+});
 
 function simplify(source) {
-  let result = []
+  const result = [];
   for (const char of source) {
-    result.push(tsMap.get(char) || char)
+    result.push(tsMap.get(char) || char);
   }
-  return result.join('')
+  return result.join('');
 }
 
 function tranditionalize(source) {
-  let result = []
+  const result = [];
   for (const char of source) {
-    result.push(stMap.get(char) || char)
+    result.push(stMap.get(char) || char);
   }
-  return result.join('')
+  return result.join('');
 }
 
-export {
-  simplify,
-  tranditionalize,
-}
+export { simplify, tranditionalize };

@@ -1,44 +1,44 @@
-export type ExternalDecoderProvider = 'none' | 'foobar2000' | 'ffmpeg'
-export type ExternalDecoderOutput = 'wav' | 'pcm'
+export type ExternalDecoderProvider = 'none' | 'foobar2000' | 'ffmpeg';
+export type ExternalDecoderOutput = 'wav' | 'pcm';
 
 export interface ExternalDecoderProbeParams {
-  executablePath: string
-  extensions: readonly string[]
-  pluginDirs: readonly string[]
-  provider: ExternalDecoderProvider
+  executablePath: string;
+  extensions: readonly string[];
+  pluginDirs: readonly string[];
+  provider: ExternalDecoderProvider;
 }
 
 export interface ExternalDecoderProbePathStatus {
-  exists: boolean
-  isDirectory: boolean
-  path: string
+  exists: boolean;
+  isDirectory: boolean;
+  path: string;
 }
 
 export interface ExternalDecoderProbeResult {
-  canProbe: boolean
-  errors: string[]
-  executableExists: boolean
-  executablePath: string
-  missingExtensions: string[]
-  platform: NodeJS.Platform
-  pluginDirs: ExternalDecoderProbePathStatus[]
-  provider: ExternalDecoderProvider
-  supportedExtensions: string[]
-  warnings: string[]
+  canProbe: boolean;
+  errors: string[];
+  executableExists: boolean;
+  executablePath: string;
+  missingExtensions: string[];
+  platform: NodeJS.Platform;
+  pluginDirs: ExternalDecoderProbePathStatus[];
+  provider: ExternalDecoderProvider;
+  supportedExtensions: string[];
+  warnings: string[];
 }
 
 export interface ExternalDecoderTranscodeParams {
-  executablePath: string
-  inputPath: string
-  output: ExternalDecoderOutput
-  provider: ExternalDecoderProvider
-  timeoutMs: number
+  executablePath: string;
+  inputPath: string;
+  output: ExternalDecoderOutput;
+  provider: ExternalDecoderProvider;
+  timeoutMs: number;
 }
 
 export interface ExternalDecoderTranscodeResult {
-  outputPath: string
-  output: ExternalDecoderOutput
-  warnings: string[]
+  outputPath: string;
+  output: ExternalDecoderOutput;
+  warnings: string[];
 }
 
 export const nativeLocalAudioExtensions = [
@@ -49,18 +49,13 @@ export const nativeLocalAudioExtensions = [
   'aac',
   'ogg',
   'opus',
-] as const
+] as const;
 
-export const externalDecoderExtensions = [
-  'dsf',
-  'dff',
-  'iso',
-  'sacd',
-] as const
+export const externalDecoderExtensions = ['dsf', 'dff', 'iso', 'sacd'] as const;
 
 export const externalDecoderExtensionAliases = {
   sadc: 'sacd',
-} as const
+} as const;
 
 export const foobar2000DecoderPluginHints = [
   {
@@ -78,7 +73,7 @@ export const foobar2000DecoderPluginHints = [
     formats: ['dff'],
     purpose: 'DSDIFF input support through an external Foobar2000 process.',
   },
-] as const
+] as const;
 
 export const playbackCapabilityRoadmap = {
   localAudio: {
@@ -93,19 +88,26 @@ export const playbackCapabilityRoadmap = {
     usesUserApiRuntime: true,
     settingKey: 'common.apiSource',
   },
-} as const
+} as const;
 
 export const normalizeAudioExtension = (ext: string): string => {
-  const normalized = ext.trim().replace(/^\./, '').toLowerCase()
-  return externalDecoderExtensionAliases[normalized as keyof typeof externalDecoderExtensionAliases] ?? normalized
-}
+  const normalized = ext.trim().replace(/^\./, '').toLowerCase();
+  return (
+    externalDecoderExtensionAliases[normalized as keyof typeof externalDecoderExtensionAliases] ??
+    normalized
+  );
+};
 
 export const isNativeLocalAudioExtension = (ext: string): boolean => {
-  const normalized = normalizeAudioExtension(ext)
-  return nativeLocalAudioExtensions.includes(normalized as typeof nativeLocalAudioExtensions[number])
-}
+  const normalized = normalizeAudioExtension(ext);
+  return nativeLocalAudioExtensions.includes(
+    normalized as (typeof nativeLocalAudioExtensions)[number],
+  );
+};
 
 export const isExternalDecoderExtension = (ext: string): boolean => {
-  const normalized = normalizeAudioExtension(ext)
-  return externalDecoderExtensions.includes(normalized as typeof externalDecoderExtensions[number])
-}
+  const normalized = normalizeAudioExtension(ext);
+  return externalDecoderExtensions.includes(
+    normalized as (typeof externalDecoderExtensions)[number],
+  );
+};

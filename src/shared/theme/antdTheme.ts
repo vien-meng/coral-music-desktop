@@ -1,7 +1,7 @@
-import type { ThemeConfig } from 'antd'
-import { theme } from 'antd'
+import type { ThemeConfig } from 'antd';
+import { theme } from 'antd';
 
-export type CoralThemeMode = 'light' | 'dark'
+export type CoralThemeMode = 'light' | 'dark';
 
 export const coralColors = {
   coral: '#f0645a',
@@ -9,7 +9,7 @@ export const coralColors = {
   ink: '#20242a',
   mist: '#f6f8fb',
   amber: '#d89614',
-} as const
+} as const;
 
 export const createCoralAntdTheme = (mode: CoralThemeMode = 'light'): ThemeConfig => ({
   algorithm: mode === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm,
@@ -34,4 +34,4 @@ export const createCoralAntdTheme = (mode: CoralThemeMode = 'light'): ThemeConfi
       borderRadiusLG: 8,
     },
   },
-})
+});

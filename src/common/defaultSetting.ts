@@ -1,8 +1,8 @@
-import path from 'node:path'
-import os from 'node:os'
+import path from 'node:path';
+import os from 'node:os';
 
-const isMac = process.platform == 'darwin'
-const isWin = process.platform == 'win32'
+const isMac = process.platform == 'darwin';
+const isWin = process.platform == 'win32';
 
 const defaultSetting: LX.AppSetting = {
   version: '2.1.0',
@@ -168,15 +168,12 @@ const defaultSetting: LX.AppSetting = {
 
   'odc.isAutoClearSearchInput': false,
   'odc.isAutoClearSearchList': false,
-
-}
-
+};
 
 // 使用新年皮肤
 if (new Date().getMonth() < 2) {
-  defaultSetting['theme.id'] = 'happy_new_year'
-  defaultSetting['desktopLyric.style.lyricPlayedColor'] = 'rgba(255, 57, 71, 1)'
+  defaultSetting['theme.id'] = 'happy_new_year';
+  defaultSetting['desktopLyric.style.lyricPlayedColor'] = 'rgba(255, 57, 71, 1)';
 }
 
-
-export default defaultSetting
+export default defaultSetting;

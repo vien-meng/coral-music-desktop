@@ -1,23 +1,30 @@
-import { encodePath } from '@common/utils/common'
+import { QUALITYS } from '@common/constants';
+import { encodePath } from '@common/utils/common';
 import {
   isExternalDecoderExtension,
   isNativeLocalAudioExtension,
   normalizeAudioExtension,
-} from '@shared/playbackCapabilities'
-import { cacheService } from '../cacheService'
-import { externalDecoderService } from '../externalDecoderService'
-import { musicSdkRuntime } from '../musicSdkRuntime'
-import { checkPath } from '../nodeBridgeService'
-import { settingService } from '../settingService'
-import { canDecodeLocalAudioExtension, decodeLocalAudioToObjectUrl, type DecodedAudioData } from './localAudioDecodeService'
-import type { PlayerRuntimeMusicInfo } from './types'
+} from '@shared/playbackCapabilities';
+import { cacheService } from '../cacheService';
+import { externalDecoderService } from '../externalDecoderService';
+import { musicSdkRuntime } from '../musicSdkRuntime';
+import { checkPath } from '../nodeBridgeService';
+import { settingService } from '../settingService';
+import {
+  canDecodeLocalAudioExtension,
+  decodeLocalAudioToObjectUrl,
+  type DecodedAudioData,
+} from './localAudioDecodeService';
+import type { PlayerRuntimeMusicInfo } from './types';
 
-const TRY_QUALITIES: LX.Quality[] = ['flac24bit', 'flac', '320k']
-const TOO_MANY_REQUESTS_MESSAGE = 'too many requests'
+const PLAY_QUALITIES: LX.Quality[] = QUALITYS.filter(
+  (quality) => quality !== 'wav' && quality !== 'ape',
+);
+const TOO_MANY_REQUESTS_MESSAGE = 'too many requests';
 
-const pendingOtherSourcePromises = new Map<string, Promise<LX.Music.MusicInfoOnline[]>>()
-const otherSourceCache = new Map<string, LX.Music.MusicInfoOnline[]>()
-const nativeAudioSupportCache = new Map<string, boolean>()
+const pendingOtherSourcePromises = new Map<string, Promise<LX.Music.MusicInfoOnline[]>>();
+const otherSourceCache = new Map<string, LX.Music.MusicInfoOnline[]>();
+const nativeAudioSupportCache = new Map<string, boolean>();
 
 const localAudioMimeTypes: Record<string, string[]> = {
   aac: ['audio/aac', 'audio/mp4'],
@@ -27,71 +34,71 @@ const localAudioMimeTypes: Record<string, string[]> = {
   ogg: ['audio/ogg; codecs="vorbis"', 'audio/ogg'],
   opus: ['audio/ogg; codecs="opus"', 'audio/opus'],
   wav: ['audio/wav', 'audio/wave', 'audio/x-wav'],
-}
+};
 
 interface MusicUrlResult {
-  type: LX.Quality
-  url: string
+  type: LX.Quality;
+  url: string;
 }
 
 interface MusicUrlRequest {
-  promise: Promise<MusicUrlResult>
+  promise: Promise<MusicUrlResult>;
 }
 
 interface MusicSdkSource {
-  getMusicUrl?: (musicInfo: unknown, quality: LX.Quality) => MusicUrlRequest
+  getMusicUrl?: (musicInfo: unknown, quality: LX.Quality) => MusicUrlRequest;
 }
 
 interface MusicSdk {
   findMusic?: (musicInfo: {
-    albumName: string
-    interval: string
-    name: string
-    singer: string
-    source: string
-  }) => Promise<unknown[]>
-  [source: string]: unknown
+    albumName: string;
+    interval: string;
+    name: string;
+    singer: string;
+    source: string;
+  }) => Promise<unknown[]>;
+  [source: string]: unknown;
 }
 
-const loadMusicSdk = async(): Promise<MusicSdk> => {
-  await musicSdkRuntime.sync()
-  const module = await import('../musicSdk/sdk')
-  return module.default as MusicSdk
-}
+const loadMusicSdk = async (): Promise<MusicSdk> => {
+  await musicSdkRuntime.sync();
+  const module = await import('../musicSdk/sdk');
+  return module.default as MusicSdk;
+};
 
-const isDownloadMusicInfo = (musicInfo: PlayerRuntimeMusicInfo): musicInfo is LX.Download.ListItem => {
-  return 'progress' in musicInfo && 'metadata' in musicInfo
-}
+const isDownloadMusicInfo = (
+  musicInfo: PlayerRuntimeMusicInfo,
+): musicInfo is LX.Download.ListItem => 'progress' in musicInfo && 'metadata' in musicInfo;
 
 const getFileExtension = (filePath: string): string => {
-  const fileName = filePath.split(/[\\/]/).pop() ?? filePath
-  const dotIndex = fileName.lastIndexOf('.')
-  if (dotIndex < 0) return ''
-  return normalizeAudioExtension(fileName.slice(dotIndex + 1))
-}
+  const fileName = filePath.split(/[\\/]/).pop() ?? filePath;
+  const dotIndex = fileName.lastIndexOf('.');
+  if (dotIndex < 0) return '';
+  return normalizeAudioExtension(fileName.slice(dotIndex + 1));
+};
 
 const canNativeAudioPlayExtension = (extension: string): boolean => {
-  const normalized = normalizeAudioExtension(extension)
-  const cached = nativeAudioSupportCache.get(normalized)
-  if (cached != null) return cached
+  const normalized = normalizeAudioExtension(extension);
+  const cached = nativeAudioSupportCache.get(normalized);
+  if (cached != null) return cached;
 
   if (!isNativeLocalAudioExtension(normalized)) {
-    nativeAudioSupportCache.set(normalized, false)
-    return false
+    nativeAudioSupportCache.set(normalized, false);
+    return false;
   }
 
-  const AudioConstructor = globalThis.window?.Audio
+  const AudioConstructor = globalThis.window?.Audio;
   if (!AudioConstructor) {
-    nativeAudioSupportCache.set(normalized, false)
-    return false
+    nativeAudioSupportCache.set(normalized, false);
+    return false;
   }
 
-  const audio = new AudioConstructor()
-  const mimeTypes = localAudioMimeTypes[normalized] ?? [`audio/${normalized}`]
-  const canPlay = mimeTypes.some(type => audio.canPlayType(type) !== '')
-  nativeAudioSupportCache.set(normalized, canPlay)
-  return canPlay
-}
+  const audio = new AudioConstructor();
+  const mimeTypes = localAudioMimeTypes[normalized] ?? [`audio/${normalized}`];
+  const canPlay = mimeTypes.some((type) => audio.canPlayType(type) !== '');
+  nativeAudioSupportCache.set(normalized, canPlay);
+  return canPlay;
+};
 
 const toOldPlayableMusicInfo = (musicInfo: LX.Music.MusicInfoOnline): Record<string, unknown> => {
   const oldMusicInfo: Record<string, unknown> = {
@@ -105,37 +112,37 @@ const toOldPlayableMusicInfo = (musicInfo: LX.Music.MusicInfoOnline): Record<str
     typeUrl: {},
     types: musicInfo.meta.qualitys,
     _types: musicInfo.meta._qualitys,
-  }
+  };
 
   switch (musicInfo.source) {
     case 'kg':
-      oldMusicInfo.hash = musicInfo.meta.hash
-      break
+      oldMusicInfo.hash = musicInfo.meta.hash;
+      break;
     case 'tx':
-      oldMusicInfo.albumMid = musicInfo.meta.albumMid
-      oldMusicInfo.songId = musicInfo.meta.id
-      oldMusicInfo.strMediaMid = musicInfo.meta.strMediaMid
-      break
+      oldMusicInfo.albumMid = musicInfo.meta.albumMid;
+      oldMusicInfo.songId = musicInfo.meta.id;
+      oldMusicInfo.strMediaMid = musicInfo.meta.strMediaMid;
+      break;
     case 'mg':
-      oldMusicInfo.copyrightId = musicInfo.meta.copyrightId
-      oldMusicInfo.lrcUrl = musicInfo.meta.lrcUrl
-      oldMusicInfo.mrcUrl = musicInfo.meta.mrcUrl
-      oldMusicInfo.trcUrl = musicInfo.meta.trcUrl
-      break
+      oldMusicInfo.copyrightId = musicInfo.meta.copyrightId;
+      oldMusicInfo.lrcUrl = musicInfo.meta.lrcUrl;
+      oldMusicInfo.mrcUrl = musicInfo.meta.mrcUrl;
+      oldMusicInfo.trcUrl = musicInfo.meta.trcUrl;
+      break;
   }
 
-  if ('albumId' in musicInfo.meta) oldMusicInfo.albumId = musicInfo.meta.albumId
+  if ('albumId' in musicInfo.meta) oldMusicInfo.albumId = musicInfo.meta.albumId;
 
-  return oldMusicInfo
-}
+  return oldMusicInfo;
+};
 
 const toOnlineMusicInfo = (musicInfo: unknown): LX.Music.MusicInfoOnline | null => {
-  if (typeof musicInfo !== 'object' || musicInfo == null) return null
+  if (typeof musicInfo !== 'object' || musicInfo == null) return null;
 
-  const oldMusicInfo = musicInfo as Record<string, any>
-  const source = oldMusicInfo.source
-  const songId = oldMusicInfo.songmid
-  if (typeof source !== 'string' || !songId) return null
+  const oldMusicInfo = musicInfo as Record<string, any>;
+  const source = oldMusicInfo.source;
+  const songId = oldMusicInfo.songmid;
+  if (typeof source !== 'string' || !songId) return null;
 
   const meta: Record<string, unknown> = {
     _qualitys: oldMusicInfo._types ?? {},
@@ -144,7 +151,7 @@ const toOnlineMusicInfo = (musicInfo: unknown): LX.Music.MusicInfoOnline | null 
     picUrl: oldMusicInfo.img ?? '',
     qualitys: oldMusicInfo.types ?? [],
     songId,
-  }
+  };
   const newMusicInfo = {
     id: `${source}_${songId}`,
     interval: oldMusicInfo.interval ?? '',
@@ -152,147 +159,165 @@ const toOnlineMusicInfo = (musicInfo: unknown): LX.Music.MusicInfoOnline | null 
     name: oldMusicInfo.name ?? '',
     singer: oldMusicInfo.singer ?? '',
     source: source as LX.OnlineSource,
-  }
+  };
 
   switch (source) {
     case 'kg':
-      meta.hash = oldMusicInfo.hash
-      newMusicInfo.id = `${songId}_${oldMusicInfo.hash}`
-      break
+      meta.hash = oldMusicInfo.hash;
+      newMusicInfo.id = `${songId}_${oldMusicInfo.hash}`;
+      break;
     case 'tx':
-      meta.albumMid = oldMusicInfo.albumMid
-      meta.id = oldMusicInfo.songId
-      meta.strMediaMid = oldMusicInfo.strMediaMid
-      break
+      meta.albumMid = oldMusicInfo.albumMid;
+      meta.id = oldMusicInfo.songId;
+      meta.strMediaMid = oldMusicInfo.strMediaMid;
+      break;
     case 'mg':
-      meta.copyrightId = oldMusicInfo.copyrightId
-      meta.lrcUrl = oldMusicInfo.lrcUrl
-      meta.mrcUrl = oldMusicInfo.mrcUrl
-      meta.trcUrl = oldMusicInfo.trcUrl
-      break
+      meta.copyrightId = oldMusicInfo.copyrightId;
+      meta.lrcUrl = oldMusicInfo.lrcUrl;
+      meta.mrcUrl = oldMusicInfo.mrcUrl;
+      meta.trcUrl = oldMusicInfo.trcUrl;
+      break;
   }
 
-  return newMusicInfo as unknown as LX.Music.MusicInfoOnline
-}
+  return newMusicInfo as unknown as LX.Music.MusicInfoOnline;
+};
 
 export interface ResolvedPlaybackUrl {
-  decodedAudio?: DecodedAudioData
-  decodedFilePath?: string
-  objectUrl?: string
-  musicInfo: PlayerRuntimeMusicInfo
-  quality: LX.Quality
-  source: 'cache' | 'download' | 'fresh' | 'local'
-  url: string
+  decodedAudio?: DecodedAudioData;
+  decodedFilePath?: string;
+  objectUrl?: string;
+  musicInfo: PlayerRuntimeMusicInfo;
+  quality: LX.Quality;
+  source: 'cache' | 'download' | 'fresh' | 'local';
+  url: string;
 }
 
 export interface ResolvePlayableMusicUrlOptions {
-  allowFresh?: boolean
-  allowToggleSource?: boolean
-  isRefresh?: boolean
-  onToggleSource?: (musicInfo?: LX.Music.MusicInfoOnline) => void
-  preferredQuality?: LX.Quality
+  allowFresh?: boolean;
+  allowToggleSource?: boolean;
+  isRefresh?: boolean;
+  onToggleSource?: (musicInfo?: LX.Music.MusicInfoOnline) => void;
+  preferredQuality?: LX.Quality;
 }
 
 export const resolveLocalMusicUrl = (musicInfo?: PlayerRuntimeMusicInfo): string | null => {
-  if (!musicInfo || isDownloadMusicInfo(musicInfo) || musicInfo.source !== 'local') return null
+  if (!musicInfo || isDownloadMusicInfo(musicInfo) || musicInfo.source !== 'local') return null;
 
-  const filePath = musicInfo.meta.filePath.trim()
-  if (!filePath) return null
-  const extension = getFileExtension(filePath)
-  if (canDecodeLocalAudioExtension(extension)) return null
-  if (!canNativeAudioPlayExtension(extension)) return null
+  const filePath = musicInfo.meta.filePath.trim();
+  if (!filePath) return null;
+  const extension = getFileExtension(filePath);
+  if (canDecodeLocalAudioExtension(extension)) return null;
+  if (!canNativeAudioPlayExtension(extension)) return null;
 
-  return encodePath(filePath)
-}
+  return encodePath(filePath);
+};
 
 export const canPlayWithLocalRuntime = (musicInfo?: PlayerRuntimeMusicInfo): boolean => {
-  if (!musicInfo || isDownloadMusicInfo(musicInfo) || musicInfo.source !== 'local') return false
+  if (!musicInfo || isDownloadMusicInfo(musicInfo) || musicInfo.source !== 'local') return false;
 
-  const extension = getFileExtension(musicInfo.meta.filePath)
-  return canNativeAudioPlayExtension(extension) ||
+  const extension = getFileExtension(musicInfo.meta.filePath);
+  return (
+    canNativeAudioPlayExtension(extension) ||
     canDecodeLocalAudioExtension(extension) ||
     isExternalDecoderExtension(extension)
-}
+  );
+};
 
-const resolveInternalDecodedPath = async(
+const resolveInternalDecodedPath = async (
   filePath: string,
-): Promise<{ decodedAudio: DecodedAudioData, objectUrl: string, url: string } | null> => {
-  const normalizedFilePath = filePath.trim()
-  if (!normalizedFilePath) return null
+): Promise<{ decodedAudio: DecodedAudioData; objectUrl: string; url: string } | null> => {
+  const normalizedFilePath = filePath.trim();
+  if (!normalizedFilePath) return null;
 
-  const extension = getFileExtension(normalizedFilePath)
-  if (!canDecodeLocalAudioExtension(extension)) return null
+  const extension = getFileExtension(normalizedFilePath);
+  if (!canDecodeLocalAudioExtension(extension)) return null;
 
-  const decoded = await decodeLocalAudioToObjectUrl(normalizedFilePath, extension)
-  if (!decoded) return null
+  const decoded = await decodeLocalAudioToObjectUrl(normalizedFilePath, extension);
+  if (!decoded) return null;
 
   return {
     decodedAudio: decoded.audioData,
     objectUrl: decoded.objectUrl,
     url: decoded.url,
-  }
-}
+  };
+};
 
-const resolveExternalDecodedPath = async(
+const resolveExternalDecodedPath = async (
   filePath: string,
-): Promise<{ decodedFilePath: string, url: string } | null> => {
-  const normalizedFilePath = filePath.trim()
-  if (!normalizedFilePath) return null
+): Promise<{ decodedFilePath: string; url: string } | null> => {
+  const normalizedFilePath = filePath.trim();
+  if (!normalizedFilePath) return null;
 
-  const extension = getFileExtension(normalizedFilePath)
-  if (!isExternalDecoderExtension(extension)) return null
+  const extension = getFileExtension(normalizedFilePath);
+  if (!isExternalDecoderExtension(extension)) return null;
 
-  const setting = await settingService.getAppSetting()
-  if (!setting?.['player.externalDecoder.enabled'] || setting['player.externalDecoder.provider'] === 'none') {
-    throw new Error(`本地 ${extension.toUpperCase()} 文件需要外部解码器，请在“设置 > 本地解码”启用 FFmpeg。`)
+  const setting = await settingService.getAppSetting();
+  if (
+    !setting?.['player.externalDecoder.enabled'] ||
+    setting['player.externalDecoder.provider'] === 'none'
+  ) {
+    throw new Error(
+      `本地 ${extension.toUpperCase()} 文件需要外部解码器，请在“设置 > 本地解码”启用 FFmpeg。`,
+    );
   }
 
-  if (!setting['player.externalDecoder.extensions'].map(normalizeAudioExtension).includes(extension)) {
-    throw new Error(`当前外部解码器未启用 ${extension.toUpperCase()} 扩展，请在“设置 > 本地解码”加入该扩展。`)
+  if (
+    !setting['player.externalDecoder.extensions'].map(normalizeAudioExtension).includes(extension)
+  ) {
+    throw new Error(
+      `当前外部解码器未启用 ${extension.toUpperCase()} 扩展，请在“设置 > 本地解码”加入该扩展。`,
+    );
   }
 
   const result = await externalDecoderService.transcodeExternalDecoder({
-    executablePath: setting['player.externalDecoder.executablePath'] ||
+    executablePath:
+      setting['player.externalDecoder.executablePath'] ||
       (setting['player.externalDecoder.provider'] === 'ffmpeg' ? 'ffmpeg' : ''),
     inputPath: normalizedFilePath,
     output: setting['player.externalDecoder.preferredOutput'],
     provider: setting['player.externalDecoder.provider'],
     timeoutMs: setting['player.externalDecoder.timeoutMs'],
-  })
+  });
 
   return {
     decodedFilePath: result.outputPath,
     url: encodePath(result.outputPath),
-  }
-}
+  };
+};
 
-const resolveExternalDecodedLocalMusicUrl = async(
+const resolveExternalDecodedLocalMusicUrl = async (
   musicInfo: PlayerRuntimeMusicInfo,
-): Promise<{ decodedFilePath: string, url: string } | null> => {
-  if (isDownloadMusicInfo(musicInfo) || musicInfo.source !== 'local') return null
-  return resolveExternalDecodedPath(musicInfo.meta.filePath)
-}
+): Promise<{ decodedFilePath: string; url: string } | null> => {
+  if (isDownloadMusicInfo(musicInfo) || musicInfo.source !== 'local') return null;
+  return resolveExternalDecodedPath(musicInfo.meta.filePath);
+};
 
-export const resolveDownloadMusicUrl = async(
+export const resolveDownloadMusicUrl = async (
   musicInfo: LX.Download.ListItem,
   isRefresh = false,
-): Promise<{ decodedAudio?: DecodedAudioData, decodedFilePath?: string, objectUrl?: string, url: string } | null> => {
-  if (isRefresh || !musicInfo.isComplate || /\.ape$/i.test(musicInfo.metadata.fileName)) return null
-  if (musicInfo.metadata.filePath && await checkPath(musicInfo.metadata.filePath)) {
-    const extension = getFileExtension(musicInfo.metadata.filePath)
-    const internalDecoded = await resolveInternalDecodedPath(musicInfo.metadata.filePath)
-    if (internalDecoded) return internalDecoded
+): Promise<{
+  decodedAudio?: DecodedAudioData;
+  decodedFilePath?: string;
+  objectUrl?: string;
+  url: string;
+} | null> => {
+  if (isRefresh || !musicInfo.isComplate || /\.ape$/i.test(musicInfo.metadata.fileName))
+    return null;
+  if (musicInfo.metadata.filePath && (await checkPath(musicInfo.metadata.filePath))) {
+    const extension = getFileExtension(musicInfo.metadata.filePath);
+    const internalDecoded = await resolveInternalDecodedPath(musicInfo.metadata.filePath);
+    if (internalDecoded) return internalDecoded;
 
     if (canNativeAudioPlayExtension(extension)) {
-      return { url: encodePath(musicInfo.metadata.filePath) }
+      return { url: encodePath(musicInfo.metadata.filePath) };
     }
 
-    const decoded = await resolveExternalDecodedPath(musicInfo.metadata.filePath)
-    if (decoded) return decoded
+    const decoded = await resolveExternalDecodedPath(musicInfo.metadata.filePath);
+    if (decoded) return decoded;
   }
 
-  return null
-}
+  return null;
+};
 
 export const getPreferredPlayQuality = (
   preferredQuality: LX.Quality,
@@ -300,54 +325,60 @@ export const getPreferredPlayQuality = (
 ): LX.Quality => {
   const fallbackQuality = musicInfo.meta._qualitys['128k']
     ? '128k'
-    : musicInfo.meta.qualitys[0]?.type ?? '128k'
+    : (PLAY_QUALITIES.find((item) => musicInfo.meta._qualitys[item]) ??
+      musicInfo.meta.qualitys[0]?.type ??
+      '128k');
 
-  if (!TRY_QUALITIES.includes(preferredQuality)) return fallbackQuality
+  if (!PLAY_QUALITIES.includes(preferredQuality)) return fallbackQuality;
 
-  const quality = TRY_QUALITIES
-    .slice(TRY_QUALITIES.indexOf(preferredQuality))
-    .find(item => musicInfo.meta._qualitys[item])
+  const quality = PLAY_QUALITIES.slice(PLAY_QUALITIES.indexOf(preferredQuality)).find(
+    (item) => musicInfo.meta._qualitys[item],
+  );
 
-  return quality ?? fallbackQuality
-}
+  return quality ?? fallbackQuality;
+};
 
 const getSourceSdk = (sdk: MusicSdk, source: LX.OnlineSource): MusicSdkSource | null => {
-  const sourceSdk = sdk[source]
-  if (typeof sourceSdk !== 'object' || sourceSdk == null || Array.isArray(sourceSdk)) return null
-  return sourceSdk as MusicSdkSource
-}
+  const sourceSdk = sdk[source];
+  if (typeof sourceSdk !== 'object' || sourceSdk == null || Array.isArray(sourceSdk)) return null;
+  return sourceSdk as MusicSdkSource;
+};
 
-export const fetchFreshOnlineMusicUrl = async(
+export const fetchFreshOnlineMusicUrl = async (
   musicInfo: LX.Music.MusicInfoOnline,
   quality: LX.Quality,
 ): Promise<MusicUrlResult> => {
-  const sdk = await loadMusicSdk()
-  const request = getSourceSdk(sdk, musicInfo.source)?.getMusicUrl?.(toOldPlayableMusicInfo(musicInfo), quality)
-  if (!request) throw new Error(`music url source not found: ${musicInfo.source}`)
+  const sdk = await loadMusicSdk();
+  const request = getSourceSdk(sdk, musicInfo.source)?.getMusicUrl?.(
+    toOldPlayableMusicInfo(musicInfo),
+    quality,
+  );
+  if (!request) throw new Error(`music url source not found: ${musicInfo.source}`);
 
-  const result = await request.promise
-  if (!result.url) throw new Error('music url is empty')
-  return result
-}
+  const result = await request.promise;
+  if (!result.url) throw new Error('music url is empty');
+  return result;
+};
 
-const createOtherSourceCacheKey = (musicInfo: LX.Music.MusicInfoOnline): string => {
-  return `${musicInfo.source}_${musicInfo.id}`
-}
+const createOtherSourceCacheKey = (musicInfo: LX.Music.MusicInfoOnline): string =>
+  `${musicInfo.source}_${musicInfo.id}`;
 
-const fetchOtherSourceMusicList = async(musicInfo: LX.Music.MusicInfoOnline): Promise<LX.Music.MusicInfoOnline[]> => {
-  const cacheKey = createOtherSourceCacheKey(musicInfo)
-  const cachedList = otherSourceCache.get(cacheKey)
-  if (cachedList) return cachedList
+const fetchOtherSourceMusicList = async (
+  musicInfo: LX.Music.MusicInfoOnline,
+): Promise<LX.Music.MusicInfoOnline[]> => {
+  const cacheKey = createOtherSourceCacheKey(musicInfo);
+  const cachedList = otherSourceCache.get(cacheKey);
+  if (cachedList) return cachedList;
 
-  const pendingPromise = pendingOtherSourcePromises.get(cacheKey)
-  if (pendingPromise) return pendingPromise
+  const pendingPromise = pendingOtherSourcePromises.get(cacheKey);
+  if (pendingPromise) return pendingPromise;
 
   const promise = loadMusicSdk()
-    .then(async(sdk) => {
-      const dbCachedList = await cacheService.getCachedOtherSource(musicInfo.id)
+    .then(async (sdk) => {
+      const dbCachedList = await cacheService.getCachedOtherSource(musicInfo.id);
       if (dbCachedList.length) {
-        otherSourceCache.set(cacheKey, dbCachedList)
-        return dbCachedList
+        otherSourceCache.set(cacheKey, dbCachedList);
+        return dbCachedList;
       }
 
       const rawList = await sdk.findMusic?.({
@@ -356,86 +387,90 @@ const fetchOtherSourceMusicList = async(musicInfo: LX.Music.MusicInfoOnline): Pr
         name: musicInfo.name,
         singer: musicInfo.singer,
         source: musicInfo.source,
-      })
-      const list = rawList
-        ?.map(toOnlineMusicInfo)
-        .filter((item): item is LX.Music.MusicInfoOnline => item != null) ?? []
+      });
+      const list =
+        rawList
+          ?.map(toOnlineMusicInfo)
+          .filter((item): item is LX.Music.MusicInfoOnline => item != null) ?? [];
 
-      if (otherSourceCache.size > 10) otherSourceCache.clear()
-      otherSourceCache.set(cacheKey, list)
-      if (list.length) void cacheService.saveCachedOtherSource(musicInfo.id, list)
-      return list
+      if (otherSourceCache.size > 10) otherSourceCache.clear();
+      otherSourceCache.set(cacheKey, list);
+      if (list.length) cacheService.saveCachedOtherSource(musicInfo.id, list);
+      return list;
     })
     .finally(() => {
-      pendingOtherSourcePromises.delete(cacheKey)
-    })
+      pendingOtherSourcePromises.delete(cacheKey);
+    });
 
-  pendingOtherSourcePromises.set(cacheKey, promise)
-  return promise
-}
+  pendingOtherSourcePromises.set(cacheKey, promise);
+  return promise;
+};
 
-const resolveOnlineMusicUrl = async(
+const resolveOnlineMusicUrl = async (
   musicInfo: LX.Music.MusicInfoOnline,
   options: ResolvePlayableMusicUrlOptions,
 ): Promise<ResolvedPlaybackUrl | null> => {
-  const quality = getPreferredPlayQuality(options.preferredQuality ?? '128k', musicInfo)
+  const quality = getPreferredPlayQuality(options.preferredQuality ?? '128k', musicInfo);
   const cachedUrl = options.isRefresh
     ? ''
-    : await cacheService.getCachedMusicUrl(musicInfo, quality)
+    : await cacheService.getCachedMusicUrl(musicInfo, quality);
   if (cachedUrl) {
     return {
       musicInfo,
       quality,
       source: 'cache',
       url: cachedUrl,
-    }
+    };
   }
 
-  if (options.allowFresh === false) return null
+  if (options.allowFresh === false) return null;
 
   try {
-    const freshUrl = await fetchFreshOnlineMusicUrl(musicInfo, quality)
-    await cacheService.saveCachedMusicUrl(musicInfo, freshUrl.type, freshUrl.url)
+    const freshUrl = await fetchFreshOnlineMusicUrl(musicInfo, quality);
+    await cacheService.saveCachedMusicUrl(musicInfo, freshUrl.type, freshUrl.url);
 
     return {
       musicInfo,
       quality: freshUrl.type,
       source: 'fresh',
       url: freshUrl.url,
-    }
+    };
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    if (message === 'Api is not found') {
-      throw new Error('当前没有可用音源，请先通过“添加音源”导入并启用 User API。')
+    const message = err instanceof Error ? err.message : String(err);
+    if (message === 'Api is not found' || /^music url source not found:/.test(message)) {
+      throw new Error('当前没有可用音源，请先通过“添加音源”导入并启用 User API。');
     }
-    if (options.allowToggleSource === false || message === TOO_MANY_REQUESTS_MESSAGE) throw err
+    if (options.allowToggleSource === false || message === TOO_MANY_REQUESTS_MESSAGE) throw err;
 
-    options.onToggleSource?.()
-    const otherSourceList = await fetchOtherSourceMusicList(musicInfo)
+    options.onToggleSource?.();
+    const otherSourceList = await fetchOtherSourceMusicList(musicInfo);
     for (const otherMusicInfo of otherSourceList) {
-      if (otherMusicInfo.source === musicInfo.source) continue
-      const targetQuality = getPreferredPlayQuality(options.preferredQuality ?? quality, otherMusicInfo)
-      if (!otherMusicInfo.meta._qualitys[targetQuality]) continue
+      if (otherMusicInfo.source === musicInfo.source) continue;
+      const targetQuality = getPreferredPlayQuality(
+        options.preferredQuality ?? quality,
+        otherMusicInfo,
+      );
+      if (!otherMusicInfo.meta._qualitys[targetQuality]) continue;
 
-      options.onToggleSource?.(otherMusicInfo)
+      options.onToggleSource?.(otherMusicInfo);
       const resolved = await resolveOnlineMusicUrl(otherMusicInfo, {
         ...options,
         allowToggleSource: false,
         preferredQuality: targetQuality,
-      }).catch(() => null)
-      if (resolved) return resolved
+      }).catch(() => null);
+      if (resolved) return resolved;
     }
 
-    throw err
+    throw err;
   }
-}
+};
 
-export const resolvePlayableMusicUrl = async(
+export const resolvePlayableMusicUrl = async (
   musicInfo: PlayerRuntimeMusicInfo,
   options: ResolvePlayableMusicUrlOptions = {},
 ): Promise<ResolvedPlaybackUrl | null> => {
   if (isDownloadMusicInfo(musicInfo)) {
-    const downloadUrl = await resolveDownloadMusicUrl(musicInfo, options.isRefresh)
+    const downloadUrl = await resolveDownloadMusicUrl(musicInfo, options.isRefresh);
     if (downloadUrl) {
       return {
         decodedFilePath: downloadUrl.decodedFilePath,
@@ -445,27 +480,27 @@ export const resolvePlayableMusicUrl = async(
         quality: musicInfo.metadata.quality,
         source: 'download',
         url: downloadUrl.url,
-      }
+      };
     }
 
     return resolveOnlineMusicUrl(musicInfo.metadata.musicInfo, {
       ...options,
       preferredQuality: options.preferredQuality ?? musicInfo.metadata.quality,
-    })
+    });
   }
 
-  const localUrl = resolveLocalMusicUrl(musicInfo)
+  const localUrl = resolveLocalMusicUrl(musicInfo);
   if (localUrl) {
     return {
       musicInfo,
       quality: '128k',
       source: 'local',
       url: localUrl,
-    }
+    };
   }
 
   if (musicInfo.source === 'local') {
-    const internalDecodedLocal = await resolveInternalDecodedPath(musicInfo.meta.filePath)
+    const internalDecodedLocal = await resolveInternalDecodedPath(musicInfo.meta.filePath);
     if (internalDecodedLocal) {
       return {
         objectUrl: internalDecodedLocal.objectUrl,
@@ -474,10 +509,10 @@ export const resolvePlayableMusicUrl = async(
         quality: '128k',
         source: 'local',
         url: internalDecodedLocal.url,
-      }
+      };
     }
 
-    const decodedLocal = await resolveExternalDecodedLocalMusicUrl(musicInfo)
+    const decodedLocal = await resolveExternalDecodedLocalMusicUrl(musicInfo);
     if (decodedLocal) {
       return {
         decodedFilePath: decodedLocal.decodedFilePath,
@@ -485,10 +520,10 @@ export const resolvePlayableMusicUrl = async(
         quality: '128k',
         source: 'local',
         url: decodedLocal.url,
-      }
+      };
     }
-    return null
+    return null;
   }
 
-  return resolveOnlineMusicUrl(musicInfo, options)
-}
+  return resolveOnlineMusicUrl(musicInfo, options);
+};

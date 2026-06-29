@@ -1,68 +1,72 @@
-import { sizeFormate, formatPlayTime } from '../../index'
-import { createHttpFetch } from './utils'
-import { formatSingerName } from '../utils'
+import { sizeFormate, formatPlayTime } from '../../index';
+import { createHttpFetch } from './utils';
+import { formatSingerName } from '../utils';
 
 const createGetMusicInfosTask = (ids) => {
-  let list = ids
-  let tasks = []
+  let list = ids;
+  const tasks = [];
   while (list.length) {
-    tasks.push(list.slice(0, 100))
-    if (list.length < 100) break
-    list = list.slice(100)
+    tasks.push(list.slice(0, 100));
+    if (list.length < 100) break;
+    list = list.slice(100);
   }
-  let url = 'https://c.musicapp.migu.cn/MIGUM2.0/v1.0/content/resourceinfo.do?resourceType=2'
-  return Promise.all(tasks.map(task => createHttpFetch(url, {
-    method: 'POST',
-    form: {
-      resourceId: task.join('|'),
-    },
-  }).then(data => data.resource)))
-}
+  const url = 'https://c.musicapp.migu.cn/MIGUM2.0/v1.0/content/resourceinfo.do?resourceType=2';
+  return Promise.all(
+    tasks.map((task) =>
+      createHttpFetch(url, {
+        method: 'POST',
+        form: {
+          resourceId: task.join('|'),
+        },
+      }).then((data) => data.resource),
+    ),
+  );
+};
 
 export const filterMusicInfoList = (rawList) => {
   // console.log(rawList)
-  let ids = new Set()
-  const list = []
-  rawList.forEach(item => {
-    if (!item.songId || ids.has(item.songId)) return
-    ids.add(item.songId)
-    const types = []
-    const _types = {}
-    item.newRateFormats?.forEach(type => {
-      let size
+  const ids = new Set();
+  const list = [];
+  rawList.forEach((item) => {
+    if (!item.songId || ids.has(item.songId)) return;
+    ids.add(item.songId);
+    const types = [];
+    const _types = {};
+    item.newRateFormats?.forEach((type) => {
+      let size;
       switch (type.formatType) {
         case 'PQ':
-          size = sizeFormate(type.size ?? type.androidSize)
-          types.push({ type: '128k', size })
+          size = sizeFormate(type.size ?? type.androidSize);
+          types.push({ type: '128k', size });
           _types['128k'] = {
             size,
-          }
-          break
+          };
+          break;
         case 'HQ':
-          size = sizeFormate(type.size ?? type.androidSize)
-          types.push({ type: '320k', size })
+          size = sizeFormate(type.size ?? type.androidSize);
+          types.push({ type: '320k', size });
           _types['320k'] = {
             size,
-          }
-          break
+          };
+          break;
         case 'SQ':
-          size = sizeFormate(type.size ?? type.androidSize)
-          types.push({ type: 'flac', size })
+          size = sizeFormate(type.size ?? type.androidSize);
+          types.push({ type: 'flac', size });
           _types.flac = {
             size,
-          }
-          break
+          };
+          break;
         case 'ZQ':
-          size = sizeFormate(type.size ?? type.androidSize)
-          types.push({ type: 'flac24bit', size })
+          size = sizeFormate(type.size ?? type.androidSize);
+          types.push({ type: 'flac24bit', size });
           _types.flac24bit = {
             size,
-          }
-          break
+          };
+          break;
       }
-    })
+    });
 
-    const intervalTest = /(\d\d:\d\d)$/.test(item.length)
+    const intervalTest = /(\d\d:\d\d)$/.test(item.length);
 
     list.push({
       singer: formatSingerName(item.artists, 'name'),
@@ -82,53 +86,53 @@ export const filterMusicInfoList = (rawList) => {
       types,
       _types,
       typeUrl: {},
-    })
-  })
-  return list
-}
+    });
+  });
+  return list;
+};
 
 export const filterMusicInfoListV5 = (rawList) => {
   // console.log(rawList)
-  let ids = new Set()
-  const list = []
-  rawList.forEach(item => {
-    if (!item.songId || ids.has(item.songId)) return
-    ids.add(item.songId)
-    const types = []
-    const _types = {}
-    item.audioFormats?.forEach(type => {
-      let size
+  const ids = new Set();
+  const list = [];
+  rawList.forEach((item) => {
+    if (!item.songId || ids.has(item.songId)) return;
+    ids.add(item.songId);
+    const types = [];
+    const _types = {};
+    item.audioFormats?.forEach((type) => {
+      let size;
       switch (type.formatType) {
         case 'PQ':
-          size = sizeFormate(type.size ?? type.androidSize)
-          types.push({ type: '128k', size })
+          size = sizeFormate(type.size ?? type.androidSize);
+          types.push({ type: '128k', size });
           _types['128k'] = {
             size,
-          }
-          break
+          };
+          break;
         case 'HQ':
-          size = sizeFormate(type.size ?? type.androidSize)
-          types.push({ type: '320k', size })
+          size = sizeFormate(type.size ?? type.androidSize);
+          types.push({ type: '320k', size });
           _types['320k'] = {
             size,
-          }
-          break
+          };
+          break;
         case 'SQ':
-          size = sizeFormate(type.size ?? type.androidSize)
-          types.push({ type: 'flac', size })
+          size = sizeFormate(type.size ?? type.androidSize);
+          types.push({ type: 'flac', size });
           _types.flac = {
             size,
-          }
-          break
+          };
+          break;
         case 'ZQ':
-          size = sizeFormate(type.size ?? type.androidSize)
-          types.push({ type: 'flac24bit', size })
+          size = sizeFormate(type.size ?? type.androidSize);
+          types.push({ type: 'flac24bit', size });
           _types.flac24bit = {
             size,
-          }
-          break
+          };
+          break;
       }
-    })
+    });
 
     list.push({
       singer: formatSingerName(item.singerList, 'name'),
@@ -148,15 +152,15 @@ export const filterMusicInfoListV5 = (rawList) => {
       types,
       _types,
       typeUrl: {},
-    })
-  })
-  return list
-}
+    });
+  });
+  return list;
+};
 
-export const getMusicInfo = async(copyrightId) => {
-  return getMusicInfos([copyrightId]).then(data => data[0])
-}
+export const getMusicInfo = async (copyrightId) =>
+  getMusicInfos([copyrightId]).then((data) => data[0]);
 
-export const getMusicInfos = async(copyrightIds) => {
-  return filterMusicInfoList(await Promise.all(createGetMusicInfosTask(copyrightIds)).then(data => data.flat()))
-}
+export const getMusicInfos = async (copyrightIds) =>
+  filterMusicInfoList(
+    await Promise.all(createGetMusicInfosTask(copyrightIds)).then((data) => data.flat()),
+  );

@@ -1,126 +1,174 @@
-import { settingService } from './settingService'
-import { userApiService } from './userApiService'
+import { settingService } from './settingService';
+import { userApiService } from './userApiService';
 
-type LegacyRuntimeState = typeof import('./musicSdk/sdk/runtimeState.js')
+type LegacyRuntimeState = typeof import('./musicSdk/sdk/runtimeState.js');
 
 interface LegacyMusicUrlResult {
-  source: LX.Source
-  action: 'musicUrl'
+  source: LX.Source;
+  action: 'musicUrl';
   data: {
-    type: LX.Quality
-    url: string
-  }
+    type: LX.Quality;
+    url: string;
+  };
 }
 
 interface LegacyUserApiMusicSource {
+  getLyric: (
+    musicInfo: unknown,
+    isGetLyricx?: boolean,
+  ) => {
+    promise: Promise<LX.Music.LyricInfo>;
+  };
   getMusicUrl: (
     musicInfo: unknown,
     quality: LX.Quality,
   ) => {
     promise: Promise<{
-      type: LX.Quality
-      url: string
-    }>
-  }
+      type: LX.Quality;
+      url: string;
+    }>;
+  };
+  getPic: (musicInfo: unknown) => Promise<string>;
 }
 
-let runtimeStatePromise: Promise<LegacyRuntimeState> | null = null
-let syncedApiSource: string | null = null
+let runtimeStatePromise: Promise<LegacyRuntimeState> | null = null;
+let syncedApiSource: string | null = null;
 
 const normalizeUserApiMusicUrlResult = (
   result: unknown,
   fallbackQuality: LX.Quality,
-): { type: LX.Quality, url: string } => {
+): { type: LX.Quality; url: string } => {
   if (typeof result === 'string') {
     return {
       type: fallbackQuality,
       url: result,
-    }
+    };
   }
 
   if (typeof result !== 'object' || result == null) {
-    throw new Error('User API did not return a playable URL.')
+    throw new Error('User API did not return a playable URL.');
   }
 
   const rawResult = result as Partial<LegacyMusicUrlResult> & {
-    type?: LX.Quality
-    url?: string
-  }
-  const data = typeof rawResult.data === 'object' && rawResult.data != null
-    ? rawResult.data
-    : rawResult
-  const url = data.url
-  if (typeof url !== 'string' || !url) throw new Error('User API did not return a playable URL.')
+    type?: LX.Quality;
+    url?: string;
+  };
+  const data =
+    typeof rawResult.data === 'object' && rawResult.data != null ? rawResult.data : rawResult;
+  const url = data.url;
+  if (typeof url !== 'string' || !url) throw new Error('User API did not return a playable URL.');
 
   return {
     type: data.type ?? fallbackQuality,
     url,
-  }
-}
+  };
+};
 
-const loadRuntimeState = async(): Promise<LegacyRuntimeState> => {
-  runtimeStatePromise ??= import('./musicSdk/sdk/runtimeState.js')
-  return await runtimeStatePromise
-}
+const loadRuntimeState = async (): Promise<LegacyRuntimeState> => {
+  runtimeStatePromise ??= import('./musicSdk/sdk/runtimeState.js');
+  return await runtimeStatePromise;
+};
 
 const createUserApiMusicSource = (source: LX.Source): LegacyUserApiMusicSource => ({
+  getLyric(musicInfo, isGetLyricx) {
+    return {
+      promise: userApiService
+        .requestUserApi({
+          action: 'lyric',
+          info: {
+            isGetLyricx,
+            musicInfo,
+          },
+          source,
+        })
+        .then((result) => {
+          const lyricResult = result as Partial<LX.Music.LyricInfo> & {
+            data?: Partial<LX.Music.LyricInfo>;
+          };
+          const lyricInfo = lyricResult.data ?? lyricResult;
+          return {
+            lyric: lyricInfo.lyric ?? '',
+            lxlyric: lyricInfo.lxlyric ?? '',
+            rlyric: lyricInfo.rlyric ?? '',
+            tlyric: lyricInfo.tlyric ?? '',
+          };
+        }),
+    };
+  },
   getMusicUrl(musicInfo, quality) {
     return {
-      promise: userApiService.requestUserApi({
-        action: 'musicUrl',
+      promise: userApiService
+        .requestUserApi({
+          action: 'musicUrl',
+          info: {
+            musicInfo,
+            type: quality,
+          },
+          source,
+        })
+        .then((result) => normalizeUserApiMusicUrlResult(result, quality)),
+    };
+  },
+  getPic(musicInfo) {
+    return userApiService
+      .requestUserApi({
+        action: 'pic',
         info: {
           musicInfo,
-          type: quality,
         },
         source,
-      }).then(result => {
-        return normalizeUserApiMusicUrlResult(result, quality)
-      }),
-    }
-  },
-})
+      })
+      .then((result) => {
+        if (typeof result === 'string') return result;
+        if (typeof result !== 'object' || result == null) return '';
 
-const applyUserApiRuntime = async(
+        const rawResult = result as { data?: string; url?: string };
+        return rawResult.data ?? rawResult.url ?? '';
+      });
+  },
+});
+
+const applyUserApiRuntime = async (
   runtimeState: LegacyRuntimeState,
   apiInfo: LX.UserApi.UserApiInfo,
 ): Promise<void> => {
-  const apis: Record<string, LegacyUserApiMusicSource> = {}
+  const apis: Record<string, LegacyUserApiMusicSource> = {};
   for (const [source, sourceInfo] of Object.entries(apiInfo.sources ?? {})) {
-    if (sourceInfo.type !== 'music' || !sourceInfo.actions.includes('musicUrl')) continue
-    apis[source] = createUserApiMusicSource(source as LX.Source)
+    if (sourceInfo.type !== 'music' || !sourceInfo.actions.includes('musicUrl')) continue;
+    apis[source] = createUserApiMusicSource(source as LX.Source);
   }
 
-  runtimeState.userApi.list = [apiInfo]
-  runtimeState.userApi.status = true
-  runtimeState.userApi.message = ''
-  runtimeState.userApi.apis = apis
-}
+  runtimeState.userApi.list = [apiInfo];
+  runtimeState.userApi.status = true;
+  runtimeState.userApi.message = '';
+  runtimeState.userApi.apis = apis;
+};
 
-export const syncMusicSdkRuntime = async(): Promise<string> => {
-  const runtimeState = await loadRuntimeState()
-  const setting = await settingService.getAppSetting()
-  const apiSource = setting?.['common.apiSource'] || 'temp'
+export const syncMusicSdkRuntime = async (): Promise<string> => {
+  const runtimeState = await loadRuntimeState();
+  const setting = await settingService.getAppSetting();
+  const apiSource = setting?.['common.apiSource'] || 'temp';
 
-  runtimeState.apiSource.value = apiSource
+  runtimeState.apiSource.value = apiSource;
   if (!apiSource.startsWith('user_api')) {
-    syncedApiSource = apiSource
-    return apiSource
+    syncedApiSource = apiSource;
+    return apiSource;
   }
 
   if (syncedApiSource !== apiSource) {
-    await userApiService.setUserApi(apiSource)
-    syncedApiSource = apiSource
+    await userApiService.setUserApi(apiSource);
+    syncedApiSource = apiSource;
   }
 
-  const status = await userApiService.getUserApiStatus()
+  const status = await userApiService.getUserApiStatus();
   if (!status.status || !status.apiInfo) {
-    throw new Error(status.message || 'User API source is not ready.')
+    throw new Error(status.message || '当前音源未就绪，请刷新或重新启用 User API 音源。');
   }
 
-  await applyUserApiRuntime(runtimeState, status.apiInfo)
-  return apiSource
-}
+  await applyUserApiRuntime(runtimeState, status.apiInfo);
+  return apiSource;
+};
 
 export const musicSdkRuntime = {
   sync: syncMusicSdkRuntime,
-}
+};

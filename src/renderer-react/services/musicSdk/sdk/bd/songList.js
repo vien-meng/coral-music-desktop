@@ -1,6 +1,6 @@
-import { httpFetch } from '../../request'
-import { formatPlayTime, toMD5 } from '../../index'
-import CryptoJS from 'crypto-js'
+import CryptoJS from 'crypto-js';
+import { httpFetch } from '../../request';
+import { formatPlayTime, toMD5 } from '../../index';
 
 export default {
   _requestObj_tags: null,
@@ -24,155 +24,162 @@ export default {
     listDetailLink: /^.+\/songlist\/(\d+)(?:\?.*|&.*$|#.*$|$)/,
   },
   aesPassEncod(jsonData) {
-    let timestamp = Math.floor(Date.now() / 1000)
-    let privateKey = toMD5('baidu_taihe_music_secret_key' + timestamp).substr(8, 16)
-    let key = CryptoJS.enc.Utf8.parse(privateKey)
-    let iv = CryptoJS.enc.Utf8.parse(privateKey)
-    let arrData = []
-    let strData = ''
-    for (let key in jsonData) arrData.push(key)
-    arrData.sort()
+    const timestamp = Math.floor(Date.now() / 1000);
+    const privateKey = toMD5(`baidu_taihe_music_secret_key${timestamp}`).substr(8, 16);
+    const key = CryptoJS.enc.Utf8.parse(privateKey);
+    const iv = CryptoJS.enc.Utf8.parse(privateKey);
+    const arrData = [];
+    let strData = '';
+    for (const key in jsonData) arrData.push(key);
+    arrData.sort();
     for (let i = 0; i < arrData.length; i++) {
-      let key = arrData[i]
-      strData +=
-        (i === 0 ? '' : '&') + key + '=' + encodeURIComponent(jsonData[key])
+      const key = arrData[i];
+      strData += `${(i === 0 ? '' : '&') + key}=${encodeURIComponent(jsonData[key])}`;
     }
-    let JsonFormatter = {
+    const JsonFormatter = {
       stringify(cipherParams) {
-        let jsonObj = {
+        const jsonObj = {
           ct: cipherParams.ciphertext.toString(CryptoJS.enc.Base64),
-        }
+        };
         if (cipherParams.iv) {
-          jsonObj.iv = cipherParams.iv.toString()
+          jsonObj.iv = cipherParams.iv.toString();
         }
         if (cipherParams.salt) {
-          jsonObj.s = cipherParams.salt.toString()
+          jsonObj.s = cipherParams.salt.toString();
         }
-        return jsonObj
+        return jsonObj;
       },
       parse(jsonStr) {
-        let jsonObj = JSON.parse(jsonStr)
-        let cipherParams = CryptoJS.lib.CipherParams.create({
+        const jsonObj = JSON.parse(jsonStr);
+        const cipherParams = CryptoJS.lib.CipherParams.create({
           ciphertext: CryptoJS.enc.Base64.parse(jsonObj.ct),
-        })
+        });
         if (jsonObj.iv) {
-          cipherParams.iv = CryptoJS.enc.Hex.parse(jsonObj.iv)
+          cipherParams.iv = CryptoJS.enc.Hex.parse(jsonObj.iv);
         }
         if (jsonObj.s) {
-          cipherParams.salt = CryptoJS.enc.Hex.parse(jsonObj.s)
+          cipherParams.salt = CryptoJS.enc.Hex.parse(jsonObj.s);
         }
-        return cipherParams
+        return cipherParams;
       },
-    }
-    let encrypted = CryptoJS.AES.encrypt(strData, key, {
+    };
+    const encrypted = CryptoJS.AES.encrypt(strData, key, {
       iv,
       blockSize: 16,
       mode: CryptoJS.mode.CBC,
       format: JsonFormatter,
-    })
-    let ciphertext = encrypted.toString().ct
-    let sign = toMD5('baidu_taihe_music' + ciphertext + timestamp)
-    let jsonRet = {
+    });
+    const ciphertext = encrypted.toString().ct;
+    const sign = toMD5(`baidu_taihe_music${ciphertext}${timestamp}`);
+    const jsonRet = {
       timestamp,
       param: ciphertext,
       sign,
-    }
-    return jsonRet
+    };
+    return jsonRet;
   },
   createUrl(param, method) {
-    let data = this.aesPassEncod(param)
-    return `http://musicmini.qianqian.com/v1/restserver/ting?method=${method}&time=${Date.now()}&timestamp=${data.timestamp}&param=${data.param}&sign=${data.sign}`
+    const data = this.aesPassEncod(param);
+    return `http://musicmini.qianqian.com/v1/restserver/ting?method=${method}&time=${Date.now()}&timestamp=${data.timestamp}&param=${data.param}&sign=${data.sign}`;
   },
   getTagsUrl() {
-    return this.createUrl({
-      from: 'qianqianmini',
-      type: 'diy',
-      version: '10.1.8',
-    }, 'baidu.ting.ugcdiy.getChannels')
+    return this.createUrl(
+      {
+        from: 'qianqianmini',
+        type: 'diy',
+        version: '10.1.8',
+      },
+      'baidu.ting.ugcdiy.getChannels',
+    );
   },
   getListUrl(sortType, tagName, page) {
-    return this.createUrl({
-      channelname: tagName || '全部',
-      from: 'qianqianmini',
-      offset: (page - 1) * this.limit_list,
-      order_type: sortType,
-      size: this.limit_list,
-      version: '10.1.8',
-    }, 'baidu.ting.ugcdiy.getChanneldiy')
+    return this.createUrl(
+      {
+        channelname: tagName || '全部',
+        from: 'qianqianmini',
+        offset: (page - 1) * this.limit_list,
+        order_type: sortType,
+        size: this.limit_list,
+        version: '10.1.8',
+      },
+      'baidu.ting.ugcdiy.getChanneldiy',
+    );
   },
   getListDetailUrl(list_id, page) {
-    return this.createUrl({
-      list_id,
-      offset: (page - 1) * this.limit_song,
-      size: this.limit_song,
-      withcount: '1',
-      withsong: '1',
-    }, 'baidu.ting.ugcdiy.getBaseInfo')
+    return this.createUrl(
+      {
+        list_id,
+        offset: (page - 1) * this.limit_song,
+        size: this.limit_song,
+        withcount: '1',
+        withsong: '1',
+      },
+      'baidu.ting.ugcdiy.getBaseInfo',
+    );
   },
 
   // 获取标签
   getTags(tryNum = 0) {
-    if (this._requestObj_tags) this._requestObj_tags.cancelHttp()
-    if (tryNum > 2) return Promise.reject(new Error('try max num'))
-    this._requestObj_tags = httpFetch(this.getTagsUrl())
+    if (this._requestObj_tags) this._requestObj_tags.cancelHttp();
+    if (tryNum > 2) return Promise.reject(new Error('try max num'));
+    this._requestObj_tags = httpFetch(this.getTagsUrl());
     return this._requestObj_tags.promise.then(({ body }) => {
-      if (body.error_code !== this.successCode) return this.getTags(++tryNum)
+      if (body.error_code !== this.successCode) return this.getTags(++tryNum);
       return {
         hotTag: this.filterInfoHotTag(body.result.hot),
         tags: this.filterTagInfo(body.result.tags),
         source: 'bd',
-      }
-    })
+      };
+    });
   },
   filterInfoHotTag(rawList) {
-    return rawList.map(item => ({
+    return rawList.map((item) => ({
       name: item,
       id: item,
       source: 'bd',
-    }))
+    }));
   },
   filterTagInfo(rawList) {
-    return rawList.map(type => ({
+    return rawList.map((type) => ({
       name: type.first,
-      list: type.second.map(item => ({
+      list: type.second.map((item) => ({
         parent_id: type.first,
         parent_name: type.first,
         id: item,
         name: item,
         source: 'bd',
       })),
-    }))
+    }));
   },
 
   // 获取列表数据
   getList(sortId, tagId, page, tryNum = 0) {
-    if (this._requestObj_list) this._requestObj_list.cancelHttp()
-    if (tryNum > 2) return Promise.reject(new Error('try max num'))
-    this._requestObj_list = httpFetch(this.getListUrl(sortId, tagId, page))
+    if (this._requestObj_list) this._requestObj_list.cancelHttp();
+    if (tryNum > 2) return Promise.reject(new Error('try max num'));
+    this._requestObj_list = httpFetch(this.getListUrl(sortId, tagId, page));
     return this._requestObj_list.promise.then(({ body }) => {
-      if (body.error_code !== this.successCode) return this.getList(sortId, tagId, page, ++tryNum)
+      if (body.error_code !== this.successCode) return this.getList(sortId, tagId, page, ++tryNum);
       return {
         list: this.filterList(body.diyInfo),
         total: body.nums,
         page,
         limit: this.limit_list,
         source: 'bd',
-      }
-    })
+      };
+    });
   },
-
 
   /**
    * 格式化播放数量
    * @param {*} num
    */
   formatPlayCount(num) {
-    if (num > 100000000) return parseInt(num / 10000000) / 10 + '亿'
-    if (num > 10000) return parseInt(num / 1000) / 10 + '万'
-    return num
+    if (num > 100000000) return `${parseInt(num / 10000000) / 10}亿`;
+    if (num > 10000) return `${parseInt(num / 1000) / 10}万`;
+    return num;
   },
   filterList(rawData) {
-    return rawData.map(item => ({
+    return rawData.map((item) => ({
       play_count: this.formatPlayCount(item.listen_num),
       id: String(item.list_id),
       author: item.username,
@@ -182,19 +189,19 @@ export default {
       grade: item.grade,
       desc: item.desc || item.tag,
       source: 'bd',
-    }))
+    }));
   },
 
   // 获取歌曲列表内的音乐
   getListDetail(id, page, tryNum = 0) {
-    if (tryNum > 2) return Promise.reject(new Error('try max num'))
+    if (tryNum > 2) return Promise.reject(new Error('try max num'));
 
-    if ((/[?&:/]/.test(id))) id = id.replace(this.regExps.listDetailLink, '$1')
+    if (/[?&:/]/.test(id)) id = id.replace(this.regExps.listDetailLink, '$1');
 
-    const requestObj_listDetail = httpFetch(this.getListDetailUrl(id, page))
+    const requestObj_listDetail = httpFetch(this.getListDetailUrl(id, page));
     return requestObj_listDetail.promise.then(({ body }) => {
-      if (body.error_code !== this.successCode) return this.getListDetail(id, page, ++tryNum)
-      let listData = this.filterData(body.result.songlist)
+      if (body.error_code !== this.successCode) return this.getListDetail(id, page, ++tryNum);
+      const listData = this.filterData(body.result.songlist);
       return {
         list: listData,
         page,
@@ -208,33 +215,33 @@ export default {
           author: body.result.info.userinfo.username,
           play_count: this.formatPlayCount(body.result.listen_num),
         },
-      }
-    })
+      };
+    });
   },
   filterData(rawList) {
     // console.log(rawList)
-    return rawList.map(item => {
-      const types = []
-      const _types = {}
-      let size = null
-      let itemTypes = item.all_rate.split(',')
+    return rawList.map((item) => {
+      const types = [];
+      const _types = {};
+      const size = null;
+      const itemTypes = item.all_rate.split(',');
       if (itemTypes.includes('128')) {
-        types.push({ type: '128k', size })
+        types.push({ type: '128k', size });
         _types['128k'] = {
           size,
-        }
+        };
       }
       if (itemTypes.includes('320')) {
-        types.push({ type: '320k', size })
+        types.push({ type: '320k', size });
         _types['320k'] = {
           size,
-        }
+        };
       }
       if (itemTypes.includes('flac')) {
-        types.push({ type: 'flac', size })
+        types.push({ type: 'flac', size });
         _types.flac = {
           size,
-        }
+        };
       }
       // types.reverse()
 
@@ -251,11 +258,10 @@ export default {
         types,
         _types,
         typeUrl: {},
-      }
-    })
+      };
+    });
   },
-
-}
+};
 
 // getList
 // getTags

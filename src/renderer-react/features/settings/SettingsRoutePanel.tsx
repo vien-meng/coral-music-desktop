@@ -10,7 +10,7 @@ import {
   ReloadOutlined,
   WarningOutlined,
   UploadOutlined,
-} from '@ant-design/icons'
+} from '@ant-design/icons';
 import {
   Alert,
   Button,
@@ -27,93 +27,124 @@ import {
   Switch,
   Tag,
   Typography,
-} from 'antd'
-import { observer } from 'mobx-react-lite'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { TRAY_AUTO_ID } from '@common/constants'
-import { sizeFormate } from '@common/utils/common'
-import { coralProjectLinks } from '@shared/brand'
+} from 'antd';
+import { observer } from 'mobx-react-lite';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { TRAY_AUTO_ID } from '@common/constants';
+import { sizeFormate } from '@common/utils/common';
+import { coralProjectLinks } from '@shared/brand';
 import {
   externalDecoderExtensions,
   normalizeAudioExtension,
   type ExternalDecoderProbeResult,
-} from '@shared/playbackCapabilities'
-import { PlainList, PlainListItem, PlainListMeta } from '../../components/base'
-import { appService } from '../../services/appService'
-import { backupService } from '../../services/backupService'
-import { cacheService } from '../../services/cacheService'
-import { externalDecoderService } from '../../services/externalDecoderService'
-import { listService } from '../../services/listService'
-import { readFile } from '../../services/nodeBridgeService'
-import { rootStore } from '../../stores/rootStore'
-import { DislikeListModal } from './DislikeListModal'
-import { HotKeySection } from './HotKeySection'
-import { PlayTimeoutModal } from './PlayTimeoutModal'
-import { ThemeEditModal } from './ThemeEditModal'
+} from '@shared/playbackCapabilities';
+import { PlainList, PlainListItem, PlainListMeta } from '../../components/base';
+import { appService } from '../../services/appService';
+import { backupService } from '../../services/backupService';
+import { cacheService } from '../../services/cacheService';
+import { externalDecoderService } from '../../services/externalDecoderService';
+import { listService } from '../../services/listService';
+import { readFile } from '../../services/nodeBridgeService';
+import { rootStore } from '../../stores/rootStore';
+import { DislikeListModal } from './DislikeListModal';
+import { HotKeySection } from './HotKeySection';
+import { PlayTimeoutModal } from './PlayTimeoutModal';
+import { ThemeEditModal } from './ThemeEditModal';
 
-const { Text } = Typography
+const { Text } = Typography;
 
 type BooleanSettingKey = {
-  [Key in keyof LX.AppSetting]: LX.AppSetting[Key] extends boolean
-    ? Key
-    : never;
-}[keyof LX.AppSetting]
+  [Key in keyof LX.AppSetting]: LX.AppSetting[Key] extends boolean ? Key : never;
+}[keyof LX.AppSetting];
 
 interface SettingSectionProps {
-  children: ReactNode
-  title: string
+  children: ReactNode;
+  title: string;
 }
 
 interface SettingSwitchProps {
-  appSetting: LX.AppSetting
-  disabled?: boolean
-  label: string
-  settingKey: BooleanSettingKey
-  updateSetting: (setting: Partial<LX.AppSetting>) => void
+  appSetting: LX.AppSetting;
+  disabled?: boolean;
+  label: string;
+  settingKey: BooleanSettingKey;
+  updateSetting: (setting: Partial<LX.AppSetting>) => void;
 }
 
-const playQualityOptions: Array<{ label: string, value: LX.Quality }> = [
-  { label: '128k', value: '128k' },
-  { label: '320k', value: '320k' },
+const playQualityOptions: Array<{ label: string; value: LX.Quality }> = [
+  { label: 'Master', value: 'master' },
+  { label: 'Atmos Plus', value: 'atmos_plus' },
+  { label: 'Atmos', value: 'atmos' },
+  { label: 'Hi-Res', value: 'hires' },
+  { label: 'FLAC Hi-Res', value: 'flac24bit' },
   { label: 'FLAC', value: 'flac' },
-  { label: 'Hi-Res', value: 'flac24bit' },
-]
+  { label: '320k', value: '320k' },
+  { label: '128k', value: '128k' },
+];
+
+const qualityNameMap: Partial<Record<LX.Quality, string>> = {
+  '128k': '128k',
+  '192k': '192k',
+  '320k': '320k',
+  ape: 'APE',
+  atmos: 'Atmos',
+  atmos_plus: 'Atmos Plus',
+  flac: 'FLAC',
+  flac24bit: 'FLAC Hi-Res',
+  hires: 'Hi-Res',
+  master: 'Master',
+  wav: 'WAV',
+};
+
+const formatQualityName = (quality: LX.Quality): string => qualityNameMap[quality] ?? quality;
+
+const getUserApiQualityNames = (apiInfo?: LX.UserApi.UserApiInfo | null): string[] => {
+  const qualities = new Set<LX.Quality>();
+
+  Object.values(apiInfo?.sources ?? {}).forEach((sourceInfo) => {
+    if (sourceInfo.type !== 'music' || !sourceInfo.actions.includes('musicUrl')) return;
+    sourceInfo.qualitys.forEach((quality) => {
+      qualities.add(quality);
+    });
+  });
+
+  return Array.from(qualities).map(formatQualityName);
+};
+
+const hasUserApiSourceInfo = (apiInfo?: LX.UserApi.UserApiInfo | null): boolean =>
+  Object.keys(apiInfo?.sources ?? {}).length > 0;
 
 const maxDownloadOptions = [1, 2, 3, 4, 5, 6].map((value) => ({
   label: `${value}`,
   value,
-}))
+}));
 
 const lyricAlignOptions = [
   { label: '左侧', value: 'left' },
   { label: '居中', value: 'center' },
   { label: '右侧', value: 'right' },
-]
+];
 
-const splitListSetting = (value: string): string[] => {
-  return Array.from(
+const splitListSetting = (value: string): string[] =>
+  Array.from(
     new Set(
       value
         .split(/[\n,，;；\s]+/)
-        .map(item => item.trim())
+        .map((item) => item.trim())
         .filter(Boolean),
     ),
-  )
-}
+  );
 
 const splitExtensionSetting = (value: string): string[] => {
-  const extensions = splitListSetting(value)
-    .map(normalizeAudioExtension)
-    .filter(Boolean)
-  return Array.from(new Set(extensions))
-}
+  const extensions = splitListSetting(value).map(normalizeAudioExtension).filter(Boolean);
+  return Array.from(new Set(extensions));
+};
 
 const SettingSection = ({ children, title }: SettingSectionProps) => (
   <section className="coral-settings-section">
     <h2>{title}</h2>
     <Form layout="vertical">{children}</Form>
   </section>
-)
+);
 
 const SettingSwitch = ({
   appSetting,
@@ -129,33 +160,28 @@ const SettingSwitch = ({
       onChange={(checked) => {
         const nextSetting: Partial<LX.AppSetting> = {
           [settingKey]: checked,
-        }
-        updateSetting(nextSetting)
+        };
+        updateSetting(nextSetting);
       }}
     />
   </Form.Item>
-)
+);
 
 interface OnlineImportModalProps {
-  loading: boolean
-  onClose: () => void
-  onSubmit: (url: string) => void | Promise<void>
-  open: boolean
+  loading: boolean;
+  onClose: () => void;
+  onSubmit: (url: string) => void | Promise<void>;
+  open: boolean;
 }
 
-const OnlineImportModal = ({
-  loading,
-  onClose,
-  onSubmit,
-  open,
-}: OnlineImportModalProps) => {
-  const [url, setUrl] = useState('')
+const OnlineImportModal = ({ loading, onClose, onSubmit, open }: OnlineImportModalProps) => {
+  const [url, setUrl] = useState('');
 
   const handleSubmit = () => {
-    const trimmed = url.trim()
-    if (!/^https?:\/\//.test(trimmed)) return
-    void onSubmit(trimmed)
-  }
+    const trimmed = url.trim();
+    if (!/^https?:\/\//.test(trimmed)) return;
+    onSubmit(trimmed);
+  };
 
   return (
     <Modal
@@ -183,24 +209,24 @@ const OnlineImportModal = ({
         placeholder="输入脚本 URL（http:// 或 https://）"
         value={url}
         onChange={(event) => {
-          setUrl(event.target.value)
+          setUrl(event.target.value);
         }}
         onPressEnter={handleSubmit}
       />
     </Modal>
-  )
-}
+  );
+};
 
 interface ThemeSelectorModalProps {
-  appSetting: LX.AppSetting
-  darkThemes: LX.Theme[]
-  lightThemes: LX.Theme[]
-  onClose: () => void
-  onEdit: (id: string) => void
-  onRemove: (id: string) => void
-  onSelectDark: (id: string) => void
-  onSelectLight: (id: string) => void
-  open: boolean
+  appSetting: LX.AppSetting;
+  darkThemes: LX.Theme[];
+  lightThemes: LX.Theme[];
+  onClose: () => void;
+  onEdit: (id: string) => void;
+  onRemove: (id: string) => void;
+  onSelectDark: (id: string) => void;
+  onSelectLight: (id: string) => void;
+  open: boolean;
 }
 
 const ThemeSwatch = ({
@@ -211,12 +237,12 @@ const ThemeSwatch = ({
   primaryColor,
   onRemove,
 }: {
-  active: boolean
-  name: string
-  onClick: () => void
-  onEdit?: () => void
-  primaryColor: string
-  onRemove?: () => void
+  active: boolean;
+  name: string;
+  onClick: () => void;
+  onEdit?: () => void;
+  primaryColor: string;
+  onRemove?: () => void;
 }) => (
   <div
     className={`coral-theme-swatch${active ? ' coral-theme-swatch-active' : ''}`}
@@ -225,21 +251,18 @@ const ThemeSwatch = ({
     tabIndex={0}
     onKeyDown={(event) => {
       if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault()
-        onClick()
+        event.preventDefault();
+        onClick();
       }
     }}
   >
-    <div
-      className="coral-theme-swatch-bg"
-      style={{ backgroundColor: primaryColor }}
-    >
+    <div className="coral-theme-swatch-bg" style={{ backgroundColor: primaryColor }}>
       {onEdit ? (
         <EditOutlined
           className="coral-theme-swatch-edit"
           onClick={(event) => {
-            event.stopPropagation()
-            onEdit()
+            event.stopPropagation();
+            onEdit();
           }}
         />
       ) : null}
@@ -247,15 +270,15 @@ const ThemeSwatch = ({
         <DeleteOutlined
           className="coral-theme-swatch-remove"
           onClick={(event) => {
-            event.stopPropagation()
-            onRemove()
+            event.stopPropagation();
+            onRemove();
           }}
         />
       ) : null}
     </div>
     <div className="coral-theme-swatch-label">{name}</div>
   </div>
-)
+);
 
 const ThemeSelectorModal = ({
   appSetting,
@@ -268,13 +291,7 @@ const ThemeSelectorModal = ({
   onSelectLight,
   open,
 }: ThemeSelectorModalProps) => (
-  <Modal
-    open={open}
-    title="主题选择"
-    onCancel={onClose}
-    footer={null}
-    width={520}
-  >
+  <Modal open={open} title="主题选择" onCancel={onClose} footer={null} width={520}>
     <div className="coral-theme-selector">
       <div className="coral-theme-selector-group">
         <h3>浅色主题</h3>
@@ -286,19 +303,19 @@ const ThemeSelectorModal = ({
               name={theme.isCustom ? theme.name : theme.name}
               primaryColor={theme.config.themeColors['--color-theme']}
               onClick={() => {
-                onSelectLight(theme.id)
+                onSelectLight(theme.id);
               }}
               onEdit={
                 theme.isCustom
                   ? () => {
-                      onEdit(theme.id)
+                      onEdit(theme.id);
                     }
                   : undefined
               }
               onRemove={
                 theme.isCustom
                   ? () => {
-                      onRemove(theme.id)
+                      onRemove(theme.id);
                     }
                   : undefined
               }
@@ -316,19 +333,19 @@ const ThemeSelectorModal = ({
               name={theme.isCustom ? theme.name : theme.name}
               primaryColor={theme.config.themeColors['--color-theme']}
               onClick={() => {
-                onSelectDark(theme.id)
+                onSelectDark(theme.id);
               }}
               onEdit={
                 theme.isCustom
                   ? () => {
-                      onEdit(theme.id)
+                      onEdit(theme.id);
                     }
                   : undefined
               }
               onRemove={
                 theme.isCustom
                   ? () => {
-                      onRemove(theme.id)
+                      onRemove(theme.id);
                     }
                   : undefined
               }
@@ -338,60 +355,61 @@ const ThemeSelectorModal = ({
       </div>
     </div>
   </Modal>
-)
+);
 
 export const SettingsRoutePanel = observer(() => {
-  const { settings, sync, theme, userApi, dislike, list, ui } = rootStore
-  const appSetting = settings.appSetting
-  const [isOnlineImportOpen, setIsOnlineImportOpen] = useState(false)
-  const [isThemeSelectorOpen, setIsThemeSelectorOpen] = useState(false)
-  const [isDislikeListOpen, setIsDislikeListOpen] = useState(false)
-  const [isPlayTimeoutOpen, setIsPlayTimeoutOpen] = useState(false)
-  const [isThemeEditOpen, setIsThemeEditOpen] = useState(false)
-  const [editingThemeId, setEditingThemeId] = useState<string | undefined>()
-  const [cacheSize, setCacheSize] = useState(0)
-  const [otherSourceCount, setOtherSourceCount] = useState(0)
-  const [musicUrlCount, setMusicUrlCount] = useState(0)
-  const [lyricRawCount, setLyricRawCount] = useState(0)
-  const [lyricEditedCount, setLyricEditedCount] = useState(0)
-  const [decoderExtensionsDraft, setDecoderExtensionsDraft] = useState('')
-  const [decoderPluginDirsDraft, setDecoderPluginDirsDraft] = useState('')
-  const [decoderProbeResult, setDecoderProbeResult] =
-    useState<ExternalDecoderProbeResult | null>(null)
-  const [isProbingDecoder, setIsProbingDecoder] = useState(false)
-  const externalDecoderSectionRef = useRef<HTMLDivElement | null>(null)
+  const { settings, sync, theme, userApi, dislike, list, ui } = rootStore;
+  const appSetting = settings.appSetting;
+  const [isOnlineImportOpen, setIsOnlineImportOpen] = useState(false);
+  const [isThemeSelectorOpen, setIsThemeSelectorOpen] = useState(false);
+  const [isDislikeListOpen, setIsDislikeListOpen] = useState(false);
+  const [isPlayTimeoutOpen, setIsPlayTimeoutOpen] = useState(false);
+  const [isThemeEditOpen, setIsThemeEditOpen] = useState(false);
+  const [editingThemeId, setEditingThemeId] = useState<string | undefined>();
+  const [cacheSize, setCacheSize] = useState(0);
+  const [otherSourceCount, setOtherSourceCount] = useState(0);
+  const [musicUrlCount, setMusicUrlCount] = useState(0);
+  const [lyricRawCount, setLyricRawCount] = useState(0);
+  const [lyricEditedCount, setLyricEditedCount] = useState(0);
+  const [decoderExtensionsDraft, setDecoderExtensionsDraft] = useState('');
+  const [decoderPluginDirsDraft, setDecoderPluginDirsDraft] = useState('');
+  const [decoderProbeResult, setDecoderProbeResult] = useState<ExternalDecoderProbeResult | null>(
+    null,
+  );
+  const [isProbingDecoder, setIsProbingDecoder] = useState(false);
+  const externalDecoderSectionRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!appSetting) return
-    setDecoderExtensionsDraft(appSetting['player.externalDecoder.extensions'].join(', '))
-    setDecoderPluginDirsDraft(appSetting['player.externalDecoder.pluginDirs'].join('\n'))
+    if (!appSetting) return;
+    setDecoderExtensionsDraft(appSetting['player.externalDecoder.extensions'].join(', '));
+    setDecoderPluginDirsDraft(appSetting['player.externalDecoder.pluginDirs'].join('\n'));
   }, [
     appSetting?.['player.externalDecoder.extensions'],
     appSetting?.['player.externalDecoder.pluginDirs'],
-  ])
+  ]);
 
   useEffect(() => {
-    if (!appSetting) return
+    if (!appSetting) return;
 
     if (ui.consumeQuickAction('configureExternalDecoder')) {
       externalDecoderSectionRef.current?.scrollIntoView({
         behavior: 'smooth',
         block: 'start',
-      })
-      return
+      });
+      return;
     }
 
     if (ui.consumeQuickAction('importUserApiOnline')) {
-      setIsOnlineImportOpen(true)
-      return
+      setIsOnlineImportOpen(true);
+      return;
     }
 
-    if (!ui.consumeQuickAction('importUserApiFile')) return
+    if (!ui.consumeQuickAction('importUserApiFile')) return;
 
-    void (async() => {
+    (async () => {
       if (userApi.userApis.length > 20) {
-        Modal.warning({ title: '提示', content: '最多支持 20 个自定义源' })
-        return
+        Modal.warning({ title: '提示', content: '最多支持 20 个自定义源' });
+        return;
       }
 
       const result = await appService.showSelectDialog({
@@ -401,56 +419,58 @@ export const SettingsRoutePanel = observer(() => {
           { name: 'LX API File', extensions: ['js'] },
           { name: 'All Files', extensions: ['*'] },
         ],
-      })
-      if (result.canceled || !result.filePaths.length) return
+      });
+      if (result.canceled || !result.filePaths.length) return;
 
-      const buffer = await readFile(result.filePaths[0])
-      const apiInfo = await userApi.importUserApi(buffer.toString())
-      if (apiInfo) await activateUserApi(apiInfo)
-    })()
-  }, [appSetting, ui.pendingQuickAction])
+      const buffer = await readFile(result.filePaths[0]);
+      const apiInfo = await userApi.importUserApi(buffer.toString());
+      if (apiInfo) await activateUserApi(apiInfo);
+    })();
+  }, [appSetting, ui.pendingQuickAction]);
 
   if (!appSetting) {
-    return (
-      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="设置尚未加载" />
-    )
+    return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="设置尚未加载" />;
   }
 
   const applySetting = (setting: Partial<LX.AppSetting>): void => {
-    void settings.updateAppSetting(setting)
-  }
+    settings.updateAppSetting(setting);
+  };
 
-  const syncServerDevices = sync.serverDevices ?? []
+  const syncServerDevices = sync.serverDevices ?? [];
 
-  const activateUserApi = async(apiInfo: LX.UserApi.UserApiInfo): Promise<boolean> => {
-    if (!userApi.canPlay(apiInfo)) {
+  const activateUserApi = async (apiInfo: LX.UserApi.UserApiInfo): Promise<boolean> => {
+    await userApi.setUserApi(apiInfo.id);
+
+    const runtimeApiInfo =
+      userApi.status?.apiInfo?.id === apiInfo.id ? userApi.status.apiInfo : apiInfo;
+    if (!userApi.canPlay(runtimeApiInfo)) {
       Modal.warning({
         title: '音源不可用于播放',
-        content: '该 User API 没有声明任何平台的 musicUrl 能力，可以保留用于查看，但不会设为当前播放音源。',
-      })
-      return false
+        content:
+          userApi.status?.message ||
+          '该 User API 没有声明任何平台的 musicUrl 能力，可以保留用于查看，但不会设为当前播放音源。',
+      });
+      return false;
     }
 
-    await userApi.setUserApi(apiInfo.id)
-    await settings.updateAppSetting({ 'common.apiSource': apiInfo.id })
-    return true
-  }
+    await settings.updateAppSetting({ 'common.apiSource': apiInfo.id });
+    return true;
+  };
 
-  const removeUserApi = async(api: LX.UserApi.UserApiInfo): Promise<void> => {
+  const removeUserApi = async (api: LX.UserApi.UserApiInfo): Promise<void> => {
     if (api.id === appSetting['common.apiSource']) {
       const fallbackApiId =
-        userApi.playableUserApis.find((userApiInfo) => userApiInfo.id !== api.id)?.id ??
-        ''
-      await settings.updateAppSetting({ 'common.apiSource': fallbackApiId })
+        userApi.playableUserApis.find((userApiInfo) => userApiInfo.id !== api.id)?.id ?? '';
+      await settings.updateAppSetting({ 'common.apiSource': fallbackApiId });
     }
 
-    await userApi.removeUserApis([api.id])
-  }
+    await userApi.removeUserApis([api.id]);
+  };
 
-  const handleImportFile = async(): Promise<void> => {
+  const handleImportFile = async (): Promise<void> => {
     if (userApi.userApis.length > 20) {
-      Modal.warning({ title: '提示', content: '最多支持 20 个自定义源' })
-      return
+      Modal.warning({ title: '提示', content: '最多支持 20 个自定义源' });
+      return;
     }
 
     const result = await appService.showSelectDialog({
@@ -460,42 +480,39 @@ export const SettingsRoutePanel = observer(() => {
         { name: 'LX API File', extensions: ['js'] },
         { name: 'All Files', extensions: ['*'] },
       ],
-    })
-    if (result.canceled || !result.filePaths.length) return
+    });
+    if (result.canceled || !result.filePaths.length) return;
 
-    const buffer = await readFile(result.filePaths[0])
-    const apiInfo = await userApi.importUserApi(buffer.toString())
-    if (apiInfo) await activateUserApi(apiInfo)
-  }
+    const buffer = await readFile(result.filePaths[0]);
+    const apiInfo = await userApi.importUserApi(buffer.toString());
+    if (apiInfo) await activateUserApi(apiInfo);
+  };
 
-  const handleImportOnline = async(url: string): Promise<void> => {
-    if (!/^https?:\/\//.test(url)) return
+  const handleImportOnline = async (url: string): Promise<void> => {
+    if (!/^https?:\/\//.test(url)) return;
 
-    let script: string
+    let script: string;
     try {
-      const response = await fetch(url)
-      script = await response.text()
+      const response = await fetch(url);
+      script = await response.text();
     } catch (error) {
-      userApi.actionError =
-        error instanceof Error ? error.message : String(error)
-      return
+      userApi.actionError = error instanceof Error ? error.message : String(error);
+      return;
     }
 
     if (script.length > 9_000_000) {
-      Modal.error({ title: '导入失败', content: '脚本文件过大' })
-      return
+      Modal.error({ title: '导入失败', content: '脚本文件过大' });
+      return;
     }
 
-    const apiInfo = await userApi.importUserApi(script)
-    if (apiInfo) await activateUserApi(apiInfo)
-  }
+    const apiInfo = await userApi.importUserApi(script);
+    if (apiInfo) await activateUserApi(apiInfo);
+  };
 
-  const handleSetCurrentApi = async(
-    api: LX.UserApi.UserApiInfo,
-  ): Promise<void> => {
-    if (api.id === appSetting['common.apiSource']) return
-    await activateUserApi(api)
-  }
+  const handleSetCurrentApi = async (api: LX.UserApi.UserApiInfo): Promise<void> => {
+    if (api.id === appSetting['common.apiSource']) return;
+    await activateUserApi(api);
+  };
 
   const updateSetting = <Key extends keyof LX.AppSetting>(
     key: Key,
@@ -503,32 +520,31 @@ export const SettingsRoutePanel = observer(() => {
   ): void => {
     const nextSetting: Partial<LX.AppSetting> = {
       [key]: value,
-    }
-    applySetting(nextSetting)
-  }
+    };
+    applySetting(nextSetting);
+  };
 
-  const currentUserApi = userApi.userApis.find(api => api.id === appSetting['common.apiSource'])
-  const currentUserApiSourceNames = userApi.getPlayableSourceNames(currentUserApi)
-  const canPlayCurrentUserApi = currentUserApiSourceNames.length > 0
+  const currentUserApi = userApi.userApis.find((api) => api.id === appSetting['common.apiSource']);
+  const currentUserApiSourceNames = userApi.getPlayableSourceNames(currentUserApi);
+  const currentUserApiQualityNames = getUserApiQualityNames(currentUserApi);
+  const canPlayCurrentUserApi = currentUserApiSourceNames.length > 0;
 
   const commitDecoderExtensions = (): string[] => {
-    const extensions = splitExtensionSetting(decoderExtensionsDraft)
-    const nextExtensions = extensions.length
-      ? extensions
-      : [...externalDecoderExtensions]
-    setDecoderExtensionsDraft(nextExtensions.join(', '))
-    updateSetting('player.externalDecoder.extensions', nextExtensions)
-    return nextExtensions
-  }
+    const extensions = splitExtensionSetting(decoderExtensionsDraft);
+    const nextExtensions = extensions.length ? extensions : [...externalDecoderExtensions];
+    setDecoderExtensionsDraft(nextExtensions.join(', '));
+    updateSetting('player.externalDecoder.extensions', nextExtensions);
+    return nextExtensions;
+  };
 
   const commitDecoderPluginDirs = (): string[] => {
-    const pluginDirs = splitListSetting(decoderPluginDirsDraft)
-    setDecoderPluginDirsDraft(pluginDirs.join('\n'))
-    updateSetting('player.externalDecoder.pluginDirs', pluginDirs)
-    return pluginDirs
-  }
+    const pluginDirs = splitListSetting(decoderPluginDirsDraft);
+    setDecoderPluginDirsDraft(pluginDirs.join('\n'));
+    updateSetting('player.externalDecoder.pluginDirs', pluginDirs);
+    return pluginDirs;
+  };
 
-  const handleSelectDecoderExecutable = async(): Promise<void> => {
+  const handleSelectDecoderExecutable = async (): Promise<void> => {
     const result = await appService.showSelectDialog({
       title: '选择外部解码器可执行文件',
       properties: ['openFile'],
@@ -536,32 +552,31 @@ export const SettingsRoutePanel = observer(() => {
         { name: 'Decoder', extensions: ['exe', 'app'] },
         { name: 'All Files', extensions: ['*'] },
       ],
-    })
-    if (result.canceled || !result.filePaths.length) return
-    updateSetting('player.externalDecoder.executablePath', result.filePaths[0])
-    setDecoderProbeResult(null)
-  }
+    });
+    if (result.canceled || !result.filePaths.length) return;
+    updateSetting('player.externalDecoder.executablePath', result.filePaths[0]);
+    setDecoderProbeResult(null);
+  };
 
-  const handleSelectDecoderPluginDirs = async(): Promise<void> => {
+  const handleSelectDecoderPluginDirs = async (): Promise<void> => {
     const result = await appService.showSelectDialog({
       title: '选择 Foobar2000 组件目录',
       properties: ['openDirectory', 'multiSelections'],
-    })
-    if (result.canceled || !result.filePaths.length) return
+    });
+    if (result.canceled || !result.filePaths.length) return;
 
-    const pluginDirs = Array.from(new Set([
-      ...splitListSetting(decoderPluginDirsDraft),
-      ...result.filePaths,
-    ]))
-    setDecoderPluginDirsDraft(pluginDirs.join('\n'))
-    updateSetting('player.externalDecoder.pluginDirs', pluginDirs)
-    setDecoderProbeResult(null)
-  }
+    const pluginDirs = Array.from(
+      new Set([...splitListSetting(decoderPluginDirsDraft), ...result.filePaths]),
+    );
+    setDecoderPluginDirsDraft(pluginDirs.join('\n'));
+    updateSetting('player.externalDecoder.pluginDirs', pluginDirs);
+    setDecoderProbeResult(null);
+  };
 
-  const handleProbeExternalDecoder = async(): Promise<void> => {
-    const extensions = commitDecoderExtensions()
-    const pluginDirs = commitDecoderPluginDirs()
-    setIsProbingDecoder(true)
+  const handleProbeExternalDecoder = async (): Promise<void> => {
+    const extensions = commitDecoderExtensions();
+    const pluginDirs = commitDecoderPluginDirs();
+    setIsProbingDecoder(true);
 
     try {
       const result = await externalDecoderService.probeExternalDecoder({
@@ -569,29 +584,23 @@ export const SettingsRoutePanel = observer(() => {
         extensions,
         pluginDirs,
         provider: appSetting['player.externalDecoder.provider'],
-      })
-      setDecoderProbeResult(result)
+      });
+      setDecoderProbeResult(result);
     } finally {
-      setIsProbingDecoder(false)
+      setIsProbingDecoder(false);
     }
-  }
+  };
 
   return (
     <Spin
       spinning={settings.isHydrating || settings.isSaving}
       wrapperClassName="coral-settings-spin"
     >
-      <Space
-        direction="vertical"
-        size="middle"
-        className="coral-wide coral-settings-panel"
-      >
+      <Space direction="vertical" size="middle" className="coral-wide coral-settings-panel">
         {settings.hydrateError ? (
           <Alert showIcon type="error" message={settings.hydrateError} />
         ) : null}
-        {settings.saveError ? (
-          <Alert showIcon type="error" message={settings.saveError} />
-        ) : null}
+        {settings.saveError ? <Alert showIcon type="error" message={settings.saveError} /> : null}
 
         <SettingSection title="主题">
           {theme.hydrateError ? (
@@ -612,7 +621,7 @@ export const SettingsRoutePanel = observer(() => {
                 { label: '深色', value: 'dark' },
               ]}
               onChange={(event) => {
-                void theme.setThemeMode(event.target.value)
+                theme.setThemeMode(event.target.value);
               }}
             />
           </Form.Item>
@@ -621,15 +630,15 @@ export const SettingsRoutePanel = observer(() => {
               <Button
                 icon={<BgColorsOutlined />}
                 onClick={() => {
-                  setIsThemeSelectorOpen(true)
+                  setIsThemeSelectorOpen(true);
                 }}
               >
                 选择主题
               </Button>
               <Button
                 onClick={() => {
-                  setEditingThemeId(undefined)
-                  setIsThemeEditOpen(true)
+                  setEditingThemeId(undefined);
+                  setIsThemeEditOpen(true);
                 }}
               >
                 新增主题
@@ -677,7 +686,7 @@ export const SettingsRoutePanel = observer(() => {
                 { label: '右侧', value: 'right' },
               ]}
               onChange={(event) => {
-                updateSetting('common.controlBtnPosition', event.target.value)
+                updateSetting('common.controlBtnPosition', event.target.value);
               }}
             />
           </Form.Item>
@@ -692,10 +701,7 @@ export const SettingsRoutePanel = observer(() => {
                 { label: '完整', value: 'full' },
               ]}
               onChange={(event) => {
-                updateSetting(
-                  'common.playBarProgressStyle',
-                  event.target.value,
-                )
+                updateSetting('common.playBarProgressStyle', event.target.value);
               }}
             />
           </Form.Item>
@@ -705,7 +711,7 @@ export const SettingsRoutePanel = observer(() => {
               max={24}
               value={appSetting['common.fontSize']}
               onChange={(value) => {
-                if (value != null) updateSetting('common.fontSize', value)
+                if (value != null) updateSetting('common.fontSize', value);
               }}
             />
           </Form.Item>
@@ -752,7 +758,7 @@ export const SettingsRoutePanel = observer(() => {
             <Button
               icon={<ClockCircleOutlined />}
               onClick={() => {
-                setIsPlayTimeoutOpen(true)
+                setIsPlayTimeoutOpen(true);
               }}
             >
               设置定时停止
@@ -764,7 +770,7 @@ export const SettingsRoutePanel = observer(() => {
               options={playQualityOptions}
               className="coral-settings-select"
               onChange={(value) => {
-                updateSetting('player.playQuality', value)
+                updateSetting('player.playQuality', value);
               }}
             />
           </Form.Item>
@@ -772,239 +778,220 @@ export const SettingsRoutePanel = observer(() => {
 
         <div ref={externalDecoderSectionRef}>
           <SettingSection title="本地解码">
-          <SettingSwitch
-            appSetting={appSetting}
-            label="本地音频导入"
-            settingKey="player.localAudio.enabled"
-            updateSetting={applySetting}
-          />
-          <Form.Item label="外部解码器">
-            <Switch
-              checked={appSetting['player.externalDecoder.enabled']}
-              onChange={(checked) => {
-                applySetting({
-                  'player.externalDecoder.enabled': checked,
-                  'player.externalDecoder.executablePath': checked && !appSetting['player.externalDecoder.executablePath'].trim()
-                    ? 'ffmpeg'
-                    : appSetting['player.externalDecoder.executablePath'],
-                  'player.externalDecoder.preferredOutput': 'wav',
-                  'player.externalDecoder.provider': checked
-                    ? 'ffmpeg'
-                    : 'none',
-                })
-                setDecoderProbeResult(null)
-              }}
+            <SettingSwitch
+              appSetting={appSetting}
+              label="本地音频导入"
+              settingKey="player.localAudio.enabled"
+              updateSetting={applySetting}
             />
-          </Form.Item>
-          <Form.Item label="解码器类型">
-            <Radio.Group
-              value={appSetting['player.externalDecoder.provider']}
-              optionType="button"
-              buttonStyle="solid"
-              options={[
-                { label: '关闭', value: 'none' },
-                { label: 'FFmpeg', value: 'ffmpeg' },
-                { label: 'Foobar2000', value: 'foobar2000' },
-              ]}
-              onChange={(event) => {
-                const provider = event.target.value
-                applySetting({
-                  'player.externalDecoder.enabled': provider !== 'none',
-                  'player.externalDecoder.executablePath': provider === 'ffmpeg' && !appSetting['player.externalDecoder.executablePath'].trim()
-                    ? 'ffmpeg'
-                    : appSetting['player.externalDecoder.executablePath'],
-                  'player.externalDecoder.preferredOutput': provider === 'ffmpeg'
-                    ? 'wav'
-                    : appSetting['player.externalDecoder.preferredOutput'],
-                  'player.externalDecoder.provider': provider,
-                })
-                setDecoderProbeResult(null)
-              }}
-            />
-          </Form.Item>
-          <Form.Item label="运行状态" className="coral-settings-wide-item">
-            <Alert
-              showIcon
-              type={appSetting['player.externalDecoder.provider'] === 'ffmpeg' ? 'info' : 'warning'}
-              message={
-                appSetting['player.externalDecoder.provider'] === 'ffmpeg'
-                  ? 'FFmpeg 会在播放 DSD/SACD 等格式时转码为临时 WAV，切歌或退出播放器后自动清理；当前仅启用 WAV 输出。'
-                  : appSetting['player.externalDecoder.provider'] === 'foobar2000'
-                    ? 'Foobar2000 当前仅支持路径和组件探测，播放时会提示改用 FFmpeg。'
-                    : '外部格式播放前需要先启用 FFmpeg。'
-              }
-            />
-          </Form.Item>
-          <Form.Item label="输出格式">
-            <Radio.Group
-              value={appSetting['player.externalDecoder.preferredOutput']}
-              optionType="button"
-              buttonStyle="solid"
-              options={[
-                { label: 'WAV', value: 'wav' },
-                { label: 'PCM', value: 'pcm', disabled: true },
-              ]}
-              onChange={(event) => {
-                updateSetting(
-                  'player.externalDecoder.preferredOutput',
-                  event.target.value,
-                )
-              }}
-            />
-          </Form.Item>
-          <Form.Item label="超时">
-            <InputNumber
-              min={5}
-              max={300}
-              addonAfter="秒"
-              value={Math.round(
-                appSetting['player.externalDecoder.timeoutMs'] / 1000,
-              )}
-              onChange={(value) => {
-                if (value != null) {
-                  updateSetting('player.externalDecoder.timeoutMs', value * 1000)
+            <Form.Item label="外部解码器">
+              <Switch
+                checked={appSetting['player.externalDecoder.enabled']}
+                onChange={(checked) => {
+                  applySetting({
+                    'player.externalDecoder.enabled': checked,
+                    'player.externalDecoder.executablePath':
+                      checked && !appSetting['player.externalDecoder.executablePath'].trim()
+                        ? 'ffmpeg'
+                        : appSetting['player.externalDecoder.executablePath'],
+                    'player.externalDecoder.preferredOutput': 'wav',
+                    'player.externalDecoder.provider': checked ? 'ffmpeg' : 'none',
+                  });
+                  setDecoderProbeResult(null);
+                }}
+              />
+            </Form.Item>
+            <Form.Item label="解码器类型">
+              <Radio.Group
+                value={appSetting['player.externalDecoder.provider']}
+                optionType="button"
+                buttonStyle="solid"
+                options={[
+                  { label: '关闭', value: 'none' },
+                  { label: 'FFmpeg', value: 'ffmpeg' },
+                  { label: 'Foobar2000', value: 'foobar2000' },
+                ]}
+                onChange={(event) => {
+                  const provider = event.target.value;
+                  applySetting({
+                    'player.externalDecoder.enabled': provider !== 'none',
+                    'player.externalDecoder.executablePath':
+                      provider === 'ffmpeg' &&
+                      !appSetting['player.externalDecoder.executablePath'].trim()
+                        ? 'ffmpeg'
+                        : appSetting['player.externalDecoder.executablePath'],
+                    'player.externalDecoder.preferredOutput':
+                      provider === 'ffmpeg'
+                        ? 'wav'
+                        : appSetting['player.externalDecoder.preferredOutput'],
+                    'player.externalDecoder.provider': provider,
+                  });
+                  setDecoderProbeResult(null);
+                }}
+              />
+            </Form.Item>
+            <Form.Item label="运行状态" className="coral-settings-wide-item">
+              <Alert
+                showIcon
+                type={
+                  appSetting['player.externalDecoder.provider'] === 'ffmpeg' ? 'info' : 'warning'
                 }
-              }}
-            />
-          </Form.Item>
-          <Form.Item
-            label="解码器路径"
-            className="coral-settings-wide-item"
-          >
-            <Space.Compact className="coral-settings-decoder-path">
-              <Input
-                allowClear
-                value={appSetting['player.externalDecoder.executablePath']}
-                placeholder={appSetting['player.externalDecoder.provider'] === 'ffmpeg'
-                  ? 'ffmpeg 或 ffmpeg.exe'
-                  : 'foobar2000.exe'}
+                message={
+                  appSetting['player.externalDecoder.provider'] === 'ffmpeg'
+                    ? 'FFmpeg 会在播放 DSD/SACD 等格式时转码为临时 WAV，切歌或退出播放器后自动清理；当前仅启用 WAV 输出。'
+                    : appSetting['player.externalDecoder.provider'] === 'foobar2000'
+                      ? 'Foobar2000 当前仅支持路径和组件探测，播放时会提示改用 FFmpeg。'
+                      : '外部格式播放前需要先启用 FFmpeg。'
+                }
+              />
+            </Form.Item>
+            <Form.Item label="输出格式">
+              <Radio.Group
+                value={appSetting['player.externalDecoder.preferredOutput']}
+                optionType="button"
+                buttonStyle="solid"
+                options={[
+                  { label: 'WAV', value: 'wav' },
+                  { label: 'PCM', value: 'pcm', disabled: true },
+                ]}
                 onChange={(event) => {
-                  updateSetting(
-                    'player.externalDecoder.executablePath',
-                    event.target.value,
-                  )
-                  setDecoderProbeResult(null)
+                  updateSetting('player.externalDecoder.preferredOutput', event.target.value);
                 }}
               />
-              <Button
-                icon={<FolderOpenOutlined />}
-                onClick={() => {
-                  void handleSelectDecoderExecutable()
+            </Form.Item>
+            <Form.Item label="超时">
+              <InputNumber
+                min={5}
+                max={300}
+                addonAfter="秒"
+                value={Math.round(appSetting['player.externalDecoder.timeoutMs'] / 1000)}
+                onChange={(value) => {
+                  if (value != null) {
+                    updateSetting('player.externalDecoder.timeoutMs', value * 1000);
+                  }
                 }}
               />
-            </Space.Compact>
-          </Form.Item>
-          <Form.Item label="支持扩展" className="coral-settings-wide-item">
-            <Input
-              allowClear
-              value={decoderExtensionsDraft}
-              placeholder="dsf, dff, iso, sacd"
-              className="coral-settings-decoder-input"
-              onChange={(event) => {
-                setDecoderExtensionsDraft(event.target.value)
-                setDecoderProbeResult(null)
-              }}
-              onBlur={() => {
-                commitDecoderExtensions()
-              }}
-              onPressEnter={(event) => {
-                event.currentTarget.blur()
-              }}
-            />
-          </Form.Item>
-          <Form.Item label="组件目录" className="coral-settings-wide-item">
-            <Space direction="vertical" size="small" className="coral-wide">
-              <Input.TextArea
-                autoSize={{ minRows: 2, maxRows: 4 }}
-                value={decoderPluginDirsDraft}
-                placeholder="每行一个 Foobar2000 components 目录；FFmpeg 可留空"
-                onChange={(event) => {
-                  setDecoderPluginDirsDraft(event.target.value)
-                  setDecoderProbeResult(null)
-                }}
-                onBlur={() => {
-                  commitDecoderPluginDirs()
-                }}
-              />
-              <Space wrap>
+            </Form.Item>
+            <Form.Item label="解码器路径" className="coral-settings-wide-item">
+              <Space.Compact className="coral-settings-decoder-path">
+                <Input
+                  allowClear
+                  value={appSetting['player.externalDecoder.executablePath']}
+                  placeholder={
+                    appSetting['player.externalDecoder.provider'] === 'ffmpeg'
+                      ? 'ffmpeg 或 ffmpeg.exe'
+                      : 'foobar2000.exe'
+                  }
+                  onChange={(event) => {
+                    updateSetting('player.externalDecoder.executablePath', event.target.value);
+                    setDecoderProbeResult(null);
+                  }}
+                />
                 <Button
-                  size="small"
                   icon={<FolderOpenOutlined />}
                   onClick={() => {
-                    void handleSelectDecoderPluginDirs()
+                    handleSelectDecoderExecutable();
                   }}
-                >
-                  添加目录
-                </Button>
-                <Button
-                  size="small"
-                  icon={<ReloadOutlined />}
-                  loading={isProbingDecoder}
-                  onClick={() => {
-                    void handleProbeExternalDecoder()
-                  }}
-                >
-                  探测配置
-                </Button>
-              </Space>
-            </Space>
-          </Form.Item>
-          {decoderProbeResult ? (
-            <Form.Item label="探测结果" className="coral-settings-wide-item">
-              <Space
-                direction="vertical"
-                size="small"
-                className="coral-settings-probe-result"
-              >
-                <Alert
-                  showIcon
-                  type={decoderProbeResult.canProbe ? 'success' : 'warning'}
-                  icon={
-                    decoderProbeResult.canProbe
-                      ? <CheckCircleOutlined />
-                      : <WarningOutlined />
-                  }
-                  message={
-                    decoderProbeResult.canProbe
-                      ? '配置可用于下一步解码适配'
-                      : '配置尚未可用'
-                  }
-                  description={`平台 ${decoderProbeResult.platform} · 支持 ${decoderProbeResult.supportedExtensions.length || 0} 个扩展 · 缺失 ${decoderProbeResult.missingExtensions.length || 0} 个扩展`}
                 />
-                {decoderProbeResult.errors.length ? (
-                  <Alert
-                    showIcon
-                    type="error"
-                    message={decoderProbeResult.errors.join('；')}
-                  />
-                ) : null}
-                {decoderProbeResult.warnings.length ? (
-                  <Alert
-                    showIcon
-                    type="warning"
-                    message={decoderProbeResult.warnings.join('；')}
-                  />
-                ) : null}
-                {decoderProbeResult.pluginDirs.length ? (
-                  <PlainList
-                    items={decoderProbeResult.pluginDirs}
-                    renderItem={(pluginDir) => (
-                      <PlainListItem key={pluginDir.path}>
-                        <PlainListMeta
-                          title={pluginDir.path}
-                          description={
-                            pluginDir.exists && pluginDir.isDirectory
-                              ? '目录可用'
-                              : '目录不可用'
-                          }
-                        />
-                      </PlainListItem>
-                    )}
-                  />
-                ) : null}
+              </Space.Compact>
+            </Form.Item>
+            <Form.Item label="支持扩展" className="coral-settings-wide-item">
+              <Input
+                allowClear
+                value={decoderExtensionsDraft}
+                placeholder="dsf, dff, iso, sacd"
+                className="coral-settings-decoder-input"
+                onChange={(event) => {
+                  setDecoderExtensionsDraft(event.target.value);
+                  setDecoderProbeResult(null);
+                }}
+                onBlur={() => {
+                  commitDecoderExtensions();
+                }}
+                onPressEnter={(event) => {
+                  event.currentTarget.blur();
+                }}
+              />
+            </Form.Item>
+            <Form.Item label="组件目录" className="coral-settings-wide-item">
+              <Space direction="vertical" size="small" className="coral-wide">
+                <Input.TextArea
+                  autoSize={{ minRows: 2, maxRows: 4 }}
+                  value={decoderPluginDirsDraft}
+                  placeholder="每行一个 Foobar2000 components 目录；FFmpeg 可留空"
+                  onChange={(event) => {
+                    setDecoderPluginDirsDraft(event.target.value);
+                    setDecoderProbeResult(null);
+                  }}
+                  onBlur={() => {
+                    commitDecoderPluginDirs();
+                  }}
+                />
+                <Space wrap>
+                  <Button
+                    size="small"
+                    icon={<FolderOpenOutlined />}
+                    onClick={() => {
+                      handleSelectDecoderPluginDirs();
+                    }}
+                  >
+                    添加目录
+                  </Button>
+                  <Button
+                    size="small"
+                    icon={<ReloadOutlined />}
+                    loading={isProbingDecoder}
+                    onClick={() => {
+                      handleProbeExternalDecoder();
+                    }}
+                  >
+                    探测配置
+                  </Button>
+                </Space>
               </Space>
             </Form.Item>
-          ) : null}
+            {decoderProbeResult ? (
+              <Form.Item label="探测结果" className="coral-settings-wide-item">
+                <Space direction="vertical" size="small" className="coral-settings-probe-result">
+                  <Alert
+                    showIcon
+                    type={decoderProbeResult.canProbe ? 'success' : 'warning'}
+                    icon={
+                      decoderProbeResult.canProbe ? <CheckCircleOutlined /> : <WarningOutlined />
+                    }
+                    message={
+                      decoderProbeResult.canProbe ? '配置可用于下一步解码适配' : '配置尚未可用'
+                    }
+                    description={`平台 ${decoderProbeResult.platform} · 支持 ${decoderProbeResult.supportedExtensions.length || 0} 个扩展 · 缺失 ${decoderProbeResult.missingExtensions.length || 0} 个扩展`}
+                  />
+                  {decoderProbeResult.errors.length ? (
+                    <Alert showIcon type="error" message={decoderProbeResult.errors.join('；')} />
+                  ) : null}
+                  {decoderProbeResult.warnings.length ? (
+                    <Alert
+                      showIcon
+                      type="warning"
+                      message={decoderProbeResult.warnings.join('；')}
+                    />
+                  ) : null}
+                  {decoderProbeResult.pluginDirs.length ? (
+                    <PlainList
+                      items={decoderProbeResult.pluginDirs}
+                      renderItem={(pluginDir) => (
+                        <PlainListItem key={pluginDir.path}>
+                          <PlainListMeta
+                            title={pluginDir.path}
+                            description={
+                              pluginDir.exists && pluginDir.isDirectory ? '目录可用' : '目录不可用'
+                            }
+                          />
+                        </PlainListItem>
+                      )}
+                    />
+                  ) : null}
+                </Space>
+              </Form.Item>
+            ) : null}
           </SettingSection>
         </div>
 
@@ -1034,7 +1021,7 @@ export const SettingsRoutePanel = observer(() => {
               buttonStyle="solid"
               options={lyricAlignOptions}
               onChange={(event) => {
-                updateSetting('playDetail.style.align', event.target.value)
+                updateSetting('playDetail.style.align', event.target.value);
               }}
             />
           </Form.Item>
@@ -1044,7 +1031,9 @@ export const SettingsRoutePanel = observer(() => {
               max={220}
               value={appSetting['playDetail.style.fontSize']}
               onChange={(value) => {
-                if (value != null) { updateSetting('playDetail.style.fontSize', value) }
+                if (value != null) {
+                  updateSetting('playDetail.style.fontSize', value);
+                }
               }}
             />
           </Form.Item>
@@ -1139,7 +1128,7 @@ export const SettingsRoutePanel = observer(() => {
                 { label: '纵向', value: 'vertical' },
               ]}
               onChange={(event) => {
-                updateSetting('desktopLyric.direction', event.target.value)
+                updateSetting('desktopLyric.direction', event.target.value);
               }}
             />
           </Form.Item>
@@ -1153,7 +1142,7 @@ export const SettingsRoutePanel = observer(() => {
                 { label: '居中', value: 'center' },
               ]}
               onChange={(event) => {
-                updateSetting('desktopLyric.scrollAlign', event.target.value)
+                updateSetting('desktopLyric.scrollAlign', event.target.value);
               }}
             />
           </Form.Item>
@@ -1164,7 +1153,7 @@ export const SettingsRoutePanel = observer(() => {
               buttonStyle="solid"
               options={lyricAlignOptions}
               onChange={(event) => {
-                updateSetting('desktopLyric.style.align', event.target.value)
+                updateSetting('desktopLyric.style.align', event.target.value);
               }}
             />
           </Form.Item>
@@ -1174,7 +1163,9 @@ export const SettingsRoutePanel = observer(() => {
               max={80}
               value={appSetting['desktopLyric.style.fontSize']}
               onChange={(value) => {
-                if (value != null) { updateSetting('desktopLyric.style.fontSize', value) }
+                if (value != null) {
+                  updateSetting('desktopLyric.style.fontSize', value);
+                }
               }}
             />
           </Form.Item>
@@ -1184,7 +1175,9 @@ export const SettingsRoutePanel = observer(() => {
               max={80}
               value={appSetting['desktopLyric.style.lineGap']}
               onChange={(value) => {
-                if (value != null) { updateSetting('desktopLyric.style.lineGap', value) }
+                if (value != null) {
+                  updateSetting('desktopLyric.style.lineGap', value);
+                }
               }}
             />
           </Form.Item>
@@ -1194,7 +1187,9 @@ export const SettingsRoutePanel = observer(() => {
               max={100}
               value={appSetting['desktopLyric.style.opacity']}
               onChange={(value) => {
-                if (value != null) { updateSetting('desktopLyric.style.opacity', value) }
+                if (value != null) {
+                  updateSetting('desktopLyric.style.opacity', value);
+                }
               }}
             />
           </Form.Item>
@@ -1223,7 +1218,7 @@ export const SettingsRoutePanel = observer(() => {
                 { label: '底部', value: 'bottom' },
               ]}
               onChange={(event) => {
-                updateSetting('list.addMusicLocationType', event.target.value)
+                updateSetting('list.addMusicLocationType', event.target.value);
               }}
             />
           </Form.Item>
@@ -1260,7 +1255,7 @@ export const SettingsRoutePanel = observer(() => {
               options={maxDownloadOptions}
               className="coral-settings-number-select"
               onChange={(value) => {
-                updateSetting('download.maxDownloadNum', value)
+                updateSetting('download.maxDownloadNum', value);
               }}
             />
           </Form.Item>
@@ -1275,7 +1270,7 @@ export const SettingsRoutePanel = observer(() => {
                 { label: '歌名', value: '歌名' },
               ]}
               onChange={(event) => {
-                updateSetting('download.fileName', event.target.value)
+                updateSetting('download.fileName', event.target.value);
               }}
             />
           </Form.Item>
@@ -1284,12 +1279,10 @@ export const SettingsRoutePanel = observer(() => {
               <Switch
                 checked={appSetting['download.isDownloadLrc']}
                 onChange={(checked) => {
-                  updateSetting('download.isDownloadLrc', checked)
+                  updateSetting('download.isDownloadLrc', checked);
                 }}
               />
-              <Text type="secondary">
-                {appSetting['download.lrcFormat'].toUpperCase()}
-              </Text>
+              <Text type="secondary">{appSetting['download.lrcFormat'].toUpperCase()}</Text>
             </Space>
           </Form.Item>
           <Form.Item label="保存路径">
@@ -1349,10 +1342,10 @@ export const SettingsRoutePanel = observer(() => {
               placeholder="127.0.0.1"
               className="coral-settings-input"
               onBlur={(event) => {
-                updateSetting('network.proxy.host', event.target.value.trim())
+                updateSetting('network.proxy.host', event.target.value.trim());
               }}
               onPressEnter={(event) => {
-                event.currentTarget.blur()
+                event.currentTarget.blur();
               }}
             />
           </Form.Item>
@@ -1363,10 +1356,10 @@ export const SettingsRoutePanel = observer(() => {
               placeholder="7890"
               className="coral-settings-number-input"
               onBlur={(event) => {
-                updateSetting('network.proxy.port', event.target.value.trim())
+                updateSetting('network.proxy.port', event.target.value.trim());
               }}
               onPressEnter={(event) => {
-                event.currentTarget.blur()
+                event.currentTarget.blur();
               }}
             />
           </Form.Item>
@@ -1413,7 +1406,7 @@ export const SettingsRoutePanel = observer(() => {
                 { label: '客户端', value: 'client' },
               ]}
               onChange={(event) => {
-                updateSetting('sync.mode', event.target.value)
+                updateSetting('sync.mode', event.target.value);
               }}
             />
           </Form.Item>
@@ -1425,10 +1418,10 @@ export const SettingsRoutePanel = observer(() => {
               placeholder="23332"
               className="coral-settings-number-input"
               onBlur={(event) => {
-                updateSetting('sync.server.port', event.target.value.trim())
+                updateSetting('sync.server.port', event.target.value.trim());
               }}
               onPressEnter={(event) => {
-                event.currentTarget.blur()
+                event.currentTarget.blur();
               }}
             />
           </Form.Item>
@@ -1440,10 +1433,10 @@ export const SettingsRoutePanel = observer(() => {
               placeholder="http://127.0.0.1:23332"
               className="coral-settings-input"
               onBlur={(event) => {
-                updateSetting('sync.client.host', event.target.value.trim())
+                updateSetting('sync.client.host', event.target.value.trim());
               }}
               onPressEnter={(event) => {
-                event.currentTarget.blur()
+                event.currentTarget.blur();
               }}
             />
           </Form.Item>
@@ -1454,7 +1447,9 @@ export const SettingsRoutePanel = observer(() => {
               disabled={appSetting['sync.enable']}
               value={appSetting['sync.server.maxSsnapshotNum']}
               onChange={(value) => {
-                if (value != null) { updateSetting('sync.server.maxSsnapshotNum', value) }
+                if (value != null) {
+                  updateSetting('sync.server.maxSsnapshotNum', value);
+                }
               }}
             />
           </Form.Item>
@@ -1465,7 +1460,7 @@ export const SettingsRoutePanel = observer(() => {
                   icon={<ReloadOutlined />}
                   loading={sync.isHydrating}
                   onClick={() => {
-                    void sync.refreshServerDevices()
+                    sync.refreshServerDevices();
                   }}
                 >
                   刷新
@@ -1474,7 +1469,7 @@ export const SettingsRoutePanel = observer(() => {
                   icon={<KeyOutlined />}
                   loading={sync.isMutating}
                   onClick={() => {
-                    void sync.generateCode()
+                    sync.generateCode();
                   }}
                 >
                   配对码
@@ -1482,12 +1477,7 @@ export const SettingsRoutePanel = observer(() => {
               </Space>
               <PlainList
                 items={syncServerDevices}
-                empty={(
-                  <Empty
-                    image={Empty.PRESENTED_IMAGE_SIMPLE}
-                    description="暂无设备"
-                  />
-                )}
+                empty={<Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无设备" />}
                 renderItem={(device) => (
                   <PlainListItem
                     key={device.clientId}
@@ -1499,7 +1489,7 @@ export const SettingsRoutePanel = observer(() => {
                         okText="移除"
                         cancelText="取消"
                         onConfirm={() => {
-                          void sync.removeServerDevice(device.clientId)
+                          sync.removeServerDevice(device.clientId);
                         }}
                       >
                         <Button
@@ -1512,10 +1502,7 @@ export const SettingsRoutePanel = observer(() => {
                       </Popconfirm>,
                     ]}
                   >
-                    <PlainListMeta
-                      title={device.deviceName}
-                      description={device.clientId}
-                    />
+                    <PlainListMeta title={device.deviceName} description={device.clientId} />
                   </PlainListItem>
                 )}
               />
@@ -1543,10 +1530,10 @@ export const SettingsRoutePanel = observer(() => {
               placeholder="23330"
               className="coral-settings-number-input"
               onBlur={(event) => {
-                updateSetting('openAPI.port', event.target.value.trim())
+                updateSetting('openAPI.port', event.target.value.trim());
               }}
               onPressEnter={(event) => {
-                event.currentTarget.blur()
+                event.currentTarget.blur();
               }}
             />
           </Form.Item>
@@ -1572,42 +1559,53 @@ export const SettingsRoutePanel = observer(() => {
           <Form.Item label="当前音源" className="coral-settings-wide-item">
             <Alert
               showIcon
-              type={currentUserApi && userApi.status?.status && canPlayCurrentUserApi ? 'success' : 'warning'}
+              type={
+                currentUserApi && userApi.status?.status && canPlayCurrentUserApi
+                  ? 'success'
+                  : 'warning'
+              }
               message={currentUserApi ? currentUserApi.name : '未启用音源'}
               description={
                 currentUserApi
-                  ? `状态：${userApi.status?.status ? '可用' : userApi.status?.message || '未就绪'} · 支持：${currentUserApiSourceNames.length ? currentUserApiSourceNames.join('、') : '暂无可播放平台'}`
+                  ? `状态：${userApi.status?.status ? '可用' : userApi.status?.message || '未就绪'} · 平台：${currentUserApiSourceNames.length ? currentUserApiSourceNames.join('、') : '暂无可播放平台'} · 音质：${currentUserApiQualityNames.length ? currentUserApiQualityNames.join('、') : '暂无'}`
                   : '在线播放需要先导入并启用一个 User API 音源；本地文件播放不依赖音源。'
               }
-              action={!currentUserApi ? (
-                <Button
-                  size="small"
-                  type="primary"
-                  onClick={() => {
-                    setIsOnlineImportOpen(true)
-                  }}
-                >
-                  在线导入
-                </Button>
-              ) : undefined}
+              action={
+                !currentUserApi ? (
+                  <Button
+                    size="small"
+                    type="primary"
+                    onClick={() => {
+                      setIsOnlineImportOpen(true);
+                    }}
+                  >
+                    在线导入
+                  </Button>
+                ) : undefined
+              }
             />
           </Form.Item>
           <Form.Item className="coral-settings-wide-item">
             <Space wrap>
               <Button
                 icon={<ReloadOutlined />}
-                loading={userApi.isHydrating}
+                loading={userApi.isHydrating || userApi.isMutating}
                 onClick={() => {
-                  void userApi.refreshUserApis()
+                  const currentApiId = appSetting['common.apiSource'];
+                  if (currentApiId?.startsWith('user_api')) {
+                    userApi.setUserApi(currentApiId);
+                  } else {
+                    userApi.refreshUserApis();
+                  }
                 }}
               >
-                刷新
+                重新检测
               </Button>
               <Button
                 icon={<UploadOutlined />}
                 loading={userApi.isMutating}
                 onClick={() => {
-                  void handleImportFile()
+                  handleImportFile();
                 }}
               >
                 导入文件
@@ -1616,7 +1614,7 @@ export const SettingsRoutePanel = observer(() => {
                 icon={<LinkOutlined />}
                 loading={userApi.isMutating}
                 onClick={() => {
-                  setIsOnlineImportOpen(true)
+                  setIsOnlineImportOpen(true);
                 }}
               >
                 在线导入
@@ -1626,7 +1624,7 @@ export const SettingsRoutePanel = observer(() => {
                 size="small"
                 onClick={() => {
                   if (coralProjectLinks.customSourceDocs) {
-                    void appService.openUrl(coralProjectLinks.customSourceDocs)
+                    appService.openUrl(coralProjectLinks.customSourceDocs);
                   }
                 }}
                 disabled={!coralProjectLinks.customSourceDocs}
@@ -1638,15 +1636,12 @@ export const SettingsRoutePanel = observer(() => {
           <Form.Item label="已安装 API" className="coral-settings-wide-item">
             <PlainList
               items={userApi.userApis}
-              empty={(
-                <Empty
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  description="暂无 API"
-                />
-              )}
+              empty={<Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无 API" />}
               renderItem={(api) => {
-                const playableSourceNames = userApi.getPlayableSourceNames(api)
-                const canPlay = playableSourceNames.length > 0
+                const hasSourceInfo = hasUserApiSourceInfo(api);
+                const playableSourceNames = userApi.getPlayableSourceNames(api);
+                const playableQualityNames = getUserApiQualityNames(api);
+                const canPlay = playableSourceNames.length > 0;
 
                 return (
                   <PlainListItem
@@ -1654,21 +1649,17 @@ export const SettingsRoutePanel = observer(() => {
                     actions={[
                       <Button
                         key="set"
-                        type={
-                          api.id === appSetting['common.apiSource']
-                            ? 'primary'
-                            : 'default'
-                        }
+                        type={api.id === appSetting['common.apiSource'] ? 'primary' : 'default'}
                         size="small"
-                        disabled={api.id === appSetting['common.apiSource'] || !canPlay}
+                        disabled={
+                          api.id === appSetting['common.apiSource'] || (hasSourceInfo && !canPlay)
+                        }
                         loading={userApi.isMutating}
                         onClick={() => {
-                          void handleSetCurrentApi(api)
+                          handleSetCurrentApi(api);
                         }}
                       >
-                        {api.id === appSetting['common.apiSource']
-                          ? '当前'
-                          : '设为当前'}
+                        {api.id === appSetting['common.apiSource'] ? '当前' : '设为当前'}
                       </Button>,
                       <Space key="update-alert" size={6}>
                         <Text type="secondary">提醒</Text>
@@ -1677,7 +1668,7 @@ export const SettingsRoutePanel = observer(() => {
                           checked={api.allowShowUpdateAlert}
                           loading={userApi.isMutating}
                           onChange={(checked) => {
-                            void userApi.setAllowUpdateAlert(api.id, checked)
+                            userApi.setAllowUpdateAlert(api.id, checked);
                           }}
                         />
                       </Space>,
@@ -1688,7 +1679,7 @@ export const SettingsRoutePanel = observer(() => {
                         okText="删除"
                         cancelText="取消"
                         onConfirm={() => {
-                          void removeUserApi(api)
+                          removeUserApi(api);
                         }}
                       >
                         <Button
@@ -1705,35 +1696,35 @@ export const SettingsRoutePanel = observer(() => {
                       title={
                         <Space wrap>
                           <Text>{api.name}</Text>
-                          {api.version ? (
-                            <Text type="secondary">{api.version}</Text>
-                          ) : null}
-                          <Tag color={canPlay ? 'green' : 'orange'}>
-                            {canPlay ? '可播放' : '不可播放'}
+                          {api.version ? <Text type="secondary">{api.version}</Text> : null}
+                          <Tag color={canPlay ? 'green' : hasSourceInfo ? 'orange' : 'blue'}>
+                            {canPlay ? '可播放' : hasSourceInfo ? '不可播放' : '待检测'}
                           </Tag>
                         </Space>
                       }
                       description={
                         <Space direction="vertical" size={2}>
-                          {api.description ? (
-                            <Text type="secondary">{api.description}</Text>
-                          ) : null}
+                          {api.description ? <Text type="secondary">{api.description}</Text> : null}
                           <Space wrap size={8}>
-                            {api.author ? (
-                              <Text type="secondary">{api.author}</Text>
+                            {api.author ? <Text type="secondary">{api.author}</Text> : null}
+                            <Text type="secondary">源 {Object.keys(api.sources ?? {}).length}</Text>
+                            <Text type={canPlay || !hasSourceInfo ? 'secondary' : 'warning'}>
+                              播放{' '}
+                              {canPlay
+                                ? playableSourceNames.join('、')
+                                : hasSourceInfo
+                                  ? '未声明 musicUrl'
+                                  : '启用后检测'}
+                            </Text>
+                            {playableQualityNames.length ? (
+                              <Text type="secondary">音质 {playableQualityNames.join('、')}</Text>
                             ) : null}
-                            <Text type="secondary">
-                              源 {Object.keys(api.sources ?? {}).length}
-                            </Text>
-                            <Text type={canPlay ? 'secondary' : 'warning'}>
-                              播放 {canPlay ? playableSourceNames.join('、') : '未声明 musicUrl'}
-                            </Text>
                           </Space>
                         </Space>
                       }
                     />
                   </PlainListItem>
-                )
+                );
               }}
             />
           </Form.Item>
@@ -1744,182 +1735,186 @@ export const SettingsRoutePanel = observer(() => {
         </SettingSection>
 
         <SettingSection title="备份">
-            <Form.Item label="部分备份" className="coral-settings-wide-item">
-              <Space wrap>
-                <Button
-                  size="small"
-                  onClick={async() => {
-                    const result = await appService.showSelectDialog({
-                      title: '导入播放列表',
-                      properties: ['openFile'],
-                      filters: [
-                        { name: 'Play List', extensions: ['json', 'lxmc'] },
-                        { name: 'All Files', extensions: ['*'] },
-                      ],
-                    })
-                    if (result.canceled || !result.filePaths.length) return
-                    Modal.confirm({
-                      title: '导入播放列表',
-                      content: '将覆盖现有列表数据，是否继续？',
-                      okText: '确认',
-                      cancelText: '取消',
-                      onOk: async() => backupService.importPlayList(result.filePaths[0]),
-                    })
-                  }}
-                >
-                  导入播放列表
-                </Button>
-                <Button
-                  size="small"
-                  onClick={async() => {
-                    const result = await cacheService.showSaveDialog({
-                      title: '导出播放列表',
-                      defaultPath: 'coral_list.lxmc',
-                    })
-                    if (result.canceled || !result.filePath) return
-                    await backupService.exportPlayList(result.filePath)
-                  }}
-                >
-                  导出播放列表
-                </Button>
-                <Button
-                  size="small"
-                  onClick={async() => {
-                    const result = await appService.showSelectDialog({
-                      title: '导入设置',
-                      properties: ['openFile'],
-                      filters: [
-                        { name: 'Setting', extensions: ['json', 'lxmc'] },
-                        { name: 'All Files', extensions: ['*'] },
-                      ],
-                    })
-                    if (result.canceled || !result.filePaths.length) return
-                    await backupService.importSetting(result.filePaths[0])
-                  }}
-                >
-                  导入设置
-                </Button>
-                <Button
-                  size="small"
-                  onClick={async() => {
-                    const result = await cacheService.showSaveDialog({
-                      title: '导出设置',
-                      defaultPath: 'coral_setting_v2.lxmc',
-                    })
-                    if (result.canceled || !result.filePath) return
-                    await backupService.exportSetting(result.filePath, appSetting)
-                  }}
-                >
-                  导出设置
-                </Button>
-              </Space>
-            </Form.Item>
-            <Form.Item label="全量备份" className="coral-settings-wide-item">
-              <Space wrap>
-                <Button
-                  size="small"
-                  onClick={async() => {
-                    const result = await appService.showSelectDialog({
-                      title: '导入全部数据',
-                      properties: ['openFile'],
-                      filters: [
-                        { name: 'Setting', extensions: ['json', 'lxmc'] },
-                        { name: 'All Files', extensions: ['*'] },
-                      ],
-                    })
-                    if (result.canceled || !result.filePaths.length) return
-                    Modal.confirm({
-                      title: '导入全部数据',
-                      content: '将覆盖现有列表和设置数据，是否继续？',
-                      okText: '确认',
-                      cancelText: '取消',
-                      onOk: async() => backupService.importAllData(result.filePaths[0]),
-                    })
-                  }}
-                >
-                  导入全部数据
-                </Button>
-                <Button
-                  size="small"
-                  onClick={async() => {
-                    const result = await cacheService.showSaveDialog({
-                      title: '导出全部数据',
-                      defaultPath: 'coral_datas_v2.lxmc',
-                    })
-                    if (result.canceled || !result.filePath) return
-                    await backupService.exportAllData(result.filePath, appSetting)
-                  }}
-                >
-                  导出全部数据
-                </Button>
-              </Space>
-            </Form.Item>
-            <Form.Item label="其他导出" className="coral-settings-wide-item">
-              <Space wrap>
-                <Button
-                  size="small"
-                  onClick={async() => {
-                    Modal.confirm({
-                      title: '导出为文本',
-                      content: '是否合并到一个文件？',
-                      okText: '合并',
-                      cancelText: '分开导出',
-                      onOk: async() => {
-                        const result = await cacheService.showSaveDialog({
-                          title: '导出为文本',
-                          defaultPath: 'coral_list_all.txt',
-                        })
-                        if (result.canceled || !result.filePath) return
-                        let path = result.filePath
-                        if (!path.endsWith('.txt')) path += '.txt'
-                        await backupService.exportPlayListToText(path, true)
-                      },
-                      onCancel: async() => {
-                        const result = await appService.showSelectDialog({
-                          title: '选择导出目录',
-                          properties: ['openDirectory'],
-                        })
-                        if (result.canceled || !result.filePaths.length) return
-                        await backupService.exportPlayListToText(result.filePaths[0], false)
-                      },
-                    })
-                  }}
-                >
-                  导出为文本
-                </Button>
-                <Button
-                  size="small"
-                  onClick={async() => {
-                    Modal.confirm({
-                      title: '导出为 CSV',
-                      content: '是否合并到一个文件？',
-                      okText: '合并',
-                      cancelText: '分开导出',
-                      onOk: async() => {
-                        const result = await cacheService.showSaveDialog({
-                          title: '导出为 CSV',
-                          defaultPath: 'coral_list_all.csv',
-                        })
-                        if (result.canceled || !result.filePath) return
-                        let path = result.filePath
-                        if (!path.endsWith('.csv')) path += '.csv'
-                        await backupService.exportPlayListToCsv(path, true, '歌曲名,歌手,专辑\n')
-                      },
-                      onCancel: async() => {
-                        const result = await appService.showSelectDialog({
-                          title: '选择导出目录',
-                          properties: ['openDirectory'],
-                        })
-                        if (result.canceled || !result.filePaths.length) return
-                        await backupService.exportPlayListToCsv(result.filePaths[0], false, '歌曲名,歌手,专辑\n')
-                      },
-                    })
-                  }}
-                >
-                  导出为 CSV
-                </Button>
-              </Space>
-            </Form.Item>
+          <Form.Item label="部分备份" className="coral-settings-wide-item">
+            <Space wrap>
+              <Button
+                size="small"
+                onClick={async () => {
+                  const result = await appService.showSelectDialog({
+                    title: '导入播放列表',
+                    properties: ['openFile'],
+                    filters: [
+                      { name: 'Play List', extensions: ['json', 'lxmc'] },
+                      { name: 'All Files', extensions: ['*'] },
+                    ],
+                  });
+                  if (result.canceled || !result.filePaths.length) return;
+                  Modal.confirm({
+                    title: '导入播放列表',
+                    content: '将覆盖现有列表数据，是否继续？',
+                    okText: '确认',
+                    cancelText: '取消',
+                    onOk: async () => backupService.importPlayList(result.filePaths[0]),
+                  });
+                }}
+              >
+                导入播放列表
+              </Button>
+              <Button
+                size="small"
+                onClick={async () => {
+                  const result = await cacheService.showSaveDialog({
+                    title: '导出播放列表',
+                    defaultPath: 'coral_list.lxmc',
+                  });
+                  if (result.canceled || !result.filePath) return;
+                  await backupService.exportPlayList(result.filePath);
+                }}
+              >
+                导出播放列表
+              </Button>
+              <Button
+                size="small"
+                onClick={async () => {
+                  const result = await appService.showSelectDialog({
+                    title: '导入设置',
+                    properties: ['openFile'],
+                    filters: [
+                      { name: 'Setting', extensions: ['json', 'lxmc'] },
+                      { name: 'All Files', extensions: ['*'] },
+                    ],
+                  });
+                  if (result.canceled || !result.filePaths.length) return;
+                  await backupService.importSetting(result.filePaths[0]);
+                }}
+              >
+                导入设置
+              </Button>
+              <Button
+                size="small"
+                onClick={async () => {
+                  const result = await cacheService.showSaveDialog({
+                    title: '导出设置',
+                    defaultPath: 'coral_setting_v2.lxmc',
+                  });
+                  if (result.canceled || !result.filePath) return;
+                  await backupService.exportSetting(result.filePath, appSetting);
+                }}
+              >
+                导出设置
+              </Button>
+            </Space>
+          </Form.Item>
+          <Form.Item label="全量备份" className="coral-settings-wide-item">
+            <Space wrap>
+              <Button
+                size="small"
+                onClick={async () => {
+                  const result = await appService.showSelectDialog({
+                    title: '导入全部数据',
+                    properties: ['openFile'],
+                    filters: [
+                      { name: 'Setting', extensions: ['json', 'lxmc'] },
+                      { name: 'All Files', extensions: ['*'] },
+                    ],
+                  });
+                  if (result.canceled || !result.filePaths.length) return;
+                  Modal.confirm({
+                    title: '导入全部数据',
+                    content: '将覆盖现有列表和设置数据，是否继续？',
+                    okText: '确认',
+                    cancelText: '取消',
+                    onOk: async () => backupService.importAllData(result.filePaths[0]),
+                  });
+                }}
+              >
+                导入全部数据
+              </Button>
+              <Button
+                size="small"
+                onClick={async () => {
+                  const result = await cacheService.showSaveDialog({
+                    title: '导出全部数据',
+                    defaultPath: 'coral_datas_v2.lxmc',
+                  });
+                  if (result.canceled || !result.filePath) return;
+                  await backupService.exportAllData(result.filePath, appSetting);
+                }}
+              >
+                导出全部数据
+              </Button>
+            </Space>
+          </Form.Item>
+          <Form.Item label="其他导出" className="coral-settings-wide-item">
+            <Space wrap>
+              <Button
+                size="small"
+                onClick={async () => {
+                  Modal.confirm({
+                    title: '导出为文本',
+                    content: '是否合并到一个文件？',
+                    okText: '合并',
+                    cancelText: '分开导出',
+                    onOk: async () => {
+                      const result = await cacheService.showSaveDialog({
+                        title: '导出为文本',
+                        defaultPath: 'coral_list_all.txt',
+                      });
+                      if (result.canceled || !result.filePath) return;
+                      let path = result.filePath;
+                      if (!path.endsWith('.txt')) path += '.txt';
+                      await backupService.exportPlayListToText(path, true);
+                    },
+                    onCancel: async () => {
+                      const result = await appService.showSelectDialog({
+                        title: '选择导出目录',
+                        properties: ['openDirectory'],
+                      });
+                      if (result.canceled || !result.filePaths.length) return;
+                      await backupService.exportPlayListToText(result.filePaths[0], false);
+                    },
+                  });
+                }}
+              >
+                导出为文本
+              </Button>
+              <Button
+                size="small"
+                onClick={async () => {
+                  Modal.confirm({
+                    title: '导出为 CSV',
+                    content: '是否合并到一个文件？',
+                    okText: '合并',
+                    cancelText: '分开导出',
+                    onOk: async () => {
+                      const result = await cacheService.showSaveDialog({
+                        title: '导出为 CSV',
+                        defaultPath: 'coral_list_all.csv',
+                      });
+                      if (result.canceled || !result.filePath) return;
+                      let path = result.filePath;
+                      if (!path.endsWith('.csv')) path += '.csv';
+                      await backupService.exportPlayListToCsv(path, true, '歌曲名,歌手,专辑\n');
+                    },
+                    onCancel: async () => {
+                      const result = await appService.showSelectDialog({
+                        title: '选择导出目录',
+                        properties: ['openDirectory'],
+                      });
+                      if (result.canceled || !result.filePaths.length) return;
+                      await backupService.exportPlayListToCsv(
+                        result.filePaths[0],
+                        false,
+                        '歌曲名,歌手,专辑\n',
+                      );
+                    },
+                  });
+                }}
+              >
+                导出为 CSV
+              </Button>
+            </Space>
+          </Form.Item>
         </SettingSection>
 
         <SettingSection title="其他">
@@ -1941,7 +1936,7 @@ export const SettingsRoutePanel = observer(() => {
                 { label: '跟随系统', value: TRAY_AUTO_ID },
               ]}
               onChange={(event) => {
-                updateSetting('tray.themeId', event.target.value)
+                updateSetting('tray.themeId', event.target.value);
               }}
             />
           </Form.Item>
@@ -1952,9 +1947,9 @@ export const SettingsRoutePanel = observer(() => {
                 title="清理资源缓存"
                 okText="清理"
                 cancelText="取消"
-                onConfirm={async() => {
-                  await cacheService.clearCache()
-                  setCacheSize(await cacheService.getCacheSize())
+                onConfirm={async () => {
+                  await cacheService.clearCache();
+                  setCacheSize(await cacheService.getCacheSize());
                 }}
               >
                 <Button size="small" danger>
@@ -1963,8 +1958,8 @@ export const SettingsRoutePanel = observer(() => {
               </Popconfirm>
               <Button
                 size="small"
-                onClick={async() => {
-                  setCacheSize(await cacheService.getCacheSize())
+                onClick={async () => {
+                  setCacheSize(await cacheService.getCacheSize());
                 }}
               >
                 刷新
@@ -1978,9 +1973,9 @@ export const SettingsRoutePanel = observer(() => {
                 title="清理其它来源缓存"
                 okText="清理"
                 cancelText="取消"
-                onConfirm={async() => {
-                  await cacheService.clearOtherSource()
-                  setOtherSourceCount(await cacheService.getOtherSourceCount())
+                onConfirm={async () => {
+                  await cacheService.clearOtherSource();
+                  setOtherSourceCount(await cacheService.getOtherSourceCount());
                 }}
               >
                 <Button size="small" danger>
@@ -1996,9 +1991,9 @@ export const SettingsRoutePanel = observer(() => {
                 title="清理歌曲 URL 缓存"
                 okText="清理"
                 cancelText="取消"
-                onConfirm={async() => {
-                  await cacheService.clearMusicUrl()
-                  setMusicUrlCount(await cacheService.getMusicUrlCount())
+                onConfirm={async () => {
+                  await cacheService.clearMusicUrl();
+                  setMusicUrlCount(await cacheService.getMusicUrlCount());
                 }}
               >
                 <Button size="small" danger>
@@ -2014,9 +2009,9 @@ export const SettingsRoutePanel = observer(() => {
                 title="清理原始歌词缓存"
                 okText="清理"
                 cancelText="取消"
-                onConfirm={async() => {
-                  await cacheService.clearLyricRaw()
-                  setLyricRawCount(await cacheService.getLyricRawCount())
+                onConfirm={async () => {
+                  await cacheService.clearLyricRaw();
+                  setLyricRawCount(await cacheService.getLyricRawCount());
                 }}
               >
                 <Button size="small" danger>
@@ -2025,19 +2020,16 @@ export const SettingsRoutePanel = observer(() => {
               </Popconfirm>
             </Space>
           </Form.Item>
-          <Form.Item
-            label="已编辑歌词缓存"
-            className="coral-settings-wide-item"
-          >
+          <Form.Item label="已编辑歌词缓存" className="coral-settings-wide-item">
             <Space>
               <Text type="secondary">{lyricEditedCount} 首</Text>
               <Popconfirm
                 title="清理已编辑歌词缓存"
                 okText="清理"
                 cancelText="取消"
-                onConfirm={async() => {
-                  await cacheService.clearLyricEdited()
-                  setLyricEditedCount(await cacheService.getLyricEditedCount())
+                onConfirm={async () => {
+                  await cacheService.clearLyricEdited();
+                  setLyricEditedCount(await cacheService.getLyricEditedCount());
                 }}
               >
                 <Button size="small" danger>
@@ -2052,7 +2044,7 @@ export const SettingsRoutePanel = observer(() => {
               <Button
                 size="small"
                 onClick={() => {
-                  setIsDislikeListOpen(true)
+                  setIsDislikeListOpen(true);
                 }}
               >
                 编辑
@@ -2066,7 +2058,7 @@ export const SettingsRoutePanel = observer(() => {
               okText="清空"
               okButtonProps={{ danger: true }}
               cancelText="取消"
-              onConfirm={async() => {
+              onConfirm={async () => {
                 await listService.overwriteListFull({
                   defaultList: [],
                   loveList: [],
@@ -2074,8 +2066,8 @@ export const SettingsRoutePanel = observer(() => {
                     ...info,
                     list: [],
                   })),
-                })
-                await list.hydrate()
+                });
+                await list.hydrate();
               }}
             >
               <Button danger size="small">
@@ -2091,7 +2083,7 @@ export const SettingsRoutePanel = observer(() => {
               type="link"
               onClick={() => {
                 if (coralProjectLinks.projectRepository) {
-                  void appService.openUrl(coralProjectLinks.projectRepository)
+                  appService.openUrl(coralProjectLinks.projectRepository);
                 }
               }}
               disabled={!coralProjectLinks.projectRepository}
@@ -2104,7 +2096,7 @@ export const SettingsRoutePanel = observer(() => {
               type="link"
               onClick={() => {
                 if (coralProjectLinks.projectReleases) {
-                  void appService.openUrl(coralProjectLinks.projectReleases)
+                  appService.openUrl(coralProjectLinks.projectReleases);
                 }
               }}
               disabled={!coralProjectLinks.projectReleases}
@@ -2117,7 +2109,7 @@ export const SettingsRoutePanel = observer(() => {
               type="link"
               onClick={() => {
                 if (coralProjectLinks.projectFaq) {
-                  void appService.openUrl(coralProjectLinks.projectFaq)
+                  appService.openUrl(coralProjectLinks.projectFaq);
                 }
               }}
               disabled={!coralProjectLinks.projectFaq}
@@ -2130,7 +2122,7 @@ export const SettingsRoutePanel = observer(() => {
               type="link"
               onClick={() => {
                 if (coralProjectLinks.projectIssues) {
-                  void appService.openUrl(coralProjectLinks.projectIssues)
+                  appService.openUrl(coralProjectLinks.projectIssues);
                 }
               }}
               disabled={!coralProjectLinks.projectIssues}
@@ -2150,11 +2142,11 @@ export const SettingsRoutePanel = observer(() => {
           open={isOnlineImportOpen}
           loading={userApi.isMutating}
           onClose={() => {
-            setIsOnlineImportOpen(false)
+            setIsOnlineImportOpen(false);
           }}
-          onSubmit={async(url) => {
-            await handleImportOnline(url)
-            if (!userApi.actionError) setIsOnlineImportOpen(false)
+          onSubmit={async (url) => {
+            await handleImportOnline(url);
+            if (!userApi.actionError) setIsOnlineImportOpen(false);
           }}
         />
 
@@ -2164,35 +2156,35 @@ export const SettingsRoutePanel = observer(() => {
           lightThemes={theme.lightThemes}
           open={isThemeSelectorOpen}
           onClose={() => {
-            setIsThemeSelectorOpen(false)
+            setIsThemeSelectorOpen(false);
           }}
           onEdit={(id) => {
-            setIsThemeSelectorOpen(false)
-            setEditingThemeId(id)
-            setIsThemeEditOpen(true)
+            setIsThemeSelectorOpen(false);
+            setEditingThemeId(id);
+            setIsThemeEditOpen(true);
           }}
           onRemove={(id) => {
-            void theme.removeUserTheme(id)
+            theme.removeUserTheme(id);
           }}
           onSelectDark={(id) => {
-            void theme.setDarkThemeId(id)
+            theme.setDarkThemeId(id);
           }}
           onSelectLight={(id) => {
-            void theme.setLightThemeId(id)
+            theme.setLightThemeId(id);
           }}
         />
 
         <DislikeListModal
           open={isDislikeListOpen}
           onClose={() => {
-            setIsDislikeListOpen(false)
+            setIsDislikeListOpen(false);
           }}
         />
 
         <PlayTimeoutModal
           open={isPlayTimeoutOpen}
           onClose={() => {
-            setIsPlayTimeoutOpen(false)
+            setIsPlayTimeoutOpen(false);
           }}
         />
 
@@ -2200,10 +2192,10 @@ export const SettingsRoutePanel = observer(() => {
           open={isThemeEditOpen}
           themeId={editingThemeId}
           onClose={() => {
-            setIsThemeEditOpen(false)
+            setIsThemeEditOpen(false);
           }}
         />
       </Space>
     </Spin>
-  )
-})
+  );
+});

@@ -1,1 +1,1 @@
-export { SettingsStore } from './domains/settingsStore'
+export { SettingsStore } from './domains/settingsStore';

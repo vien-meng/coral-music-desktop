@@ -1,46 +1,45 @@
-import type { CoralThemeMode } from '@shared/theme/antdTheme'
-import { ipcChannels, type IpcThemeCollection } from '@shared/ipc/contracts'
-import { ipcClient } from './ipc/client'
-import { isElectronRenderer } from './appService'
+import type { CoralThemeMode } from '@shared/theme/antdTheme';
+import { ipcChannels, type IpcThemeCollection } from '@shared/ipc/contracts';
+import { ipcClient } from './ipc/client';
+import { isElectronRenderer } from './appService';
 
-const isRecord = (value: unknown): value is Record<string, unknown> => {
-  return typeof value === 'object' && value != null
-}
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value != null;
 
 const parseThemePayload = (value: unknown): LX.ThemeSetting['theme'] | null => {
-  if (!isRecord(value)) return null
-  if (typeof value.id !== 'string') return null
-  if (typeof value.name !== 'string') return null
-  if (typeof value.isDark !== 'boolean') return null
-  if (!isRecord(value.colors)) return null
+  if (!isRecord(value)) return null;
+  if (typeof value.id !== 'string') return null;
+  if (typeof value.name !== 'string') return null;
+  if (typeof value.isDark !== 'boolean') return null;
+  if (!isRecord(value.colors)) return null;
 
   return {
     id: value.id,
     name: value.name,
     isDark: value.isDark,
     colors: value.colors as Record<string, string>,
-  }
-}
+  };
+};
 
 const parseEncodedTheme = (rawTheme: string): LX.ThemeSetting['theme'] | null => {
   try {
-    return parseThemePayload(JSON.parse(rawTheme))
+    return parseThemePayload(JSON.parse(rawTheme));
   } catch {
     try {
-      return parseThemePayload(JSON.parse(decodeURIComponent(rawTheme)))
+      return parseThemePayload(JSON.parse(decodeURIComponent(rawTheme)));
     } catch {
-      return null
+      return null;
     }
   }
-}
+};
 
 export const getInitialThemeSetting = (): LX.ThemeSetting | null => {
-  const search = globalThis.location?.search
-  if (!search) return null
+  const search = globalThis.location?.search;
+  if (!search) return null;
 
-  const query = new URLSearchParams(search)
-  const shouldUseDarkColors = query.get('dark') === 'true'
-  const rawTheme = query.get('theme')
+  const query = new URLSearchParams(search);
+  const shouldUseDarkColors = query.get('dark') === 'true';
+  const rawTheme = query.get('theme');
   const theme = rawTheme
     ? parseEncodedTheme(rawTheme)
     : {
@@ -48,44 +47,42 @@ export const getInitialThemeSetting = (): LX.ThemeSetting | null => {
         name: shouldUseDarkColors ? 'Black' : 'Green',
         isDark: shouldUseDarkColors,
         colors: {},
-      }
+      };
 
-  if (!theme) return null
+  if (!theme) return null;
 
   return {
     shouldUseDarkColors,
     theme,
-  }
-}
+  };
+};
 
 export const resolveThemeMode = (themeSetting: LX.ThemeSetting | null): CoralThemeMode => {
-  if (!themeSetting) return 'light'
-  return themeSetting.theme.isDark ? 'dark' : 'light'
-}
+  if (!themeSetting) return 'light';
+  return themeSetting.theme.isDark ? 'dark' : 'light';
+};
 
-export const getInitialThemeMode = (): CoralThemeMode => {
-  return resolveThemeMode(getInitialThemeSetting())
-}
+export const getInitialThemeMode = (): CoralThemeMode => resolveThemeMode(getInitialThemeSetting());
 
-export const getThemes = async(): Promise<IpcThemeCollection | null> => {
-  if (!isElectronRenderer()) return null
-  return await ipcClient.invoke(ipcChannels.winMain.getThemes)
-}
+export const getThemes = async (): Promise<IpcThemeCollection | null> => {
+  if (!isElectronRenderer()) return null;
+  return await ipcClient.invoke(ipcChannels.winMain.getThemes);
+};
 
-export const saveTheme = async(theme: LX.Theme): Promise<void> => {
-  if (!isElectronRenderer()) return
-  await ipcClient.invoke(ipcChannels.winMain.saveTheme, theme)
-}
+export const saveTheme = async (theme: LX.Theme): Promise<void> => {
+  if (!isElectronRenderer()) return;
+  await ipcClient.invoke(ipcChannels.winMain.saveTheme, theme);
+};
 
-export const removeTheme = async(id: string): Promise<void> => {
-  if (!isElectronRenderer()) return
-  await ipcClient.invoke(ipcChannels.winMain.removeTheme, id)
-}
+export const removeTheme = async (id: string): Promise<void> => {
+  if (!isElectronRenderer()) return;
+  await ipcClient.invoke(ipcChannels.winMain.removeTheme, id);
+};
 
 export const onThemeChange = (listener: (setting: LX.ThemeSetting) => void): (() => void) => {
-  if (!isElectronRenderer()) return () => {}
-  return ipcClient.on(ipcChannels.common.themeChange, listener)
-}
+  if (!isElectronRenderer()) return () => {};
+  return ipcClient.on(ipcChannels.common.themeChange, listener);
+};
 
 export const themeService = {
   getInitialThemeMode,
@@ -95,4 +92,4 @@ export const themeService = {
   removeTheme,
   resolveThemeMode,
   saveTheme,
-}
+};

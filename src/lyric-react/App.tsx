@@ -1,28 +1,28 @@
-import { ConfigProvider, Typography } from 'antd'
-import zhCN from 'antd/locale/zh_CN'
-import { observer } from 'mobx-react-lite'
-import { useEffect } from 'react'
-import { createCoralAntdTheme } from '@shared/theme/antdTheme'
-import { lyricRootStore } from './stores/lyricRootStore'
-import { AudioVisualizer } from './components/common'
-import { ControlBar, LyricHorizontal, LyricVertical, ResizeHandles } from './components/layout'
-import { useLyricWindowInteraction } from './hooks/useLyricWindowInteraction'
+import { ConfigProvider, Typography } from 'antd';
+import zhCN from 'antd/locale/zh_CN';
+import { observer } from 'mobx-react-lite';
+import { useEffect } from 'react';
+import { createCoralAntdTheme } from '@shared/theme/antdTheme';
+import { lyricRootStore } from './stores/lyricRootStore';
+import { AudioVisualizer } from './components/common';
+import { ControlBar, LyricHorizontal, LyricVertical, ResizeHandles } from './components/layout';
+import { useLyricWindowInteraction } from './hooks/useLyricWindowInteraction';
 
-const { Text } = Typography
+const { Text } = Typography;
 
 export const LyricApp = observer(() => {
-  const windowInteraction = useLyricWindowInteraction()
+  const windowInteraction = useLyricWindowInteraction();
   const shellClassName = [
     'lyric-shell',
     lyricRootStore.isLocked ? 'locked' : null,
     lyricRootStore.shouldHide ? 'hidden' : null,
   ]
     .filter(Boolean)
-    .join(' ')
+    .join(' ');
 
   useEffect(() => {
-    void lyricRootStore.initialize()
-  }, [])
+    lyricRootStore.initialize();
+  }, []);
 
   return (
     <ConfigProvider locale={zhCN} theme={createCoralAntdTheme(lyricRootStore.themeMode)}>
@@ -30,10 +30,10 @@ export const LyricApp = observer(() => {
         className={shellClassName}
         style={lyricRootStore.lyricStyle}
         onMouseEnter={() => {
-          lyricRootStore.setMouseInWindow(true)
+          lyricRootStore.setMouseInWindow(true);
         }}
         onMouseLeave={() => {
-          lyricRootStore.setMouseInWindow(false)
+          lyricRootStore.setMouseInWindow(false);
         }}
         onMouseDown={windowInteraction.handleMoveMouseDown}
         onTouchStart={windowInteraction.handleMoveTouchStart}
@@ -51,5 +51,5 @@ export const LyricApp = observer(() => {
         {!lyricRootStore.isLocked ? <ResizeHandles interaction={windowInteraction} /> : null}
       </main>
     </ConfigProvider>
-  )
-})
+  );
+});

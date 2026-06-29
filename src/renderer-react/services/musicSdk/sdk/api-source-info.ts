@@ -1,10 +1,10 @@
 // Support qualitys: 128k 320k flac wav
 
 const sources: Array<{
-  id: string
-  name: string
-  disabled: boolean
-  supportQualitys: Partial<Record<LX.OnlineSource, LX.Quality[]>>
+  id: string;
+  name: string;
+  disabled: boolean;
+  supportQualitys: Partial<Record<LX.OnlineSource, LX.Quality[]>>;
 }> = [
   // {
   //   id: 'test',
@@ -27,6 +27,6 @@ const sources: Array<{
   //     kw: ['128k'],
   //   },
   // },
-]
+];
 
-export default sources
+export default sources;

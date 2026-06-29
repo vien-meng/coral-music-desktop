@@ -1,12 +1,11 @@
 // import { httpFetch } from '../../request'
-import { getMusicInfo } from './musicInfo'
+import { getMusicInfo } from './musicInfo';
 
-const getSongId = async(mInfo) => {
-  if (mInfo.songmid != mInfo.copyrightId) return mInfo.songmid
-  const musicInfo = await getMusicInfo(mInfo.copyrightId)
-  return musicInfo.songmid
-}
-
+const getSongId = async (mInfo) => {
+  if (mInfo.songmid != mInfo.copyrightId) return mInfo.songmid;
+  const musicInfo = await getMusicInfo(mInfo.copyrightId);
+  return musicInfo.songmid;
+};
 
 // export const getSongId = async(musicInfo, retry = 0) => {
 //   if (musicInfo.songmid != musicInfo.copyrightId) return musicInfo.songmid
@@ -28,4 +27,4 @@ const getSongId = async(mInfo) => {
 //   })
 // }
 
-export default getSongId
+export default getSongId;

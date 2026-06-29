@@ -3,9 +3,9 @@
 // import { sendSyncActionList } from '@main/modules/winMain'
 // import { SYNC_CLOSE_CODE } from '@/constants'
 // import { SYNC_CLOSE_CODE } from '@common/constants_sync'
-import { SYNC_CLOSE_CODE } from '@common/constants_sync'
-import { getUserSpace } from '@main/modules/sync/server/user'
-import { handleRemoteListAction } from '@main/modules/sync/listEvent'
+import { SYNC_CLOSE_CODE } from '@common/constants_sync';
+import { getUserSpace } from '@main/modules/sync/server/user';
+import { handleRemoteListAction } from '@main/modules/sync/listEvent';
 // import { encryptMsg } from '@/utils/tools'
 
 // let wss: LX.SocketServer | null
@@ -148,25 +148,33 @@ import { handleRemoteListAction } from '@main/modules/sync/listEvent'
 
 const handler: LX.Sync.ServerSyncHandlerListActions<LX.Sync.Server.Socket> = {
   async onListSyncAction(socket, action) {
-    if (!socket.moduleReadys.list) return
-    await handleRemoteListAction(action)
-    const userSpace = getUserSpace(socket.userInfo.name)
-    const key = await userSpace.listManage.createSnapshot()
-    userSpace.listManage.updateDeviceSnapshotKey(socket.keyInfo.clientId, key)
-    const currentUserName = socket.userInfo.name
-    const currentId = socket.keyInfo.clientId
+    if (!socket.moduleReadys.list) return;
+    await handleRemoteListAction(action);
+    const userSpace = getUserSpace(socket.userInfo.name);
+    const key = await userSpace.listManage.createSnapshot();
+    userSpace.listManage.updateDeviceSnapshotKey(socket.keyInfo.clientId, key);
+    const currentUserName = socket.userInfo.name;
+    const currentId = socket.keyInfo.clientId;
     socket.broadcast((client) => {
-      if (client.keyInfo.clientId == currentId || !client.moduleReadys?.list || client.userInfo.name != currentUserName) return
-      void client.remoteQueueList.onListSyncAction(action).then(async() => {
-        return userSpace.listManage.updateDeviceSnapshotKey(client.keyInfo.clientId, key)
-      }).catch(err => {
-        // TODO send status
-        client.close(SYNC_CLOSE_CODE.failed)
-        // client.moduleReadys.list = false
-        console.log(err.message)
-      })
-    })
+      if (
+        client.keyInfo.clientId == currentId ||
+        !client.moduleReadys?.list ||
+        client.userInfo.name != currentUserName
+      )
+        return;
+      client.remoteQueueList
+        .onListSyncAction(action)
+        .then(async () =>
+          userSpace.listManage.updateDeviceSnapshotKey(client.keyInfo.clientId, key),
+        )
+        .catch((err) => {
+          // TODO send status
+          client.close(SYNC_CLOSE_CODE.failed);
+          // client.moduleReadys.list = false
+          console.log(err.message);
+        });
+    });
   },
-}
+};
 
-export default handler
+export default handler;

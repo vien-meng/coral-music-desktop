@@ -1,9 +1,8 @@
-import { EventEmitter } from 'events'
-
+import { EventEmitter } from 'events';
 
 export class Event extends EventEmitter {
   dislike_changed() {
-    this.emit('dislike_changed')
+    this.emit('dislike_changed');
   }
 
   /**
@@ -12,9 +11,9 @@ export class Event extends EventEmitter {
    * @param isRemote 是否属于远程操作
    */
   async dislike_data_overwrite(dislikeData: LX.Dislike.DislikeRules, isRemote: boolean = false) {
-    await global.lx.worker.dbService.dislikeInfoOverwrite(dislikeData)
-    this.emit('dislike_data_overwrite', dislikeData, isRemote)
-    this.dislike_changed()
+    await global.lx.worker.dbService.dislikeInfoOverwrite(dislikeData);
+    this.emit('dislike_data_overwrite', dislikeData, isRemote);
+    this.dislike_changed();
   }
 
   /**
@@ -26,10 +25,10 @@ export class Event extends EventEmitter {
    */
   async dislike_music_add(musicInfo: LX.Dislike.DislikeMusicInfo[], isRemote: boolean = false) {
     // const changedIds =
-    await global.lx.worker.dbService.dislikeInfoAdd(musicInfo)
+    await global.lx.worker.dbService.dislikeInfoAdd(musicInfo);
     // await checkUpdateDislike(changedIds)
-    this.emit('dislike_music_add', musicInfo, isRemote)
-    this.dislike_changed()
+    this.emit('dislike_music_add', musicInfo, isRemote);
+    this.dislike_changed();
   }
 
   /**
@@ -39,18 +38,19 @@ export class Event extends EventEmitter {
    */
   async dislike_music_clear(isRemote: boolean = false) {
     // const changedIds =
-    await global.lx.worker.dbService.dislikeInfoOverwrite('')
+    await global.lx.worker.dbService.dislikeInfoOverwrite('');
     // await checkUpdateDislike(changedIds)
-    this.emit('dislike_music_clear', isRemote)
-    this.dislike_changed()
+    this.emit('dislike_music_clear', isRemote);
+    this.dislike_changed();
   }
 }
 
-
-type EventMethods = Omit<EventType, keyof EventEmitter>
+type EventMethods = Omit<EventType, keyof EventEmitter>;
 declare class EventType extends Event {
-  on<K extends keyof EventMethods>(event: K, listener: EventMethods[K]): this
-  once<K extends keyof EventMethods>(event: K, listener: EventMethods[K]): this
-  off<K extends keyof EventMethods>(event: K, listener: EventMethods[K]): this
+  on<K extends keyof EventMethods>(event: K, listener: EventMethods[K]): this;
+
+  once<K extends keyof EventMethods>(event: K, listener: EventMethods[K]): this;
+
+  off<K extends keyof EventMethods>(event: K, listener: EventMethods[K]): this;
 }
-export type Type = Omit<EventType, keyof Omit<EventEmitter, 'on' | 'off' | 'once'>>
+export type Type = Omit<EventType, keyof Omit<EventEmitter, 'on' | 'off' | 'once'>>;

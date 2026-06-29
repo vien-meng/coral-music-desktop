@@ -1,33 +1,36 @@
-import { DownOutlined } from '@ant-design/icons'
-import { Button, Popover, Typography } from 'antd'
-import { observer } from 'mobx-react-lite'
-import { useCallback, useMemo, useState } from 'react'
-import type { SongListTagGroup, SongListTagItem } from '../../../stores/domains/songListStore'
+import { DownOutlined } from '@ant-design/icons';
+import { Button, Popover, Typography } from 'antd';
+import { observer } from 'mobx-react-lite';
+import { useCallback, useMemo, useState } from 'react';
+import type { SongListTagGroup, SongListTagItem } from '../../../stores/domains/songListStore';
 
-const { Text } = Typography
+const { Text } = Typography;
 
 export interface TagPopoverProps {
-  activeTagId: string
-  groupedTags: SongListTagGroup[]
-  onSelect: (tag: SongListTagItem) => void
+  activeTagId: string;
+  groupedTags: SongListTagGroup[];
+  onSelect: (tag: SongListTagItem) => void;
 }
 
 const TagPopoverBase = ({ activeTagId, groupedTags, onSelect }: TagPopoverProps) => {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
 
   const activeTagName = useMemo(() => {
-    if (!activeTagId) return '默认'
+    if (!activeTagId) return '默认';
     for (const group of groupedTags) {
-      const found = group.list.find(t => t.id === activeTagId)
-      if (found) return found.name
+      const found = group.list.find((t) => t.id === activeTagId);
+      if (found) return found.name;
     }
-    return activeTagId
-  }, [activeTagId, groupedTags])
+    return activeTagId;
+  }, [activeTagId, groupedTags]);
 
-  const handleSelect = useCallback((tag: SongListTagItem) => {
-    onSelect(tag)
-    setOpen(false)
-  }, [onSelect])
+  const handleSelect = useCallback(
+    (tag: SongListTagItem) => {
+      onSelect(tag);
+      setOpen(false);
+    },
+    [onSelect],
+  );
 
   return (
     <Popover
@@ -42,21 +45,35 @@ const TagPopoverBase = ({ activeTagId, groupedTags, onSelect }: TagPopoverProps)
         >
           <div
             className="coral-tag-item"
-            onClick={() => { handleSelect({ id: '', name: '默认', parent_id: '', parent_name: '', source: '' } as any /* SongListTagItem */) }}
+            onClick={() => {
+              handleSelect(
+                {
+                  id: '',
+                  name: '默认',
+                  parent_id: '',
+                  parent_name: '',
+                  source: '',
+                } as any /* SongListTagItem */,
+              );
+            }}
           >
             默认
           </div>
-          {groupedTags.map(group => (
+          {groupedTags.map((group) => (
             <div key={group.name}>
-              <Text type="secondary" style={{ display: 'block', paddingTop: 10, paddingBottom: 3 }}>{group.name}</Text>
+              <Text type="secondary" style={{ display: 'block', paddingTop: 10, paddingBottom: 3 }}>
+                {group.name}
+              </Text>
               <div>
-                {group.list.map(tag => (
+                {group.list.map((tag) => (
                   <Button
                     key={tag.id}
                     type={tag.id === activeTagId ? 'primary' : 'default'}
                     size="small"
                     className="coral-tag-item-btn"
-                    onClick={() => { handleSelect(tag) }}
+                    onClick={() => {
+                      handleSelect(tag);
+                    }}
                   >
                     {tag.name}
                   </Button>
@@ -72,7 +89,7 @@ const TagPopoverBase = ({ activeTagId, groupedTags, onSelect }: TagPopoverProps)
         <DownOutlined style={{ fontSize: '0.8em', marginLeft: 7 }} />
       </Button>
     </Popover>
-  )
-}
+  );
+};
 
-export const TagPopover = observer(TagPopoverBase)
+export const TagPopover = observer(TagPopoverBase);

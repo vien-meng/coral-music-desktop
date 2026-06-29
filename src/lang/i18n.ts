@@ -1,35 +1,32 @@
-import { messages } from './index'
-import type { Messages, Message } from './index'
+import { messages } from './index';
+import type { Messages, Message } from './index';
 
-type TranslateValues = Record<string, string | number | boolean>
+type TranslateValues = Record<string, string | number | boolean>;
 
-type Langs = keyof Messages
-type I18nPluginApp = {
+type Langs = keyof Messages;
+interface I18nPluginApp {
   config: {
-    globalProperties: Record<string, unknown>
-  }
+    globalProperties: Record<string, unknown>;
+  };
 }
 
 export declare interface I18n {
-  locale: Langs
-  fallbackLocale: Langs
-  availableLocales: Langs[]
-  messages: Messages
-  message: Message
-  setLanguage: (locale: Langs) => void
-  fillMessage: (message: string, val: TranslateValues) => string
-  getMessage: (key: keyof Message, val?: TranslateValues) => string
-  t: (key: keyof Message, val?: TranslateValues) => string
+  locale: Langs;
+  fallbackLocale: Langs;
+  availableLocales: Langs[];
+  messages: Messages;
+  message: Message;
+  setLanguage: (locale: Langs) => void;
+  fillMessage: (message: string, val: TranslateValues) => string;
+  getMessage: (key: keyof Message, val?: TranslateValues) => string;
+  t: (key: keyof Message, val?: TranslateValues) => string;
 }
 
-let locale: Langs = 'zh-cn'
+let locale: Langs = 'zh-cn';
 
-let i18n: I18n
+let i18n: I18n;
 
-
-const trackReactivityValues = (): Langs => {
-  return locale
-}
+const trackReactivityValues = (): Langs => locale;
 
 const i18nPlugin = {
   install: (app: I18nPluginApp) => {
@@ -40,56 +37,49 @@ const i18nPlugin = {
       // return key.split('.').reduce((o, i) => {
       //   if (o) return o[i]
       // }, options)
-      trackReactivityValues()
-      return i18n.getMessage(key, val)
-    }
+      trackReactivityValues();
+      return i18n.getMessage(key, val);
+    };
   },
-}
+};
 
-const useI18n = () => {
-  return (key: keyof Message, val?: TranslateValues): string => {
-    trackReactivityValues()
-    return i18n.getMessage(key, val)
-  }
-}
+const useI18n =
+  () =>
+  (key: keyof Message, val?: TranslateValues): string => {
+    trackReactivityValues();
+    return i18n.getMessage(key, val);
+  };
 
 const setLanguage = (lang: Langs) => {
-  i18n.setLanguage(lang)
-}
+  i18n.setLanguage(lang);
+};
 
-const createI18n = (): I18n => {
-  return i18n = {
+const createI18n = (): I18n =>
+  (i18n = {
     locale,
     fallbackLocale: 'zh-cn',
     availableLocales: Object.keys(messages) as Langs[],
     messages,
     message: messages[locale],
     setLanguage(_locale: Langs) {
-      this.locale = _locale
-      this.message = messages[_locale]
-      locale = _locale
+      this.locale = _locale;
+      this.message = messages[_locale];
+      locale = _locale;
     },
     fillMessage(message: string, vals: TranslateValues): string {
       for (const [key, val] of Object.entries(vals)) {
-        message = message.replaceAll(`{${key}}`, String(val))
+        message = message.replaceAll(`{${key}}`, String(val));
       }
-      return message
+      return message;
     },
     getMessage(key: keyof Message, val?: TranslateValues): string {
-      let targetMessage = this.message[key] ?? this.messages[this.fallbackLocale][key] ?? key
-      return val ? this.fillMessage(targetMessage, val) : targetMessage
+      let targetMessage = this.message[key] ?? this.messages[this.fallbackLocale][key] ?? key;
+      return val ? this.fillMessage(targetMessage, val) : targetMessage;
     },
     t(key: keyof Message, val?: TranslateValues): string {
-      trackReactivityValues()
-      return this.getMessage(key, val)
+      trackReactivityValues();
+      return this.getMessage(key, val);
     },
-  }
-}
+  });
 
-
-export {
-  i18nPlugin,
-  setLanguage,
-  useI18n,
-  createI18n,
-}
+export { i18nPlugin, setLanguage, useI18n, createI18n };

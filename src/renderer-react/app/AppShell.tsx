@@ -5,23 +5,23 @@ import {
   MoonOutlined,
   SunOutlined,
   UploadOutlined,
-} from '@ant-design/icons'
-import { Button, Dropdown, Flex, Layout, Menu, Space, Typography } from 'antd'
-import { observer } from 'mobx-react-lite'
-import { coralBrand } from '@shared/brand'
-import { SearchInput, WindowControlBtns } from '../components/layout'
-import { PlayBar } from '../components/player'
-import { rootStore } from '../stores/rootStore'
-import { RouterOutlet } from './router'
-import { rendererRoutes } from './routeConfig'
+} from '@ant-design/icons';
+import { Button, Dropdown, Flex, Layout, Menu, Space, Typography } from 'antd';
+import { observer } from 'mobx-react-lite';
+import { coralBrand } from '@shared/brand';
+import { SearchInput, WindowControlBtns } from '../components/layout';
+import { PlayBar } from '../components/player';
+import { rootStore } from '../stores/rootStore';
+import { RouterOutlet } from './router';
+import { rendererRoutes } from './routeConfig';
 
-const { Header, Sider, Content, Footer } = Layout
-const { Text } = Typography
+const { Header, Sider, Content, Footer } = Layout;
+const { Text } = Typography;
 
 export const AppShell = observer(() => {
-  const { settings, theme, ui } = rootStore
-  const controlBtnPosition = settings.appSetting?.['common.controlBtnPosition'] ?? 'right'
-  const isFullscreen = false
+  const { settings, theme, ui } = rootStore;
+  const controlBtnPosition = settings.appSetting?.['common.controlBtnPosition'] ?? 'right';
+  const isFullscreen = false;
 
   return (
     <Layout className="coral-shell">
@@ -34,19 +34,21 @@ export const AppShell = observer(() => {
           )}
           <div>
             <Text strong>{coralBrand.productName}</Text>
-            <Text type="secondary" className="coral-brand-subtitle">{coralBrand.englishName}</Text>
+            <Text type="secondary" className="coral-brand-subtitle">
+              {coralBrand.englishName}
+            </Text>
           </div>
         </div>
         <Menu
           mode="inline"
           selectedKeys={[ui.activeRoute]}
-          items={rendererRoutes.map(route => ({
+          items={rendererRoutes.map((route) => ({
             key: route.key,
             icon: route.icon,
             label: route.label,
           }))}
           onClick={({ key }) => {
-            ui.setActiveRoute(key)
+            ui.setActiveRoute(key);
           }}
         />
       </Sider>
@@ -54,17 +56,19 @@ export const AppShell = observer(() => {
         <Header className="coral-header">
           <Flex align="center" justify="space-between" gap={16}>
             <div className="coral-drag-region" style={{ flex: 1, minWidth: 0 }}>
-              <SearchInput onSearch={(text) => {
-                ui.setActiveRoute('search')
-                rootStore.search.setSearchText(text)
-              }} />
+              <SearchInput
+                onSearch={(text) => {
+                  ui.setActiveRoute('search');
+                  rootStore.search.setSearchText(text);
+                }}
+              />
             </div>
             <Space className="coral-header-actions" size={8}>
               <Button
                 className="coral-header-action-btn"
                 icon={theme.themeMode === 'light' ? <MoonOutlined /> : <SunOutlined />}
                 onClick={() => {
-                  void theme.setThemeMode(theme.themeMode === 'light' ? 'dark' : 'light')
+                  theme.setThemeMode(theme.themeMode === 'light' ? 'dark' : 'light');
                 }}
               >
                 {theme.themeMode === 'light' ? '深色' : '浅色'}
@@ -73,8 +77,8 @@ export const AppShell = observer(() => {
                 className="coral-header-action-btn"
                 icon={<FileAddOutlined />}
                 onClick={() => {
-                  ui.setActiveRoute('list')
-                  ui.requestQuickAction('importLocalAudio')
+                  ui.setActiveRoute('list');
+                  ui.requestQuickAction('importLocalAudio');
                 }}
               >
                 本地文件
@@ -95,12 +99,10 @@ export const AppShell = observer(() => {
                     },
                   ],
                   onClick: ({ key }) => {
-                    ui.setActiveRoute('setting')
+                    ui.setActiveRoute('setting');
                     ui.requestQuickAction(
-                      key === 'file'
-                        ? 'importUserApiFile'
-                        : 'importUserApiOnline',
-                    )
+                      key === 'file' ? 'importUserApiFile' : 'importUserApiOnline',
+                    );
                   },
                 }}
               >
@@ -122,5 +124,5 @@ export const AppShell = observer(() => {
         </Footer>
       </Layout>
     </Layout>
-  )
-})
+  );
+});

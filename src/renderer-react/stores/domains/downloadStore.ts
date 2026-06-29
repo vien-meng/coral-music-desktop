@@ -1,25 +1,44 @@
-import { makeAutoObservable, observable } from 'mobx'
-import type { IpcDownloadTaskAction } from '@shared/ipc/contracts'
-import * as downloadService from '../../services/downloadService'
-import type { SettingsStore } from './settingsStore'
+import { makeAutoObservable, observable } from 'mobx';
+import type { IpcDownloadTaskAction } from '@shared/ipc/contracts';
+import * as downloadService from '../../services/downloadService';
+import type { SettingsStore } from './settingsStore';
 
 export class DownloadStore {
-  actionError: string | null = null
-  hydrateError: string | null = null
-  isHydrated = false
-  isHydrating = false
-  isMutatingTask = false
-  tasks: LX.Download.ListItem[] = []
-  private readonly settings?: SettingsStore
-  private runtimeDisposer: (() => void) | null = null
-  private readonly queuedTaskIds = new Set<string>()
-  private readonly activeStartTaskIds = new Set<string>()
-  private readonly autoRetryCounts = new Map<string, number>()
-  private isPumpingQueue = false
+  actionError: string | null = null;
+
+  hydrateError: string | null = null;
+
+  isHydrated = false;
+
+  isHydrating = false;
+
+  isMutatingTask = false;
+
+  tasks: LX.Download.ListItem[] = [];
+
+  private readonly settings?: SettingsStore;
+
+  private runtimeDisposer: (() => void) | null = null;
+
+  private readonly queuedTaskIds = new Set<string>();
+
+  private readonly activeStartTaskIds = new Set<string>();
+
+  private readonly autoRetryCounts = new Map<string, number>();
+
+  private isPumpingQueue = false;
 
   constructor(settings?: SettingsStore) {
-    this.settings = settings
-    makeAutoObservable<this, 'settings' | 'runtimeDisposer' | 'queuedTaskIds' | 'activeStartTaskIds' | 'autoRetryCounts' | 'isPumpingQueue'>(
+    this.settings = settings;
+    makeAutoObservable<
+      this,
+      | 'settings'
+      | 'runtimeDisposer'
+      | 'queuedTaskIds'
+      | 'activeStartTaskIds'
+      | 'autoRetryCounts'
+      | 'isPumpingQueue'
+    >(
       this,
       {
         activeStartTaskIds: false,
@@ -31,232 +50,239 @@ export class DownloadStore {
         runtimeDisposer: false,
       },
       { autoBind: true },
-    )
+    );
   }
 
   get taskCount(): number {
-    return this.tasks.length
+    return this.tasks.length;
   }
 
   get completedTaskCount(): number {
-    return this.tasks.filter(task => task.status === 'completed' || task.isComplate).length
+    return this.tasks.filter((task) => task.status === 'completed' || task.isComplate).length;
   }
 
   get playableTasks(): LX.Download.ListItem[] {
-    return this.tasks.filter(task => task.status === 'completed' || task.isComplate)
+    return this.tasks.filter((task) => task.status === 'completed' || task.isComplate);
   }
 
   get maxConcurrentTaskCount(): number {
-    return this.settings?.appSetting?.['download.maxDownloadNum'] ?? 3
+    return this.settings?.appSetting?.['download.maxDownloadNum'] ?? 3;
   }
 
   get runningTaskCount(): number {
-    return this.tasks.filter(task => task.status === 'run').length
+    return this.tasks.filter((task) => task.status === 'run').length;
   }
 
   get queuedTaskCount(): number {
-    return this.queuedTaskIds.size
+    return this.queuedTaskIds.size;
   }
 
   async hydrate(): Promise<void> {
-    if (this.isHydrating || this.isHydrated) return
+    if (this.isHydrating || this.isHydrated) return;
 
-    this.bindRuntime()
-    this.isHydrating = true
-    this.hydrateError = null
+    this.bindRuntime();
+    this.isHydrating = true;
+    this.hydrateError = null;
 
     try {
-      this.tasks = await downloadService.getDownloadTasks()
-      this.isHydrated = true
+      this.tasks = await downloadService.getDownloadTasks();
+      this.isHydrated = true;
     } catch (error) {
-      this.hydrateError = error instanceof Error ? error.message : String(error)
+      this.hydrateError = error instanceof Error ? error.message : String(error);
     } finally {
-      this.isHydrating = false
+      this.isHydrating = false;
     }
   }
 
   async refreshTasks(): Promise<void> {
-    this.bindRuntime()
-    this.isHydrating = true
-    this.hydrateError = null
+    this.bindRuntime();
+    this.isHydrating = true;
+    this.hydrateError = null;
 
     try {
-      this.tasks = await downloadService.getDownloadTasks()
-      this.isHydrated = true
+      this.tasks = await downloadService.getDownloadTasks();
+      this.isHydrated = true;
     } catch (error) {
-      this.hydrateError = error instanceof Error ? error.message : String(error)
+      this.hydrateError = error instanceof Error ? error.message : String(error);
     } finally {
-      this.isHydrating = false
+      this.isHydrating = false;
     }
   }
 
   async removeTask(taskId: string): Promise<void> {
-    await this.removeTasks([taskId])
+    await this.removeTasks([taskId]);
   }
 
   async removeTasks(taskIds: string[]): Promise<void> {
-    const ids = Array.from(new Set(taskIds)).filter(Boolean)
-    if (!ids.length) return
+    const ids = Array.from(new Set(taskIds)).filter(Boolean);
+    if (!ids.length) return;
 
-    this.isMutatingTask = true
-    this.actionError = null
+    this.isMutatingTask = true;
+    this.actionError = null;
 
     try {
-      await downloadService.removeDownloadTasks(ids)
+      await downloadService.removeDownloadTasks(ids);
       for (const id of ids) {
-        this.queuedTaskIds.delete(id)
-        this.activeStartTaskIds.delete(id)
-        this.autoRetryCounts.delete(id)
+        this.queuedTaskIds.delete(id);
+        this.activeStartTaskIds.delete(id);
+        this.autoRetryCounts.delete(id);
       }
-      const removeIdSet = new Set(ids)
-      this.tasks = this.tasks.filter(task => !removeIdSet.has(task.id))
+      const removeIdSet = new Set(ids);
+      this.tasks = this.tasks.filter((task) => !removeIdSet.has(task.id));
     } catch (error) {
-      this.actionError = error instanceof Error ? error.message : String(error)
+      this.actionError = error instanceof Error ? error.message : String(error);
     } finally {
-      this.isMutatingTask = false
+      this.isMutatingTask = false;
     }
   }
 
   async clearTasks(): Promise<void> {
-    if (!this.tasks.length) return
+    if (!this.tasks.length) return;
 
-    this.isMutatingTask = true
-    this.actionError = null
+    this.isMutatingTask = true;
+    this.actionError = null;
 
     try {
-      await downloadService.clearDownloadTasks()
-      this.queuedTaskIds.clear()
-      this.activeStartTaskIds.clear()
-      this.autoRetryCounts.clear()
-      this.tasks = []
+      await downloadService.clearDownloadTasks();
+      this.queuedTaskIds.clear();
+      this.activeStartTaskIds.clear();
+      this.autoRetryCounts.clear();
+      this.tasks = [];
     } catch (error) {
-      this.actionError = error instanceof Error ? error.message : String(error)
+      this.actionError = error instanceof Error ? error.message : String(error);
     } finally {
-      this.isMutatingTask = false
+      this.isMutatingTask = false;
     }
   }
 
   openTaskFile(task: LX.Download.ListItem): void {
-    if (!task.metadata.filePath) return
-    downloadService.openDownloadTaskFile(task.metadata.filePath)
+    if (!task.metadata.filePath) return;
+    downloadService.openDownloadTaskFile(task.metadata.filePath);
   }
 
   async startTask(taskId: string): Promise<void> {
-    const task = this.getTaskById(taskId)
-    if (!task) return
+    const task = this.getTaskById(taskId);
+    if (!task) return;
 
-    this.enqueueTask(task)
-    await this.pumpQueue()
+    this.enqueueTask(task);
+    await this.pumpQueue();
   }
 
   async retryTask(taskId: string): Promise<void> {
-    const task = this.getTaskById(taskId)
-    if (!task) return
+    const task = this.getTaskById(taskId);
+    if (!task) return;
 
-    this.autoRetryCounts.delete(taskId)
-    this.enqueueTask(task)
-    await this.pumpQueue()
+    this.autoRetryCounts.delete(taskId);
+    this.enqueueTask(task);
+    await this.pumpQueue();
   }
 
   async pauseTask(taskId: string): Promise<void> {
     if (this.queuedTaskIds.delete(taskId)) {
-      const task = this.getTaskById(taskId)
-      if (!task) return
+      const task = this.getTaskById(taskId);
+      if (!task) return;
       this.upsertTask({
         ...task,
         status: 'pause',
         statusText: '已暂停',
-      })
-      await downloadService.updateDownloadTasks([this.getTaskById(taskId)!])
-      return
+      });
+      await downloadService.updateDownloadTasks([this.getTaskById(taskId)!]);
+      return;
     }
 
-    this.isMutatingTask = true
-    this.actionError = null
+    this.isMutatingTask = true;
+    this.actionError = null;
 
     try {
-      const nextTask = await downloadService.pauseDownloadTask(taskId)
-      if (nextTask) this.upsertTask(nextTask)
+      const nextTask = await downloadService.pauseDownloadTask(taskId);
+      if (nextTask) this.upsertTask(nextTask);
     } catch (error) {
-      this.actionError = error instanceof Error ? error.message : String(error)
+      this.actionError = error instanceof Error ? error.message : String(error);
     } finally {
-      this.isMutatingTask = false
+      this.isMutatingTask = false;
     }
   }
 
   async startTasks(taskIds: string[]): Promise<void> {
-    const ids = Array.from(new Set(taskIds)).filter(Boolean)
+    const ids = Array.from(new Set(taskIds)).filter(Boolean);
     for (const id of ids) {
-      const task = this.getTaskById(id)
-      if (task) this.enqueueTask(task)
+      const task = this.getTaskById(id);
+      if (task) this.enqueueTask(task);
     }
-    await this.pumpQueue()
+    await this.pumpQueue();
   }
 
   async pauseTasks(taskIds: string[]): Promise<void> {
-    const ids = Array.from(new Set(taskIds)).filter(Boolean)
+    const ids = Array.from(new Set(taskIds)).filter(Boolean);
     for (const id of ids) {
-      const task = this.getTaskById(id)
-      if (!task || task.status !== 'run') continue
-      await this.pauseTask(id)
+      const task = this.getTaskById(id);
+      if (!task || task.status !== 'run') continue;
+      await this.pauseTask(id);
     }
-    await this.pumpQueue()
+    await this.pumpQueue();
   }
 
   bindRuntime(): void {
-    if (this.runtimeDisposer) return
-    this.runtimeDisposer = downloadService.onDownloadTaskAction(action => {
-      this.applyRuntimeAction(action)
-    })
+    if (this.runtimeDisposer) return;
+    this.runtimeDisposer = downloadService.onDownloadTaskAction((action) => {
+      this.applyRuntimeAction(action);
+    });
   }
 
   disposeRuntime(): void {
-    this.runtimeDisposer?.()
-    this.runtimeDisposer = null
+    this.runtimeDisposer?.();
+    this.runtimeDisposer = null;
   }
 
   private applyRuntimeAction(action: IpcDownloadTaskAction): void {
-    if (action.task) this.upsertTask(action.task)
+    if (action.task) this.upsertTask(action.task);
 
     if (action.action.action === 'refreshUrl') {
-      const task = action.task ?? this.getTaskById(action.taskId)
+      const task = action.task ?? this.getTaskById(action.taskId);
       if (task && this.shouldAutoRetry(task.id)) {
-        void downloadService.startDownloadTask(task, { isRefresh: true, isRetry: true })
-          .then(nextTask => { this.upsertTask(nextTask) })
-          .catch(error => {
-            this.actionError = error instanceof Error ? error.message : String(error)
+        downloadService
+          .startDownloadTask(task, { isRefresh: true, isRetry: true })
+          .then((nextTask) => {
+            this.upsertTask(nextTask);
           })
+          .catch((error) => {
+            this.actionError = error instanceof Error ? error.message : String(error);
+          });
       }
-      return
+      return;
     }
 
     if (action.action.action === 'complete') {
-      this.autoRetryCounts.delete(action.taskId)
+      this.autoRetryCounts.delete(action.taskId);
     }
 
-    if (action.action.action === 'complete' || action.action.action === 'error' || action.action.action === 'statusText') {
-      void this.pumpQueue()
+    if (
+      action.action.action === 'complete' ||
+      action.action.action === 'error' ||
+      action.action.action === 'statusText'
+    ) {
+      this.pumpQueue();
     }
   }
 
   private getTaskById(taskId: string): LX.Download.ListItem | null {
-    return this.tasks.find(task => task.id === taskId) ?? null
+    return this.tasks.find((task) => task.id === taskId) ?? null;
   }
 
   private upsertTask(task: LX.Download.ListItem): void {
-    const index = this.tasks.findIndex(item => item.id === task.id)
+    const index = this.tasks.findIndex((item) => item.id === task.id);
     if (index < 0) {
-      this.tasks = [task, ...this.tasks]
-      return
+      this.tasks = [task, ...this.tasks];
+      return;
     }
-    const nextTasks = [...this.tasks]
-    nextTasks[index] = task
-    this.tasks = nextTasks
+    const nextTasks = [...this.tasks];
+    nextTasks[index] = task;
+    this.tasks = nextTasks;
   }
 
   private enqueueTask(task: LX.Download.ListItem): void {
-    if (!this.isRunnableTask(task)) return
-    this.queuedTaskIds.add(task.id)
+    if (!this.isRunnableTask(task)) return;
+    this.queuedTaskIds.add(task.id);
     if (task.status !== 'waiting' || task.statusText !== '排队中') {
       const queuedTask: LX.Download.ListItem = {
         ...task,
@@ -264,104 +290,106 @@ export class DownloadStore {
         speed: '',
         status: 'waiting',
         statusText: '排队中',
-      }
-      this.upsertTask(queuedTask)
-      void downloadService.updateDownloadTasks([queuedTask])
+      };
+      this.upsertTask(queuedTask);
+      downloadService.updateDownloadTasks([queuedTask]);
     }
   }
 
   private isRunnableTask(task: LX.Download.ListItem): boolean {
-    return task.status === 'waiting' || task.status === 'pause' || task.status === 'error'
+    return task.status === 'waiting' || task.status === 'pause' || task.status === 'error';
   }
 
   private getAvailableQueueSlots(): number {
-    const max = Math.max(1, this.maxConcurrentTaskCount)
-    return Math.max(0, max - this.runningTaskCount - this.activeStartTaskIds.size)
+    const max = Math.max(1, this.maxConcurrentTaskCount);
+    return Math.max(0, max - this.runningTaskCount - this.activeStartTaskIds.size);
   }
 
   private async pumpQueue(): Promise<void> {
-    if (this.isPumpingQueue) return
-    this.isPumpingQueue = true
+    if (this.isPumpingQueue) return;
+    this.isPumpingQueue = true;
 
     try {
-      const startPromises: Array<Promise<void>> = []
+      const startPromises: Array<Promise<void>> = [];
       while (this.getAvailableQueueSlots() > startPromises.length) {
-        const taskId = Array.from(this.queuedTaskIds).find(id => {
-          const task = this.getTaskById(id)
-          return task ? this.isRunnableTask(task) : false
-        })
-        if (!taskId) break
+        const taskId = Array.from(this.queuedTaskIds).find((id) => {
+          const task = this.getTaskById(id);
+          return task ? this.isRunnableTask(task) : false;
+        });
+        if (!taskId) break;
 
-        this.queuedTaskIds.delete(taskId)
-        startPromises.push(this.startQueuedTask(taskId))
+        this.queuedTaskIds.delete(taskId);
+        startPromises.push(this.startQueuedTask(taskId));
       }
 
-      await Promise.all(startPromises)
+      await Promise.all(startPromises);
     } finally {
-      this.isPumpingQueue = false
+      this.isPumpingQueue = false;
     }
   }
 
   private async startQueuedTask(taskId: string): Promise<void> {
-    const task = this.getTaskById(taskId)
-    if (!task) return
+    const task = this.getTaskById(taskId);
+    if (!task) return;
 
-    this.activeStartTaskIds.add(taskId)
-    this.isMutatingTask = true
-    this.actionError = null
+    this.activeStartTaskIds.add(taskId);
+    this.isMutatingTask = true;
+    this.actionError = null;
 
     try {
       const nextTask = await downloadService.startDownloadTask(task, {
         ensureLyric: this.shouldPrepareDownloadLyric(),
         isRefresh: task.status === 'error',
         isRetry: task.status === 'error',
-      })
-      this.upsertTask(nextTask)
+      });
+      this.upsertTask(nextTask);
     } catch (error) {
-      this.actionError = error instanceof Error ? error.message : String(error)
-      const failedTask = this.getTaskById(taskId)
+      this.actionError = error instanceof Error ? error.message : String(error);
+      const failedTask = this.getTaskById(taskId);
       if (failedTask) {
         const nextTask: LX.Download.ListItem = {
           ...failedTask,
           status: 'error',
           statusText: this.actionError,
-        }
-        this.upsertTask(nextTask)
-        await downloadService.updateDownloadTasks([nextTask])
+        };
+        this.upsertTask(nextTask);
+        await downloadService.updateDownloadTasks([nextTask]);
       }
     } finally {
-      this.activeStartTaskIds.delete(taskId)
-      this.isMutatingTask = this.activeStartTaskIds.size > 0
+      this.activeStartTaskIds.delete(taskId);
+      this.isMutatingTask = this.activeStartTaskIds.size > 0;
     }
   }
 
   private shouldAutoRetry(taskId: string): boolean {
-    const count = this.autoRetryCounts.get(taskId) ?? 0
+    const count = this.autoRetryCounts.get(taskId) ?? 0;
     if (count >= 2) {
-      const task = this.getTaskById(taskId)
+      const task = this.getTaskById(taskId);
       if (task) {
         const nextTask: LX.Download.ListItem = {
           ...task,
           status: 'error',
           statusText: '下载地址刷新失败',
-        }
-        this.upsertTask(nextTask)
-        void downloadService.updateDownloadTasks([nextTask])
+        };
+        this.upsertTask(nextTask);
+        downloadService.updateDownloadTasks([nextTask]);
       }
-      return false
+      return false;
     }
 
-    this.autoRetryCounts.set(taskId, count + 1)
-    return true
+    this.autoRetryCounts.set(taskId, count + 1);
+    return true;
   }
 
   private shouldPrepareDownloadLyric(): boolean {
-    const setting = this.settings?.appSetting
-    if (!setting) return false
-    return setting['download.isDownloadLrc'] ||
+    const setting = this.settings?.appSetting;
+    if (!setting) return false;
+    return (
+      setting['download.isDownloadLrc'] ||
       setting['download.isEmbedLyric'] ||
       setting['download.isEmbedLyricLx'] ||
       setting['download.isEmbedLyricT'] ||
       setting['download.isEmbedLyricR']
+    );
   }
 }

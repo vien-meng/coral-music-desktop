@@ -1,34 +1,34 @@
-import { Input, Modal, Select, Typography } from 'antd'
-import { observer } from 'mobx-react-lite'
-import { useCallback, useEffect, useState } from 'react'
-import { coralProjectLinks } from '@shared/brand'
-import { openUrl } from '../../../services/appService'
-import { rootStore } from '../../../stores/rootStore'
+import { Input, Modal, Select, Typography } from 'antd';
+import { observer } from 'mobx-react-lite';
+import { useCallback, useEffect, useState } from 'react';
+import { coralProjectLinks } from '@shared/brand';
+import { openUrl } from '../../../services/appService';
+import { rootStore } from '../../../stores/rootStore';
 
-const { Text } = Typography
+const { Text } = Typography;
 
 export interface OpenListModalProps {
-  open: boolean
-  onClose: () => void
+  open: boolean;
+  onClose: () => void;
 }
 
 export const OpenListModal = observer(({ open, onClose }: OpenListModalProps) => {
-  const { songList } = rootStore
-  const [source, setSource] = useState(songList.activeSource)
-  const [text, setText] = useState('')
+  const { songList } = rootStore;
+  const [source, setSource] = useState(songList.activeSource);
+  const [text, setText] = useState('');
 
   useEffect(() => {
     if (open) {
-      setSource(songList.activeSource)
-      setText('')
+      setSource(songList.activeSource);
+      setText('');
     }
-  }, [open, songList.activeSource])
+  }, [open, songList.activeSource]);
 
   const handleSubmit = useCallback(() => {
-    if (!text.trim()) return
-    songList.setOpenSongListInputInfo({ source, text })
-    onClose()
-  }, [text, source, songList, onClose])
+    if (!text.trim()) return;
+    songList.setOpenSongListInputInfo({ source, text });
+    onClose();
+  }, [text, source, songList, onClose]);
 
   return (
     <Modal
@@ -46,13 +46,15 @@ export const OpenListModal = observer(({ open, onClose }: OpenListModalProps) =>
           <Select
             value={source}
             onChange={setSource}
-            options={songList.sources.map(s => ({ label: s.toUpperCase(), value: s }))}
+            options={songList.sources.map((s) => ({ label: s.toUpperCase(), value: s }))}
             style={{ width: 80 }}
             className="coral-open-list-source-select"
           />
           <Input
             value={text}
-            onChange={e => { setText(e.target.value) }}
+            onChange={(e) => {
+              setText(e.target.value);
+            }}
             placeholder="歌单链接 / ID"
             onPressEnter={handleSubmit}
             style={{ flex: 1, borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
@@ -67,16 +69,17 @@ export const OpenListModal = observer(({ open, onClose }: OpenListModalProps) =>
               如果无法打开，请参考
               <Text
                 className="coral-link-text"
-                onClick={async() => {
-                  if (coralProjectLinks.songListFaq) await openUrl(coralProjectLinks.songListFaq)
+                onClick={async () => {
+                  if (coralProjectLinks.songListFaq) await openUrl(coralProjectLinks.songListFaq);
                 }}
               >
-                {' '}FAQ
+                {' '}
+                FAQ
               </Text>
             </li>
           </ol>
         </div>
       </div>
     </Modal>
-  )
-})
+  );
+});

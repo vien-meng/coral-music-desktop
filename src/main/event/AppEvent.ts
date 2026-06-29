@@ -1,7 +1,8 @@
-import { EventEmitter } from 'events'
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+import { EventEmitter } from 'events';
 
-import { saveAppHotKeyConfig, updateSetting } from '@main/utils'
-import type { BrowserWindow } from 'electron'
+import { saveAppHotKeyConfig, updateSetting } from '@main/utils';
+import type { BrowserWindow } from 'electron';
 
 export class Event extends EventEmitter {
   // closeAll() {
@@ -16,7 +17,7 @@ export class Event extends EventEmitter {
    * 初始化APP
    */
   app_inited() {
-    this.emit('app_inited')
+    this.emit('app_inited');
   }
 
   /**
@@ -25,7 +26,7 @@ export class Event extends EventEmitter {
    * @param setting 已更新配置
    */
   updated_config(keys: Array<keyof LX.AppSetting>, setting: Partial<LX.AppSetting>) {
-    this.emit('updated_config', keys, setting)
+    this.emit('updated_config', keys, setting);
   }
 
   /**
@@ -33,90 +34,91 @@ export class Event extends EventEmitter {
    * @param setting 新设置
    */
   update_config(setting: Partial<LX.AppSetting>) {
-    const { setting: newSetting, updatedSettingKeys, updatedSetting } = updateSetting(setting)
-    global.lx.appSetting = newSetting
-    if (!updatedSettingKeys.length) return
-    this.emit('update_config', newSetting)
+    const { setting: newSetting, updatedSettingKeys, updatedSetting } = updateSetting(setting);
+    global.lx.appSetting = newSetting;
+    if (!updatedSettingKeys.length) return;
+    this.emit('update_config', newSetting);
     // console.log(updatedSetting)
-    this.updated_config(updatedSettingKeys, updatedSetting)
+    this.updated_config(updatedSettingKeys, updatedSetting);
   }
 
   system_theme_change(isDark: boolean) {
-    this.emit('system_theme_change', isDark)
+    this.emit('system_theme_change', isDark);
   }
 
   theme_change() {
-    this.emit('theme_change')
+    this.emit('theme_change');
   }
 
   deeplink(link: string) {
-    this.emit('deeplink', link)
+    this.emit('deeplink', link);
   }
 
   player_status(status: Partial<LX.Player.Status>) {
     for (const [key, value] of Object.entries(status)) {
       // @ts-expect-error
-      global.lx.player_status[key] = value
+      global.lx.player_status[key] = value;
     }
-    this.emit('player_status', status)
+    this.emit('player_status', status);
   }
 
   hot_key_down(keyInfo: LX.HotKeyDownInfo) {
-    this.emit('hot_key_down', keyInfo)
+    this.emit('hot_key_down', keyInfo);
   }
 
   hot_key_config_update(config: LX.HotKeyConfigAll) {
-    saveAppHotKeyConfig(config)
-    this.emit('hot_key_config_update', config)
+    saveAppHotKeyConfig(config);
+    this.emit('hot_key_config_update', config);
   }
 
   main_window_created(win: BrowserWindow) {
-    this.emit('main_window_created', win)
+    this.emit('main_window_created', win);
   }
 
   main_window_ready_to_show() {
-    this.emit('main_window_ready_to_show')
+    this.emit('main_window_ready_to_show');
   }
 
   main_window_inited() {
-    this.emit('main_window_inited')
+    this.emit('main_window_inited');
   }
 
   main_window_show() {
-    this.emit('main_window_show')
+    this.emit('main_window_show');
   }
 
   main_window_hide() {
-    this.emit('main_window_hide')
+    this.emit('main_window_hide');
   }
 
   main_window_focus() {
-    this.emit('main_window_focus')
+    this.emit('main_window_focus');
   }
 
   main_window_blur() {
-    this.emit('main_window_blur')
+    this.emit('main_window_blur');
   }
 
   main_window_close() {
-    this.emit('main_window_close')
+    this.emit('main_window_close');
   }
 
   main_window_fullscreen(isFullscreen: boolean) {
-    this.emit('main_window_fullscreen', isFullscreen)
+    this.emit('main_window_fullscreen', isFullscreen);
   }
 
   desktop_lyric_window_created(win: BrowserWindow) {
-    this.emit('desktop_lyric_window_created', win)
+    this.emit('desktop_lyric_window_created', win);
   }
 }
 
-
-type EventMethods = Omit<EventType, keyof EventEmitter>
+type EventMethods = Omit<EventType, keyof EventEmitter>;
 declare class EventType extends Event {
-  on<K extends keyof EventMethods>(event: K, listener: EventMethods[K]): this
-  once<K extends keyof EventMethods>(event: K, listener: EventMethods[K]): this
-  off<K extends keyof EventMethods>(event: K, listener: EventMethods[K]): this
+  on<K extends keyof EventMethods>(event: K, listener: EventMethods[K]): this;
+
+  once<K extends keyof EventMethods>(event: K, listener: EventMethods[K]): this;
+
+  off<K extends keyof EventMethods>(event: K, listener: EventMethods[K]): this;
 }
 
-export type Type = Omit<EventType, keyof Omit<EventEmitter, 'on' | 'off' | 'once'>>
+export type Type = Omit<EventType, keyof Omit<EventEmitter, 'on' | 'off' | 'once'>>;

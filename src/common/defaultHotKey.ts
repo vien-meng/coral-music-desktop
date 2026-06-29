@@ -1,4 +1,4 @@
-import { HOTKEY_PLAYER, HOTKEY_COMMON, HOTKEY_DESKTOP_LYRIC } from './hotKey'
+import { HOTKEY_PLAYER, HOTKEY_COMMON, HOTKEY_DESKTOP_LYRIC } from './hotKey';
 
 const local: LX.HotKeyConfig = {
   enable: true,
@@ -24,7 +24,7 @@ const local: LX.HotKeyConfig = {
       action: HOTKEY_COMMON.focusSearchInput.action,
     },
   },
-}
+};
 
 const global: LX.HotKeyConfig = {
   enable: false,
@@ -85,9 +85,9 @@ const global: LX.HotKeyConfig = {
       action: HOTKEY_DESKTOP_LYRIC.toggle_always_top.action,
     },
   },
-}
+};
 
 export default {
   local,
   global,
-}
+};

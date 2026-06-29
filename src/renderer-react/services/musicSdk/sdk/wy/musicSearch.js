@@ -1,8 +1,8 @@
 // import { httpFetch } from '../../request'
 // import { weapi } from './utils/crypto'
-import { sizeFormate, formatPlayTime } from '../../index'
+import { sizeFormate, formatPlayTime } from '../../index';
 // import musicDetailApi from './musicDetail'
-import { eapiRequest } from './utils/index'
+import { eapiRequest } from './utils/index';
 
 export default {
   limit: 30,
@@ -25,55 +25,55 @@ export default {
       scene: 'normal',
       total: page == 1,
       limit,
-    })
-    return searchRequest.promise.then(({ body }) => body)
+    });
+    return searchRequest.promise.then(({ body }) => body);
   },
   getSinger(singers) {
-    let arr = []
-    singers.forEach(singer => {
-      arr.push(singer.name)
-    })
-    return arr.join('、')
+    const arr = [];
+    singers.forEach((singer) => {
+      arr.push(singer.name);
+    });
+    return arr.join('、');
   },
   handleResult(rawList) {
     // console.log(rawList)
-    if (!rawList) return []
-    return rawList.map(item => {
-      item = item.baseInfo.simpleSongData
-      const types = []
-      const _types = {}
-      let size
+    if (!rawList) return [];
+    return rawList.map((item) => {
+      item = item.baseInfo.simpleSongData;
+      const types = [];
+      const _types = {};
+      let size;
 
       if (item.privilege.maxBrLevel == 'hires') {
-        size = item.hr ? sizeFormate(item.hr.size) : null
-        types.push({ type: 'flac24bit', size })
+        size = item.hr ? sizeFormate(item.hr.size) : null;
+        types.push({ type: 'flac24bit', size });
         _types.flac24bit = {
           size,
-        }
+        };
       }
       switch (item.privilege.maxbr) {
         case 999000:
-          size = item.sq ? sizeFormate(item.sq.size) : null
-          types.push({ type: 'flac', size })
+          size = item.sq ? sizeFormate(item.sq.size) : null;
+          types.push({ type: 'flac', size });
           _types.flac = {
             size,
-          }
+          };
         case 320000:
-          size = item.h ? sizeFormate(item.h.size) : null
-          types.push({ type: '320k', size })
+          size = item.h ? sizeFormate(item.h.size) : null;
+          types.push({ type: '320k', size });
           _types['320k'] = {
             size,
-          }
+          };
         case 192000:
         case 128000:
-          size = item.l ? sizeFormate(item.l.size) : null
-          types.push({ type: '128k', size })
+          size = item.l ? sizeFormate(item.l.size) : null;
+          types.push({ type: '128k', size });
           _types['128k'] = {
             size,
-          }
+          };
       }
 
-      types.reverse()
+      types.reverse();
 
       return {
         singer: this.getSinger(item.ar),
@@ -88,23 +88,23 @@ export default {
         types,
         _types,
         typeUrl: {},
-      }
-    })
+      };
+    });
   },
   search(str, page = 1, limit, retryNum = 0) {
-    if (++retryNum > 3) return Promise.reject(new Error('try max num'))
-    if (limit == null) limit = this.limit
-    return this.musicSearch(str, page, limit).then(result => {
+    if (++retryNum > 3) return Promise.reject(new Error('try max num'));
+    if (limit == null) limit = this.limit;
+    return this.musicSearch(str, page, limit).then((result) => {
       // console.log(result)
-      if (!result || result.code !== 200) return this.search(str, page, limit, retryNum)
-      let list = this.handleResult(result.data.resources || [])
+      if (!result || result.code !== 200) return this.search(str, page, limit, retryNum);
+      const list = this.handleResult(result.data.resources || []);
       // console.log(list)
 
-      if (list == null) return this.search(str, page, limit, retryNum)
+      if (list == null) return this.search(str, page, limit, retryNum);
 
-      this.total = result.data.totalCount || 0
-      this.page = page
-      this.allPage = Math.ceil(this.total / this.limit)
+      this.total = result.data.totalCount || 0;
+      this.page = page;
+      this.allPage = Math.ceil(this.total / this.limit);
 
       return {
         list,
@@ -112,8 +112,8 @@ export default {
         limit: this.limit,
         total: this.total,
         source: 'wy',
-      }
+      };
       // return result.data
-    })
+    });
   },
-}
+};

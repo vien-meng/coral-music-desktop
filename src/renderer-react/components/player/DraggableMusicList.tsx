@@ -1,40 +1,40 @@
-import { useCallback, useRef, type DragEvent, type ReactNode } from 'react'
+import { useCallback, useRef, type DragEvent, type ReactNode } from 'react';
 
 export interface DraggableMusicListProps {
-  actions?: (item: LX.Music.MusicInfo, index: number) => ReactNode[]
-  list: LX.Music.MusicInfo[]
-  onReorder: (fromIndex: number, toIndex: number) => void
-  renderItem: (item: LX.Music.MusicInfo, index: number) => ReactNode
+  actions?: (item: LX.Music.MusicInfo, index: number) => ReactNode[];
+  list: LX.Music.MusicInfo[];
+  onReorder: (fromIndex: number, toIndex: number) => void;
+  renderItem: (item: LX.Music.MusicInfo, index: number) => ReactNode;
 }
 
 export const DraggableMusicList = ({ list, onReorder, renderItem }: DraggableMusicListProps) => {
-  const dragIndex = useRef<number | null>(null)
+  const dragIndex = useRef<number | null>(null);
 
   const handleDragStart = useCallback((event: DragEvent<HTMLDivElement>, index: number) => {
-    dragIndex.current = index
-    event.dataTransfer.effectAllowed = 'move'
-  }, [])
+    dragIndex.current = index;
+    event.dataTransfer.effectAllowed = 'move';
+  }, []);
 
   const handleDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
-    event.preventDefault()
-    event.dataTransfer.dropEffect = 'move'
-  }, [])
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
 
   const handleDrop = useCallback(
     (event: DragEvent<HTMLDivElement>, dropIndex: number) => {
-      event.preventDefault()
-      const fromIndex = dragIndex.current
-      if (fromIndex == null || fromIndex === dropIndex) return
+      event.preventDefault();
+      const fromIndex = dragIndex.current;
+      if (fromIndex == null || fromIndex === dropIndex) return;
 
-      onReorder(fromIndex, dropIndex)
-      dragIndex.current = null
+      onReorder(fromIndex, dropIndex);
+      dragIndex.current = null;
     },
     [onReorder],
-  )
+  );
 
   const handleDragEnd = useCallback(() => {
-    dragIndex.current = null
-  }, [])
+    dragIndex.current = null;
+  }, []);
 
   return (
     <div className="coral-draggable-list">
@@ -43,14 +43,18 @@ export const DraggableMusicList = ({ list, onReorder, renderItem }: DraggableMus
           key={item.id}
           draggable
           className="coral-draggable-item"
-          onDragStart={event => { handleDragStart(event, index) }}
+          onDragStart={(event) => {
+            handleDragStart(event, index);
+          }}
           onDragOver={handleDragOver}
-          onDrop={event => { handleDrop(event, index) }}
+          onDrop={(event) => {
+            handleDrop(event, index);
+          }}
           onDragEnd={handleDragEnd}
         >
           {renderItem(item, index)}
         </div>
       ))}
     </div>
-  )
-}
+  );
+};

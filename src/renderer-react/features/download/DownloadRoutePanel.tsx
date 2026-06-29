@@ -8,16 +8,29 @@ import {
   PlayCircleOutlined,
   ReloadOutlined,
   SearchOutlined,
-} from '@ant-design/icons'
-import { Alert, Button, Checkbox, Dropdown, Empty, Modal, Progress, Segmented, Space, Tag, Tooltip, Typography } from 'antd'
-import { observer } from 'mobx-react-lite'
-import { useMemo, useState } from 'react'
-import { PlainList, PlainListItem, PlainListMeta } from '../../components/base'
-import type { SearchSource } from '../../stores/domains/searchStore'
-import { rootStore } from '../../stores/rootStore'
+} from '@ant-design/icons';
+import {
+  Alert,
+  Button,
+  Checkbox,
+  Dropdown,
+  Empty,
+  Modal,
+  Progress,
+  Segmented,
+  Space,
+  Tag,
+  Tooltip,
+  Typography,
+} from 'antd';
+import { observer } from 'mobx-react-lite';
+import { useMemo, useState } from 'react';
+import { PlainList, PlainListItem, PlainListMeta } from '../../components/base';
+import type { SearchSource } from '../../stores/domains/searchStore';
+import { rootStore } from '../../stores/rootStore';
 
-const { Text } = Typography
-type SupportedMusicSearchSource = Exclude<SearchSource, 'all'>
+const { Text } = Typography;
+type SupportedMusicSearchSource = Exclude<SearchSource, 'all'>;
 
 const TAB_OPTIONS = [
   { label: '全部', value: 'all' },
@@ -25,9 +38,9 @@ const TAB_OPTIONS = [
   { label: '已完成', value: 'completed' },
   { label: '暂停', value: 'pause' },
   { label: '错误', value: 'error' },
-]
+];
 
-type DownloadTab = 'all' | 'run' | 'completed' | 'pause' | 'error'
+type DownloadTab = 'all' | 'run' | 'completed' | 'pause' | 'error';
 
 const statusColorMap: Record<string, string> = {
   completed: 'green',
@@ -35,97 +48,103 @@ const statusColorMap: Record<string, string> = {
   pause: 'default',
   run: 'processing',
   waiting: 'gold',
-}
-const musicSearchSources: SupportedMusicSearchSource[] = ['kw', 'kg', 'tx', 'wy', 'mg']
+};
+const musicSearchSources: SupportedMusicSearchSource[] = ['kw', 'kg', 'tx', 'wy', 'mg'];
 
 export const DownloadRoutePanel = observer(() => {
-  const { download, player, search, ui } = rootStore
-  const [activeTab, setActiveTab] = useState<DownloadTab>('all')
-  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([])
+  const { download, player, search, ui } = rootStore;
+  const [activeTab, setActiveTab] = useState<DownloadTab>('all');
+  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
 
   const filteredTasks = useMemo(() => {
-    if (activeTab === 'all') return download.tasks
-    const statusFilter: LX.Download.DownloadTaskStatus = activeTab === 'error'
-      ? 'error'
-      : activeTab as LX.Download.DownloadTaskStatus
-    return download.tasks.filter(task => task.status === statusFilter || (activeTab === 'completed' && task.isComplate))
-  }, [download.tasks, activeTab])
+    if (activeTab === 'all') return download.tasks;
+    const statusFilter: LX.Download.DownloadTaskStatus =
+      activeTab === 'error' ? 'error' : (activeTab as LX.Download.DownloadTaskStatus);
+    return download.tasks.filter(
+      (task) => task.status === statusFilter || (activeTab === 'completed' && task.isComplate),
+    );
+  }, [download.tasks, activeTab]);
 
-  const selectedTaskIdSet = new Set(selectedTaskIds)
-  const selectedTasks = download.tasks.filter(task => selectedTaskIdSet.has(task.id))
-  const selectedPlayableTasks = selectedTasks.filter(task => task.status === 'completed' || task.isComplate)
-  const selectedRunnableTasks = selectedTasks.filter(task => task.status === 'waiting' || task.status === 'pause' || task.status === 'error')
-  const selectedRunningTasks = selectedTasks.filter(task => task.status === 'run')
-  const isAllSelected = Boolean(filteredTasks.length) && filteredTasks.every(task => selectedTaskIdSet.has(task.id))
+  const selectedTaskIdSet = new Set(selectedTaskIds);
+  const selectedTasks = download.tasks.filter((task) => selectedTaskIdSet.has(task.id));
+  const selectedPlayableTasks = selectedTasks.filter(
+    (task) => task.status === 'completed' || task.isComplate,
+  );
+  const selectedRunnableTasks = selectedTasks.filter(
+    (task) => task.status === 'waiting' || task.status === 'pause' || task.status === 'error',
+  );
+  const selectedRunningTasks = selectedTasks.filter((task) => task.status === 'run');
+  const isAllSelected =
+    Boolean(filteredTasks.length) && filteredTasks.every((task) => selectedTaskIdSet.has(task.id));
 
   const handleClearTasks = (): void => {
-    if (!download.taskCount) return
+    if (!download.taskCount) return;
     Modal.confirm({
       content: `共 ${download.taskCount} 个任务`,
       okButtonProps: { danger: true },
       okText: '清空',
       title: '清空下载任务',
-      onOk: async() => {
+      onOk: async () => {
         // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
-        await download.clearTasks()
-        setSelectedTaskIds([])
+        await download.clearTasks();
+        setSelectedTaskIds([]);
       },
-    })
-  }
+    });
+  };
 
   const handleSelectAllTasks = (): void => {
-    setSelectedTaskIds(isAllSelected ? [] : filteredTasks.map(task => task.id))
-  }
+    setSelectedTaskIds(isAllSelected ? [] : filteredTasks.map((task) => task.id));
+  };
 
   const handleToggleTaskSelection = (taskId: string, checked: boolean): void => {
-    setSelectedTaskIds(ids => {
-      if (checked) return ids.includes(taskId) ? ids : [...ids, taskId]
-      return ids.filter(id => id !== taskId)
-    })
-  }
+    setSelectedTaskIds((ids) => {
+      if (checked) return ids.includes(taskId) ? ids : [...ids, taskId];
+      return ids.filter((id) => id !== taskId);
+    });
+  };
 
   const handleRemoveSelectedTasks = (): void => {
-    if (!selectedTasks.length) return
+    if (!selectedTasks.length) return;
     Modal.confirm({
       content: `确认移除 ${selectedTasks.length} 个下载任务？`,
       okButtonProps: { danger: true },
       okText: '移除',
       title: '批量移除下载任务',
-      onOk: async() => {
+      onOk: async () => {
         // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
-        await download.removeTasks(selectedTaskIds)
-        setSelectedTaskIds([])
+        await download.removeTasks(selectedTaskIds);
+        setSelectedTaskIds([]);
       },
-    })
-  }
+    });
+  };
 
   const handlePlaySelectedTasks = (): void => {
-    if (!selectedPlayableTasks.length) return
-    player.playFromQueue(selectedPlayableTasks[0], selectedPlayableTasks, 'download')
-  }
+    if (!selectedPlayableTasks.length) return;
+    player.playFromQueue(selectedPlayableTasks[0], selectedPlayableTasks, 'download');
+  };
 
   const handleStartSelectedTasks = (): void => {
-    if (!selectedRunnableTasks.length) return
-    download.startTasks(selectedRunnableTasks.map(task => task.id)).catch(() => {})
-  }
+    if (!selectedRunnableTasks.length) return;
+    download.startTasks(selectedRunnableTasks.map((task) => task.id)).catch(() => {});
+  };
 
   const handlePauseSelectedTasks = (): void => {
-    if (!selectedRunningTasks.length) return
-    download.pauseTasks(selectedRunningTasks.map(task => task.id)).catch(() => {})
-  }
+    if (!selectedRunningTasks.length) return;
+    download.pauseTasks(selectedRunningTasks.map((task) => task.id)).catch(() => {});
+  };
 
   const handleSearchTaskMusic = (task: LX.Download.ListItem): void => {
-    const musicInfo = task.metadata.musicInfo
-    const searchText = `${musicInfo.name} ${musicInfo.singer}`.trim()
+    const musicInfo = task.metadata.musicInfo;
+    const searchText = `${musicInfo.name} ${musicInfo.singer}`.trim();
 
     if (musicSearchSources.includes(musicInfo.source as SupportedMusicSearchSource)) {
-      search.setSource(musicInfo.source as SupportedMusicSearchSource)
+      search.setSource(musicInfo.source as SupportedMusicSearchSource);
     }
-    search.setSearchType('music')
-    search.setSearchText(searchText)
-    ui.setActiveRoute('search')
-    void search.submitSearch()
-  }
+    search.setSearchType('music');
+    search.setSearchText(searchText);
+    ui.setActiveRoute('search');
+    search.submitSearch();
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
@@ -136,7 +155,9 @@ export const DownloadRoutePanel = observer(() => {
             <Button
               icon={<ReloadOutlined />}
               loading={download.isHydrating}
-              onClick={() => { download.refreshTasks().catch(() => {}) }}
+              onClick={() => {
+                download.refreshTasks().catch(() => {});
+              }}
             >
               刷新
             </Button>
@@ -149,10 +170,7 @@ export const DownloadRoutePanel = observer(() => {
             >
               清空
             </Button>
-            <Button
-              disabled={!download.taskCount}
-              onClick={handleSelectAllTasks}
-            >
+            <Button disabled={!download.taskCount} onClick={handleSelectAllTasks}>
               {isAllSelected ? '取消全选' : '全选'}
             </Button>
             <Button
@@ -190,9 +208,13 @@ export const DownloadRoutePanel = observer(() => {
           </Space>
           <Space>
             <Tag>已完成 {download.completedTaskCount}</Tag>
-            <Tag>下载中 {download.runningTaskCount} / {download.maxConcurrentTaskCount}</Tag>
+            <Tag>
+              下载中 {download.runningTaskCount} / {download.maxConcurrentTaskCount}
+            </Tag>
             <Tag>排队 {download.queuedTaskCount}</Tag>
-            <Tag>选中 {selectedTasks.length} / {download.taskCount}</Tag>
+            <Tag>
+              选中 {selectedTasks.length} / {download.taskCount}
+            </Tag>
           </Space>
         </Space>
       </div>
@@ -202,29 +224,48 @@ export const DownloadRoutePanel = observer(() => {
         <Segmented
           value={activeTab}
           options={TAB_OPTIONS}
-          onChange={value => { setActiveTab(value as DownloadTab) }}
+          onChange={(value) => {
+            setActiveTab(value as DownloadTab);
+          }}
         />
       </div>
 
       {/* Errors */}
-      {download.hydrateError
-        ? <Alert showIcon type="error" message={download.hydrateError} closable style={{ margin: '0 15px 8px', flex: 'none' }} />
-        : null}
-      {download.actionError
-        ? <Alert showIcon type="error" message={download.actionError} closable style={{ margin: '0 15px 8px', flex: 'none' }} />
-        : null}
+      {download.hydrateError ? (
+        <Alert
+          showIcon
+          type="error"
+          message={download.hydrateError}
+          closable
+          style={{ margin: '0 15px 8px', flex: 'none' }}
+        />
+      ) : null}
+      {download.actionError ? (
+        <Alert
+          showIcon
+          type="error"
+          message={download.actionError}
+          closable
+          style={{ margin: '0 15px 8px', flex: 'none' }}
+        />
+      ) : null}
 
       {/* Task list */}
       <div className="scroll" style={{ flex: 1, overflowY: 'auto', padding: '0 15px 15px' }}>
         <PlainList
           className="coral-result-list"
           items={filteredTasks}
-          empty={<Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={activeTab === 'all' ? '暂无任务' : '该分类暂无任务'} />}
-          renderItem={task => {
-            const isPlayable = task.status === 'completed' || task.isComplate
-            const canStart = task.status === 'waiting' || task.status === 'pause'
-            const canPause = task.status === 'run'
-            const canRetry = task.status === 'error'
+          empty={
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description={activeTab === 'all' ? '暂无任务' : '该分类暂无任务'}
+            />
+          }
+          renderItem={(task) => {
+            const isPlayable = task.status === 'completed' || task.isComplate;
+            const canStart = task.status === 'waiting' || task.status === 'pause';
+            const canPause = task.status === 'run';
+            const canRetry = task.status === 'error';
             return (
               <PlainListItem
                 key={task.id}
@@ -232,7 +273,9 @@ export const DownloadRoutePanel = observer(() => {
                   <Checkbox
                     key="select"
                     checked={selectedTaskIdSet.has(task.id)}
-                    onChange={event => { handleToggleTaskSelection(task.id, event.target.checked) }}
+                    onChange={(event) => {
+                      handleToggleTaskSelection(task.id, event.target.checked);
+                    }}
                   />,
                   <Tooltip key="start" title={canRetry ? '重试' : '开始下载'}>
                     <Button
@@ -243,9 +286,9 @@ export const DownloadRoutePanel = observer(() => {
                       loading={download.isMutatingTask && (canStart || canRetry)}
                       onClick={() => {
                         if (canRetry) {
-                          download.retryTask(task.id).catch(() => {})
+                          download.retryTask(task.id).catch(() => {});
                         } else {
-                          download.startTask(task.id).catch(() => {})
+                          download.startTask(task.id).catch(() => {});
                         }
                       }}
                     />
@@ -257,7 +300,9 @@ export const DownloadRoutePanel = observer(() => {
                       icon={<PauseCircleOutlined />}
                       disabled={!canPause}
                       loading={download.isMutatingTask && canPause}
-                      onClick={() => { download.pauseTask(task.id).catch(() => {}) }}
+                      onClick={() => {
+                        download.pauseTask(task.id).catch(() => {});
+                      }}
                     />
                   </Tooltip>,
                   <Tooltip key="play" title="播放">
@@ -266,7 +311,9 @@ export const DownloadRoutePanel = observer(() => {
                       size="small"
                       icon={<PlayCircleOutlined />}
                       disabled={!isPlayable}
-                      onClick={() => { player.playFromQueue(task, download.playableTasks, 'download') }}
+                      onClick={() => {
+                        player.playFromQueue(task, download.playableTasks, 'download');
+                      }}
                     />
                   </Tooltip>,
                   <Tooltip key="remove" title="移除任务">
@@ -276,7 +323,9 @@ export const DownloadRoutePanel = observer(() => {
                       size="small"
                       icon={<DeleteOutlined />}
                       loading={download.isMutatingTask}
-                      onClick={() => { download.removeTask(task.id).catch(() => {}) }}
+                      onClick={() => {
+                        download.removeTask(task.id).catch(() => {});
+                      }}
                     />
                   </Tooltip>,
                   <Dropdown
@@ -298,9 +347,9 @@ export const DownloadRoutePanel = observer(() => {
                       ],
                       onClick: ({ key }) => {
                         if (key === 'file') {
-                          download.openTaskFile(task)
+                          download.openTaskFile(task);
                         } else if (key === 'search') {
-                          handleSearchTaskMusic(task)
+                          handleSearchTaskMusic(task);
                         }
                       },
                     }}
@@ -310,16 +359,24 @@ export const DownloadRoutePanel = observer(() => {
                 ]}
               >
                 <PlainListMeta
-                  title={(
+                  title={
                     <Space wrap>
-                      <Text ellipsis style={{ maxWidth: 300 }}>{task.metadata.fileName || task.metadata.musicInfo.name}</Text>
-                      {task.metadata.quality
-                        ? <Tag style={{ fontSize: 11, lineHeight: '18px' }}>{task.metadata.quality === 'flac24bit' ? 'FLAC Hires' : task.metadata.quality.toUpperCase()}</Tag>
-                        : null}
-                      <Tag color={statusColorMap[task.status]}>{task.statusText || task.status}</Tag>
+                      <Text ellipsis style={{ maxWidth: 300 }}>
+                        {task.metadata.fileName || task.metadata.musicInfo.name}
+                      </Text>
+                      {task.metadata.quality ? (
+                        <Tag style={{ fontSize: 11, lineHeight: '18px' }}>
+                          {task.metadata.quality === 'flac24bit'
+                            ? 'FLAC Hires'
+                            : task.metadata.quality.toUpperCase()}
+                        </Tag>
+                      ) : null}
+                      <Tag color={statusColorMap[task.status]}>
+                        {task.statusText || task.status}
+                      </Tag>
                     </Space>
-                  )}
-                  description={(
+                  }
+                  description={
                     <Space direction="vertical" size={2} className="coral-wide">
                       <Progress
                         percent={Math.round(task.progress)}
@@ -328,19 +385,25 @@ export const DownloadRoutePanel = observer(() => {
                         status={task.status === 'error' ? 'exception' : undefined}
                       />
                       <Space size={4}>
-                        {task.speed ? <Text type="secondary" style={{ fontSize: 12 }}>{task.speed}/s</Text> : null}
-                        {task.metadata.filePath
-                          ? <Text type="secondary" style={{ fontSize: 12 }} ellipsis>{task.metadata.filePath}</Text>
-                          : null}
+                        {task.speed ? (
+                          <Text type="secondary" style={{ fontSize: 12 }}>
+                            {task.speed}/s
+                          </Text>
+                        ) : null}
+                        {task.metadata.filePath ? (
+                          <Text type="secondary" style={{ fontSize: 12 }} ellipsis>
+                            {task.metadata.filePath}
+                          </Text>
+                        ) : null}
                       </Space>
                     </Space>
-                  )}
+                  }
                 />
               </PlainListItem>
-            )
+            );
           }}
         />
       </div>
     </div>
-  )
-})
+  );
+});

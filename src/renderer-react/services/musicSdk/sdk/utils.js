@@ -1,36 +1,38 @@
-import { decodeName } from '../index'
+import { decodeName } from '../index';
 
-const nodeRequire = globalThis.require
-const crypto = nodeRequire('node:crypto')
-const dns = nodeRequire('node:dns')
+const nodeRequire = globalThis.require;
+const crypto = nodeRequire('node:crypto');
+const dns = nodeRequire('node:dns');
 
-export const toMD5 = str => crypto.createHash('md5').update(str).digest('hex')
+export const toMD5 = (str) => crypto.createHash('md5').update(str).digest('hex');
 
-
-const ipMap = new Map()
-export const getHostIp = hostname => {
-  const result = ipMap.get(hostname)
-  if (typeof result === 'object') return result
-  if (result === true) return
-  ipMap.set(hostname, true)
+const ipMap = new Map();
+export const getHostIp = (hostname) => {
+  const result = ipMap.get(hostname);
+  if (typeof result === 'object') return result;
+  if (result === true) return;
+  ipMap.set(hostname, true);
   // console.log(hostname)
-  dns.lookup(hostname, {
-    // family: 4,
-    all: false,
-  }, (err, address, family) => {
-    if (err) return console.log(err)
-    // console.log(address, family)
-    ipMap.set(hostname, { address, family })
-  })
-}
+  dns.lookup(
+    hostname,
+    {
+      // family: 4,
+      all: false,
+    },
+    (err, address, family) => {
+      if (err) return console.log(err);
+      // console.log(address, family)
+      ipMap.set(hostname, { address, family });
+    },
+  );
+};
 
 export const dnsLookup = (hostname, options, callback) => {
-  const result = getHostIp(hostname)
-  if (result) return callback(null, result.address, result.family)
+  const result = getHostIp(hostname);
+  if (result) return callback(null, result.address, result.family);
 
-  dns.lookup(hostname, options, callback)
-}
-
+  dns.lookup(hostname, options, callback);
+};
 
 /**
  * 格式化歌手
@@ -40,13 +42,13 @@ export const dnsLookup = (hostname, options, callback) => {
  */
 export const formatSingerName = (singers, nameKey = 'name', join = '、') => {
   if (Array.isArray(singers)) {
-    const singer = []
-    singers.forEach(item => {
-      let name = item[nameKey]
-      if (!name) return
-      singer.push(name)
-    })
-    return decodeName(singer.join(join))
+    const singer = [];
+    singers.forEach((item) => {
+      const name = item[nameKey];
+      if (!name) return;
+      singer.push(name);
+    });
+    return decodeName(singer.join(join));
   }
-  return decodeName(String(singers ?? ''))
-}
+  return decodeName(String(singers ?? ''));
+};

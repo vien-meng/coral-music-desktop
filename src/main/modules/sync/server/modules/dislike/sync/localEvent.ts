@@ -14,7 +14,7 @@ const sendListAction = async(wss: LX.Sync.Server.SocketServer, action: LX.Sync.D
     if (!client.moduleReadys?.dislike) continue
     // eslint-disable-next-line require-atomic-updates
     if (!key) key = await userSpace.dislikeManage.createSnapshot()
-    void client.remoteQueueDislike.onDislikeSyncAction(action).then(async() => {
+    client.remoteQueueDislike.onDislikeSyncAction(action).then(async() => {
       return userSpace.dislikeManage.updateDeviceSnapshotKey(client.keyInfo.clientId, key)
     }).catch(err => {
       // TODO send status
@@ -33,7 +33,7 @@ export const registerEvent = (wss: LX.Sync.Server.SocketServer) => {
   // })
   unregisterEvent()
   unregisterLocalListAction = registerDislikeActionEvent((action) => {
-    void sendListAction(wss, action)
+    sendListAction(wss, action)
   })
 }
 

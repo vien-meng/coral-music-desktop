@@ -1,13 +1,9 @@
-import path from 'node:path'
-import { builtinModules } from 'node:module'
-import { defineConfig } from 'vite'
-import { aliases, projectRoot } from './aliases'
+import path from 'node:path';
+import { builtinModules } from 'node:module';
+import { defineConfig } from 'vite';
+import { aliases, projectRoot } from './aliases';
 
-const external = [
-  'electron',
-  ...builtinModules,
-  ...builtinModules.map(name => `node:${name}`),
-]
+const external = ['electron', ...builtinModules, ...builtinModules.map((name) => `node:${name}`)];
 
 export default defineConfig(({ mode }) => ({
   ssr: {
@@ -42,4 +38,4 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
-}))
+}));
