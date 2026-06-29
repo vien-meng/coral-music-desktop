@@ -335,7 +335,7 @@ export const SongListRoutePanel = observer(() => {
         {/* Detail section */}
         {songList.hasListDetail && (
           <div className="coral-detail-section" style={{ marginTop: 24 }}>
-            <Divider orientation="left" plain style={{ fontSize: 14, margin: '12px 0' }}>
+            <Divider titlePlacement="left" plain style={{ fontSize: 14, margin: '12px 0' }}>
               <Text ellipsis>{detailTitle}</Text>
             </Divider>
 

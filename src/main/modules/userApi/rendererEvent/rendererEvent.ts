@@ -201,7 +201,7 @@ export const request = async ({
 
 export const getStatus = (): LX.UserApi.UserApiStatus => apiStatus;
 
-export const setAllowShowUpdateAlert = (id: string, enable: boolean) => {
+export const updateAllowShowUpdateAlert = (id: string, enable: boolean) => {
   if (!userApi || userApi.id != id) return;
   userApi.allowShowUpdateAlert = enable;
 };

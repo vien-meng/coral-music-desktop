@@ -1,3 +1,4 @@
+/* eslint-disable no-constant-condition */
 /* eslint-disable no-promise-executor-return */
 // import { SYNC_CLOSE_CODE } from '../../../../constants'
 import {

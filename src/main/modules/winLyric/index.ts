@@ -53,6 +53,7 @@ export default () => {
   //   mainSend(global.modules.lyricWindow, ipcWinLyricNames.set_lyric_info, info)
   // })
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   global.lx.event_app.on('hot_key_down', ({ type, key }) => {
     let info = global.lx.hotKey.config.global.keys[key];
     if (!info || info.type != APP_EVENT_NAMES.winLyricName) return;

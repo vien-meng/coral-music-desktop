@@ -26,7 +26,7 @@ type InteractionState = MoveState | ResizeState | null;
 const isWindows = (): boolean =>
   new URLSearchParams(globalThis.location?.search).get('os') === 'windows';
 
-const getTouchPoint = (event: TouchEvent | ReactTouchEvent): Touch | null =>
+const getTouchPoint = (event: TouchEvent | ReactTouchEvent): Touch | React.Touch | null =>
   event.changedTouches.length ? event.changedTouches[0] : null;
 
 const getResizeBounds = (

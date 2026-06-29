@@ -17,7 +17,9 @@ interface SmokeServer {
 }
 
 const wait = async (time: number): Promise<void> => {
-  await new Promise((resolve) => setTimeout(resolve, time));
+  await new Promise<void>((resolve) => {
+    setTimeout(resolve, time);
+  });
 };
 
 const createSmokeMusicInfo = (id: string, name: string): LX.Music.MusicInfoOnline => ({

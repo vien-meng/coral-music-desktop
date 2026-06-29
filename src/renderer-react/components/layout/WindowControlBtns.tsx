@@ -36,7 +36,14 @@ export const WindowControlBtns = ({
         onMouseLeave={() => {
           setIsHovering(false);
         }}
-        style={{ display: 'flex', gap: 8, padding: '0 12px', WebkitAppRegion: 'no-drag' }}
+        style={
+          {
+            display: 'flex',
+            gap: 8,
+            padding: '0 12px',
+            WebkitAppRegion: 'no-drag',
+          } as React.CSSProperties
+        }
       >
         <button
           aria-label="关闭"
@@ -111,7 +118,7 @@ export const WindowControlBtns = ({
   return (
     <div
       className="coral-window-btns-windows"
-      style={{ display: 'flex', WebkitAppRegion: 'no-drag' }}
+      style={{ display: 'flex', WebkitAppRegion: 'no-drag' } as React.CSSProperties}
     >
       <button
         aria-label="最小化"

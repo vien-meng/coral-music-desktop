@@ -127,7 +127,7 @@ export const LeaderboardRoutePanel = observer(() => {
             <div>
               {leaderboard.boardId ? (
                 <>
-                  <Divider orientation="left" plain style={{ fontSize: 13, margin: '0 0 8px' }}>
+                  <Divider titlePlacement="left" plain style={{ fontSize: 13, margin: '0 0 8px' }}>
                     <Space>
                       <Text strong>{leaderboard.boardId}</Text>
                       <Tag>{`${leaderboard.listDetailInfo.total} 首`}</Tag>

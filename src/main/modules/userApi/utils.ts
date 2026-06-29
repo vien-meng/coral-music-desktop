@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { userApis as defaultUserApis } from './config';
 import { STORE_NAMES } from '@common/constants';
 import getStore from '@main/utils/store';
@@ -20,7 +21,7 @@ export const getUserApis = (): LX.UserApi.UserApiInfo[] => {
   if (userApis) return userApis;
 
   const electronStore_userApi = getStore(STORE_NAMES.USER_API);
-  let infoFull = electronStore_userApi.get('userApis');
+  let infoFull = electronStore_userApi.get('userApis') as LX.UserApi.UserApiInfoFull[] | undefined;
   let requiredUpdate = false;
   if (infoFull) {
     for (let i = 0; i < infoFull.length; i++) {

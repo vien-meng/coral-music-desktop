@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { contextBridge, ipcRenderer, webFrame } from 'electron';
 import needle from 'needle';
 import zlib from 'zlib';
@@ -270,18 +271,25 @@ const initEnv = (userApi) => {
     },
     send(eventName, data) {
       return new Promise((resolve, reject) => {
-        if (!eventNames.includes(eventName))
-          return reject(new Error(`The event is not supported: ${eventName}`));
+        if (!eventNames.includes(eventName)) {
+          reject(new Error(`The event is not supported: ${eventName}`));
+          return;
+        }
         switch (eventName) {
           case EVENT_NAMES.inited:
-            if (isInitedApi) return reject(new Error('Script is inited'));
+            if (isInitedApi) {
+              reject(new Error('Script is inited'));
+              return;
+            }
             isInitedApi = true;
             handleInit(this, data);
             resolve();
             break;
           case EVENT_NAMES.updateAlert:
-            if (isShowedUpdateAlert)
-              return reject(new Error('The update alert can only be called once.'));
+            if (isShowedUpdateAlert) {
+              reject(new Error('The update alert can only be called once.'));
+              return;
+            }
             isShowedUpdateAlert = true;
             handleShowUpdateAlert(data, resolve, reject);
             break;

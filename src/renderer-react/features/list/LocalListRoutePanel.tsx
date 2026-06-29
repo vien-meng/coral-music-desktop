@@ -71,7 +71,7 @@ const duplicateVariantPattern = /(\(|（).+(\)|）)/g;
 const duplicatePunctuationPattern = /\s|'|\.|,|，|&|"|、|\(|\)|（|）|`|~|-|<|>|\||\/|\]|\[/g;
 const musicSearchSources: SupportedMusicSearchSource[] = ['kw', 'kg', 'tx', 'wy', 'mg'];
 
-const parseIntervalSeconds = (interval?: string): number => {
+const parseIntervalSeconds = (interval?: string | null): number => {
   if (!interval) return 0;
   return interval
     .split(':')

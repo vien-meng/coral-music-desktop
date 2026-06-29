@@ -27,7 +27,7 @@ const isDownloadMusicInfo = (
 ): musicInfo is LX.Download.ListItem =>
   Boolean(musicInfo && 'progress' in musicInfo && 'metadata' in musicInfo);
 
-const getPlayableQualities = (musicInfo: LX.Music.MusicInfo): LX.Quality[] => {
+const getPlayableQualities = (musicInfo: LX.Music.MusicInfoOnline): LX.Quality[] => {
   const qualitys = musicInfo.meta._qualitys;
   return PLAY_QUALITYS.filter(
     (quality, index) =>

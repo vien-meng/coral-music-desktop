@@ -5,11 +5,7 @@ import {
   removeApi as handleRemoveApi,
   setAllowShowUpdateAlert as saveAllowShowUpdateAlert,
 } from './utils';
-import {
-  loadApi,
-  setAllowShowUpdateAlert as setRendererEventAllowShowUpdateAlert,
-  init,
-} from './rendererEvent/rendererEvent';
+import { loadApi, updateAllowShowUpdateAlert, init } from './rendererEvent/rendererEvent';
 
 let userApiId: string | null;
 
@@ -41,7 +37,7 @@ export const setApi = async (id: string) => {
 
 export const setAllowShowUpdateAlert = (id: string, enable: boolean) => {
   saveAllowShowUpdateAlert(id, enable);
-  setRendererEventAllowShowUpdateAlert(id, enable);
+  updateAllowShowUpdateAlert(id, enable);
 };
 
 export * from './rendererEvent/rendererEvent';
