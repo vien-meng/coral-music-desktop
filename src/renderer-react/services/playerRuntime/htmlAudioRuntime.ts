@@ -1,4 +1,5 @@
 import { resolvePlayableMusicUrl } from './musicUrlResolver';
+import { probeAudioStreamInfo } from './audioHeaderProbe';
 import type { DecodedAudioData } from './localAudioDecodeService';
 import { removeFile } from '../nodeBridgeService';
 import type {
@@ -91,6 +92,8 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
   private loadRequestId = 0;
 
   private status: PlayerRuntimeStatus = {};
+
+  private probeAbortController: AbortController | null = null;
 
   private isDisposed = false;
 
@@ -211,6 +214,7 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
     if (this.isDisposed) return;
 
     this.isDisposed = true;
+    this.probeAbortController?.abort();
     for (const dispose of this.disposers.splice(0)) dispose();
     this.listeners.clear();
     if (this.audio) {
@@ -537,6 +541,9 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
     }
     this.setAudioSource(resolved.url);
     this.playAudio();
+
+    // 异步探测在线音频文件头，获取实际采样率/比特率
+    this.startAudioProbe(resolved.url, requestId);
   }
 
   private playAudio(): void {
@@ -579,6 +586,23 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
       name: displayMusicInfo.name,
       picUrl: displayMusicInfo.meta.picUrl ?? '',
       singer: displayMusicInfo.singer,
+    });
+  }
+
+  private startAudioProbe(url: string, requestId: number): void {
+    // 取消上一次探测
+    this.probeAbortController?.abort();
+    this.probeAbortController = new AbortController();
+    const signal = this.probeAbortController.signal;
+
+    probeAudioStreamInfo(url, signal).then((info) => {
+      // 切歌后丢弃结果
+      if (this.isDisposed || requestId !== this.loadRequestId || signal.aborted) return;
+      this.publish({
+        probeSampleRate: info.sampleRate,
+        probeBitrate: info.bitrate,
+        probeFormat: info.format !== 'unknown' ? info.format : null,
+      });
     });
   }
 

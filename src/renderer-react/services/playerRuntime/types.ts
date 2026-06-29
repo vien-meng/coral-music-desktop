@@ -2,6 +2,12 @@ export type PlayerRuntimeStatus = Partial<LX.Player.Status> & {
   actualQuality?: LX.Quality;
   errorText?: string;
   isEnded?: boolean;
+  /** 在线音频探测到的实际采样率 (Hz) */
+  probeSampleRate?: number | null;
+  /** 在线音频探测到的实际比特率 (bps) */
+  probeBitrate?: number | null;
+  /** 在线音频探测到的格式 */
+  probeFormat?: string | null;
 };
 export type PlayerStatusListener = (status: PlayerRuntimeStatus) => void;
 export type PlayerRuntimeMusicInfo = LX.Music.MusicInfo | LX.Download.ListItem;
