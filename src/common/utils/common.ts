@@ -13,7 +13,7 @@ export const sizeFormate = (size: number): string => {
   if (!size) return '0 B';
   let units = ['B', 'KB', 'MB', 'GB', 'TB'];
   let number = Math.floor(Math.log(size) / Math.log(1024));
-  return `${(size / Math.pow(1024, Math.floor(number))).toFixed(2)} ${units[number]}`;
+  return `${(size / 1024 ** Math.floor(number)).toFixed(2)} ${units[number]}`;
 };
 
 /**
@@ -61,13 +61,13 @@ export const dateFormat = (_date: any, format = 'Y-M-D h:m:s') => {
 export const formatPlayTime = (time: number) => {
   let m = Math.trunc(time / 60);
   let s = Math.trunc(time % 60);
-  return m == 0 && s == 0 ? '--/--' : numFix(m) + ':' + numFix(s);
+  return m == 0 && s == 0 ? '--/--' : `${numFix(m)}:${numFix(s)}`;
 };
 
 export const formatPlayTime2 = (time: number) => {
   let m = Math.trunc(time / 60);
   let s = Math.trunc(time % 60);
-  return numFix(m) + ':' + numFix(s);
+  return `${numFix(m)}:${numFix(s)}`;
 };
 
 export const isUrl = (path: string) => /https?:\/\//.test(path);
@@ -148,12 +148,16 @@ export const similar = (a: string, b: string) => {
   let al = a.length;
   let bl = b.length;
   let mp = []; // 一个表
-  let i, j, ai, lt, tmp; // ai：字符串a的第i个字符。 lt：左上角的值。 tmp：暂存新的值。
+  let i;
+  let j;
+  let ai;
+  let lt;
+  let tmp; // ai：字符串a的第i个字符。 lt：左上角的值。 tmp：暂存新的值。
   for (i = 0; i <= bl; i++) mp[i] = i;
   for (i = 1; i <= al; i++) {
     ai = a.charAt(i - 1);
     lt = mp[0];
-    mp[0] = mp[0] + 1;
+    mp[0] += 1;
     for (j = 1; j <= bl; j++) {
       tmp = Math.min(mp[j] + 1, mp[j - 1] + 1, lt + (ai == b.charAt(j - 1) ? 0 : 1));
       lt = mp[j];
@@ -195,9 +199,7 @@ export const sortInsert = <T>(
   arr.splice(left, 0, data);
 };
 
-export const encodePath = (path: string) => {
-  return encodeURI(path.replaceAll('\\', '/'));
-};
+export const encodePath = (path: string) => encodeURI(path.replaceAll('\\', '/'));
 
 export const arrPush = <T>(list: T[], newList: T[]) => {
   for (let i = 0; i * 1000 < newList.length; i++) {

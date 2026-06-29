@@ -23,6 +23,7 @@ import { observer } from 'mobx-react-lite';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { rootStore } from '../../stores/rootStore';
+import type { SongListTagItem } from '../../stores/domains/songListStore';
 import { OnlineMusicRowActions } from '../online/OnlineMusicRowActions';
 import { OnlineMusicPreviewList, OnlinePager } from '../online/OnlinePreviewList';
 import { OpenListModal } from './components/OpenListModal';
@@ -51,7 +52,7 @@ export const SongListRoutePanel = observer(() => {
     if (!tagInfo) return [];
     return [{ name: '热门标签', list: tagInfo.hotTag }, ...tagInfo.tags] as Array<{
       name: string;
-      list: Array<{ id: string; name: string; parent_id: string; parent_name: string }>;
+      list: Array<SongListTagItem>;
     }>;
   }, [songList.tags, songList.activeSource]);
 

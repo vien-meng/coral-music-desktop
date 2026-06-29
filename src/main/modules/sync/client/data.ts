@@ -1,43 +1,54 @@
-import fs from 'node:fs'
-import path from 'node:path'
-import { File } from '../../../../common/constants_sync'
-import { exists } from '../utils'
+import fs from 'node:fs';
+import path from 'node:path';
+import { File } from '../../../../common/constants_sync';
+import { exists } from '../utils';
 
+let syncAuthKeys: Record<string, LX.Sync.ClientKeyInfo>;
 
-let syncAuthKeys: Record<string, LX.Sync.ClientKeyInfo>
+const saveSyncAuthKeys = async () => {
+  const syncAuthKeysFilePath = path.join(
+    global.lxDataPath,
+    File.clientDataPath,
+    File.syncAuthKeysJSON,
+  );
+  return fs.promises.writeFile(syncAuthKeysFilePath, JSON.stringify(syncAuthKeys), 'utf8');
+};
 
-
-const saveSyncAuthKeys = async() => {
-  const syncAuthKeysFilePath = path.join(global.lxDataPath, File.clientDataPath, File.syncAuthKeysJSON)
-  return fs.promises.writeFile(syncAuthKeysFilePath, JSON.stringify(syncAuthKeys), 'utf8')
-}
-
-export const initClientInfo = async() => {
-  if (syncAuthKeys != null) return
-  const syncAuthKeysFilePath = path.join(global.lxDataPath, File.clientDataPath, File.syncAuthKeysJSON)
-  if (await fs.promises.stat(syncAuthKeysFilePath).then(() => true).catch(() => false)) {
+export const initClientInfo = async () => {
+  if (syncAuthKeys != null) return;
+  const syncAuthKeysFilePath = path.join(
+    global.lxDataPath,
+    File.clientDataPath,
+    File.syncAuthKeysJSON,
+  );
+  if (
+    await fs.promises
+      .stat(syncAuthKeysFilePath)
+      .then(() => true)
+      .catch(() => false)
+  ) {
     // eslint-disable-next-line require-atomic-updates
-    syncAuthKeys = JSON.parse((await fs.promises.readFile(syncAuthKeysFilePath)).toString())
+    syncAuthKeys = JSON.parse((await fs.promises.readFile(syncAuthKeysFilePath)).toString());
   } else {
     // eslint-disable-next-line require-atomic-updates
-    syncAuthKeys = {}
-    const syncDataPath = path.join(global.lxDataPath, File.clientDataPath)
-    if (!await exists(syncDataPath)) {
-      await fs.promises.mkdir(syncDataPath, { recursive: true })
+    syncAuthKeys = {};
+    const syncDataPath = path.join(global.lxDataPath, File.clientDataPath);
+    if (!(await exists(syncDataPath))) {
+      await fs.promises.mkdir(syncDataPath, { recursive: true });
     }
-    saveSyncAuthKeys()
+    saveSyncAuthKeys();
   }
-}
+};
 
-export const getSyncAuthKey = async(serverId: string) => {
-  await initClientInfo()
-  return syncAuthKeys[serverId] ?? null
-}
-export const setSyncAuthKey = async(serverId: string, info: LX.Sync.ClientKeyInfo) => {
-  await initClientInfo()
-  syncAuthKeys[serverId] = info
-  saveSyncAuthKeys()
-}
+export const getSyncAuthKey = async (serverId: string) => {
+  await initClientInfo();
+  return syncAuthKeys[serverId] ?? null;
+};
+export const setSyncAuthKey = async (serverId: string, info: LX.Sync.ClientKeyInfo) => {
+  await initClientInfo();
+  syncAuthKeys[serverId] = info;
+  saveSyncAuthKeys();
+};
 
 // let syncHost: string
 // export const getSyncHost = async() => {

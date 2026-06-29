@@ -178,11 +178,11 @@ export const initSetting = async() => {
 /**
  * 初始化快捷键设置
  */
-export const initHotKey = async() => {
+export const initHotKey = async(): Promise<LX.HotKeyConfigAll> => {
   const electronStore_hotKey = getStore(STORE_NAMES.HOTKEY)
 
-  let localConfig = electronStore_hotKey.get('local')
-  let globalConfig = electronStore_hotKey.get('global')
+  let localConfig: LX.HotKeyConfig | undefined = electronStore_hotKey.get('local')
+  let globalConfig: LX.HotKeyConfig | undefined = electronStore_hotKey.get('global')
 
   if (globalConfig) {
     // 移除v2.2.0及之前设置的全局媒体快捷键注册
@@ -210,7 +210,7 @@ export const initHotKey = async() => {
   return {
     local: localConfig!,
     global: globalConfig!,
-  }
+  } as LX.HotKeyConfigAll
 }
 
 type HotKeyType = 'local' | 'global'

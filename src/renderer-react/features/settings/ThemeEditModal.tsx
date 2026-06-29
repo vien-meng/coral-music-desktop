@@ -221,7 +221,7 @@ export const ThemeEditModal = observer(
           appClass: 'color-picker',
           comparison: false,
           useAsButton: true,
-          swatches: field.swatches as string[] | undefined,
+          swatches: field.swatches as unknown as string[] | undefined,
           components: {
             preview: true,
             opacity: true,
@@ -394,7 +394,7 @@ export const ThemeEditModal = observer(
         isDarkFont,
         isCustom: true,
         config: {
-          themeColors: themeColors as LX.ThemeColors,
+          themeColors: themeColors as unknown as LX.ThemeColors,
           extInfo: {
             '--color-app-background': extInfo['--color-app-background'] ?? 'rgba(255, 255, 255, 1)',
             '--color-main-background':

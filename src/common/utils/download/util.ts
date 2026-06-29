@@ -1,4 +1,4 @@
-import { httpOverHttp, httpsOverHttp } from 'tunnel'
+import { httpOverHttp, httpsOverHttp } from 'tunnel';
 
 export const STATUS = {
   idle: 'IDLE',
@@ -9,18 +9,18 @@ export const STATUS = {
   completed: 'COMPLETED',
   error: 'ERROR',
   failed: 'FAILED',
-} as const
+} as const;
 
-const httpsRxp = /^https:/
-export const getRequestAgent = (url: string, proxy?: { host: string, port: number }) => {
-  let options
+const httpsRxp = /^https:/;
+export const getRequestAgent = (url: string, proxy?: { host: string; port: number }) => {
+  let options;
   if (proxy) {
     options = {
       proxy: {
         host: proxy.host,
         port: proxy.port,
       },
-    }
+    };
   }
-  return options ? (httpsRxp.test(url) ? httpsOverHttp : httpOverHttp)(options) : undefined
-}
+  return options ? (httpsRxp.test(url) ? httpsOverHttp : httpOverHttp)(options) : undefined;
+};

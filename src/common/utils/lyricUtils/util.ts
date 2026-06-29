@@ -6,8 +6,10 @@ const encodeNames = {
   '&quot;': '"',
   '&apos;': "'",
   '&#039;': "'",
-} as const
+} as const;
 
-export const decodeName = (str: string | null = '') => {
-  return str?.replace(/(?:&amp;|&lt;|&gt;|&quot;|&apos;|&#039;|&nbsp;)/gm, (s: string) => encodeNames[s as keyof typeof encodeNames]) ?? ''
-}
+export const decodeName = (str: string | null = '') =>
+  str?.replace(
+    /(?:&amp;|&lt;|&gt;|&quot;|&apos;|&#039;|&nbsp;)/gm,
+    (s: string) => encodeNames[s as keyof typeof encodeNames],
+  ) ?? '';

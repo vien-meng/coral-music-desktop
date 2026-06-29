@@ -1,25 +1,24 @@
 class MetaDataBlock {
   constructor(isLast, type) {
-    this.isLast = isLast
-    this.type = type
-    this.error = null
-    this.hasData = false
-    this.removed = false
+    this.isLast = isLast;
+    this.type = type;
+    this.error = null;
+    this.hasData = false;
+    this.removed = false;
   }
 
   remove() {
-    this.removed = true
+    this.removed = true;
   }
 
-  parse(buffer) {
-  }
+  parse(_buffer) {}
 
   toString() {
-    let str = '[MetaDataBlock]'
-    str += ' type: ' + this.type
-    str += ', isLast: ' + this.isLast
-    return str
+    let str = '[MetaDataBlock]';
+    str += ` type: ${this.type}`;
+    str += `, isLast: ${this.isLast}`;
+    return str;
   }
 }
 
-module.exports = MetaDataBlock
+module.exports = MetaDataBlock;

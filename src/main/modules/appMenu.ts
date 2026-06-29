@@ -1,6 +1,5 @@
-import { app, Menu } from 'electron'
-import { isMac } from '@common/utils'
-
+import { app, Menu } from 'electron';
+import { isMac } from '@common/utils';
 
 export default () => {
   if (isMac) {
@@ -16,8 +15,8 @@ export default () => {
             label: '退出',
             accelerator: 'Command+Q',
             click() {
-              global.lx.isSkipTrayQuit = true
-              app.quit()
+              global.lx.isSkipTrayQuit = true;
+              app.quit();
             },
           },
         ],
@@ -42,10 +41,10 @@ export default () => {
           { label: '选择全部', accelerator: 'Command+A', role: 'selectAll' },
         ],
       },
-    ]
+    ];
 
-    Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+    Menu.setApplicationMenu(Menu.buildFromTemplate(template));
   } else {
-    Menu.setApplicationMenu(null)
+    Menu.setApplicationMenu(null);
   }
-}
+};

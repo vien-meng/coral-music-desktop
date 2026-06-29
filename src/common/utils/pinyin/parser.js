@@ -1,8 +1,8 @@
-const fs = require('fs').promises
-const path = require('path')
+const fs = require('fs').promises;
+const path = require('path');
 
-const sourceFilePath = path.join(__dirname, './kMandarin_8105.txt')
-const distFilePath = path.join(__dirname, './pinyin.txt')
+const sourceFilePath = path.join(__dirname, './kMandarin_8105.txt');
+const distFilePath = path.join(__dirname, './pinyin.txt');
 
 const yuanyin = [
   ['ā', 'a'],
@@ -29,30 +29,29 @@ const yuanyin = [
   ['ǘ', 'v'],
   ['ǚ', 'v'],
   ['ǜ', 'v'],
-]
+];
 
-const parse = async() => {
-  let datas = (await fs.readFile(sourceFilePath)).toString()
-  datas = datas.replace(/ +=> +(\w|\+)+ */gm, ' ')
-  for (const [y1, y2] of yuanyin) datas = datas.replaceAll(y1, y2)
+const parse = async () => {
+  let datas = (await fs.readFile(sourceFilePath)).toString();
+  datas = datas.replace(/ +=> +(\w|\+)+ */gm, ' ');
+  for (const [y1, y2] of yuanyin) datas = datas.replaceAll(y1, y2);
   // console.log(datas)
-  const lines = datas.split('\n')
-  const dict = {}
+  const lines = datas.split('\n');
+  const dict = {};
   for (let line of lines) {
-    if (!line || line.startsWith('#')) continue
-    line = line.trim().replace(/^[\w+]+: */, '')
-    let [p1, comment] = line.split('#')
-    let [z, ps] = comment.split(/(?: *\? *-> *| *-> *)/)
-    const ys = new Set([p1.trim()])
-    if (ps != null) ps.split(/(?: +| *, *)/).forEach(y => ys.add(y.trim()))
-    dict[z.trim()] = Array.from(ys)
+    if (!line || line.startsWith('#')) continue;
+    line = line.trim().replace(/^[\w+]+: */, '');
+    let [p1, comment] = line.split('#');
+    let [z, ps] = comment.split(/(?: *\? *-> *| *-> *)/);
+    const ys = new Set([p1.trim()]);
+    if (ps != null) ps.split(/(?: +| *, *)/).forEach((y) => ys.add(y.trim()));
+    dict[z.trim()] = Array.from(ys);
   }
 
-  fs.writeFile(distFilePath, JSON.stringify(dict))
-}
+  fs.writeFile(distFilePath, JSON.stringify(dict));
+};
 
-
-parse()
+parse();
 
 // let dict = {}
 // let line = 'U+2CBBF: qi  # 𬮿 ?-> gai,ai'
@@ -64,5 +63,3 @@ parse()
 // console.log(ps)
 // if (ps != null) ys.push(...ps.split(/(?: +| *, *)/).map(y => y.trim()))
 // console.log(dict)
-
-

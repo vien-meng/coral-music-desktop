@@ -21,7 +21,8 @@ export const PlayTimeoutModal = observer(({ onClose, open }: PlayTimeoutModalPro
 
   useEffect(() => {
     if (!open || !appSetting) return;
-    setTime(appSetting['player.waitPlayEndStopTime']);
+    const raw = appSetting['player.waitPlayEndStopTime'];
+    setTime(raw ? parseInt(raw, 10) || 0 : 0);
   }, [appSetting, open]);
 
   const timeLabel = timeoutStopService.store.timeLabel;
@@ -48,8 +49,9 @@ export const PlayTimeoutModal = observer(({ onClose, open }: PlayTimeoutModalPro
     try {
       const verified = verify();
       if (verified === '') return;
-      if (appSetting && appSetting['player.waitPlayEndStopTime'] !== verified) {
-        await settings.updateAppSetting({ 'player.waitPlayEndStopTime': verified });
+      const verifiedStr = String(verified);
+      if (appSetting && appSetting['player.waitPlayEndStopTime'] !== verifiedStr) {
+        await settings.updateAppSetting({ 'player.waitPlayEndStopTime': verifiedStr });
       }
       timeoutStopService.start(verified * 60);
       onClose();

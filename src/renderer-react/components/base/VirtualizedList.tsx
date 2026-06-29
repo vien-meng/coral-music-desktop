@@ -340,6 +340,6 @@ const VirtualizedListInner = <T,>(
   );
 };
 
-export const VirtualizedList = forwardRef(VirtualizedListInner) as <T>(
+export const VirtualizedList = forwardRef(VirtualizedListInner) as unknown as <T>(
   props: VirtualizedListProps<T> & { ref?: React.Ref<VirtualizedListHandle> },
 ) => React.ReactElement;

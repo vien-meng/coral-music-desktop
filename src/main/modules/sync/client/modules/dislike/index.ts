@@ -1,4 +1,3 @@
+export { default as handler } from './handler';
 
-export { default as handler } from './handler'
-
-export * from './localEvent'
+export * from './localEvent';

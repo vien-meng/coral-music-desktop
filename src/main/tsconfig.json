@@ -2,17 +2,14 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "baseUrl": "../../",
-    "typeRoots": [
-      "./types",
-      "../common/types",
-      "../../node_modules/@types"
-    ],
-    "paths": {                                           /* Specify a set of entries that re-map imports to additional lookup locations. */
+    "typeRoots": ["./types", "../common/types", "../../node_modules/@types"],
+    "paths": {
+      /* Specify a set of entries that re-map imports to additional lookup locations. */
       "@common/*": ["src/common/*"],
       "@main/*": ["src/main/*"],
       "@static/*": ["src/static/*"],
       "@shared/*": ["src/shared/*"],
       "@/*": ["src/*"]
-    },
-  },
+    }
+  }
 }

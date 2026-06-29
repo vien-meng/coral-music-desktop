@@ -1,3 +1,3 @@
-export { registerRendererEvents } from './winRendererEvent'
+export { registerRendererEvents } from './winRendererEvent';
 
-export { default } from './rendererEvent'
+export { default } from './rendererEvent';

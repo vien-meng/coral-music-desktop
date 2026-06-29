@@ -1,5 +1,3 @@
-
-
 declare namespace LX {
   namespace Dislike {
     // interface ListItemMusicText {
@@ -19,19 +17,19 @@ declare namespace LX {
     // type ListItem = ListItemMusic | ListItemMusicText
 
     interface DislikeMusicInfo {
-      name: string
-      singer: string
+      name: string;
+      singer: string;
     }
 
-    type DislikeRules = string
+    type DislikeRules = string;
 
     interface DislikeInfo {
       // musicIds: Set<string>
-      names: Set<string>
-      musicNames: Set<string>
-      singerNames: Set<string>
+      names: Set<string>;
+      musicNames: Set<string>;
+      singerNames: Set<string>;
       // list: LX.Dislike.ListItem[]
-      rules: DislikeRules
+      rules: DislikeRules;
     }
   }
 }

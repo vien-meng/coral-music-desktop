@@ -1,5 +1,5 @@
 // import progress from 'request-progress'
-import { request, type Options } from '@common/utils/request'
+import { request, type Options } from '@common/utils/request';
 // import fs from 'fs'
 
 export const requestMsg = {
@@ -9,7 +9,7 @@ export const requestMsg = {
   // unachievable: '哦No😱...接口无法访问了！已帮你切换到临时接口，重试下看能不能播放吧~',
   notConnectNetwork: '无法连接到服务器',
   cancelRequest: '取消http请求',
-} as const
+} as const;
 
 // var proxyUrl = "http://" + user + ":" + password + "@" + host + ":" + port;
 // var proxiedRequest = request.defaults({'proxy': proxyUrl});
@@ -23,40 +23,39 @@ export const requestMsg = {
  * @param {*} url
  * @param {*} options
  */
-export const httpFetch = async<T = unknown> (url: string, options: Options) => {
-  return request<T>(url, options).catch(async(err: any) => {
+export const httpFetch = async <T = unknown>(url: string, options: Options) =>
+  request<T>(url, options).catch(async (err: any) => {
     // console.log('出错', err)
     if (err.message === 'socket hang up') {
       // window.globalObj.apiSource = 'temp'
-      throw new Error(requestMsg.unachievable)
+      throw new Error(requestMsg.unachievable);
     }
     switch (err.code) {
       case 'ETIMEDOUT':
       case 'ESOCKETTIMEDOUT':
-        throw new Error(requestMsg.timeout)
+        throw new Error(requestMsg.timeout);
       case 'ENOTFOUND':
-        throw new Error(requestMsg.notConnectNetwork)
+        throw new Error(requestMsg.notConnectNetwork);
       default:
-        throw err
+        throw err;
     }
-  })
-  // requestObj.promise = requestObj.promise.catch(async err => {
-  //   // console.log('出错', err)
-  //   if (err.message === 'socket hang up') {
-  //     // window.globalObj.apiSource = 'temp'
-  //     return Promise.reject(new Error(requestMsg.unachievable))
-  //   }
-  //   switch (err.code) {
-  //     case 'ETIMEDOUT':
-  //     case 'ESOCKETTIMEDOUT':
-  //       return Promise.reject(new Error(requestMsg.timeout))
-  //     case 'ENOTFOUND':
-  //       return Promise.reject(new Error(requestMsg.notConnectNetwork))
-  //     default:
-  //       return Promise.reject(err)
-  //   }
-  // })
-  // return requestPromise
-}
+  });
 
-export type RequestOptions = Options
+// requestObj.promise = requestObj.promise.catch(async err => {
+//   // console.log('出错', err)
+//   if (err.message === 'socket hang up') {
+//     // window.globalObj.apiSource = 'temp'
+//     return Promise.reject(new Error(requestMsg.unachievable))
+//   }
+//   switch (err.code) {
+//     case 'ETIMEDOUT':
+//     case 'ESOCKETTIMEDOUT':
+//       return Promise.reject(new Error(requestMsg.timeout))
+//     case 'ENOTFOUND':
+//       return Promise.reject(new Error(requestMsg.notConnectNetwork))
+//     default:
+//       return Promise.reject(err)
+//   }
+// })
+// return requestPromise
+export type RequestOptions = Options;

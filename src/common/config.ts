@@ -1,8 +1,8 @@
 export interface WindowSize {
-  id: number
-  name: string
-  width: number
-  height: number
+  id: number;
+  name: string;
+  width: number;
+  height: number;
 }
 
 export const windowSizeList: WindowSize[] = [
@@ -48,9 +48,9 @@ export const windowSizeList: WindowSize[] = [
     width: 1700,
     height: 1070,
   },
-]
+];
 
-export const navigationUrlWhiteList: RegExp[] = []
+export const navigationUrlWhiteList: RegExp[] = [];
 
 // 基础黑白色
 // export const commonColorNames = [
@@ -83,4 +83,3 @@ export const navigationUrlWhiteList: RegExp[] = []
 //   'rgb(222,222,222)',
 //   'rgb(229,229,229)',
 // ] as const
-

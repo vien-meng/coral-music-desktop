@@ -8,8 +8,7 @@ export const ENV_PARAMS = [
   'MAX_SNAPSHOT_NUM',
   'LIST_ADD_MUSIC_LOCATION_TYPE',
   'CORAL_USER_',
-] as const
-
+] as const;
 
 export const LIST_IDS = {
   DEFAULT: 'default',
@@ -17,7 +16,7 @@ export const LIST_IDS = {
   TEMP: 'temp',
   DOWNLOAD: 'download',
   PLAY_LATER: null,
-} as const
+} as const;
 
 export const SYNC_CODE = {
   helloMsg: 'Hello~::^-^::~v4~',
@@ -27,19 +26,18 @@ export const SYNC_CODE = {
   msgBlockedIp: 'Blocked IP',
   msgConnect: 'coral-music connect',
 
-
   authFailed: 'Auth failed',
   missingAuthCode: 'Missing auth code',
   getServiceIdFailed: 'Get service id failed',
   connectServiceFailed: 'Connect service failed',
   connecting: 'Connecting...',
   unknownServiceAddress: 'Unknown service address',
-} as const
+} as const;
 
 export const SYNC_CLOSE_CODE = {
   normal: 1000,
   failed: 4100,
-} as const
+} as const;
 
 export const TRANS_MODE: Readonly<Record<LX.Sync.List.SyncMode, LX.Sync.List.SyncMode>> = {
   merge_local_remote: 'merge_remote_local',
@@ -49,7 +47,7 @@ export const TRANS_MODE: Readonly<Record<LX.Sync.List.SyncMode, LX.Sync.List.Syn
   overwrite_local_remote_full: 'overwrite_remote_local_full',
   overwrite_remote_local_full: 'overwrite_local_remote_full',
   cancel: 'cancel',
-} as const
+} as const;
 
 export const File = {
   serverDataPath: 'sync/server',
@@ -66,9 +64,6 @@ export const File = {
   dislikeSnapshotInfoJSON: 'snapshotInfo.json',
 
   syncAuthKeysJSON: 'syncAuthKey.json',
-} as const
+} as const;
 
-export const FeaturesList = [
-  'list',
-  'dislike',
-] as const
+export const FeaturesList = ['list', 'dislike'] as const;

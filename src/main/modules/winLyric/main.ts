@@ -1,24 +1,24 @@
-import path from 'node:path'
-import { BrowserWindow } from 'electron'
-import { getPlatform, isLinux, isWin } from '@common/utils'
-import { debounce } from '@common/utils/common'
-import { initWindowSize, minHeight, minWidth } from './utils'
-import { mainSend } from '@common/mainIpc'
-import { encodePath } from '@common/utils/electron'
+import path from 'node:path';
+import { BrowserWindow } from 'electron';
+import { getPlatform, isLinux, isWin } from '@common/utils';
+import { debounce } from '@common/utils/common';
+import { initWindowSize, minHeight, minWidth } from './utils';
+import { mainSend } from '@common/mainIpc';
+import { encodePath } from '@common/utils/electron';
 
 // require('./event')
 // require('./rendererEvent')
 
-let browserWindow: Electron.BrowserWindow | null = null
-let isWinBoundsUpdateing = false
+let browserWindow: Electron.BrowserWindow | null = null;
+let isWinBoundsUpdateing = false;
 
 const saveBoundsConfig = debounce((config: Partial<LX.AppSetting>) => {
-  global.lx.event_app.update_config(config)
-  if (isWinBoundsUpdateing) isWinBoundsUpdateing = false
-}, 500)
+  global.lx.event_app.update_config(config);
+  if (isWinBoundsUpdateing) isWinBoundsUpdateing = false;
+}, 500);
 
 const winEvent = () => {
-  if (!browserWindow) return
+  if (!browserWindow) return;
 
   // browserWindow.on('close', () => {
   //   if (global.lx.appSetting['desktopLyric.enable'] && !global.lx.mainWindowClosed) {
@@ -28,43 +28,44 @@ const winEvent = () => {
   // })
 
   browserWindow.on('closed', () => {
-    browserWindow = null
-  })
+    browserWindow = null;
+  });
 
   browserWindow.on('move', () => {
     // bounds = browserWindow.getBounds()
     // console.log('move', isWinBoundsUpdateing)
     if (isWinBoundsUpdateing) {
-      const bounds = browserWindow!.getBounds()
+      const bounds = browserWindow!.getBounds();
       saveBoundsConfig({
         'desktopLyric.x': bounds.x,
         'desktopLyric.y': bounds.y,
         'desktopLyric.width': bounds.width,
         'desktopLyric.height': bounds.height,
-      })
-    } else if (isWin) { // Linux 不允许将窗口设置出屏幕之外，MacOS未知，故只在Windows下执行强制设置
+      });
+    } else if (isWin) {
+      // Linux 不允许将窗口设置出屏幕之外，MacOS未知，故只在Windows下执行强制设置
       // 非主动调整窗口触发的窗口位置变化将重置回设置值
       browserWindow!.setBounds({
         x: global.lx.appSetting['desktopLyric.x'] ?? 0,
         y: global.lx.appSetting['desktopLyric.y'] ?? 0,
         width: global.lx.appSetting['desktopLyric.width'],
         height: global.lx.appSetting['desktopLyric.height'],
-      })
+      });
     }
-  })
+  });
 
   browserWindow.on('resize', () => {
     // bounds = browserWindow.getBounds()
     // console.log(bounds)
-    isWinBoundsUpdateing = true
-    const bounds = browserWindow!.getBounds()
+    isWinBoundsUpdateing = true;
+    const bounds = browserWindow!.getBounds();
     saveBoundsConfig({
       'desktopLyric.x': bounds.x,
       'desktopLyric.y': bounds.y,
       'desktopLyric.width': bounds.width,
       'desktopLyric.height': bounds.height,
-    })
-  })
+    });
+  });
 
   // browserWindow.on('restore', () => {
   //   browserWindow.webContents.send('restore')
@@ -74,39 +75,45 @@ const winEvent = () => {
   // })
 
   browserWindow.once('ready-to-show', () => {
-    showWindow()
+    showWindow();
     if (global.lx.appSetting['desktopLyric.isLock']) {
-      browserWindow!.setIgnoreMouseEvents(true, { forward: !isLinux && global.lx.appSetting['desktopLyric.isHoverHide'] })
+      browserWindow!.setIgnoreMouseEvents(true, {
+        forward: !isLinux && global.lx.appSetting['desktopLyric.isHoverHide'],
+      });
     }
     // linux下每次重开时貌似要重新设置置顶
     // if (isLinux && global.lx.appSetting['desktopLyric.isAlwaysOnTop']) {
     //   browserWindow!.setAlwaysOnTop(global.lx.appSetting['desktopLyric.isAlwaysOnTop'], 'screen-saver')
     // }
-    if (global.lx.appSetting['desktopLyric.isAlwaysOnTop'] && global.lx.appSetting['desktopLyric.isAlwaysOnTopLoop']) alwaysOnTopTools.startLoop()
-    browserWindow!.blur()
-  })
-}
+    if (
+      global.lx.appSetting['desktopLyric.isAlwaysOnTop'] &&
+      global.lx.appSetting['desktopLyric.isAlwaysOnTopLoop']
+    )
+      alwaysOnTopTools.startLoop();
+    browserWindow!.blur();
+  });
+};
 
 export const createWindow = () => {
-  closeWindow()
-  if (!global.envParams.workAreaSize) return
-  let x = global.lx.appSetting['desktopLyric.x']
-  let y = global.lx.appSetting['desktopLyric.y']
-  let width = global.lx.appSetting['desktopLyric.width']
-  let height = global.lx.appSetting['desktopLyric.height']
-  let isAlwaysOnTop = global.lx.appSetting['desktopLyric.isAlwaysOnTop']
+  closeWindow();
+  if (!global.envParams.workAreaSize) return;
+  let x = global.lx.appSetting['desktopLyric.x'];
+  let y = global.lx.appSetting['desktopLyric.y'];
+  let width = global.lx.appSetting['desktopLyric.width'];
+  let height = global.lx.appSetting['desktopLyric.height'];
+  let isAlwaysOnTop = global.lx.appSetting['desktopLyric.isAlwaysOnTop'];
   // let isLockScreen = global.lx.appSetting['desktopLyric.isLockScreen']
-  let isShowTaskbar = global.lx.appSetting['desktopLyric.isShowTaskbar']
+  let isShowTaskbar = global.lx.appSetting['desktopLyric.isShowTaskbar'];
   // let { width: screenWidth, height: screenHeight } = global.envParams.workAreaSize
-  const winSize = initWindowSize(x, y, width, height)
+  const winSize = initWindowSize(x, y, width, height);
   global.lx.event_app.update_config({
     'desktopLyric.x': winSize.x,
     'desktopLyric.y': winSize.y,
     'desktopLyric.width': winSize.width,
     'desktopLyric.height': winSize.height,
-  })
+  });
 
-  const { shouldUseDarkColors, theme } = global.lx.theme
+  const { shouldUseDarkColors, theme } = global.lx.theme;
 
   /**
    * Initial window options
@@ -142,98 +149,118 @@ export const createWindow = () => {
       spellcheck: false, // 禁用拼写检查器
       backgroundThrottling: false,
     },
-  })
+  });
 
-  const winURL = process.env.NODE_ENV !== 'production'
-    ? process.env.CORAL_LYRIC_DEV_URL ?? 'http://localhost:9081/lyric.html'
-    : `file://${path.join(encodePath(__dirname), 'lyric.html')}`
-  browserWindow.loadURL(winURL + `?os=${getPlatform()}&dark=${shouldUseDarkColors}&theme=${encodeURIComponent(JSON.stringify(theme))}`)
+  const winURL =
+    process.env.NODE_ENV !== 'production'
+      ? (process.env.CORAL_LYRIC_DEV_URL ?? 'http://localhost:9081/lyric.html')
+      : `file://${path.join(encodePath(__dirname), 'lyric.html')}`;
+  browserWindow.loadURL(
+    `${
+      winURL
+    }?os=${getPlatform()}&dark=${shouldUseDarkColors}&theme=${encodeURIComponent(JSON.stringify(theme))}`,
+  );
 
-  winEvent()
+  winEvent();
   // browserWindow.webContents.openDevTools()
-  global.lx.event_app.desktop_lyric_window_created(browserWindow)
-}
-export const isExistWindow = (): boolean => !!browserWindow
+  global.lx.event_app.desktop_lyric_window_created(browserWindow);
+};
+export const isExistWindow = (): boolean => !!browserWindow;
 
 export const closeWindow = () => {
-  if (!browserWindow) return
-  browserWindow.close()
-}
+  if (!browserWindow) return;
+  browserWindow.close();
+};
 
 export const showWindow = () => {
-  if (!browserWindow) return
-  browserWindow.show()
-}
+  if (!browserWindow) return;
+  browserWindow.show();
+};
 
 export const setResizeable = (isResizeable: boolean) => {
-  if (!browserWindow) return
-  browserWindow.setResizable(isResizeable)
-}
+  if (!browserWindow) return;
+  browserWindow.setResizable(isResizeable);
+};
 
 export const sendEvent = <T = any>(name: string, params?: T) => {
-  if (!browserWindow) return
-  mainSend(browserWindow, name, params)
-}
+  if (!browserWindow) return;
+  mainSend(browserWindow, name, params);
+};
 
 export const getBounds = (): Electron.Rectangle | null => {
-  if (!browserWindow) return null
-  return browserWindow.getBounds()
-}
+  if (!browserWindow) return null;
+  return browserWindow.getBounds();
+};
 
 export const setBounds = (bounds: Electron.Rectangle) => {
-  if (!browserWindow) return
-  isWinBoundsUpdateing = true
-  browserWindow.setBounds(bounds)
-}
+  if (!browserWindow) return;
+  isWinBoundsUpdateing = true;
+  browserWindow.setBounds(bounds);
+};
 
-
-export const setIgnoreMouseEvents = (ignore: boolean, options?: Electron.IgnoreMouseEventsOptions) => {
-  if (!browserWindow) return
-  browserWindow.setIgnoreMouseEvents(ignore, options)
-}
+export const setIgnoreMouseEvents = (
+  ignore: boolean,
+  options?: Electron.IgnoreMouseEventsOptions,
+) => {
+  if (!browserWindow) return;
+  browserWindow.setIgnoreMouseEvents(ignore, options);
+};
 
 export const setSkipTaskbar = (skip: boolean) => {
-  if (!browserWindow) return
-  browserWindow.setSkipTaskbar(skip)
-}
+  if (!browserWindow) return;
+  browserWindow.setSkipTaskbar(skip);
+};
 
-export const setAlwaysOnTop = (flag: boolean, level?: 'normal' | 'floating' | 'torn-off-menu' | 'modal-panel' | 'main-menu' | 'status' | 'pop-up-menu' | 'screen-saver' | undefined, relativeLevel?: number | undefined) => {
-  if (!browserWindow) return
-  browserWindow.setAlwaysOnTop(flag, level, relativeLevel)
-}
+export const setAlwaysOnTop = (
+  flag: boolean,
+  level?:
+    | 'normal'
+    | 'floating'
+    | 'torn-off-menu'
+    | 'modal-panel'
+    | 'main-menu'
+    | 'status'
+    | 'pop-up-menu'
+    | 'screen-saver'
+    | undefined,
+  relativeLevel?: number | undefined,
+) => {
+  if (!browserWindow) return;
+  browserWindow.setAlwaysOnTop(flag, level, relativeLevel);
+};
 
 export const getMainFrame = (): Electron.WebFrameMain | null => {
-  if (!browserWindow) return null
-  return browserWindow.webContents.mainFrame
-}
+  if (!browserWindow) return null;
+  return browserWindow.webContents.mainFrame;
+};
 
 interface AlwaysOnTopTools {
-  timeout: NodeJS.Timeout | null
-  setAlwaysOnTop: (isLoop: boolean) => void
-  startLoop: () => void
-  clearLoop: () => void
+  timeout: NodeJS.Timeout | null;
+  setAlwaysOnTop: (isLoop: boolean) => void;
+  startLoop: () => void;
+  clearLoop: () => void;
 }
 export const alwaysOnTopTools: AlwaysOnTopTools = {
   timeout: null,
   setAlwaysOnTop(isLoop) {
-    this.clearLoop()
-    setAlwaysOnTop(global.lx.appSetting['desktopLyric.isAlwaysOnTop'], 'screen-saver')
+    this.clearLoop();
+    setAlwaysOnTop(global.lx.appSetting['desktopLyric.isAlwaysOnTop'], 'screen-saver');
     // console.log(isLoop)
-    if (isLoop) this.startLoop()
+    if (isLoop) this.startLoop();
   },
   startLoop() {
-    this.clearLoop()
+    this.clearLoop();
     this.timeout = setInterval(() => {
       if (!isExistWindow()) {
-        this.clearLoop()
-        return
+        this.clearLoop();
+        return;
       }
-      setAlwaysOnTop(true, 'screen-saver')
-    }, 500)
+      setAlwaysOnTop(true, 'screen-saver');
+    }, 500);
   },
   clearLoop() {
-    if (!this.timeout) return
-    clearInterval(this.timeout)
-    this.timeout = null
+    if (!this.timeout) return;
+    clearInterval(this.timeout);
+    this.timeout = null;
   },
-}
+};

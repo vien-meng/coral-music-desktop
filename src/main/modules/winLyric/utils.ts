@@ -1,7 +1,8 @@
+/* eslint-disable import/no-mutable-exports */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 // 设置窗口位置、大小
-export let minWidth = 38
-export let minHeight = 38
-
+export let minWidth = 38;
+export let minHeight = 38;
 
 // const updateBounds = (bounds: Bounds) => {
 //   bounds.x = bounds.x
@@ -14,38 +15,40 @@ export let minHeight = 38
  * @param param 新设置（相对于当前设置）
  * @returns
  */
-export const getLyricWindowBounds = (bounds: Electron.Rectangle, { x, y, w, h }: LX.DesktopLyric.NewBounds): Electron.Rectangle => {
-  if (w < minWidth) w = minWidth
-  if (h < minHeight) h = minHeight
+export const getLyricWindowBounds = (
+  bounds: Electron.Rectangle,
+  { x, y, w, h }: LX.DesktopLyric.NewBounds,
+): Electron.Rectangle => {
+  if (w < minWidth) w = minWidth;
+  if (h < minHeight) h = minHeight;
 
   if (global.lx.appSetting['desktopLyric.isLockScreen']) {
-    if (!global.envParams.workAreaSize) return bounds
-    const maxWinW = global.envParams.workAreaSize.width
-    const maxWinH = global.envParams.workAreaSize.height
+    if (!global.envParams.workAreaSize) return bounds;
+    const maxWinW = global.envParams.workAreaSize.width;
+    const maxWinH = global.envParams.workAreaSize.height;
 
-    if (w > maxWinW) w = maxWinW
-    if (h > maxWinH) h = maxWinH
+    if (w > maxWinW) w = maxWinW;
+    if (h > maxWinH) h = maxWinH;
 
-    const maxX = global.envParams.workAreaSize.width - w
-    const maxY = global.envParams.workAreaSize.height - h
+    const maxX = global.envParams.workAreaSize.width - w;
+    const maxY = global.envParams.workAreaSize.height - h;
 
-    x += bounds.x
-    y += bounds.y
+    x += bounds.x;
+    y += bounds.y;
 
-    if (x > maxX) x = maxX
-    else if (x < 0) x = 0
+    if (x > maxX) x = maxX;
+    else if (x < 0) x = 0;
 
-    if (y > maxY) y = maxY
-    else if (y < 0) y = 0
+    if (y > maxY) y = maxY;
+    else if (y < 0) y = 0;
   } else {
-    y += bounds.y
-    x += bounds.x
+    y += bounds.y;
+    x += bounds.x;
   }
 
   // console.log('util bounds', bounds)
-  return { width: w, height: h, x, y }
-}
-
+  return { width: w, height: h, x, y };
+};
 
 export const watchConfigKeys = [
   'desktopLyric.enable',
@@ -84,38 +87,45 @@ export const watchConfigKeys = [
   'player.isSwapLyricTranslationAndRoma',
   'player.isPlayLxlrc',
   'player.playbackRate',
-] satisfies Array<keyof LX.AppSetting>
+] satisfies Array<keyof LX.AppSetting>;
 
-export const buildLyricConfig = (appSetting: Partial<LX.AppSetting>): Partial<LX.DesktopLyric.Config> => {
-  const setting: Partial<LX.DesktopLyric.Config> = {}
+export const buildLyricConfig = (
+  appSetting: Partial<LX.AppSetting>,
+): Partial<LX.DesktopLyric.Config> => {
+  const setting: Partial<LX.DesktopLyric.Config> = {};
   for (const key of watchConfigKeys) {
     // @ts-expect-error
-    if (key in appSetting) setting[key] = appSetting[key]
+    if (key in appSetting) setting[key] = appSetting[key];
   }
-  return setting
-}
+  return setting;
+};
 
-export const initWindowSize = (x: LX.AppSetting['desktopLyric.x'], y: LX.AppSetting['desktopLyric.y'], width: LX.AppSetting['desktopLyric.width'], height: LX.AppSetting['desktopLyric.height']) => {
+export const initWindowSize = (
+  x: LX.AppSetting['desktopLyric.x'],
+  y: LX.AppSetting['desktopLyric.y'],
+  width: LX.AppSetting['desktopLyric.width'],
+  height: LX.AppSetting['desktopLyric.height'],
+) => {
   if (x == null || y == null) {
-    if (width < minWidth) width = minWidth
-    if (height < minHeight) height = minHeight
+    if (width < minWidth) width = minWidth;
+    if (height < minHeight) height = minHeight;
     if (global.envParams.workAreaSize) {
-      x = global.envParams.workAreaSize.width - width
-      y = global.envParams.workAreaSize.height - height
+      x = global.envParams.workAreaSize.width - width;
+      y = global.envParams.workAreaSize.height - height;
     } else {
-      x = y = 0
+      x = y = 0;
     }
   } else {
-    let bounds = getLyricWindowBounds({ x, y, width, height }, { x: 0, y: 0, w: width, h: height })
-    x = bounds.x
-    y = bounds.y
-    width = bounds.width
-    height = bounds.height
+    let bounds = getLyricWindowBounds({ x, y, width, height }, { x: 0, y: 0, w: width, h: height });
+    x = bounds.x;
+    y = bounds.y;
+    width = bounds.width;
+    height = bounds.height;
   }
   return {
     x,
     y,
     width,
     height,
-  }
-}
+  };
+};

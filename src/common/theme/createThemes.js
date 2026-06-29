@@ -1,8 +1,8 @@
-//! 更新默认主题配置后，需要执行 npm run build:theme 重新构建index.json
+// ! 更新默认主题配置后，需要执行 npm run build:theme 重新构建index.json
 
-const fs = require('fs')
-const path = require('path')
-const { createThemeColors } = require('./utils')
+const fs = require('fs');
+const path = require('path');
+const { createThemeColors } = require('./utils');
 
 const defaultThemes = [
   {
@@ -284,7 +284,6 @@ const defaultThemes = [
       '--background-image-position': 'center',
       '--background-image-size': 'cover',
 
-
       '--color-btn-hide': '#3bc2b2',
       '--color-btn-min': '#85c43b',
       '--color-btn-close': '#fab4a0',
@@ -333,7 +332,6 @@ const defaultThemes = [
       '--background-image-position': 'center',
       '--background-image-size': 'cover',
 
-
       '--color-btn-hide': 'rgba(183, 212, 208, 1)',
       '--color-btn-min': 'rgba(200, 214, 183, 1)',
       '--color-btn-close': 'rgba(218, 195, 188, 1)',
@@ -367,18 +365,15 @@ const defaultThemes = [
       '--color-badge-tertiary': 'var(--color-primary-light-100)',
     },
   },
-]
+];
 
-const themes = defaultThemes.map(({ config: { primary, font, ...extInfo }, ...themeInfo }) => {
-  return {
-    ...themeInfo,
-    isCustom: false,
-    config: {
-      themeColors: createThemeColors(primary, font, themeInfo.isDark),
-      extInfo,
-    },
-  }
-})
+const themes = defaultThemes.map(({ config: { primary, font, ...extInfo }, ...themeInfo }) => ({
+  ...themeInfo,
+  isCustom: false,
+  config: {
+    themeColors: createThemeColors(primary, font, themeInfo.isDark),
+    extInfo,
+  },
+}));
 
-fs.writeFileSync(path.join(__dirname, 'index.json'), JSON.stringify(themes, null, 2))
-
+fs.writeFileSync(path.join(__dirname, 'index.json'), JSON.stringify(themes, null, 2));

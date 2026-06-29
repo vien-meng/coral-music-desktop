@@ -1,5 +1,3 @@
-
-
 // // declare module NodeJS {
 // //   interface Global {
 // //     isDev: boolean
@@ -9,5 +7,5 @@
 // //   }
 // // }
 
-declare const appStaticPath: string
-declare const userApiRootPath: string
+declare const appStaticPath: string;
+declare const userApiRootPath: string;
