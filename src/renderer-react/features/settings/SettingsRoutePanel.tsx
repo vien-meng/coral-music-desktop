@@ -73,11 +73,50 @@ interface SettingSwitchProps {
 }
 
 const playQualityOptions: Array<{ label: string, value: LX.Quality }> = [
-  { label: '128k', value: '128k' },
-  { label: '320k', value: '320k' },
+  { label: 'Master', value: 'master' },
+  { label: 'Atmos Plus', value: 'atmos_plus' },
+  { label: 'Atmos', value: 'atmos' },
+  { label: 'Hi-Res', value: 'hires' },
+  { label: 'FLAC Hi-Res', value: 'flac24bit' },
   { label: 'FLAC', value: 'flac' },
-  { label: 'Hi-Res', value: 'flac24bit' },
+  { label: '320k', value: '320k' },
+  { label: '128k', value: '128k' },
 ]
+
+const qualityNameMap: Partial<Record<LX.Quality, string>> = {
+  '128k': '128k',
+  '192k': '192k',
+  '320k': '320k',
+  ape: 'APE',
+  atmos: 'Atmos',
+  atmos_plus: 'Atmos Plus',
+  flac: 'FLAC',
+  flac24bit: 'FLAC Hi-Res',
+  hires: 'Hi-Res',
+  master: 'Master',
+  wav: 'WAV',
+}
+
+const formatQualityName = (quality: LX.Quality): string => qualityNameMap[quality] ?? quality
+
+const getUserApiQualityNames = (
+  apiInfo?: LX.UserApi.UserApiInfo | null,
+): string[] => {
+  const qualities = new Set<LX.Quality>()
+
+  Object.values(apiInfo?.sources ?? {}).forEach((sourceInfo) => {
+    if (sourceInfo.type !== 'music' || !sourceInfo.actions.includes('musicUrl')) return
+    sourceInfo.qualitys.forEach(quality => {
+      qualities.add(quality)
+    })
+  })
+
+  return Array.from(qualities).map(formatQualityName)
+}
+
+const hasUserApiSourceInfo = (
+  apiInfo?: LX.UserApi.UserApiInfo | null,
+): boolean => Object.keys(apiInfo?.sources ?? {}).length > 0
 
 const maxDownloadOptions = [1, 2, 3, 4, 5, 6].map((value) => ({
   label: `${value}`,
@@ -423,15 +462,19 @@ export const SettingsRoutePanel = observer(() => {
   const syncServerDevices = sync.serverDevices ?? []
 
   const activateUserApi = async(apiInfo: LX.UserApi.UserApiInfo): Promise<boolean> => {
-    if (!userApi.canPlay(apiInfo)) {
+    await userApi.setUserApi(apiInfo.id)
+
+    const runtimeApiInfo = userApi.status?.apiInfo?.id === apiInfo.id
+      ? userApi.status.apiInfo
+      : apiInfo
+    if (!userApi.canPlay(runtimeApiInfo)) {
       Modal.warning({
         title: '音源不可用于播放',
-        content: '该 User API 没有声明任何平台的 musicUrl 能力，可以保留用于查看，但不会设为当前播放音源。',
+        content: userApi.status?.message || '该 User API 没有声明任何平台的 musicUrl 能力，可以保留用于查看，但不会设为当前播放音源。',
       })
       return false
     }
 
-    await userApi.setUserApi(apiInfo.id)
     await settings.updateAppSetting({ 'common.apiSource': apiInfo.id })
     return true
   }
@@ -509,6 +552,7 @@ export const SettingsRoutePanel = observer(() => {
 
   const currentUserApi = userApi.userApis.find(api => api.id === appSetting['common.apiSource'])
   const currentUserApiSourceNames = userApi.getPlayableSourceNames(currentUserApi)
+  const currentUserApiQualityNames = getUserApiQualityNames(currentUserApi)
   const canPlayCurrentUserApi = currentUserApiSourceNames.length > 0
 
   const commitDecoderExtensions = (): string[] => {
@@ -1576,7 +1620,7 @@ export const SettingsRoutePanel = observer(() => {
               message={currentUserApi ? currentUserApi.name : '未启用音源'}
               description={
                 currentUserApi
-                  ? `状态：${userApi.status?.status ? '可用' : userApi.status?.message || '未就绪'} · 支持：${currentUserApiSourceNames.length ? currentUserApiSourceNames.join('、') : '暂无可播放平台'}`
+                  ? `状态：${userApi.status?.status ? '可用' : userApi.status?.message || '未就绪'} · 平台：${currentUserApiSourceNames.length ? currentUserApiSourceNames.join('、') : '暂无可播放平台'} · 音质：${currentUserApiQualityNames.length ? currentUserApiQualityNames.join('、') : '暂无'}`
                   : '在线播放需要先导入并启用一个 User API 音源；本地文件播放不依赖音源。'
               }
               action={!currentUserApi ? (
@@ -1596,12 +1640,17 @@ export const SettingsRoutePanel = observer(() => {
             <Space wrap>
               <Button
                 icon={<ReloadOutlined />}
-                loading={userApi.isHydrating}
+                loading={userApi.isHydrating || userApi.isMutating}
                 onClick={() => {
-                  void userApi.refreshUserApis()
+                  const currentApiId = appSetting['common.apiSource']
+                  if (currentApiId?.startsWith('user_api')) {
+                    void userApi.setUserApi(currentApiId)
+                  } else {
+                    void userApi.refreshUserApis()
+                  }
                 }}
               >
-                刷新
+                重新检测
               </Button>
               <Button
                 icon={<UploadOutlined />}
@@ -1645,7 +1694,9 @@ export const SettingsRoutePanel = observer(() => {
                 />
               )}
               renderItem={(api) => {
+                const hasSourceInfo = hasUserApiSourceInfo(api)
                 const playableSourceNames = userApi.getPlayableSourceNames(api)
+                const playableQualityNames = getUserApiQualityNames(api)
                 const canPlay = playableSourceNames.length > 0
 
                 return (
@@ -1660,7 +1711,7 @@ export const SettingsRoutePanel = observer(() => {
                             : 'default'
                         }
                         size="small"
-                        disabled={api.id === appSetting['common.apiSource'] || !canPlay}
+                        disabled={api.id === appSetting['common.apiSource'] || (hasSourceInfo && !canPlay)}
                         loading={userApi.isMutating}
                         onClick={() => {
                           void handleSetCurrentApi(api)
@@ -1708,8 +1759,8 @@ export const SettingsRoutePanel = observer(() => {
                           {api.version ? (
                             <Text type="secondary">{api.version}</Text>
                           ) : null}
-                          <Tag color={canPlay ? 'green' : 'orange'}>
-                            {canPlay ? '可播放' : '不可播放'}
+                          <Tag color={canPlay ? 'green' : hasSourceInfo ? 'orange' : 'blue'}>
+                            {canPlay ? '可播放' : hasSourceInfo ? '不可播放' : '待检测'}
                           </Tag>
                         </Space>
                       }
@@ -1725,9 +1776,18 @@ export const SettingsRoutePanel = observer(() => {
                             <Text type="secondary">
                               源 {Object.keys(api.sources ?? {}).length}
                             </Text>
-                            <Text type={canPlay ? 'secondary' : 'warning'}>
-                              播放 {canPlay ? playableSourceNames.join('、') : '未声明 musicUrl'}
+                            <Text type={canPlay || !hasSourceInfo ? 'secondary' : 'warning'}>
+                              播放 {canPlay
+                                ? playableSourceNames.join('、')
+                                : hasSourceInfo
+                                  ? '未声明 musicUrl'
+                                  : '启用后检测'}
                             </Text>
+                            {playableQualityNames.length ? (
+                              <Text type="secondary">
+                                音质 {playableQualityNames.join('、')}
+                              </Text>
+                            ) : null}
                           </Space>
                         </Space>
                       }

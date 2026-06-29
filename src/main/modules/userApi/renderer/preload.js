@@ -36,12 +36,12 @@ const supportQualitys = {
   local: [],
 }
 const supportActions = {
-  kw: ['musicUrl'],
-  kg: ['musicUrl'],
-  tx: ['musicUrl'],
-  wy: ['musicUrl'],
-  mg: ['musicUrl'],
-  git: ['musicUrl'],
+  kw: ['musicUrl', 'lyric', 'pic'],
+  kg: ['musicUrl', 'lyric', 'pic'],
+  tx: ['musicUrl', 'lyric', 'pic'],
+  wy: ['musicUrl', 'lyric', 'pic'],
+  mg: ['musicUrl', 'lyric', 'pic'],
+  git: ['musicUrl', 'lyric', 'pic'],
   local: ['musicUrl', 'lyric', 'pic'],
 }
 

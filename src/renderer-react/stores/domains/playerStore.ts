@@ -3,10 +3,12 @@ import {
   playerRuntimeBridge,
   type PlayerRuntimeBridge,
   type PlayerRuntimeMusicInfo,
+  type PlayerRuntimePlayOptions,
   type PlayerSoundEffectConfig,
   type PlayerRuntimeStatus,
 } from '../../services/playerService'
 import { localAudioService } from '../../services/localAudioService'
+import { onlineMediaService } from '../../services/onlineMediaService'
 import type { DislikeStore } from './dislikeStore'
 import type { SettingsStore } from './settingsStore'
 
@@ -81,6 +83,7 @@ export class PlayerStore {
   isCommentPanelOpen = false
   isLyricSelectionOpen = false
   playedMusicIds: string[] = []
+  private enrichRequestId = 0
 
   private runtime: PlayerRuntimeBridge = playerRuntimeBridge
   private runtimeStatusDisposer: (() => void) | null = null
@@ -91,10 +94,11 @@ export class PlayerStore {
     private readonly settings: SettingsStore | null = null,
     private readonly dislike: DislikeStore | null = null,
   ) {
-    makeAutoObservable<this, 'dislike' | 'historyPlayMode' | 'runtime' | 'runtimeStatusDisposer' | 'settings' | 'settingsDisposer'>(
+    makeAutoObservable<this, 'dislike' | 'enrichRequestId' | 'historyPlayMode' | 'runtime' | 'runtimeStatusDisposer' | 'settings' | 'settingsDisposer'>(
       this,
       {
         dislike: false,
+        enrichRequestId: false,
         historyPlayMode: false,
         runtime: false,
         runtimeStatusDisposer: false,
@@ -148,6 +152,31 @@ export class PlayerStore {
     ].filter(Boolean)
 
     return details.join(' · ')
+  }
+
+  get actualQuality(): LX.Quality | null {
+    return this.status?.actualQuality ?? null
+  }
+
+  get displayQualityText(): string {
+    const quality = this.actualQuality ??
+      (this.currentMusic && isDownloadMusicInfo(this.currentMusic)
+        ? this.currentMusic.metadata.quality
+        : this.settings?.appSetting?.['player.playQuality'])
+    if (!quality) return ''
+
+    const labels: Partial<Record<LX.Quality, string>> = {
+      '128k': '128k',
+      '192k': '192k',
+      '320k': '320k',
+      atmos: 'Atmos',
+      atmos_plus: 'Atmos+',
+      flac: 'FLAC',
+      flac24bit: 'FLAC Hi-Res',
+      hires: 'Hi-Res',
+      master: 'Master',
+    }
+    return labels[quality] ?? quality
   }
 
   get errorText(): string {
@@ -259,14 +288,18 @@ export class PlayerStore {
     return this.runtime.getAnalyser?.() ?? null
   }
 
-  playMusic(musicInfo?: PlayerRuntimeMusicInfo): void {
+  playMusic(musicInfo?: PlayerRuntimeMusicInfo, options: PlayerRuntimePlayOptions = {}): void {
     if (musicInfo) {
       this.currentMusic = musicInfo
       this.syncQueueIndex(musicInfo)
       this.recordPlayedMusic(musicInfo)
       this.enrichCurrentLocalMusicInfo(musicInfo)
+      this.enrichCurrentOnlineMusicInfo(musicInfo)
     }
-    this.runtime.playMusic(musicInfo)
+    this.runtime.playMusic(musicInfo, {
+      preferredQuality: this.settings?.appSetting?.['player.playQuality'],
+      ...options,
+    })
   }
 
   playNext(isAutoToggle = false): void {
@@ -417,6 +450,15 @@ export class PlayerStore {
     }
   }
 
+  refreshCurrentMusicWithQuality(quality: LX.Quality): void {
+    if (!this.currentMusic || isDownloadMusicInfo(this.currentMusic) || this.currentMusic.source === 'local') return
+    void this.settings?.updateAppSetting({ 'player.playQuality': quality })
+    this.playMusic(this.currentMusic, {
+      isRefresh: true,
+      preferredQuality: quality,
+    })
+  }
+
   private applyRuntimeStatus(status: PlayerRuntimeStatus): void {
     this.setStatus(status)
 
@@ -495,6 +537,60 @@ export class PlayerStore {
           ...this.status,
           albumName: enrichedMusicInfo.meta.albumName,
           picUrl: enrichedMusicInfo.meta.picUrl ?? '',
+        }
+      })
+      .catch(() => {})
+  }
+
+  private enrichCurrentOnlineMusicInfo(musicInfo: PlayerRuntimeMusicInfo): void {
+    if (isDownloadMusicInfo(musicInfo) || musicInfo.source === 'local') return
+
+    const requestId = ++this.enrichRequestId
+    const musicId = getRuntimeMusicId(musicInfo)
+
+    void Promise.allSettled([
+      onlineMediaService.getOnlinePicUrl(musicInfo),
+      onlineMediaService.getOnlineLyricInfo(musicInfo),
+    ])
+      .then(([picResult, lyricResult]) => {
+        if (!this.currentMusic || getRuntimeMusicId(this.currentMusic) !== musicId || requestId !== this.enrichRequestId) return
+
+        const nextMusicInfo = {
+          ...musicInfo,
+          meta: {
+            ...musicInfo.meta,
+          },
+        } as LX.Music.MusicInfoOnline
+        const nextStatus: PlayerRuntimeStatus = {}
+
+        if (picResult.status === 'fulfilled' && picResult.value && !nextMusicInfo.meta.picUrl) {
+          nextMusicInfo.meta.picUrl = picResult.value
+          nextStatus.picUrl = picResult.value
+        }
+
+        if (lyricResult.status === 'fulfilled') {
+          const lyricInfo = lyricResult.value
+          if ([lyricInfo.lyric, lyricInfo.lxlyric, lyricInfo.rlyric, lyricInfo.tlyric].some(Boolean)) {
+            nextStatus.lyric = lyricInfo.lyric
+            nextStatus.lxlyric = lyricInfo.lxlyric ?? ''
+            nextStatus.rlyric = lyricInfo.rlyric ?? ''
+            nextStatus.tlyric = lyricInfo.tlyric ?? ''
+          }
+        }
+
+        if (nextStatus.picUrl) {
+          this.currentMusic = nextMusicInfo
+          const queueIndex = this.findQueueIndex(nextMusicInfo)
+          if (queueIndex >= 0) {
+            this.playQueue = this.playQueue.map((item, index) => index === queueIndex ? nextMusicInfo : item)
+          }
+        }
+
+        if (Object.keys(nextStatus).length) {
+          this.status = {
+            ...this.status,
+            ...nextStatus,
+          }
         }
       })
       .catch(() => {})

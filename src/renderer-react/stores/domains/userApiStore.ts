@@ -2,6 +2,7 @@ import { makeAutoObservable, observable } from 'mobx'
 import { userApiService } from '../../services/userApiService'
 
 const sourceNameMap: Record<string, string> = {
+  git: 'Git',
   kg: '酷狗',
   kw: '酷我',
   mg: '咪咕',
@@ -28,6 +29,22 @@ export const canPlayWithUserApi = (
   apiInfo?: LX.UserApi.UserApiInfo | null,
 ): boolean => {
   return getPlayableUserApiSources(apiInfo).length > 0
+}
+
+const mergeStatusApiInfo = (
+  apiList: LX.UserApi.UserApiInfo[],
+  status: LX.UserApi.UserApiStatus | null,
+): LX.UserApi.UserApiInfo[] => {
+  const runtimeApiInfo = status?.apiInfo
+  if (!runtimeApiInfo?.id) return apiList
+
+  return apiList.map(api => api.id === runtimeApiInfo.id
+    ? {
+        ...api,
+        ...runtimeApiInfo,
+        allowShowUpdateAlert: api.allowShowUpdateAlert,
+      }
+    : api)
 }
 
 export class UserApiStore {
@@ -80,6 +97,7 @@ export class UserApiStore {
     try {
       this.userApis = await userApiService.getUserApiList()
       this.status = await userApiService.getUserApiStatus()
+      this.userApis = mergeStatusApiInfo(this.userApis, this.status)
       this.isHydrated = true
     } catch (error) {
       this.hydrateError = error instanceof Error ? error.message : String(error)
@@ -95,6 +113,7 @@ export class UserApiStore {
     try {
       this.userApis = await userApiService.getUserApiList()
       this.status = await userApiService.getUserApiStatus()
+      this.userApis = mergeStatusApiInfo(this.userApis, this.status)
       this.isHydrated = true
     } catch (error) {
       this.hydrateError = error instanceof Error ? error.message : String(error)
@@ -111,6 +130,7 @@ export class UserApiStore {
       const result = await userApiService.importUserApi(script)
       this.userApis = result.apiList
       this.status = await userApiService.getUserApiStatus()
+      this.userApis = mergeStatusApiInfo(this.userApis, this.status)
       return result.apiInfo
     } catch (error) {
       this.actionError = error instanceof Error ? error.message : String(error)
@@ -127,6 +147,7 @@ export class UserApiStore {
     try {
       await userApiService.setUserApi(id)
       this.status = await userApiService.getUserApiStatus()
+      this.userApis = mergeStatusApiInfo(this.userApis, this.status)
     } catch (error) {
       this.actionError = error instanceof Error ? error.message : String(error)
     } finally {
@@ -143,6 +164,7 @@ export class UserApiStore {
     try {
       this.userApis = await userApiService.removeUserApis(ids)
       this.status = await userApiService.getUserApiStatus()
+      this.userApis = mergeStatusApiInfo(this.userApis, this.status)
     } catch (error) {
       this.actionError = error instanceof Error ? error.message : String(error)
     } finally {

@@ -13,6 +13,12 @@ interface LegacyMusicUrlResult {
 }
 
 interface LegacyUserApiMusicSource {
+  getLyric: (
+    musicInfo: unknown,
+    isGetLyricx?: boolean,
+  ) => {
+    promise: Promise<LX.Music.LyricInfo>
+  }
   getMusicUrl: (
     musicInfo: unknown,
     quality: LX.Quality,
@@ -22,6 +28,7 @@ interface LegacyUserApiMusicSource {
       url: string
     }>
   }
+  getPic: (musicInfo: unknown) => Promise<string>
 }
 
 let runtimeStatePromise: Promise<LegacyRuntimeState> | null = null
@@ -64,6 +71,27 @@ const loadRuntimeState = async(): Promise<LegacyRuntimeState> => {
 }
 
 const createUserApiMusicSource = (source: LX.Source): LegacyUserApiMusicSource => ({
+  getLyric(musicInfo, isGetLyricx) {
+    return {
+      promise: userApiService.requestUserApi({
+        action: 'lyric',
+        info: {
+          isGetLyricx,
+          musicInfo,
+        },
+        source,
+      }).then((result) => {
+        const lyricResult = result as Partial<LX.Music.LyricInfo> & { data?: Partial<LX.Music.LyricInfo> }
+        const lyricInfo = lyricResult.data ?? lyricResult
+        return {
+          lyric: lyricInfo.lyric ?? '',
+          lxlyric: lyricInfo.lxlyric ?? '',
+          rlyric: lyricInfo.rlyric ?? '',
+          tlyric: lyricInfo.tlyric ?? '',
+        }
+      }),
+    }
+  },
   getMusicUrl(musicInfo, quality) {
     return {
       promise: userApiService.requestUserApi({
@@ -77,6 +105,21 @@ const createUserApiMusicSource = (source: LX.Source): LegacyUserApiMusicSource =
         return normalizeUserApiMusicUrlResult(result, quality)
       }),
     }
+  },
+  getPic(musicInfo) {
+    return userApiService.requestUserApi({
+      action: 'pic',
+      info: {
+        musicInfo,
+      },
+      source,
+    }).then((result) => {
+      if (typeof result === 'string') return result
+      if (typeof result !== 'object' || result == null) return ''
+
+      const rawResult = result as { data?: string, url?: string }
+      return rawResult.data ?? rawResult.url ?? ''
+    })
   },
 })
 
@@ -114,7 +157,7 @@ export const syncMusicSdkRuntime = async(): Promise<string> => {
 
   const status = await userApiService.getUserApiStatus()
   if (!status.status || !status.apiInfo) {
-    throw new Error(status.message || 'User API source is not ready.')
+    throw new Error(status.message || '当前音源未就绪，请刷新或重新启用 User API 音源。')
   }
 
   await applyUserApiRuntime(runtimeState, status.apiInfo)

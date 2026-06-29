@@ -5,6 +5,7 @@ import type { DecodedAudioData } from './localAudioDecodeService'
 import { removeFile } from '../nodeBridgeService'
 import type {
   PlayerEqFrequency,
+  PlayerRuntimePlayOptions,
   PlayerRuntimeBridge,
   PlayerRuntimeMusicInfo,
   PlayerRuntimeStatus,
@@ -80,11 +81,11 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
     this.bindAudioEvents()
   }
 
-  playMusic(musicInfo?: PlayerRuntimeMusicInfo): void {
+  playMusic(musicInfo?: PlayerRuntimeMusicInfo, options: PlayerRuntimePlayOptions = {}): void {
     if (musicInfo) {
       this.currentMusic = musicInfo
       this.publishMusicInfo(musicInfo)
-      void this.loadAndPlayMusic(musicInfo, ++this.loadRequestId)
+      void this.loadAndPlayMusic(musicInfo, ++this.loadRequestId, options)
       return
     }
 
@@ -452,10 +453,14 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
     this.decodedGain.gain.value = isMute ? 0 : clamp(normalizedVolume, 0, 1)
   }
 
-  private async loadAndPlayMusic(musicInfo: PlayerRuntimeMusicInfo, requestId: number): Promise<void> {
+  private async loadAndPlayMusic(
+    musicInfo: PlayerRuntimeMusicInfo,
+    requestId: number,
+    options: PlayerRuntimePlayOptions = {},
+  ): Promise<void> {
     let resolved: Awaited<ReturnType<typeof resolvePlayableMusicUrl>> = null
     try {
-      resolved = await resolvePlayableMusicUrl(musicInfo)
+      resolved = await resolvePlayableMusicUrl(musicInfo, options)
     } catch (err) {
       console.error(err)
       if (this.isDisposed || requestId !== this.loadRequestId) return
@@ -482,6 +487,7 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
 
     this.currentMusic = resolved.musicInfo
     this.publishMusicInfo(resolved.musicInfo)
+    this.publish({ actualQuality: resolved.quality, errorText: '' })
     this.clearDecodedFile(resolved.decodedFilePath)
     this.clearObjectUrl(resolved.objectUrl)
     this.currentDecodedFilePath = resolved.decodedFilePath ?? null
@@ -496,6 +502,7 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
         }
         this.decodedAudioBuffer = this.createAudioBuffer(resolved.decodedAudio)
         this.decodedStartOffset = 0
+        this.publish({ errorText: '' })
         this.playDecodedAudio(0)
       } catch (err) {
         console.error(err)
@@ -529,7 +536,10 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
 
     void audio.play()
       .then(() => {
-        this.publishAudioSnapshot({ status: 'playing' })
+        this.publishAudioSnapshot({
+          errorText: '',
+          status: 'playing',
+        })
       })
       .catch((err) => {
         this.publishAudioSnapshot({

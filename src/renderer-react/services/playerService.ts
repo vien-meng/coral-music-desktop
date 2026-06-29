@@ -5,6 +5,7 @@ import { createHtmlAudioPlayerRuntimeBackend } from './playerRuntime/htmlAudioRu
 import type {
   PlayerRuntimeBridge,
   PlayerRuntimeMusicInfo,
+  PlayerRuntimePlayOptions,
   PlayerRuntimeStatus,
   PlayerStatusListener,
 } from './playerRuntime/types'
@@ -12,6 +13,7 @@ import type {
 export type {
   PlayerRuntimeBridge,
   PlayerRuntimeMusicInfo,
+  PlayerRuntimePlayOptions,
   PlayerRuntimeStatus,
   PlayerSoundEffectConfig,
   PlayerStatusListener,
@@ -65,10 +67,10 @@ class IpcPlayerRuntimeBridge implements PlayerRuntimeBridge {
     )
   }
 
-  playMusic(musicInfo?: PlayerRuntimeMusicInfo): void {
+  playMusic(musicInfo?: PlayerRuntimeMusicInfo, options?: PlayerRuntimePlayOptions): void {
     if (!musicInfo) playMusic()
     else if (!('progress' in musicInfo)) playMusic(musicInfo)
-    this.backend.playMusic(musicInfo)
+    this.backend.playMusic(musicInfo, options)
   }
 
   playNext(): void {

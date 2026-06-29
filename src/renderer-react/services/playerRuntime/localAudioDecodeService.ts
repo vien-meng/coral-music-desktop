@@ -1,4 +1,4 @@
-import { FLACDecoder } from '@wasm-audio-decoders/flac'
+import type { FLACDecoder as FLACDecoderClass } from '@wasm-audio-decoders/flac'
 import { readFile } from '../nodeBridgeService'
 
 export interface DecodedAudioObjectUrl {
@@ -13,6 +13,14 @@ export interface DecodedAudioData {
 }
 
 const localDecoderExtensions = new Set(['flac'])
+
+let flacDecoderModulePromise: Promise<typeof import('@wasm-audio-decoders/flac')> | null = null
+
+const loadFlacDecoder = async(): Promise<typeof FLACDecoderClass> => {
+  flacDecoderModulePromise ??= import('@wasm-audio-decoders/flac')
+  const module = await flacDecoderModulePromise
+  return module.FLACDecoder
+}
 
 const toArrayBuffer = (buffer: Buffer): ArrayBuffer => {
   const start = buffer.byteOffset
@@ -66,6 +74,7 @@ const encodePcm16Wav = (audioData: DecodedAudioData): ArrayBuffer => {
 }
 
 const decodeWithFlacWasm = async(data: Uint8Array): Promise<DecodedAudioData> => {
+  const FLACDecoder = await loadFlacDecoder()
   const decoder = new FLACDecoder()
   try {
     await decoder.ready

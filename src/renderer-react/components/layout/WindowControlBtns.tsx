@@ -1,4 +1,4 @@
-import { CloseOutlined, MinusOutlined } from '@ant-design/icons'
+import { CloseOutlined, CompressOutlined, ExpandOutlined, MinusOutlined } from '@ant-design/icons'
 import { useEffect, useState } from 'react'
 import { appService } from '../../services/appService'
 
@@ -9,6 +9,7 @@ interface WindowControlBtnsProps {
 
 export const WindowControlBtns = ({ variant = 'windows', isFullscreen = false }: WindowControlBtnsProps) => {
   const [isHovering, setIsHovering] = useState(false)
+  const [isMaximized, setIsMaximized] = useState(false)
 
   useEffect(() => {
     const handleFocus = (): void => {
@@ -70,6 +71,28 @@ export const WindowControlBtns = ({ variant = 'windows', isFullscreen = false }:
         >
           {isHovering ? '−' : ''}
         </button>
+        <button
+          aria-label={isMaximized ? '还原' : '最大化'}
+          onClick={() => {
+            void appService.maximizeWindow().then(setIsMaximized)
+          }}
+          style={{
+            width: 12,
+            height: 12,
+            borderRadius: '50%',
+            border: 'none',
+            background: '#27c93f',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'rgba(0, 0, 0, 0.5)',
+            fontSize: 8,
+            opacity: isHovering ? 1 : 0.8,
+          }}
+        >
+          {isHovering ? (isMaximized ? '◱' : '+') : ''}
+        </button>
       </div>
     )
   }
@@ -97,6 +120,27 @@ export const WindowControlBtns = ({ variant = 'windows', isFullscreen = false }:
         }}
       >
         <MinusOutlined />
+      </button>
+      <button
+        aria-label={isMaximized ? '还原' : '最大化'}
+        onClick={() => {
+          void appService.maximizeWindow().then(setIsMaximized)
+        }}
+        onMouseEnter={event => { event.currentTarget.style.background = 'rgba(0, 0, 0, 0.1)' }}
+        onMouseLeave={event => { event.currentTarget.style.background = 'transparent' }}
+        style={{
+          width: 46,
+          height: 32,
+          border: 'none',
+          background: 'transparent',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'var(--color-font)',
+        }}
+      >
+        {isMaximized ? <CompressOutlined /> : <ExpandOutlined />}
       </button>
       <button
         aria-label="关闭"

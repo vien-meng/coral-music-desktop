@@ -55,8 +55,8 @@ export default () => {
   mainHandle(WIN_MAIN_RENDERER_EVENT_NAME.min, async() => {
     minimize()
   })
-  mainHandle(WIN_MAIN_RENDERER_EVENT_NAME.max, async() => {
-    maximize()
+  mainHandle<undefined, boolean>(WIN_MAIN_RENDERER_EVENT_NAME.max, async() => {
+    return maximize()
   })
   mainOn(WIN_MAIN_RENDERER_EVENT_NAME.focus, () => {
     showWindow()

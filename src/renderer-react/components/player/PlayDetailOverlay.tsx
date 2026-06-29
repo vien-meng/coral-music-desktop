@@ -1,7 +1,9 @@
 import {
   CloseOutlined,
+  CompressOutlined,
   CustomerServiceOutlined,
   DownOutlined,
+  ExpandOutlined,
   FileTextOutlined,
   FullscreenExitOutlined,
   FullscreenOutlined,
@@ -12,7 +14,7 @@ import {
   StepBackwardOutlined,
   StepForwardOutlined,
 } from '@ant-design/icons'
-import { Alert, Button, Empty, Flex, Space, Typography } from 'antd'
+import { Alert, Button, Flex, Space, Typography } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useCallback, useEffect, useState, type CSSProperties } from 'react'
 import { appService } from '../../services/appService'
@@ -22,7 +24,9 @@ import { LyricMenu } from './LyricMenu'
 import { LyricSelectionPanel } from './LyricSelectionPanel'
 import { MusicCommentPanel } from './MusicCommentPanel'
 import { PlaybackRateBtn } from './PlaybackRateBtn'
+import { PlayDetailLyricView } from './PlayDetailLyricView'
 import { ProgressBar } from './ProgressBar'
+import { QualitySwitchBtn } from './QualitySwitchBtn'
 import { SoundEffectBtn } from './SoundEffectBtn'
 import { TogglePlayModeBtn } from './TogglePlayModeBtn'
 import { VolumeBtn } from './VolumeBtn'
@@ -44,6 +48,7 @@ const formatTime = (seconds: number): string => {
 export const PlayDetailOverlay = observer(() => {
   const { player, settings, ui } = rootStore
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [isMaximized, setIsMaximized] = useState(false)
   const isPlaying = player.isPlaying
   const lyricAlign = settings.appSetting?.['playDetail.style.align'] ?? 'center'
   const lyricFontScale = ((settings.appSetting?.['playDetail.style.fontSize'] ?? 140) / 100) * (isFullscreen ? 1.25 : 1)
@@ -70,6 +75,10 @@ export const PlayDetailOverlay = observer(() => {
 
   const handleMinWindow = (): void => {
     void appService.minWindow()
+  }
+
+  const handleMaxWindow = (): void => {
+    void appService.maximizeWindow().then(setIsMaximized)
   }
 
   const handleCloseWindow = (): void => {
@@ -113,30 +122,9 @@ export const PlayDetailOverlay = observer(() => {
       )
     : <CustomerServiceOutlined className="coral-playdetail-cover-icon" />
 
-  const lyricNode = player.lyricDisplayLines.length
-    ? (
-      <div className="coral-playdetail-lyric-lines" style={lyricStyles}>
-        {player.lyricDisplayLines.map((line, index) => (
-          <p
-            key={`${index}-${line}`}
-            className={index === 0 ? 'is-active' : undefined}
-          >
-            {line}
-          </p>
-        ))}
-      </div>
-      )
-    : (
-      <Empty
-        image={Empty.PRESENTED_IMAGE_SIMPLE}
-        description="暂无歌词"
-        className="coral-playdetail-empty"
-      />
-      )
-
   let centerNode = (
     <div className="coral-playdetail-lyric">
-      {lyricNode}
+      <PlayDetailLyricView style={lyricStyles} />
     </div>
   )
   if (player.isLyricSelectionOpen) centerNode = <LyricSelectionPanel />
@@ -206,6 +194,12 @@ export const PlayDetailOverlay = observer(() => {
                   icon={<MinusOutlined />}
                   shape="circle"
                   onClick={handleMinWindow}
+                />
+                <Button
+                  aria-label={isMaximized ? '还原窗口' : '最大化窗口'}
+                  icon={isMaximized ? <CompressOutlined /> : <ExpandOutlined />}
+                  shape="circle"
+                  onClick={handleMaxWindow}
                 />
                 <Button
                   danger
@@ -327,6 +321,7 @@ export const PlayDetailOverlay = observer(() => {
               onClick={() => { player.toggleLyricSelection() }}
             />
             <LyricMenu />
+            <QualitySwitchBtn />
             <VolumeBtn />
             <TogglePlayModeBtn />
             <SoundEffectBtn />

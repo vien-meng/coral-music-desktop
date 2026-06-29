@@ -377,7 +377,7 @@ export interface CoralIpcInvokeMap {
   [ipcChannels.winMain.syncRemoveServerDevice]: IpcContract<string, void>
   [ipcChannels.winMain.close]: IpcContract<undefined, void>
   [ipcChannels.winMain.min]: IpcContract<undefined, void>
-  [ipcChannels.winMain.max]: IpcContract<undefined, void>
+  [ipcChannels.winMain.max]: IpcContract<undefined, boolean>
   [ipcChannels.winMain.fullscreen]: IpcContract<boolean, boolean>
   [ipcChannels.winLyric.getConfig]: IpcContract<
   undefined,

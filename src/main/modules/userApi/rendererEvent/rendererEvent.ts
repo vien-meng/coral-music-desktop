@@ -2,11 +2,13 @@ import { mainOn } from '@common/mainIpc'
 
 import USER_API_RENDERER_EVENT_NAME from './name'
 import { createWindow, getProxy, openDevTools, sendEvent } from '../main'
-import { getUserApis } from '../utils'
+import { getUserApis, updateApiRuntimeInfo } from '../utils'
 import { sendShowUpdateAlert, sendStatusChange } from '@main/modules/winMain'
 
 let userApi: LX.UserApi.UserApiInfo
 let apiStatus: LX.UserApi.UserApiStatus = { status: true }
+let pendingInitResolve: (() => void) | null = null
+let pendingInitTimer: NodeJS.Timeout | null = null
 const requestQueue = new Map()
 const timeouts = new Map<string, NodeJS.Timeout>()
 interface InitParams {
@@ -43,10 +45,18 @@ export const init = () => {
     //   global.lx_event.userApi.status(status = { status: true, apiInfo: { ...userApi, sources: apiInfo.sources } })
     //   return
     // }
-    apiStatus = status
-      ? { status: true, apiInfo: { ...userApi, sources: apiInfo.sources } }
-      : { status: false, apiInfo: userApi, message }
+    if (status) {
+      updateApiRuntimeInfo(userApi.id, { sources: apiInfo.sources })
+      userApi = {
+        ...userApi,
+        sources: apiInfo.sources,
+      }
+      apiStatus = { status: true, apiInfo: userApi }
+    } else {
+      apiStatus = { status: false, apiInfo: userApi, message }
+    }
     sendStatusChange(apiStatus)
+    settlePendingInit()
   }
   const handleResponse = ({ params: { status, data: { requestKey, result }, message } }: ResponseParams) => {
     const request = requestQueue.get(requestKey)
@@ -81,6 +91,31 @@ export const init = () => {
   mainOn(USER_API_RENDERER_EVENT_NAME.getProxy, handleGetProxy)
 }
 
+const settlePendingInit = () => {
+  if (pendingInitTimer) {
+    clearTimeout(pendingInitTimer)
+    pendingInitTimer = null
+  }
+  pendingInitResolve?.()
+  pendingInitResolve = null
+}
+
+const waitApiInit = (): Promise<void> => {
+  settlePendingInit()
+  return new Promise(resolve => {
+    pendingInitResolve = resolve
+    pendingInitTimer = setTimeout(() => {
+      apiStatus = {
+        status: false,
+        apiInfo: userApi,
+        message: 'User API 初始化超时，请重新检测或检查音源脚本。',
+      }
+      sendStatusChange(apiStatus)
+      settlePendingInit()
+    }, 15000)
+  })
+}
+
 export const clearRequestTimeout = (requestKey: string) => {
   const timeout = timeouts.get(requestKey)
   if (timeout) {
@@ -99,7 +134,9 @@ export const loadApi = async(apiId: string) => {
   if (!targetApi) throw new Error('api not found')
   userApi = targetApi
   console.log('load api', userApi.name)
+  const waitInit = waitApiInit()
   await createWindow(userApi)
+  await waitInit
   // if (!userApi) return global.lx_event.userApi.status(status = { status: false, message: 'api script is not found' })
   // if (!global.modules.userApiWindow) {
   //   global.lx_event.userApi.status(status = { status: false, message: 'user api runtime is not defined' })

@@ -1,3 +1,4 @@
+import { QUALITYS } from '@common/constants'
 import { encodePath } from '@common/utils/common'
 import {
   isExternalDecoderExtension,
@@ -12,7 +13,7 @@ import { settingService } from '../settingService'
 import { canDecodeLocalAudioExtension, decodeLocalAudioToObjectUrl, type DecodedAudioData } from './localAudioDecodeService'
 import type { PlayerRuntimeMusicInfo } from './types'
 
-const TRY_QUALITIES: LX.Quality[] = ['flac24bit', 'flac', '320k']
+const PLAY_QUALITIES: LX.Quality[] = QUALITYS.filter(quality => quality !== 'wav' && quality !== 'ape')
 const TOO_MANY_REQUESTS_MESSAGE = 'too many requests'
 
 const pendingOtherSourcePromises = new Map<string, Promise<LX.Music.MusicInfoOnline[]>>()
@@ -300,12 +301,14 @@ export const getPreferredPlayQuality = (
 ): LX.Quality => {
   const fallbackQuality = musicInfo.meta._qualitys['128k']
     ? '128k'
-    : musicInfo.meta.qualitys[0]?.type ?? '128k'
+    : PLAY_QUALITIES.find(item => musicInfo.meta._qualitys[item]) ??
+      musicInfo.meta.qualitys[0]?.type ??
+      '128k'
 
-  if (!TRY_QUALITIES.includes(preferredQuality)) return fallbackQuality
+  if (!PLAY_QUALITIES.includes(preferredQuality)) return fallbackQuality
 
-  const quality = TRY_QUALITIES
-    .slice(TRY_QUALITIES.indexOf(preferredQuality))
+  const quality = PLAY_QUALITIES
+    .slice(PLAY_QUALITIES.indexOf(preferredQuality))
     .find(item => musicInfo.meta._qualitys[item])
 
   return quality ?? fallbackQuality
@@ -405,7 +408,7 @@ const resolveOnlineMusicUrl = async(
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
-    if (message === 'Api is not found') {
+    if (message === 'Api is not found' || /^music url source not found:/.test(message)) {
       throw new Error('当前没有可用音源，请先通过“添加音源”导入并启用 User API。')
     }
     if (options.allowToggleSource === false || message === TOO_MANY_REQUESTS_MESSAGE) throw err

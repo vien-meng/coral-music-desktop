@@ -64,9 +64,9 @@ export const closeWindow = async(): Promise<void> => {
   await ipcClient.invoke(ipcChannels.winMain.close)
 }
 
-export const maximizeWindow = async(): Promise<void> => {
-  if (!isElectronRenderer()) return
-  await ipcClient.invoke(ipcChannels.winMain.max)
+export const maximizeWindow = async(): Promise<boolean> => {
+  if (!isElectronRenderer()) return false
+  return await ipcClient.invoke(ipcChannels.winMain.max)
 }
 
 export const setFullscreen = async(isFullscreen: boolean): Promise<boolean> => {

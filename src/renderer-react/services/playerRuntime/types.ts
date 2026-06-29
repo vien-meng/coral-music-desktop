@@ -1,4 +1,5 @@
 export type PlayerRuntimeStatus = Partial<LX.Player.Status> & {
+  actualQuality?: LX.Quality
   errorText?: string
   isEnded?: boolean
 }
@@ -13,9 +14,14 @@ export interface PlayerSoundEffectConfig {
   pitchPlaybackRate: number
 }
 
+export interface PlayerRuntimePlayOptions {
+  isRefresh?: boolean
+  preferredQuality?: LX.Quality
+}
+
 export interface PlayerRuntimeBridge {
   getAnalyser?: () => AnalyserNode | null
-  playMusic: (musicInfo?: PlayerRuntimeMusicInfo) => void
+  playMusic: (musicInfo?: PlayerRuntimeMusicInfo, options?: PlayerRuntimePlayOptions) => void
   playNext: () => void
   playPrev: () => void
   togglePlay: () => void

@@ -98,9 +98,10 @@ export const ProgressBar = ({
           position: 'absolute',
           left: 0,
           right: 0,
-          height: 5,
+          height: 6,
           borderRadius: 999,
-          background: 'var(--color-primary-light-100-alpha-100)',
+          background: 'rgba(24, 37, 56, 0.16)',
+          boxShadow: 'inset 0 0 0 1px rgba(255, 255, 255, 0.42)',
         }}
       >
         <div
@@ -110,8 +111,9 @@ export const ProgressBar = ({
             top: 0,
             height: '100%',
             width: percent,
-            background: 'var(--color-primary)',
+            background: 'linear-gradient(90deg, #f0645a, #ff8a80)',
             borderRadius: 999,
+            boxShadow: '0 0 12px rgba(240, 100, 90, 0.22)',
             transition: isActiveTransition && !isDragging ? 'width 0.3s ease' : 'none',
           }}
         />
@@ -124,7 +126,8 @@ export const ProgressBar = ({
                 top: 0,
                 height: '100%',
                 width: `${dragProgress * 100}%`,
-                background: 'var(--color-primary-alpha-50)',
+                background: 'rgba(240, 100, 90, 0.28)',
+                borderRadius: 999,
               }}
             />
             )
@@ -138,8 +141,8 @@ export const ProgressBar = ({
             width: isDragging ? 14 : 10,
             borderRadius: '50%',
             background: '#fff',
-            border: '2px solid var(--color-primary)',
-            boxShadow: '0 2px 8px rgba(15, 23, 42, 0.18)',
+            border: '2px solid #f0645a',
+            boxShadow: '0 2px 10px rgba(15, 23, 42, 0.2), 0 0 0 4px rgba(240, 100, 90, 0.12)',
             transform: 'translate(-50%, -50%)',
             transition: isActiveTransition && !isDragging ? 'left 0.3s ease' : 'none',
           }}

@@ -1,4 +1,5 @@
 import { DownloadOutlined, CloseOutlined } from '@ant-design/icons'
+import { QUALITYS } from '@common/constants'
 import { Button, Modal, Space, Typography } from 'antd'
 import { useState } from 'react'
 import * as downloadService from '../../services/downloadService'
@@ -31,6 +32,13 @@ export const DownloadQualityModal = ({ musicInfo, listId, onClose }: DownloadQua
 
   const sourceQualities = musicInfo?.source === 'local' ? [] : musicInfo?.meta.qualitys ?? []
   const availableQualities = sourceQualities
+    .slice()
+    .sort((left, right) => {
+      const leftIndex = QUALITYS.indexOf(left.type)
+      const rightIndex = QUALITYS.indexOf(right.type)
+      return (leftIndex < 0 ? QUALITYS.length : leftIndex) -
+        (rightIndex < 0 ? QUALITYS.length : rightIndex)
+    })
 
   const handleDownload = async(quality: LX.Quality): Promise<void> => {
     if (!musicInfo) return

@@ -147,6 +147,17 @@ export const setAllowShowUpdateAlert = (id: string, enable: boolean) => {
   saveData()
 }
 
+export const updateApiRuntimeInfo = (
+  id: string,
+  runtimeInfo: Pick<LX.UserApi.UserApiInfo, 'sources'>,
+) => {
+  const targetApi = getUserApis().find(api => api.id === id)
+  if (!targetApi) return
+
+  targetApi.sources = runtimeInfo.sources
+  saveData()
+}
+
 export const getScript = async(id: string) => {
   return inflateScript(scripts.get(id) ?? '')
 }

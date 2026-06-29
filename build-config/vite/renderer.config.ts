@@ -30,12 +30,23 @@ export default defineConfig({
   },
   resolve: {
     alias: aliases,
+    dedupe: [
+      'react',
+      'react-dom',
+      'react-dom/client',
+      'react/jsx-dev-runtime',
+      'react/jsx-runtime',
+      'mobx-react-lite',
+    ],
     extensions: ['.tsx', '.ts', '.jsx', '.js', '.json'],
   },
   server: {
     host: process.env.CORAL_DEV_HOST,
     port: parsePort(process.env.CORAL_RENDERER_DEV_PORT, 9080),
     strictPort: true,
+  },
+  optimizeDeps: {
+    exclude: ['@wasm-audio-decoders/flac'],
   },
   build: {
     outDir: path.join(projectRoot, 'dist'),

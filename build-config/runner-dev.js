@@ -97,6 +97,9 @@ async function startViteServer(name, configFile) {
   const server = await createServer({
     configFile,
     mode: 'development',
+    optimizeDeps: {
+      force: true,
+    },
   })
   try {
     await server.listen()
