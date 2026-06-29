@@ -28,6 +28,7 @@ export interface OnlineBoardItem {
 export interface OnlineBoardSelectorProps<BoardItem extends OnlineBoardItem = OnlineBoardItem> {
   activeBoardId: string | null;
   boards: BoardItem[];
+  disabled?: boolean;
   onSelect: (board: BoardItem) => void;
 }
 
@@ -78,6 +79,7 @@ export const OnlineTagCloud = <TagItem extends OnlineTagItem>({
 export const OnlineBoardSelector = <BoardItem extends OnlineBoardItem>({
   activeBoardId,
   boards,
+  disabled = false,
   onSelect,
 }: OnlineBoardSelectorProps<BoardItem>) => (
   <PlainList
@@ -88,6 +90,7 @@ export const OnlineBoardSelector = <BoardItem extends OnlineBoardItem>({
       <PlainListItem key={item.id}>
         <button
           type="button"
+          disabled={disabled}
           className={
             item.id === activeBoardId
               ? 'coral-board-native-button is-active'

@@ -40,10 +40,11 @@ const formatPlayCount = (count: string): string => {
 };
 
 export const SongListRoutePanel = observer(() => {
-  const { songList } = rootStore;
+  const { player, songList } = rootStore;
   const [isOpenListOpen, setIsOpenListOpen] = useState(false);
   const [isDetailPlayLoading, setIsDetailPlayLoading] = useState(false);
   const [isDetailCollectLoading, setIsDetailCollectLoading] = useState(false);
+  const [loadingSongListKey, setLoadingSongListKey] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
   // Derived data
@@ -111,18 +112,34 @@ export const SongListRoutePanel = observer(() => {
 
   const handleSelectSongList = useCallback(
     (item: { id: string; source: LX.OnlineSource }) => {
-      songList.loadListDetail(item.id, item.source);
+      if (songList.isLoadingDetail) return;
+      setLoadingSongListKey(`${item.source}__${item.id}`);
+      songList.loadListDetail(item.id, item.source).finally(() => {
+        setLoadingSongListKey(null);
+      });
     },
     [songList],
   );
 
   const handlePlayDetail = useCallback(() => {
-    if (!songList.listDetailInfo.list.length) return;
+    const queue = songList.listDetailInfo.list;
+    if (!queue.length) return;
     setIsDetailPlayLoading(true);
+    player.playFromQueue(
+      queue[0],
+      queue,
+      `songlist:${songList.listDetailInfo.source}:${songList.listDetailInfo.id}:${songList.listDetailInfo.page}`,
+    );
     setTimeout(() => {
       setIsDetailPlayLoading(false);
-    }, 1000);
-  }, [songList.listDetailInfo.list.length]);
+    }, 300);
+  }, [
+    player,
+    songList.listDetailInfo.id,
+    songList.listDetailInfo.list,
+    songList.listDetailInfo.page,
+    songList.listDetailInfo.source,
+  ]);
 
   const handleCollectDetail = useCallback(() => {
     if (!songList.listDetailInfo.id || !songList.listDetailInfo.list.length) return;
@@ -311,8 +328,10 @@ export const SongListRoutePanel = observer(() => {
                     key={`${item.source}__${item.id}`}
                     size="small"
                     hoverable
+                    loading={loadingSongListKey === `${item.source}__${item.id}`}
                     className="coral-song-list-card"
                     onClick={() => {
+                      if (songList.isLoadingDetail) return;
                       handleSelectSongList(item);
                     }}
                     cover={

@@ -330,6 +330,14 @@ export class PlayerStore {
     return this.playQueue.length;
   }
 
+  get queueItems(): PlayerRuntimeMusicInfo[] {
+    return this.playQueue.slice();
+  }
+
+  get currentQueueMusicId(): string {
+    return this.currentMusic ? getRuntimeMusicId(this.currentMusic) : '';
+  }
+
   get queuePositionText(): string {
     if (!this.playQueue.length) return '';
 

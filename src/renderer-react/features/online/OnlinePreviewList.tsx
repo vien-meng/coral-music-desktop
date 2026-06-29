@@ -52,8 +52,8 @@ export const OnlinePager = ({
   const canGoNext =
     !disabled && !loading && (hasNext ?? (normalizedMaxPage == null || page < normalizedMaxPage));
   const pageInputWidth = Math.max(
-    96,
-    String(Math.max(page, normalizedMaxPage ?? page)).length * 18 + 56,
+    72,
+    String(Math.max(page, normalizedMaxPage ?? page)).length * 16 + 44,
   );
 
   return (

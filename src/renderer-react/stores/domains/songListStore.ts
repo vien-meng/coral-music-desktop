@@ -227,6 +227,7 @@ export class SongListStore {
   }
 
   async loadListDetail(id: string, source = this.activeSource, page = 1): Promise<void> {
+    if (this.isLoadingDetail) return;
     const key = `sdetail__${source}__${id}__${page}`;
     this.isLoadingDetail = true;
     this.detailError = null;

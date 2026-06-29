@@ -45,6 +45,7 @@ export const AppShell = observer(() => {
           selectedKeys={[ui.activeRoute]}
           items={rendererRoutes.map((route) => ({
             key: route.key,
+            disabled: ui.isRouteTransitioning && route.key !== ui.activeRoute,
             icon: route.icon,
             label: route.label,
           }))}
@@ -59,6 +60,7 @@ export const AppShell = observer(() => {
             <div className="coral-header-search">
               <SearchInput
                 onSearch={(text) => {
+                  if (ui.isRouteTransitioning) return;
                   ui.setActiveRoute('search');
                   rootStore.search.setSearchText(text);
                 }}
@@ -78,6 +80,7 @@ export const AppShell = observer(() => {
               <Button
                 className="coral-header-action-btn"
                 icon={<FileAddOutlined />}
+                disabled={ui.isRouteTransitioning}
                 onClick={() => {
                   ui.setActiveRoute('list');
                   ui.requestQuickAction('importLocalAudio');
@@ -87,6 +90,7 @@ export const AppShell = observer(() => {
               </Button>
               <Dropdown
                 trigger={['click']}
+                disabled={ui.isRouteTransitioning}
                 menu={{
                   items: [
                     {
@@ -108,7 +112,11 @@ export const AppShell = observer(() => {
                   },
                 }}
               >
-                <Button className="coral-header-action-btn" icon={<UploadOutlined />}>
+                <Button
+                  className="coral-header-action-btn"
+                  icon={<UploadOutlined />}
+                  disabled={ui.isRouteTransitioning}
+                >
                   添加音源
                 </Button>
               </Dropdown>
