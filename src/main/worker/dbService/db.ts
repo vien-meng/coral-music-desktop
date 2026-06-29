@@ -28,8 +28,7 @@ export const init = (lxDataPath: string): boolean | null => {
       nativeBinding,
       // verbose: process.env.NODE_ENV !== 'production' ? console.log : undefined,
     });
-  } catch (error) {
-    console.log(error);
+  } catch {
     db = new Database(databasePath, {
       nativeBinding,
       // verbose: process.env.NODE_ENV !== 'production' ? console.log : undefined,
