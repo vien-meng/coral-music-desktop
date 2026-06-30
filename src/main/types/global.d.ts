@@ -1,9 +1,9 @@
 // // declare module NodeJS {
 // //   interface Global {
 // //     isDev: boolean
-// //     envParams: LX.EnvParams
+// //     envParams: Coral.EnvParams
 // //     staticPath: string
-// //     lx: Lx
+// //     coral: Coral
 // //   }
 // // }
 

@@ -5,10 +5,10 @@
 
 import { featureVersion } from '../modules';
 
-const handler: Omit<LX.Sync.ClientSyncHandlerActions<LX.Sync.Client.Socket>, 'finished'> = {
+const handler: Omit<Coral.Sync.ClientSyncHandlerActions<Coral.Sync.Client.Socket>, 'finished'> = {
   async getEnabledFeatures(socket, serverType, supportedFeatures) {
     // const userSpace = getUserSpace(socket.userInfo.name)
-    const features: LX.Sync.EnabledFeatures = {};
+    const features: Coral.Sync.EnabledFeatures = {};
     switch (serverType) {
       case 'server':
         if (featureVersion.list == supportedFeatures.list) {

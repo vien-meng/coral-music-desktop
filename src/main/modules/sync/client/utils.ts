@@ -73,13 +73,15 @@ export const generateRsaKey = async () =>
     );
   });
 
-export const encryptMsg = async (keyInfo: LX.Sync.ClientKeyInfo, msg: string): Promise<string> =>
+export const encryptMsg = async (keyInfo: Coral.Sync.ClientKeyInfo, msg: string): Promise<string> =>
   encodeData(msg);
 
 // if (!keyInfo) return ''
 // return aesEncrypt(msg, keyInfo.key, keyInfo.iv)
-export const decryptMsg = async (keyInfo: LX.Sync.ClientKeyInfo, enMsg: string): Promise<string> =>
-  decodeData(enMsg);
+export const decryptMsg = async (
+  keyInfo: Coral.Sync.ClientKeyInfo,
+  enMsg: string,
+): Promise<string> => decodeData(enMsg);
 
 // if (!keyInfo) return ''
 // let msg = ''
@@ -89,7 +91,7 @@ export const decryptMsg = async (keyInfo: LX.Sync.ClientKeyInfo, enMsg: string):
 //   console.log(err)
 // }
 // return msg
-export const parseUrl = (host: string): LX.Sync.Client.UrlInfo => {
+export const parseUrl = (host: string): Coral.Sync.Client.UrlInfo => {
   const url = new URL(host);
   let hostPath = url.host + url.pathname;
   let href = url.href;
@@ -104,6 +106,6 @@ export const parseUrl = (host: string): LX.Sync.Client.UrlInfo => {
   };
 };
 
-export const sendStatus = (_status: LX.Sync.ClientStatus) => {
+export const sendStatus = (_status: Coral.Sync.ClientStatus) => {
   // syncLog.log(JSON.stringify(status))
 };

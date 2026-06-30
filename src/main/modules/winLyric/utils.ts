@@ -17,12 +17,12 @@ export let minHeight = 38;
  */
 export const getLyricWindowBounds = (
   bounds: Electron.Rectangle,
-  { x, y, w, h }: LX.DesktopLyric.NewBounds,
+  { x, y, w, h }: Coral.DesktopLyric.NewBounds,
 ): Electron.Rectangle => {
   if (w < minWidth) w = minWidth;
   if (h < minHeight) h = minHeight;
 
-  if (global.lx.appSetting['desktopLyric.isLockScreen']) {
+  if (global.coral.appSetting['desktopLyric.isLockScreen']) {
     if (!global.envParams.workAreaSize) return bounds;
     const maxWinW = global.envParams.workAreaSize.width;
     const maxWinH = global.envParams.workAreaSize.height;
@@ -87,12 +87,12 @@ export const watchConfigKeys = [
   'player.isSwapLyricTranslationAndRoma',
   'player.isPlayLxlrc',
   'player.playbackRate',
-] satisfies Array<keyof LX.AppSetting>;
+] satisfies Array<keyof Coral.AppSetting>;
 
 export const buildLyricConfig = (
-  appSetting: Partial<LX.AppSetting>,
-): Partial<LX.DesktopLyric.Config> => {
-  const setting: Partial<LX.DesktopLyric.Config> = {};
+  appSetting: Partial<Coral.AppSetting>,
+): Partial<Coral.DesktopLyric.Config> => {
+  const setting: Partial<Coral.DesktopLyric.Config> = {};
   for (const key of watchConfigKeys) {
     // @ts-expect-error
     if (key in appSetting) setting[key] = appSetting[key];
@@ -101,10 +101,10 @@ export const buildLyricConfig = (
 };
 
 export const initWindowSize = (
-  x: LX.AppSetting['desktopLyric.x'],
-  y: LX.AppSetting['desktopLyric.y'],
-  width: LX.AppSetting['desktopLyric.width'],
-  height: LX.AppSetting['desktopLyric.height'],
+  x: Coral.AppSetting['desktopLyric.x'],
+  y: Coral.AppSetting['desktopLyric.y'],
+  width: Coral.AppSetting['desktopLyric.width'],
+  height: Coral.AppSetting['desktopLyric.height'],
 ) => {
   if (x == null || y == null) {
     if (width < minWidth) width = minWidth;

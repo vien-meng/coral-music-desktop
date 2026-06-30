@@ -3,7 +3,7 @@
 import { FeaturesList } from '../../../../../../common/constants_sync';
 import { modules } from '../../modules';
 
-const handler: LX.Sync.ServerSyncHandlerActions<LX.Sync.Server.Socket> = {
+const handler: Coral.Sync.ServerSyncHandlerActions<Coral.Sync.Server.Socket> = {
   async onFeatureChanged(socket, feature) {
     // const userSpace = getUserSpace(socket.userInfo.name)
     const beforeFeature = socket.feature;

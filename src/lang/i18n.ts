@@ -54,8 +54,8 @@ const setLanguage = (lang: Langs) => {
   i18n.setLanguage(lang);
 };
 
-const createI18n = (): I18n =>
-  (i18n = {
+const createI18n = (): I18n => {
+  i18n = {
     locale,
     fallbackLocale: 'zh-cn',
     availableLocales: Object.keys(messages) as Langs[],
@@ -80,6 +80,8 @@ const createI18n = (): I18n =>
       trackReactivityValues();
       return this.getMessage(key, val);
     },
-  });
+  };
+  return i18n;
+};
 
 export { i18nPlugin, setLanguage, useI18n, createI18n };

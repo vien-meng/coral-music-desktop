@@ -3,9 +3,9 @@ import { appService } from '../../services/appService';
 import { settingService } from '../../services/settingService';
 
 export class SettingsStore {
-  appSetting: LX.AppSetting | null = null;
+  appSetting: Coral.AppSetting | null = null;
 
-  envParams: LX.EnvParams | null = null;
+  envParams: Coral.EnvParams | null = null;
 
   hydrateError: string | null = null;
 
@@ -56,13 +56,13 @@ export class SettingsStore {
     for (const dispose of this.disposers.splice(0)) dispose();
   }
 
-  mergeAppSetting(setting: Partial<LX.AppSetting>): void {
+  mergeAppSetting(setting: Partial<Coral.AppSetting>): void {
     this.appSetting = this.appSetting
       ? { ...this.appSetting, ...setting }
-      : (setting as LX.AppSetting);
+      : (setting as Coral.AppSetting);
   }
 
-  async updateAppSetting(setting: Partial<LX.AppSetting>): Promise<void> {
+  async updateAppSetting(setting: Partial<Coral.AppSetting>): Promise<void> {
     this.isSaving = true;
     this.saveError = null;
 
@@ -86,7 +86,7 @@ export class SettingsStore {
     );
   }
 
-  private applyAppSetting(setting: LX.AppSetting): void {
+  private applyAppSetting(setting: Coral.AppSetting): void {
     this.appSetting = setting;
   }
 }

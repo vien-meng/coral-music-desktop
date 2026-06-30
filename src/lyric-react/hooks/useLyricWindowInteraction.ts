@@ -33,8 +33,8 @@ const getResizeBounds = (
   state: ResizeState,
   clientX: number,
   clientY: number,
-): LX.DesktopLyric.NewBounds => {
-  const bounds: LX.DesktopLyric.NewBounds = {
+): Coral.DesktopLyric.NewBounds => {
+  const bounds: Coral.DesktopLyric.NewBounds = {
     h: 0,
     w: 0,
     x: 0,

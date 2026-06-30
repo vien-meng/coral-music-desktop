@@ -19,7 +19,7 @@ export const createQueryStatement = () => {
  */
 export const createInsertStatement = () => {
   const db = getDB();
-  return db.prepare<[LX.DBService.DownloadMusicInfo]>(`
+  return db.prepare<[Coral.DBService.DownloadMusicInfo]>(`
     INSERT INTO "main"."download_list" ("id", "isComplate", "status", "statusText", "progress_downloaded", "progress_total", "url", "quality", "ext", "fileName", "filePath", "musicInfo", "position")
     VALUES (@id, @isComplate, @status, @statusText, @progress_downloaded, @progress_total, @url, @quality, @ext, @fileName, @filePath, @musicInfo, @position)`);
 };
@@ -53,7 +53,7 @@ export const createDeleteStatement = () => {
  */
 export const createUpdateStatement = () => {
   const db = getDB();
-  return db.prepare<[LX.DBService.DownloadMusicInfo]>(`
+  return db.prepare<[Coral.DBService.DownloadMusicInfo]>(`
     UPDATE "main"."download_list"
     SET "isComplate"=@isComplate, "status"=@status, "statusText"=@statusText, "progress_downloaded"=@progress_downloaded, "progress_total"=@progress_total, "url"=@url, "filePath"=@filePath
     WHERE "id"=@id`);

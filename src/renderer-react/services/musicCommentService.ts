@@ -46,7 +46,7 @@ const loadMusicSdk = async (): Promise<MusicSdk> => {
   return module.default as MusicSdk;
 };
 
-const getCommentApi = async (musicInfo: LX.Music.MusicInfo): Promise<MusicCommentApi | null> => {
+const getCommentApi = async (musicInfo: Coral.Music.MusicInfo): Promise<MusicCommentApi | null> => {
   if (musicInfo.source === 'local') return null;
 
   const sdk = await loadMusicSdk();
@@ -121,13 +121,13 @@ const requestWithRetry = async (
   }
 };
 
-export const hasComment = async (musicInfo: LX.Music.MusicInfo | null): Promise<boolean> => {
+export const hasComment = async (musicInfo: Coral.Music.MusicInfo | null): Promise<boolean> => {
   if (!musicInfo) return false;
   return Boolean(await getCommentApi(musicInfo));
 };
 
 export const getComments = async (
-  musicInfo: LX.Music.MusicInfo,
+  musicInfo: Coral.Music.MusicInfo,
   kind: MusicCommentKind,
   page = 1,
   limit = 20,

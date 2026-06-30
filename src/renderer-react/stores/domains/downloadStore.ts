@@ -14,7 +14,7 @@ export class DownloadStore {
 
   isMutatingTask = false;
 
-  tasks: LX.Download.ListItem[] = [];
+  tasks: Coral.Download.ListItem[] = [];
 
   private readonly settings?: SettingsStore;
 
@@ -65,7 +65,7 @@ export class DownloadStore {
     return this.tasks.filter((task) => task.status === 'waiting').length;
   }
 
-  get playableTasks(): LX.Download.ListItem[] {
+  get playableTasks(): Coral.Download.ListItem[] {
     return this.tasks.filter((task) => task.status === 'completed' || task.isComplate);
   }
 
@@ -160,7 +160,7 @@ export class DownloadStore {
     }
   }
 
-  openTaskFile(task: LX.Download.ListItem): void {
+  openTaskFile(task: Coral.Download.ListItem): void {
     if (!task.metadata.filePath) return;
     downloadService.openDownloadTaskFile(task.metadata.filePath);
   }
@@ -217,6 +217,25 @@ export class DownloadStore {
     await this.pumpQueue();
   }
 
+  async addAndStartTasks(tasks: Coral.Download.ListItem[]): Promise<void> {
+    if (!tasks.length) return;
+    this.isMutatingTask = true;
+    this.actionError = null;
+
+    try {
+      await downloadService.addDownloadTasks(tasks);
+      for (const task of tasks) {
+        this.upsertTask(task);
+        this.enqueueTask(task);
+      }
+      await this.pumpQueue();
+    } catch (error) {
+      this.actionError = error instanceof Error ? error.message : String(error);
+    } finally {
+      this.isMutatingTask = false;
+    }
+  }
+
   async pauseTasks(taskIds: string[]): Promise<void> {
     const ids = Array.from(new Set(taskIds)).filter(Boolean);
     for (const id of ids) {
@@ -270,11 +289,11 @@ export class DownloadStore {
     }
   }
 
-  private getTaskById(taskId: string): LX.Download.ListItem | null {
+  private getTaskById(taskId: string): Coral.Download.ListItem | null {
     return this.tasks.find((task) => task.id === taskId) ?? null;
   }
 
-  private upsertTask(task: LX.Download.ListItem): void {
+  private upsertTask(task: Coral.Download.ListItem): void {
     const index = this.tasks.findIndex((item) => item.id === task.id);
     if (index < 0) {
       this.tasks = [task, ...this.tasks];
@@ -285,11 +304,11 @@ export class DownloadStore {
     this.tasks = nextTasks;
   }
 
-  private enqueueTask(task: LX.Download.ListItem): void {
+  private enqueueTask(task: Coral.Download.ListItem): void {
     if (!this.isRunnableTask(task)) return;
     this.queuedTaskIds.add(task.id);
     if (task.status !== 'waiting' || task.statusText !== '排队中') {
-      const queuedTask: LX.Download.ListItem = {
+      const queuedTask: Coral.Download.ListItem = {
         ...task,
         isComplate: false,
         speed: '',
@@ -301,7 +320,7 @@ export class DownloadStore {
     }
   }
 
-  private isRunnableTask(task: LX.Download.ListItem): boolean {
+  private isRunnableTask(task: Coral.Download.ListItem): boolean {
     return task.status === 'waiting' || task.status === 'pause' || task.status === 'error';
   }
 
@@ -352,7 +371,7 @@ export class DownloadStore {
       this.actionError = error instanceof Error ? error.message : String(error);
       const failedTask = this.getTaskById(taskId);
       if (failedTask) {
-        const nextTask: LX.Download.ListItem = {
+        const nextTask: Coral.Download.ListItem = {
           ...failedTask,
           status: 'error',
           statusText: this.actionError,
@@ -371,7 +390,7 @@ export class DownloadStore {
     if (count >= 2) {
       const task = this.getTaskById(taskId);
       if (task) {
-        const nextTask: LX.Download.ListItem = {
+        const nextTask: Coral.Download.ListItem = {
           ...task,
           status: 'error',
           statusText: '下载地址刷新失败',

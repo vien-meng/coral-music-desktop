@@ -47,5 +47,5 @@ export class ListManage {
     this.snapshotDataManage.removeSnapshotInfo(clientId);
   };
 
-  getListData = async (): Promise<LX.Sync.List.ListData> => getLocalListData();
+  getListData = async (): Promise<Coral.Sync.List.ListData> => getLocalListData();
 }

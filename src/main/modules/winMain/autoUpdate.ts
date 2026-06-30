@@ -114,7 +114,7 @@ export default () => {
   });
 
   mainOn(WIN_MAIN_RENDERER_EVENT_NAME.quit_update, () => {
-    global.lx.isSkipTrayQuit = true;
+    global.coral.isSkipTrayQuit = true;
 
     setTimeout(() => {
       autoUpdater.quitAndInstall(true, true);
@@ -140,7 +140,7 @@ const checkUpdate = () => {
   if (isWin && process.arch.includes('arm')) {
     handleSendEvent({ type: WIN_MAIN_RENDERER_EVENT_NAME.update_error, info: 'failed' });
   } else {
-    autoUpdater.autoDownload = global.lx.appSetting['common.tryAutoUpdate'];
+    autoUpdater.autoDownload = global.coral.appSetting['common.tryAutoUpdate'];
     autoUpdater.checkForUpdates();
   }
 };

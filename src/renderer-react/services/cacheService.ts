@@ -42,7 +42,7 @@ export const clearOtherSource = async (): Promise<void> => {
   }
 };
 
-export const getCachedOtherSource = async (id: string): Promise<LX.Music.MusicInfoOnline[]> => {
+export const getCachedOtherSource = async (id: string): Promise<Coral.Music.MusicInfoOnline[]> => {
   if (!isElectronRenderer()) return [];
   try {
     const result = await ipcClient.invoke(ipcChannels.winMain.getOtherSource, id);
@@ -55,7 +55,7 @@ export const getCachedOtherSource = async (id: string): Promise<LX.Music.MusicIn
 
 export const saveCachedOtherSource = async (
   id: string,
-  list: LX.Music.MusicInfoOnline[],
+  list: Coral.Music.MusicInfoOnline[],
 ): Promise<void> => {
   if (!isElectronRenderer() || !list.length) return;
   try {
@@ -89,13 +89,13 @@ export const clearMusicUrl = async (): Promise<void> => {
 };
 
 export const createMusicUrlCacheKey = (
-  musicInfo: LX.Music.MusicInfo,
-  quality: LX.Quality,
+  musicInfo: Coral.Music.MusicInfo,
+  quality: Coral.Quality,
 ): string => `${musicInfo.id}_${quality}`;
 
 export const getCachedMusicUrl = async (
-  musicInfo: LX.Music.MusicInfo,
-  quality: LX.Quality,
+  musicInfo: Coral.Music.MusicInfo,
+  quality: Coral.Quality,
 ): Promise<string> => {
   if (!isElectronRenderer()) return '';
   try {
@@ -111,8 +111,8 @@ export const getCachedMusicUrl = async (
 };
 
 export const saveCachedMusicUrl = async (
-  musicInfo: LX.Music.MusicInfo,
-  quality: LX.Quality,
+  musicInfo: Coral.Music.MusicInfo,
+  quality: Coral.Quality,
   url: string,
 ): Promise<void> => {
   if (!isElectronRenderer() || !url) return;

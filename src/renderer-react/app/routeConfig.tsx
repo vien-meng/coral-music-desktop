@@ -1,4 +1,5 @@
 import {
+  CloudOutlined,
   DownloadOutlined,
   OrderedListOutlined,
   PlayCircleOutlined,
@@ -23,12 +24,15 @@ const LocalListRoutePanel = lazy(async () => ({
 const DownloadRoutePanel = lazy(async () => ({
   default: (await import('../features/download/DownloadRoutePanel')).DownloadRoutePanel,
 }));
+const WebDavRoutePanel = lazy(async () => ({
+  default: (await import('../features/webdav/WebDavRoutePanel')).WebDavRoutePanel,
+}));
 const SettingsRoutePanel = lazy(async () => ({
   default: (await import('../features/settings/SettingsRoutePanel')).SettingsRoutePanel,
 }));
 
 export type RendererRouteKey =
-  'search' | 'song-list' | 'leaderboard' | 'list' | 'download' | 'setting';
+  'search' | 'song-list' | 'leaderboard' | 'list' | 'webdav' | 'download' | 'setting';
 
 export interface RendererRoute {
   key: RendererRouteKey;
@@ -73,6 +77,13 @@ export const rendererRoutes: RendererRoute[] = [
     label: '下载',
     icon: <DownloadOutlined />,
     element: <DownloadRoutePanel />,
+  },
+  {
+    key: 'webdav',
+    path: '/webdav',
+    label: '网盘资源',
+    icon: <CloudOutlined />,
+    element: <WebDavRoutePanel />,
   },
   {
     key: 'setting',

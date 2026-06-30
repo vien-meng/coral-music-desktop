@@ -8,7 +8,7 @@ export const buildUserListInfoFull = ({
   sourceListId,
   list,
   locationUpdateTime,
-}: LX.List.UserListInfoFull) => ({
+}: Coral.List.UserListInfoFull) => ({
   id,
   name,
   source,
@@ -17,17 +17,17 @@ export const buildUserListInfoFull = ({
   list,
 });
 
-export const getLocalListData = async (): Promise<LX.Sync.List.ListData> => {
-  const lists: LX.Sync.List.ListData = {
-    defaultList: await global.lx.worker.dbService.getListMusics(LIST_IDS.DEFAULT),
-    loveList: await global.lx.worker.dbService.getListMusics(LIST_IDS.LOVE),
+export const getLocalListData = async (): Promise<Coral.Sync.List.ListData> => {
+  const lists: Coral.Sync.List.ListData = {
+    defaultList: await global.coral.worker.dbService.getListMusics(LIST_IDS.DEFAULT),
+    loveList: await global.coral.worker.dbService.getListMusics(LIST_IDS.LOVE),
     userList: [],
   };
 
-  const userListInfos = await global.lx.worker.dbService.getAllUserList();
+  const userListInfos = await global.coral.worker.dbService.getAllUserList();
   for await (const list of userListInfos) {
     lists.userList.push(
-      await global.lx.worker.dbService
+      await global.coral.worker.dbService
         .getListMusics(list.id)
         .then((musics) => buildUserListInfoFull({ ...list, list: musics })),
     );
@@ -36,15 +36,15 @@ export const getLocalListData = async (): Promise<LX.Sync.List.ListData> => {
   return lists;
 };
 
-export const setLocalListData = async (listData: LX.Sync.List.ListData) => {
-  await global.lx.event_list.list_data_overwrite(listData, true);
+export const setLocalListData = async (listData: Coral.Sync.List.ListData) => {
+  await global.coral.event_list.list_data_overwrite(listData, true);
 };
 
 export const registerListActionEvent = (
-  sendListAction: (action: LX.Sync.List.ActionList) => void | Promise<void>,
+  sendListAction: (action: Coral.Sync.List.ActionList) => void | Promise<void>,
 ) => {
   const list_data_overwrite = async (
-    listData: MakeOptional<LX.List.ListDataFull, 'tempList'>,
+    listData: MakeOptional<Coral.List.ListDataFull, 'tempList'>,
     isRemote: boolean = false,
   ) => {
     if (isRemote) return;
@@ -52,7 +52,7 @@ export const registerListActionEvent = (
   };
   const list_create = async (
     position: number,
-    listInfos: LX.List.UserListInfo[],
+    listInfos: Coral.List.UserListInfo[],
     isRemote: boolean = false,
   ) => {
     if (isRemote) return;
@@ -62,7 +62,7 @@ export const registerListActionEvent = (
     if (isRemote) return;
     await sendListAction({ action: 'list_remove', data: ids });
   };
-  const list_update = async (lists: LX.List.UserListInfo[], isRemote: boolean = false) => {
+  const list_update = async (lists: Coral.List.UserListInfo[], isRemote: boolean = false) => {
     if (isRemote) return;
     await sendListAction({ action: 'list_update', data: lists });
   };
@@ -76,7 +76,7 @@ export const registerListActionEvent = (
   };
   const list_music_overwrite = async (
     listId: string,
-    musicInfos: LX.Music.MusicInfo[],
+    musicInfos: Coral.Music.MusicInfo[],
     isRemote: boolean = false,
   ) => {
     if (isRemote || listId == LIST_IDS.TEMP) return;
@@ -84,8 +84,8 @@ export const registerListActionEvent = (
   };
   const list_music_add = async (
     id: string,
-    musicInfos: LX.Music.MusicInfo[],
-    addMusicLocationType: LX.AddMusicLocationType,
+    musicInfos: Coral.Music.MusicInfo[],
+    addMusicLocationType: Coral.AddMusicLocationType,
     isRemote: boolean = false,
   ) => {
     if (isRemote) return;
@@ -97,8 +97,8 @@ export const registerListActionEvent = (
   const list_music_move = async (
     fromId: string,
     toId: string,
-    musicInfos: LX.Music.MusicInfo[],
-    addMusicLocationType: LX.AddMusicLocationType,
+    musicInfos: Coral.Music.MusicInfo[],
+    addMusicLocationType: Coral.AddMusicLocationType,
     isRemote: boolean = false,
   ) => {
     if (isRemote) return;
@@ -112,7 +112,7 @@ export const registerListActionEvent = (
     await sendListAction({ action: 'list_music_remove', data: { listId, ids } });
   };
   const list_music_update = async (
-    musicInfos: LX.List.ListActionMusicUpdate,
+    musicInfos: Coral.List.ListActionMusicUpdate,
     isRemote: boolean = false,
   ) => {
     musicInfos = musicInfos.filter((item) => item.id != LIST_IDS.TEMP);
@@ -132,55 +132,55 @@ export const registerListActionEvent = (
     if (isRemote || listId == LIST_IDS.TEMP) return;
     await sendListAction({ action: 'list_music_update_position', data: { listId, position, ids } });
   };
-  global.lx.event_list.on('list_data_overwrite', list_data_overwrite);
-  global.lx.event_list.on('list_create', list_create);
-  global.lx.event_list.on('list_remove', list_remove);
-  global.lx.event_list.on('list_update', list_update);
-  global.lx.event_list.on('list_update_position', list_update_position);
-  global.lx.event_list.on('list_music_overwrite', list_music_overwrite);
-  global.lx.event_list.on('list_music_add', list_music_add);
-  global.lx.event_list.on('list_music_move', list_music_move);
-  global.lx.event_list.on('list_music_remove', list_music_remove);
-  global.lx.event_list.on('list_music_update', list_music_update);
-  global.lx.event_list.on('list_music_clear', list_music_clear);
-  global.lx.event_list.on('list_music_update_position', list_music_update_position);
+  global.coral.event_list.on('list_data_overwrite', list_data_overwrite);
+  global.coral.event_list.on('list_create', list_create);
+  global.coral.event_list.on('list_remove', list_remove);
+  global.coral.event_list.on('list_update', list_update);
+  global.coral.event_list.on('list_update_position', list_update_position);
+  global.coral.event_list.on('list_music_overwrite', list_music_overwrite);
+  global.coral.event_list.on('list_music_add', list_music_add);
+  global.coral.event_list.on('list_music_move', list_music_move);
+  global.coral.event_list.on('list_music_remove', list_music_remove);
+  global.coral.event_list.on('list_music_update', list_music_update);
+  global.coral.event_list.on('list_music_clear', list_music_clear);
+  global.coral.event_list.on('list_music_update_position', list_music_update_position);
   return () => {
-    global.lx.event_list.off('list_data_overwrite', list_data_overwrite);
-    global.lx.event_list.off('list_create', list_create);
-    global.lx.event_list.off('list_remove', list_remove);
-    global.lx.event_list.off('list_update', list_update);
-    global.lx.event_list.off('list_update_position', list_update_position);
-    global.lx.event_list.off('list_music_overwrite', list_music_overwrite);
-    global.lx.event_list.off('list_music_add', list_music_add);
-    global.lx.event_list.off('list_music_move', list_music_move);
-    global.lx.event_list.off('list_music_remove', list_music_remove);
-    global.lx.event_list.off('list_music_update', list_music_update);
-    global.lx.event_list.off('list_music_clear', list_music_clear);
-    global.lx.event_list.off('list_music_update_position', list_music_update_position);
+    global.coral.event_list.off('list_data_overwrite', list_data_overwrite);
+    global.coral.event_list.off('list_create', list_create);
+    global.coral.event_list.off('list_remove', list_remove);
+    global.coral.event_list.off('list_update', list_update);
+    global.coral.event_list.off('list_update_position', list_update_position);
+    global.coral.event_list.off('list_music_overwrite', list_music_overwrite);
+    global.coral.event_list.off('list_music_add', list_music_add);
+    global.coral.event_list.off('list_music_move', list_music_move);
+    global.coral.event_list.off('list_music_remove', list_music_remove);
+    global.coral.event_list.off('list_music_update', list_music_update);
+    global.coral.event_list.off('list_music_clear', list_music_clear);
+    global.coral.event_list.off('list_music_update_position', list_music_update_position);
   };
 };
 
-export const handleRemoteListAction = async ({ action, data }: LX.Sync.List.ActionList) => {
+export const handleRemoteListAction = async ({ action, data }: Coral.Sync.List.ActionList) => {
   // console.log('handleRemoteListAction', action)
 
   switch (action) {
     case 'list_data_overwrite':
-      await global.lx.event_list.list_data_overwrite(data, true);
+      await global.coral.event_list.list_data_overwrite(data, true);
       break;
     case 'list_create':
-      await global.lx.event_list.list_create(data.position, data.listInfos, true);
+      await global.coral.event_list.list_create(data.position, data.listInfos, true);
       break;
     case 'list_remove':
-      await global.lx.event_list.list_remove(data, true);
+      await global.coral.event_list.list_remove(data, true);
       break;
     case 'list_update':
-      await global.lx.event_list.list_update(data, true);
+      await global.coral.event_list.list_update(data, true);
       break;
     case 'list_update_position':
-      await global.lx.event_list.list_update_position(data.position, data.ids, true);
+      await global.coral.event_list.list_update_position(data.position, data.ids, true);
       break;
     case 'list_music_add':
-      await global.lx.event_list.list_music_add(
+      await global.coral.event_list.list_music_add(
         data.id,
         data.musicInfos,
         data.addMusicLocationType,
@@ -188,7 +188,7 @@ export const handleRemoteListAction = async ({ action, data }: LX.Sync.List.Acti
       );
       break;
     case 'list_music_move':
-      await global.lx.event_list.list_music_move(
+      await global.coral.event_list.list_music_move(
         data.fromId,
         data.toId,
         data.musicInfos,
@@ -197,13 +197,13 @@ export const handleRemoteListAction = async ({ action, data }: LX.Sync.List.Acti
       );
       break;
     case 'list_music_remove':
-      await global.lx.event_list.list_music_remove(data.listId, data.ids, true);
+      await global.coral.event_list.list_music_remove(data.listId, data.ids, true);
       break;
     case 'list_music_update':
-      await global.lx.event_list.list_music_update(data, true);
+      await global.coral.event_list.list_music_update(data, true);
       break;
     case 'list_music_update_position':
-      await global.lx.event_list.list_music_update_position(
+      await global.coral.event_list.list_music_update_position(
         data.listId,
         data.position,
         data.ids,
@@ -211,10 +211,10 @@ export const handleRemoteListAction = async ({ action, data }: LX.Sync.List.Acti
       );
       break;
     case 'list_music_overwrite':
-      await global.lx.event_list.list_music_overwrite(data.listId, data.musicInfos, true);
+      await global.coral.event_list.list_music_overwrite(data.listId, data.musicInfos, true);
       break;
     case 'list_music_clear':
-      await global.lx.event_list.list_music_clear(data, true);
+      await global.coral.event_list.list_music_clear(data, true);
       break;
     default:
       throw new Error('unknown list sync action');

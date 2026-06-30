@@ -6,11 +6,11 @@ Step 53 gave the React player runtime fresh current-source online URL fetching. 
 
 ## Changes
 
-- Extended `PlayerRuntimeBridge.playMusic()` with `PlayerRuntimeMusicInfo`, allowing the runtime to accept either `LX.Music.MusicInfo` or `LX.Download.ListItem`.
+- Extended `PlayerRuntimeBridge.playMusic()` with `PlayerRuntimeMusicInfo`, allowing the runtime to accept either `Coral.Music.MusicInfo` or `Coral.Download.ListItem`.
 - Extended `musicUrlResolver`.
   - Added completed download-task path resolution through `metadata.filePath`.
   - Falls back from download tasks to `metadata.musicInfo` online URL resolution when no completed local file is available.
-  - Added a local old-SDK-result to `LX.Music.MusicInfoOnline` converter for `musicSdk.findMusic()` fallback results, avoiding imports from legacy Vue utilities.
+  - Added a local old-SDK-result to `Coral.Music.MusicInfoOnline` converter for `musicSdk.findMusic()` fallback results, avoiding imports from legacy Vue utilities.
   - Added in-memory other-source lookup de-duplication/cache.
   - Added optional `allowToggleSource` and `onToggleSource` resolver hooks.
   - Keeps too-many-requests errors as hard failures instead of retrying across providers.

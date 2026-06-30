@@ -54,14 +54,14 @@ const unGzip = async (data: string) =>
   });
 
 export const encryptMsg = async (
-  keyInfo: LX.Sync.ServerKeyInfo | null,
+  keyInfo: Coral.Sync.ServerKeyInfo | null,
   msg: string,
 ): Promise<string> => (msg.length > 1024 ? `cg_${await gzip(msg)}` : msg);
 
 // if (!keyInfo) return ''
 // return aesEncrypt(msg, keyInfo.key, keyInfo.iv)
 export const decryptMsg = async (
-  keyInfo: LX.Sync.ServerKeyInfo | null,
+  keyInfo: Coral.Sync.ServerKeyInfo | null,
   enMsg: string,
 ): Promise<string> =>
   enMsg.substring(0, 3) == 'cg_' ? await unGzip(enMsg.replace('cg_', '')) : enMsg;
@@ -76,10 +76,10 @@ export const decryptMsg = async (
 // }
 // return msg
 
-// export const getSnapshotFilePath = (keyInfo: LX.Sync.KeyInfo): string => {
-//   return join(global.lx.snapshotPath, `snapshot_${keyInfo.snapshotKey}.json`)
+// export const getSnapshotFilePath = (keyInfo: Coral.Sync.KeyInfo): string => {
+//   return join(global.coral.snapshotPath, `snapshot_${keyInfo.snapshotKey}.json`)
 // }
 
-// export const sendStatus = (status: LX.Sync.ServerStatus) => {
+// export const sendStatus = (status: Coral.Sync.ServerStatus) => {
 //   syncLog.info('status', status.devices.map(d => `${getUserName(d.clientId) ?? ''} ${d.deviceName}`))
 // }

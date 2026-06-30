@@ -4,6 +4,7 @@ import { createDownloadTaskList } from './downloadTaskFactory';
 import { ipcClient } from './ipc/client';
 import { lyricService } from './lyricService';
 import { resolvePlayableMusicUrl } from './playerRuntime/musicUrlResolver';
+import { createWebDavStreamUrl } from './webDavService';
 
 type ElectronShellGlobal = typeof globalThis & {
   require?: (moduleName: 'electron') => {
@@ -13,24 +14,24 @@ type ElectronShellGlobal = typeof globalThis & {
   };
 };
 
-export const getDownloadTasks = async (): Promise<LX.Download.ListItem[]> => {
+export const getDownloadTasks = async (): Promise<Coral.Download.ListItem[]> => {
   if (!ipcClient.canUseIpc()) return [];
   return await ipcClient.invoke(ipcChannels.winMain.downloadListGet);
 };
 
 export const createDownloadTasks = async (
-  list: LX.Music.MusicInfoOnline[],
-  quality: LX.Quality,
+  list: Coral.Music.MusicInfoOnline[],
+  quality: Coral.Quality,
   fileNameFormat: string,
-  qualityList: LX.QualityList,
+  qualityList: Coral.QualityList,
   listId?: string,
-): Promise<LX.Download.ListItem[]> => {
+): Promise<Coral.Download.ListItem[]> => {
   if (!ipcClient.canUseIpc()) return [];
 
   const tasks = createDownloadTaskList(list, quality, fileNameFormat, qualityList, listId);
 
   if (tasks.length) {
-    const action: LX.Download.saveDownloadMusicInfo = {
+    const action: Coral.Download.saveDownloadMusicInfo = {
       list: tasks,
       addMusicLocationType: 'top',
     };
@@ -38,6 +39,14 @@ export const createDownloadTasks = async (
   }
 
   return tasks;
+};
+
+export const addDownloadTasks = async (tasks: Coral.Download.ListItem[]): Promise<void> => {
+  if (!ipcClient.canUseIpc() || !tasks.length) return;
+  await ipcClient.invoke(ipcChannels.winMain.downloadListAdd, {
+    addMusicLocationType: 'top',
+    list: tasks,
+  });
 };
 
 export const removeDownloadTasks = async (ids: string[]): Promise<void> => {
@@ -51,7 +60,7 @@ export const clearDownloadTasks = async (): Promise<void> => {
   await ipcClient.invoke(ipcChannels.winMain.downloadListClear);
 };
 
-export const updateDownloadTasks = async (tasks: LX.Download.ListItem[]): Promise<void> => {
+export const updateDownloadTasks = async (tasks: Coral.Download.ListItem[]): Promise<void> => {
   if (!ipcClient.canUseIpc()) return;
   await ipcClient.invoke(ipcChannels.winMain.downloadListUpdate, tasks);
 };
@@ -71,7 +80,7 @@ interface MusicSdkSource {
   getLyric?: (
     musicInfo: unknown,
     isGetLyricx?: boolean,
-  ) => { promise: Promise<LX.Music.LyricInfo> };
+  ) => { promise: Promise<Coral.Music.LyricInfo> };
 }
 
 type MusicSdk = Record<string, unknown>;
@@ -81,17 +90,23 @@ const loadMusicSdk = async (): Promise<MusicSdk> => {
   return module.default as MusicSdk;
 };
 
-const getSourceSdk = (sdk: MusicSdk, source: LX.OnlineSource): MusicSdkSource | null => {
+const getSourceSdk = (sdk: MusicSdk, source: Coral.OnlineSource): MusicSdkSource | null => {
   const sourceSdk = sdk[source];
   if (typeof sourceSdk !== 'object' || sourceSdk == null || Array.isArray(sourceSdk)) return null;
   return sourceSdk as MusicSdkSource;
 };
 
-const hasLyricContent = (lyricInfo: LX.Music.LyricInfo): boolean =>
+const hasLyricContent = (lyricInfo: Coral.Music.LyricInfo): boolean =>
   [lyricInfo.lyric, lyricInfo.lxlyric, lyricInfo.tlyric, lyricInfo.rlyric].some(Boolean);
 
-export const ensureDownloadLyricCached = async (task: LX.Download.ListItem): Promise<void> => {
+const isOnlineMusicInfo = (
+  musicInfo: Coral.Music.MusicInfo,
+): musicInfo is Coral.Music.MusicInfoOnline =>
+  musicInfo.source !== 'local' && musicInfo.source !== 'webdav';
+
+export const ensureDownloadLyricCached = async (task: Coral.Download.ListItem): Promise<void> => {
   const musicInfo = task.metadata.musicInfo;
+  if (!isOnlineMusicInfo(musicInfo)) return;
   const cachedLyric = await lyricService.getLyricRaw(musicInfo);
   if (hasLyricContent(cachedLyric)) return;
 
@@ -105,19 +120,31 @@ export const ensureDownloadLyricCached = async (task: LX.Download.ListItem): Pro
 };
 
 export const startDownloadTask = async (
-  task: LX.Download.ListItem,
+  task: Coral.Download.ListItem,
   options: StartDownloadTaskOptions = {},
-): Promise<LX.Download.ListItem> => {
+): Promise<Coral.Download.ListItem> => {
   if (!ipcClient.canUseIpc()) return task;
 
   if (options.ensureLyric) {
     await ensureDownloadLyricCached(task).catch(() => {});
   }
 
-  const resolved = await resolvePlayableMusicUrl(task, {
-    isRefresh: options.isRefresh ?? options.isRetry,
-    preferredQuality: task.metadata.quality,
-  });
+  const musicInfo = task.metadata.musicInfo;
+  const resolved =
+    musicInfo.source === 'webdav'
+      ? {
+          quality: task.metadata.quality,
+          url: (
+            await createWebDavStreamUrl({
+              accountId: musicInfo.meta.accountId,
+              href: musicInfo.meta.href,
+            })
+          ).url,
+        }
+      : await resolvePlayableMusicUrl(task, {
+          isRefresh: options.isRefresh ?? options.isRetry,
+          preferredQuality: task.metadata.quality,
+        });
   if (!resolved?.url) throw new Error('无法获取下载地址');
 
   const params = {
@@ -139,7 +166,9 @@ export const startDownloadTask = async (
   );
 };
 
-export const pauseDownloadTask = async (taskId: string): Promise<LX.Download.ListItem | null> => {
+export const pauseDownloadTask = async (
+  taskId: string,
+): Promise<Coral.Download.ListItem | null> => {
   if (!ipcClient.canUseIpc()) return null;
   return await ipcClient.invoke(ipcChannels.winMain.downloadTaskPause, taskId);
 };

@@ -238,7 +238,7 @@ export const PlayDetailOverlay = observer(() => {
                 showIcon
                 type="error"
                 className="coral-playdetail-error"
-                message={player.errorText}
+                title={player.errorText}
                 action={errorActionNode}
               />
             ) : null}

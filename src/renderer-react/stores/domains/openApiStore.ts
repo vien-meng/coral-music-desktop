@@ -4,13 +4,13 @@ import { openApiService } from '../../services/openApiService';
 export class OpenApiStore {
   lastError: string | null = null;
 
-  status: LX.OpenAPI.Status | null = null;
+  status: Coral.OpenAPI.Status | null = null;
 
   constructor() {
     makeAutoObservable(this, {}, { autoBind: true });
   }
 
-  async sendAction(action: LX.OpenAPI.Actions): Promise<LX.OpenAPI.Status | null> {
+  async sendAction(action: Coral.OpenAPI.Actions): Promise<Coral.OpenAPI.Status | null> {
     this.lastError = null;
 
     try {

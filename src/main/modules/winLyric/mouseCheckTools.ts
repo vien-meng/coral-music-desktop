@@ -49,8 +49,8 @@ export const mouseCheckTools = {
   runCheck(sendMouseLeave: () => void) {
     if (
       isLinux ||
-      !global.lx.appSetting['desktopLyric.isLock'] ||
-      !global.lx.appSetting['desktopLyric.isHoverHide'] ||
+      !global.coral.appSetting['desktopLyric.isLock'] ||
+      !global.coral.appSetting['desktopLyric.isHoverHide'] ||
       !this.isMouseInWindow
     )
       return;

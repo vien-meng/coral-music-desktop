@@ -18,12 +18,12 @@ const keys = ['lyric', 'tlyric', 'rlyric', 'lxlyric'] as const;
 
 const toDBLyric = (
   id: string,
-  source: LX.DBService.Lyricnfo['source'],
-  lyricInfo: LX.Music.LyricInfo,
-): LX.DBService.Lyricnfo[] =>
+  source: Coral.DBService.Lyricnfo['source'],
+  lyricInfo: Coral.Music.LyricInfo,
+): Coral.DBService.Lyricnfo[] =>
   (
     keys.map((k) => [k, lyricInfo[k]]).filter(([_k, t]) => t != null) as Array<
-      [LX.DBService.Lyricnfo['type'], string]
+      [Coral.DBService.Lyricnfo['type'], string]
     >
   ).map(([k, t]) => ({
     id,
@@ -37,13 +37,13 @@ const toDBLyric = (
  * @param id 歌曲id
  * @returns 歌词信息
  */
-export const getPlayerLyric = (id: string): LX.Player.LyricInfo => {
+export const getPlayerLyric = (id: string): Coral.Player.LyricInfo => {
   const lyrics = queryLyric(id);
 
-  let lyricInfo: LX.Music.LyricInfo = {
+  let lyricInfo: Coral.Music.LyricInfo = {
     lyric: '',
   };
-  let rawLyricInfo: LX.Music.LyricInfo = {
+  let rawLyricInfo: Coral.Music.LyricInfo = {
     lyric: '',
   };
   for (const lyric of lyrics) {
@@ -78,10 +78,10 @@ export const getPlayerLyric = (id: string): LX.Player.LyricInfo => {
  * @param id 歌曲id
  * @returns 歌词信息
  */
-export const getRawLyric = (id: string): LX.Music.LyricInfo => {
+export const getRawLyric = (id: string): Coral.Music.LyricInfo => {
   const lyrics = queryRawLyric(id);
 
-  let lyricInfo: LX.Music.LyricInfo = {
+  let lyricInfo: Coral.Music.LyricInfo = {
     lyric: '',
   };
   for (const lyric of lyrics) {
@@ -98,7 +98,7 @@ export const getRawLyric = (id: string): LX.Music.LyricInfo => {
  * @param id 歌曲id
  * @param lyricInfo 歌词信息
  */
-export const rawLyricAdd = (id: string, lyricInfo: LX.Music.LyricInfo) => {
+export const rawLyricAdd = (id: string, lyricInfo: Coral.Music.LyricInfo) => {
   insertRawLyric(toDBLyric(id, 'raw', lyricInfo));
 };
 
@@ -115,7 +115,7 @@ export const rawLyricRemove = (ids: string[]) => {
  * @param id 歌曲id
  * @param lyricInfo 歌词信息
  */
-export const rawLyricUpdate = (id: string, lyricInfo: LX.Music.LyricInfo) => {
+export const rawLyricUpdate = (id: string, lyricInfo: Coral.Music.LyricInfo) => {
   updateRawLyric(toDBLyric(id, 'raw', lyricInfo));
 };
 
@@ -136,10 +136,10 @@ export const rawLyricCount = () => countRawLyric();
  * @param id 歌曲id
  * @returns 歌词信息
  */
-export const getEditedLyric = (id: string): LX.Music.LyricInfo => {
+export const getEditedLyric = (id: string): Coral.Music.LyricInfo => {
   const lyrics = queryEditedLyric(id);
 
-  let lyricInfo: LX.Music.LyricInfo = {
+  let lyricInfo: Coral.Music.LyricInfo = {
     lyric: '',
   };
   for (const lyric of lyrics) {
@@ -156,7 +156,7 @@ export const getEditedLyric = (id: string): LX.Music.LyricInfo => {
  * @param id 歌曲id
  * @param lyricInfo 歌词信息
  */
-export const editedLyricAdd = (id: string, lyricInfo: LX.Music.LyricInfo) => {
+export const editedLyricAdd = (id: string, lyricInfo: Coral.Music.LyricInfo) => {
   insertEditedLyric(toDBLyric(id, 'edited', lyricInfo));
 };
 
@@ -173,7 +173,7 @@ export const editedLyricRemove = (ids: string[]) => {
  * @param id 歌曲id
  * @param lyricInfo 歌词信息
  */
-export const editedLyricUpdate = (id: string, lyricInfo: LX.Music.LyricInfo) => {
+export const editedLyricUpdate = (id: string, lyricInfo: Coral.Music.LyricInfo) => {
   updateEditedLyric(toDBLyric(id, 'edited', lyricInfo));
 };
 
@@ -189,7 +189,7 @@ export const editedLyricClear = () => {
  * @param id 歌曲id
  * @param lyricInfo 歌词信息
  */
-export const editedLyricUpdateAddAndUpdate = (id: string, lyricInfo: LX.Music.LyricInfo) => {
+export const editedLyricUpdateAddAndUpdate = (id: string, lyricInfo: Coral.Music.LyricInfo) => {
   const lyrics = queryEditedLyric(id);
   if (lyrics.length) updateEditedLyric(toDBLyric(id, 'edited', lyricInfo));
   else insertEditedLyric(toDBLyric(id, 'edited', lyricInfo));

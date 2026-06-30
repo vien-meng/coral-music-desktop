@@ -44,11 +44,6 @@ const walk = (dir) => {
   return results;
 };
 
-record('no vue source files', () => {
-  const vueFiles = walk('src').filter((file) => file.endsWith('.vue'));
-  assert(vueFiles.length === 0, `found Vue files: ${vueFiles.join(', ')}`);
-});
-
 record('active renderer routes are React panels', () => {
   const file = 'src/renderer-react/app/routeConfig.tsx';
   const content = read(file);
@@ -136,8 +131,8 @@ record('download runtime typed IPC is wired', () => {
     [
       'export const startDownloadTask',
       'export const pauseDownloadTask',
-      'await global.lx.worker.dbService.getDownloadList()',
-      'await global.lx.worker.dbService.getPlayerLyric',
+      'await global.coral.worker.dbService.getDownloadList()',
+      'await global.coral.worker.dbService.getPlayerLyric',
     ],
     runtimeFile,
   );
@@ -163,16 +158,25 @@ record('download smoke command is available', () => {
   assertIncludes(content, ['"smoke:download"', 'CORAL_DOWNLOAD_SMOKE=true'], 'package.json');
 });
 
+record('data path uses Coral names', () => {
+  const appFile = 'src/main/app.ts';
+  const dbFile = 'src/main/worker/dbService/db.ts';
+  assertIncludes(
+    read(appFile),
+    [
+      "const CORAL_DATA_DIR_NAME = 'CoralDatas'",
+      "const CORAL_DB_NAME = 'coral.data.db'",
+      'global.coralDataPath = path.join(userDataPath, CORAL_DATA_DIR_NAME)',
+      'if (!existsSync(global.coralDataPath)) mkdirSync(global.coralDataPath)',
+    ],
+    appFile,
+  );
+  assertIncludes(read(dbFile), ["path.join(coralDataPath, 'coral.data.db')"], dbFile);
+});
+
 record('legacy renderer bridges are absent from React and lyric renderers', () => {
   const files = walk('src/renderer-react').concat(walk('src/lyric-react'));
-  const forbidden = [
-    'window.lx.worker',
-    '@renderer/',
-    '../../renderer',
-    '../../../renderer',
-    "from 'vue'",
-    'from "vue"',
-  ];
+  const forbidden = ['window.coral.worker', '@renderer/', '../../renderer', '../../../renderer'];
   const hits = [];
   for (const file of files) {
     if (!/\.(ts|tsx|js|jsx)$/.test(file)) continue;

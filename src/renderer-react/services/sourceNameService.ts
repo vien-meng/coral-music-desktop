@@ -6,6 +6,7 @@ const sourceNameMap: Record<string, string> = {
   local: '本地音乐',
   mg: '咪咕音乐',
   tx: 'QQ音乐',
+  webdav: '网盘资源',
   wy: '网易云音乐',
 };
 

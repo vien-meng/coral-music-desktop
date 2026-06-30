@@ -6,7 +6,7 @@ import { isElectronRenderer } from './appService';
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value != null;
 
-const parseThemePayload = (value: unknown): LX.ThemeSetting['theme'] | null => {
+const parseThemePayload = (value: unknown): Coral.ThemeSetting['theme'] | null => {
   if (!isRecord(value)) return null;
   if (typeof value.id !== 'string') return null;
   if (typeof value.name !== 'string') return null;
@@ -21,7 +21,7 @@ const parseThemePayload = (value: unknown): LX.ThemeSetting['theme'] | null => {
   };
 };
 
-const parseEncodedTheme = (rawTheme: string): LX.ThemeSetting['theme'] | null => {
+const parseEncodedTheme = (rawTheme: string): Coral.ThemeSetting['theme'] | null => {
   try {
     return parseThemePayload(JSON.parse(rawTheme));
   } catch {
@@ -33,7 +33,7 @@ const parseEncodedTheme = (rawTheme: string): LX.ThemeSetting['theme'] | null =>
   }
 };
 
-export const getInitialThemeSetting = (): LX.ThemeSetting | null => {
+export const getInitialThemeSetting = (): Coral.ThemeSetting | null => {
   const search = globalThis.location?.search;
   if (!search) return null;
 
@@ -57,7 +57,7 @@ export const getInitialThemeSetting = (): LX.ThemeSetting | null => {
   };
 };
 
-export const resolveThemeMode = (themeSetting: LX.ThemeSetting | null): CoralThemeMode => {
+export const resolveThemeMode = (themeSetting: Coral.ThemeSetting | null): CoralThemeMode => {
   if (!themeSetting) return 'light';
   return themeSetting.theme.isDark ? 'dark' : 'light';
 };
@@ -69,7 +69,7 @@ export const getThemes = async (): Promise<IpcThemeCollection | null> => {
   return await ipcClient.invoke(ipcChannels.winMain.getThemes);
 };
 
-export const saveTheme = async (theme: LX.Theme): Promise<void> => {
+export const saveTheme = async (theme: Coral.Theme): Promise<void> => {
   if (!isElectronRenderer()) return;
   await ipcClient.invoke(ipcChannels.winMain.saveTheme, theme);
 };
@@ -79,7 +79,7 @@ export const removeTheme = async (id: string): Promise<void> => {
   await ipcClient.invoke(ipcChannels.winMain.removeTheme, id);
 };
 
-export const onThemeChange = (listener: (setting: LX.ThemeSetting) => void): (() => void) => {
+export const onThemeChange = (listener: (setting: Coral.ThemeSetting) => void): (() => void) => {
   if (!isElectronRenderer()) return () => {};
   return ipcClient.on(ipcChannels.common.themeChange, listener);
 };

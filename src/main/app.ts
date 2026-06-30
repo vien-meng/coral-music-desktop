@@ -16,6 +16,9 @@ import { migrateDBData } from './utils/migrate';
 import { openDirInExplorer } from '@common/utils/electron';
 import { setProxyByHost } from '@common/utils/request';
 
+const CORAL_DATA_DIR_NAME = 'CoralDatas';
+const CORAL_DB_NAME = 'coral.data.db';
+
 export const initGlobalData = () => {
   const envParams = parseEnvParams();
   // envParams.cmdParams.dt = !!envParams.cmdParams.dt
@@ -24,7 +27,7 @@ export const initGlobalData = () => {
     cmdParams: envParams.cmdParams,
     deeplink: envParams.deeplink,
   };
-  global.lx = {
+  global.coral = {
     inited: false,
     isSkipTrayQuit: false,
     // mainWindowClosed: true,
@@ -93,7 +96,7 @@ export const initSingleInstanceHandle = () => {
       const envParams = parseEnvParams(argv);
       if (envParams.deeplink) {
         global.envParams.deeplink = envParams.deeplink;
-        global.lx.event_app.deeplink(global.envParams.deeplink);
+        global.coral.event_app.deeplink(global.envParams.deeplink);
         return;
       }
       if (envParams.cmdParams.hidden !== true) {
@@ -148,9 +151,10 @@ export const setUserDataPath = () => {
   }
 
   const userDataPath = app.getPath('userData');
-  global.lxOldDataPath = userDataPath;
-  global.lxDataPath = path.join(userDataPath, 'LxDatas');
-  if (!existsSync(global.lxDataPath)) mkdirSync(global.lxDataPath);
+  global.coralOldDataPath = userDataPath;
+  global.coralDataPath = path.join(userDataPath, CORAL_DATA_DIR_NAME);
+
+  if (!existsSync(global.coralDataPath)) mkdirSync(global.coralDataPath);
 };
 
 export const registerDeeplink = (startApp: () => void) => {
@@ -169,7 +173,7 @@ export const registerDeeplink = (startApp: () => void) => {
     event.preventDefault();
     global.envParams.deeplink = url;
     if (isExistMainWindow()) {
-      if (global.envParams.deeplink) global.lx.event_app.deeplink(global.envParams.deeplink);
+      if (global.envParams.deeplink) global.coral.event_app.deeplink(global.envParams.deeplink);
       else showMainWindow();
     } else {
       startApp();
@@ -228,7 +232,7 @@ export const listenerAppEvent = (startApp: () => void) => {
   });
 
   app.on('before-quit', () => {
-    global.lx.isSkipTrayQuit = true;
+    global.coral.isSkipTrayQuit = true;
   });
   app.on('window-all-closed', () => {
     if (isMac) return;
@@ -246,9 +250,9 @@ export const listenerAppEvent = (startApp: () => void) => {
 
   nativeTheme.addListener('updated', () => {
     const shouldUseDarkColors = nativeTheme.shouldUseDarkColors;
-    if (shouldUseDarkColors == global.lx.theme.shouldUseDarkColors) return;
-    global.lx.theme.shouldUseDarkColors = shouldUseDarkColors;
-    global.lx?.event_app.system_theme_change(shouldUseDarkColors);
+    if (shouldUseDarkColors == global.coral.theme.shouldUseDarkColors) return;
+    global.coral.theme.shouldUseDarkColors = shouldUseDarkColors;
+    global.coral?.event_app.system_theme_change(shouldUseDarkColors);
   });
 
   const setProxy = () => {
@@ -257,31 +261,31 @@ export const listenerAppEvent = (startApp: () => void) => {
       setProxyByHost(proxy.host, proxy.port ? String(proxy.port) : undefined);
     } else setProxyByHost();
   };
-  global.lx.event_app.on('updated_config', (keys, setting) => {
+  global.coral.event_app.on('updated_config', (keys, setting) => {
     if (
       keys.includes('network.proxy.enable') ||
-      (global.lx.appSetting['network.proxy.enable'] &&
+      (global.coral.appSetting['network.proxy.enable'] &&
         keys.some((k) => k.includes('network.proxy.')))
     ) {
       setProxy();
     }
 
     if (keys.includes('player.volume')) {
-      global.lx.event_app.player_status({ volume: Math.trunc(setting['player.volume']! * 100) });
+      global.coral.event_app.player_status({ volume: Math.trunc(setting['player.volume']! * 100) });
     }
     if (keys.includes('player.isMute')) {
-      global.lx.event_app.player_status({ mute: setting['player.isMute'] });
+      global.coral.event_app.player_status({ mute: setting['player.isMute'] });
     }
   });
-  global.lx.event_app.on('app_inited', () => {
+  global.coral.event_app.on('app_inited', () => {
     setProxy();
   });
 };
 
 const initTheme = () => {
-  global.lx.theme = getTheme();
+  global.coral.theme = getTheme();
   const themeConfigKeys = ['theme.id', 'theme.lightId', 'theme.darkId'];
-  global.lx.event_app.on('updated_config', (keys) => {
+  global.coral.event_app.on('updated_config', (keys) => {
     let requireUpdate = false;
     for (const key of keys) {
       if (themeConfigKeys.includes(key)) {
@@ -290,20 +294,20 @@ const initTheme = () => {
       }
     }
     if (requireUpdate) {
-      global.lx.theme = getTheme();
-      global.lx.event_app.theme_change();
+      global.coral.theme = getTheme();
+      global.coral.event_app.theme_change();
     }
   });
-  global.lx.event_app.on('system_theme_change', () => {
-    if (global.lx.appSetting['theme.id'] == 'auto') {
-      global.lx.theme = getTheme();
-      global.lx.event_app.theme_change();
+  global.coral.event_app.on('system_theme_change', () => {
+    if (global.coral.appSetting['theme.id'] == 'auto') {
+      global.coral.theme = getTheme();
+      global.coral.event_app.theme_change();
     }
   });
 };
 
 const backupDB = (backupPath: string) => {
-  const dbPath = path.join(global.lxDataPath, 'lx.data.db');
+  const dbPath = path.join(global.coralDataPath, CORAL_DB_NAME);
   try {
     renameSync(dbPath, backupPath);
   } catch {}
@@ -318,40 +322,40 @@ const backupDB = (backupPath: string) => {
 
 let isInitialized = false;
 export const initAppSetting = async () => {
-  if (!global.lx.inited) {
+  if (!global.coral.inited) {
     const config = await initHotKey();
-    global.lx.hotKey.config.local = config.local;
-    global.lx.hotKey.config.global = config.global;
-    global.lx.inited = true;
+    global.coral.hotKey.config.local = config.local;
+    global.coral.hotKey.config.global = config.global;
+    global.coral.inited = true;
   }
 
   if (!isInitialized) {
-    let dbFileExists = await global.lx.worker.dbService.init(global.lxDataPath);
+    let dbFileExists = await global.coral.worker.dbService.init(global.coralDataPath);
     if (dbFileExists === null) {
-      const backupPath = path.join(global.lxDataPath, `lx.data.db.${Date.now()}.bak`);
+      const backupPath = path.join(global.coralDataPath, `${CORAL_DB_NAME}.${Date.now()}.bak`);
       dialog.showMessageBoxSync({
         type: 'warning',
         message: 'Database verify failed',
         detail: `数据库表结构校验失败，我们将把有问题的数据库备份到：${backupPath}\n若此问题导致你的数据丢失，你可以尝试从备份文件找回它们。\n\nThe database table structure verification failed, we will back up the problematic database to: ${backupPath}\nIf this problem causes your data to be lost, you can try to retrieve them from the backup file.`,
       });
       backupDB(backupPath);
-      dbFileExists = await global.lx.worker.dbService.init(global.lxDataPath);
+      dbFileExists = await global.coral.worker.dbService.init(global.coralDataPath);
     }
-    global.lx.appSetting = (await initSetting()).setting;
+    global.coral.appSetting = (await initSetting()).setting;
     if (!dbFileExists)
       await migrateDBData().catch((err) => {
         log.error(err);
       });
     initTheme();
     if (envParams.cmdParams.dt == null)
-      envParams.cmdParams.dt = !global.lx.appSetting['common.transparentWindow'];
+      envParams.cmdParams.dt = !global.coral.appSetting['common.transparentWindow'];
   }
-  // global.lx.theme = getTheme()
+  // global.coral.theme = getTheme()
 
   isInitialized ||= true;
 };
 
 export const quitApp = () => {
-  global.lx.isSkipTrayQuit = true;
+  global.coral.isSkipTrayQuit = true;
   app.quit();
 };

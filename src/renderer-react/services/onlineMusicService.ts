@@ -1,11 +1,11 @@
 import { similar } from '@common/utils/common';
 import { toNewMusicInfo } from '@common/utils/tools';
 
-export type OnlineSourceWithAll = LX.OnlineSource | 'all';
+export type OnlineSourceWithAll = Coral.OnlineSource | 'all';
 
 export interface OnlineMusicSearchResult {
   limit: number;
-  list: LX.Music.MusicInfo[];
+  list: Coral.Music.MusicInfo[];
   maxPage: number;
   source: OnlineSourceWithAll;
   total: number;
@@ -18,7 +18,7 @@ export interface OnlineSongListItem {
   img: string;
   name: string;
   play_count: string;
-  source: LX.OnlineSource;
+  source: Coral.OnlineSource;
   time?: string;
   total?: string;
 }
@@ -40,8 +40,8 @@ export interface OnlineSongListDetailResult {
     play_count?: string;
   };
   limit: number;
-  list: LX.Music.MusicInfoOnline[];
-  source: LX.OnlineSource;
+  list: Coral.Music.MusicInfoOnline[];
+  source: Coral.OnlineSource;
   total: number;
 }
 
@@ -53,33 +53,33 @@ export interface OnlineLeaderboardBoardItem {
 
 export interface OnlineLeaderboardBoard {
   list: OnlineLeaderboardBoardItem[];
-  source: LX.OnlineSource;
+  source: Coral.OnlineSource;
 }
 
 export interface OnlineLeaderboardDetailResult {
   limit: number;
-  list: LX.Music.MusicInfoOnline[];
-  source: LX.OnlineSource;
+  list: Coral.Music.MusicInfoOnline[];
+  source: Coral.OnlineSource;
   total: number;
 }
 
 interface MusicSdkSourceInfo {
-  id: LX.OnlineSource;
+  id: Coral.OnlineSource;
   name: string;
 }
 
 interface RawMusicSearchResult {
   allPage: number;
   limit: number;
-  list: LX.Music.MusicInfo[];
-  source: LX.OnlineSource;
+  list: Coral.Music.MusicInfo[];
+  source: Coral.OnlineSource;
   total: number;
 }
 
 interface RawSongListSearchResult {
   limit: number;
   list: OnlineSongListItem[];
-  source: LX.OnlineSource;
+  source: Coral.OnlineSource;
   total: number;
 }
 
@@ -117,7 +117,7 @@ const loadMusicSdk = async (): Promise<MusicSdk> => {
   return await musicSdkPromise;
 };
 
-const getSourceSdk = async (source: LX.OnlineSource): Promise<MusicSdkSource | null> => {
+const getSourceSdk = async (source: Coral.OnlineSource): Promise<MusicSdkSource | null> => {
   const sdk = await loadMusicSdk();
   const sourceSdk = sdk[source];
   if (typeof sourceSdk !== 'object' || sourceSdk == null || Array.isArray(sourceSdk)) return null;
@@ -133,9 +133,11 @@ const dedupeById = <Item extends { id: string }>(list: Item[]): Item[] => {
   });
 };
 
-const getSourcesByFeature = async (feature: keyof MusicSdkSource): Promise<LX.OnlineSource[]> => {
+const getSourcesByFeature = async (
+  feature: keyof MusicSdkSource,
+): Promise<Coral.OnlineSource[]> => {
   const sdk = await loadMusicSdk();
-  const result: LX.OnlineSource[] = [];
+  const result: Coral.OnlineSource[] = [];
   for (const source of sdk.sources.map((source) => source.id)) {
     if (await getSourceSdk(source).then((sourceSdk) => Boolean(sourceSdk?.[feature])))
       result.push(source);
@@ -143,7 +145,10 @@ const getSourcesByFeature = async (feature: keyof MusicSdkSource): Promise<LX.On
   return sdk.sources.map((source) => source.id).filter((source) => result.includes(source));
 };
 
-const sortMusicByKeyword = (list: LX.Music.MusicInfo[], keyword: string): LX.Music.MusicInfo[] =>
+const sortMusicByKeyword = (
+  list: Coral.Music.MusicInfo[],
+  keyword: string,
+): Coral.Music.MusicInfo[] =>
   [...list].sort((left, right) => {
     const leftScore = similar(keyword, `${left.name} ${left.singer}`);
     const rightScore = similar(keyword, `${right.name} ${right.singer}`);
@@ -158,7 +163,7 @@ const sortSongListsByKeyword = (
 
 const normalizeMusicSearchResult = (
   result: RawMusicSearchResult,
-  source: LX.OnlineSource,
+  source: Coral.OnlineSource,
 ): OnlineMusicSearchResult => ({
   limit: result.limit,
   list: dedupeById(result.list.map((musicInfo) => toNewMusicInfo(musicInfo))),
@@ -167,18 +172,18 @@ const normalizeMusicSearchResult = (
   total: result.total,
 });
 
-export const getMusicSearchSources = async (): Promise<LX.OnlineSource[]> =>
+export const getMusicSearchSources = async (): Promise<Coral.OnlineSource[]> =>
   await getSourcesByFeature('musicSearch');
 
-export const getSongListSources = async (): Promise<LX.OnlineSource[]> =>
+export const getSongListSources = async (): Promise<Coral.OnlineSource[]> =>
   await getSourcesByFeature('songList');
 
 export const getSongListSorts = async (
-  source: LX.OnlineSource,
+  source: Coral.OnlineSource,
 ): Promise<Array<{ id: string; name: string }>> =>
   (await getSourceSdk(source))?.songList?.sortList ?? [];
 
-export const getLeaderboardSources = async (): Promise<LX.OnlineSource[]> =>
+export const getLeaderboardSources = async (): Promise<Coral.OnlineSource[]> =>
   await getSourcesByFeature('leaderboard');
 
 export const searchMusic = async (
@@ -273,7 +278,7 @@ export const searchSongLists = async (
   };
 };
 
-export const getSongListTags = async (source: LX.OnlineSource): Promise<unknown> => {
+export const getSongListTags = async (source: Coral.OnlineSource): Promise<unknown> => {
   const songListApi = (await getSourceSdk(source))?.songList;
   if (!songListApi) throw new Error(`song list source not found: ${source}`);
 
@@ -281,7 +286,7 @@ export const getSongListTags = async (source: LX.OnlineSource): Promise<unknown>
 };
 
 export const getSongLists = async (
-  source: LX.OnlineSource,
+  source: Coral.OnlineSource,
   tagId: string,
   sortId: string,
   page: number,
@@ -293,7 +298,7 @@ export const getSongLists = async (
 };
 
 export const getSongListDetail = async (
-  source: LX.OnlineSource,
+  source: Coral.OnlineSource,
   id: string,
   page: number,
 ): Promise<OnlineSongListDetailResult> => {
@@ -304,14 +309,14 @@ export const getSongListDetail = async (
   return {
     ...result,
     list: dedupeById(
-      result.list.map((musicInfo) => toNewMusicInfo(musicInfo) as LX.Music.MusicInfoOnline),
+      result.list.map((musicInfo) => toNewMusicInfo(musicInfo) as Coral.Music.MusicInfoOnline),
     ),
     source,
   };
 };
 
 export const getLeaderboardBoards = async (
-  source: LX.OnlineSource,
+  source: Coral.OnlineSource,
 ): Promise<OnlineLeaderboardBoard> => {
   const leaderboardApi = (await getSourceSdk(source))?.leaderboard;
   if (!leaderboardApi) throw new Error(`leaderboard source not found: ${source}`);
@@ -320,7 +325,7 @@ export const getLeaderboardBoards = async (
 };
 
 export const getLeaderboardDetail = async (
-  source: LX.OnlineSource,
+  source: Coral.OnlineSource,
   id: string,
   page: number,
 ): Promise<OnlineLeaderboardDetailResult> => {
@@ -331,7 +336,7 @@ export const getLeaderboardDetail = async (
   return {
     ...result,
     list: dedupeById(
-      result.list.map((musicInfo) => toNewMusicInfo(musicInfo) as LX.Music.MusicInfoOnline),
+      result.list.map((musicInfo) => toNewMusicInfo(musicInfo) as Coral.Music.MusicInfoOnline),
     ),
     source,
   };

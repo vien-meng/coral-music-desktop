@@ -24,12 +24,12 @@ export const SoundEffectBtn = observer(() => {
     [appSetting],
   );
 
-  const updateSetting = (setting: Partial<LX.AppSetting>): void => {
+  const updateSetting = (setting: Partial<Coral.AppSetting>): void => {
     settings.updateAppSetting(setting);
   };
 
   const resetEq = (): void => {
-    const nextSetting: Partial<LX.AppSetting> = {};
+    const nextSetting: Partial<Coral.AppSetting> = {};
     for (const frequency of eqFrequencies) {
       nextSetting[`player.soundEffect.biquadFilter.hz${frequency}`] = 0;
     }
@@ -60,7 +60,7 @@ export const SoundEffectBtn = observer(() => {
           setOpen(false);
         }}
       >
-        <Space direction="vertical" size="middle" className="coral-wide">
+        <Space orientation="vertical" size="middle" className="coral-wide">
           <section>
             <Space className="coral-wide" style={{ justifyContent: 'space-between' }}>
               <Text strong>均衡器</Text>

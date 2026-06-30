@@ -18,7 +18,7 @@ const offsetTagRxp = /(?:^|\n)\s*\[offset:\s*(\S+(?:\d+)*)\s*\]/;
 const offsetTagAllRxp = /(^|\n)\s*\[offset:\s*(\S+(?:\d+)*)\s*\]/g;
 const lyricKeys = ['lyric', 'tlyric', 'rlyric', 'lxlyric'] as const;
 
-const emptyLyricInfo: LX.Music.LyricInfo = {
+const emptyLyricInfo: Coral.Music.LyricInfo = {
   lyric: '',
   lxlyric: '',
   rlyric: '',
@@ -37,15 +37,15 @@ const getOffset = (lrc: string | null | undefined): number => {
 };
 
 const normalizeLyricInfo = (
-  lyricInfo: LX.Music.LyricInfo | null | undefined,
-): LX.Music.LyricInfo => ({
+  lyricInfo: Coral.Music.LyricInfo | null | undefined,
+): Coral.Music.LyricInfo => ({
   lyric: lyricInfo?.lyric ?? '',
   lxlyric: lyricInfo?.lxlyric ?? '',
   rlyric: lyricInfo?.rlyric ?? '',
   tlyric: lyricInfo?.tlyric ?? '',
 });
 
-const applyOffset = (lyricInfo: LX.Music.LyricInfo, offset: number): LX.Music.LyricInfo => {
+const applyOffset = (lyricInfo: Coral.Music.LyricInfo, offset: number): Coral.Music.LyricInfo => {
   const nextLyricInfo = normalizeLyricInfo(lyricInfo);
 
   for (const key of lyricKeys) {
@@ -65,7 +65,7 @@ export const LyricMenu = observer(() => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [draftLyric, setDraftLyric] = useState<LX.Music.LyricInfo>(emptyLyricInfo);
+  const [draftLyric, setDraftLyric] = useState<Coral.Music.LyricInfo>(emptyLyricInfo);
   const [offset, setOffset] = useState(0);
   const [originOffset, setOriginOffset] = useState(0);
 
@@ -122,7 +122,7 @@ export const LyricMenu = observer(() => {
     });
   };
 
-  const setAlign = (nextAlign: LX.AppSetting['playDetail.style.align']): void => {
+  const setAlign = (nextAlign: Coral.AppSetting['playDetail.style.align']): void => {
     settings.updateAppSetting({
       'playDetail.style.align': nextAlign,
     });
@@ -211,7 +211,7 @@ export const LyricMenu = observer(() => {
             },
           ]}
           onChange={(value) => {
-            setAlign(value as LX.AppSetting['playDetail.style.align']);
+            setAlign(value as Coral.AppSetting['playDetail.style.align']);
           }}
         />
       </Flex>

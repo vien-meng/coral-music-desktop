@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // 业务工具方法
 
-export const toNewMusicInfo = (oldMusicInfo: any): LX.Music.MusicInfo => {
+export const toNewMusicInfo = (oldMusicInfo: any): Coral.Music.MusicInfo => {
   const meta: Record<string, any> = {
     songId: oldMusicInfo.songmid, // 歌曲ID，local为文件路径
     albumName: oldMusicInfo.albumName, // 歌曲专辑名称
@@ -13,7 +13,7 @@ export const toNewMusicInfo = (oldMusicInfo: any): LX.Music.MusicInfo => {
     singer: oldMusicInfo.singer,
     source: oldMusicInfo.source,
     interval: oldMusicInfo.interval,
-    meta: meta as LX.Music.MusicInfoOnline['meta'],
+    meta: meta as Coral.Music.MusicInfoOnline['meta'],
   };
 
   if (oldMusicInfo.source == 'local') {
@@ -55,7 +55,7 @@ export const toNewMusicInfo = (oldMusicInfo: any): LX.Music.MusicInfo => {
   return newInfo;
 };
 
-export const toOldMusicInfo = (minfo: LX.Music.MusicInfo) => {
+export const toOldMusicInfo = (minfo: Coral.Music.MusicInfo) => {
   const oInfo: Record<string, any> = {
     name: minfo.name,
     singer: minfo.singer,
@@ -69,6 +69,13 @@ export const toOldMusicInfo = (minfo: LX.Music.MusicInfo) => {
   if (minfo.source == 'local') {
     oInfo.filePath = minfo.meta.filePath;
     oInfo.ext = minfo.meta.ext;
+    oInfo.albumId = '';
+    oInfo.types = [];
+    oInfo._types = {};
+  } else if (minfo.source == 'webdav') {
+    oInfo.accountId = minfo.meta.accountId;
+    oInfo.ext = minfo.meta.ext;
+    oInfo.filePath = minfo.meta.href;
     oInfo.albumId = '';
     oInfo.types = [];
     oInfo._types = {};
@@ -102,12 +109,12 @@ export const toOldMusicInfo = (minfo: LX.Music.MusicInfo) => {
  * 修复2.0.0-dev.8之前的新列表数据音质
  * @param musicInfo
  */
-export const fixNewMusicInfoQuality = (musicInfo: LX.Music.MusicInfo) => {
-  if (musicInfo.source == 'local') return musicInfo;
+export const fixNewMusicInfoQuality = (musicInfo: Coral.Music.MusicInfo) => {
+  if (musicInfo.source == 'local' || musicInfo.source == 'webdav') return musicInfo;
 
   const legacyQualitys = musicInfo.meta
-    ._qualitys as LX.Music.MusicInfoOnline['meta']['_qualitys'] & {
-    flac32bit?: LX.Music.MusicInfoOnline['meta']['_qualitys']['flac24bit'];
+    ._qualitys as Coral.Music.MusicInfoOnline['meta']['_qualitys'] & {
+    flac32bit?: Coral.Music.MusicInfoOnline['meta']['_qualitys']['flac24bit'];
   };
   if (legacyQualitys.flac32bit && !legacyQualitys.flac24bit) {
     legacyQualitys.flac24bit = legacyQualitys.flac32bit;
@@ -115,7 +122,7 @@ export const fixNewMusicInfoQuality = (musicInfo: LX.Music.MusicInfo) => {
 
     musicInfo.meta.qualitys = musicInfo.meta.qualitys.map((quality) => {
       const legacyQuality = quality as Omit<typeof quality, 'type'> & {
-        type: LX.Quality | 'flac32bit';
+        type: Coral.Quality | 'flac32bit';
       };
       if (legacyQuality.type == 'flac32bit') legacyQuality.type = 'flac24bit';
       return legacyQuality as typeof quality;
@@ -125,7 +132,7 @@ export const fixNewMusicInfoQuality = (musicInfo: LX.Music.MusicInfo) => {
   return musicInfo;
 };
 
-export const filterMusicList = <T extends LX.Music.MusicInfo>(list: T[]): T[] => {
+export const filterMusicList = <T extends Coral.Music.MusicInfo>(list: T[]): T[] => {
   const ids = new Set<string>();
   return list.filter((s) => {
     if (!s.id || ids.has(s.id) || !s.name) return false;

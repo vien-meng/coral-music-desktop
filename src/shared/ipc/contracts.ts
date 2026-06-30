@@ -75,6 +75,19 @@ export const ipcChannels = {
       WIN_MAIN_RENDERER_EVENT_NAME.download_task_retry as 'winMain_download_task_retry',
     downloadTaskStart:
       WIN_MAIN_RENDERER_EVENT_NAME.download_task_start as 'winMain_download_task_start',
+    webDavAccountList:
+      WIN_MAIN_RENDERER_EVENT_NAME.webdav_account_list as 'winMain_webdav_account_list',
+    webDavAccountSave:
+      WIN_MAIN_RENDERER_EVENT_NAME.webdav_account_save as 'winMain_webdav_account_save',
+    webDavAccountRemove:
+      WIN_MAIN_RENDERER_EVENT_NAME.webdav_account_remove as 'winMain_webdav_account_remove',
+    webDavAccountTest:
+      WIN_MAIN_RENDERER_EVENT_NAME.webdav_account_test as 'winMain_webdav_account_test',
+    webDavListDir: WIN_MAIN_RENDERER_EVENT_NAME.webdav_list_dir as 'winMain_webdav_list_dir',
+    webDavCreateStreamUrl:
+      WIN_MAIN_RENDERER_EVENT_NAME.webdav_create_stream_url as 'winMain_webdav_create_stream_url',
+    webDavRevokeStreamUrl:
+      WIN_MAIN_RENDERER_EVENT_NAME.webdav_revoke_stream_url as 'winMain_webdav_revoke_stream_url',
     externalDecoderProbe:
       WIN_MAIN_RENDERER_EVENT_NAME.external_decoder_probe as 'winMain_external_decoder_probe',
     externalDecoderTranscode:
@@ -162,13 +175,13 @@ export const ipcChannels = {
 } as const;
 
 export interface IpcThemeCollection {
-  themes: LX.Theme[];
-  userThemes: LX.Theme[];
+  themes: Coral.Theme[];
+  userThemes: Coral.Theme[];
   dataPath: string;
 }
 
 export interface IpcPlayerActionClick {
-  action: LX.Player.StatusButtonActions;
+  action: Coral.Player.StatusButtonActions;
   data?: unknown;
 }
 
@@ -178,55 +191,74 @@ export interface IpcDataSaveParams {
 }
 
 export interface IpcDownloadTaskStartParams {
-  task: LX.Download.ListItem;
+  task: Coral.Download.ListItem;
   url: string;
   isRetry?: boolean;
 }
 
 export interface IpcDownloadTaskAction {
   taskId: string;
-  task?: LX.Download.ListItem;
-  action: LX.Download.DownloadTaskActions;
+  task?: Coral.Download.ListItem;
+  action: Coral.Download.DownloadTaskActions;
 }
 
 export interface CoralIpcInvokeMap {
-  [ipcChannels.common.getAppSetting]: IpcContract<undefined, LX.AppSetting>;
-  [ipcChannels.common.getEnvParams]: IpcContract<undefined, LX.EnvParams>;
+  [ipcChannels.common.getAppSetting]: IpcContract<undefined, Coral.AppSetting>;
+  [ipcChannels.common.getEnvParams]: IpcContract<undefined, Coral.EnvParams>;
   [ipcChannels.common.getSystemFonts]: IpcContract<undefined, string[]>;
-  [ipcChannels.common.setAppSetting]: IpcContract<Partial<LX.AppSetting>, void>;
-  [ipcChannels.dislike.addDislikeMusicInfos]: IpcContract<LX.Dislike.DislikeMusicInfo[], void>;
+  [ipcChannels.common.setAppSetting]: IpcContract<Partial<Coral.AppSetting>, void>;
+  [ipcChannels.dislike.addDislikeMusicInfos]: IpcContract<Coral.Dislike.DislikeMusicInfo[], void>;
   [ipcChannels.dislike.clearDislikeMusicInfos]: IpcContract<undefined, void>;
-  [ipcChannels.dislike.getDislikeMusicInfos]: IpcContract<undefined, LX.Dislike.DislikeInfo>;
-  [ipcChannels.dislike.overwriteDislikeMusicInfos]: IpcContract<LX.Dislike.DislikeRules, void>;
-  [ipcChannels.player.listAdd]: IpcContract<LX.List.ListActionAdd, void>;
-  [ipcChannels.player.listDataOverwrite]: IpcContract<LX.List.ListActionDataOverwrite, void>;
-  [ipcChannels.player.listGet]: IpcContract<undefined, LX.List.UserListInfo[]>;
-  [ipcChannels.player.listRemove]: IpcContract<LX.List.ListActionRemove, void>;
-  [ipcChannels.player.listUpdate]: IpcContract<LX.List.ListActionUpdate, void>;
-  [ipcChannels.player.listUpdatePosition]: IpcContract<LX.List.ListActionUpdatePosition, void>;
-  [ipcChannels.player.listMusicAdd]: IpcContract<LX.List.ListActionMusicAdd, void>;
-  [ipcChannels.player.listMusicClear]: IpcContract<LX.List.ListActionMusicClear, void>;
-  [ipcChannels.player.listMusicGet]: IpcContract<string, LX.Music.MusicInfo[]>;
-  [ipcChannels.player.listMusicMove]: IpcContract<LX.List.ListActionMusicMove, void>;
-  [ipcChannels.player.listMusicRemove]: IpcContract<LX.List.ListActionMusicRemove, void>;
+  [ipcChannels.dislike.getDislikeMusicInfos]: IpcContract<undefined, Coral.Dislike.DislikeInfo>;
+  [ipcChannels.dislike.overwriteDislikeMusicInfos]: IpcContract<Coral.Dislike.DislikeRules, void>;
+  [ipcChannels.player.listAdd]: IpcContract<Coral.List.ListActionAdd, void>;
+  [ipcChannels.player.listDataOverwrite]: IpcContract<Coral.List.ListActionDataOverwrite, void>;
+  [ipcChannels.player.listGet]: IpcContract<undefined, Coral.List.UserListInfo[]>;
+  [ipcChannels.player.listRemove]: IpcContract<Coral.List.ListActionRemove, void>;
+  [ipcChannels.player.listUpdate]: IpcContract<Coral.List.ListActionUpdate, void>;
+  [ipcChannels.player.listUpdatePosition]: IpcContract<Coral.List.ListActionUpdatePosition, void>;
+  [ipcChannels.player.listMusicAdd]: IpcContract<Coral.List.ListActionMusicAdd, void>;
+  [ipcChannels.player.listMusicClear]: IpcContract<Coral.List.ListActionMusicClear, void>;
+  [ipcChannels.player.listMusicGet]: IpcContract<string, Coral.Music.MusicInfo[]>;
+  [ipcChannels.player.listMusicMove]: IpcContract<Coral.List.ListActionMusicMove, void>;
+  [ipcChannels.player.listMusicRemove]: IpcContract<Coral.List.ListActionMusicRemove, void>;
   [ipcChannels.player.listMusicUpdatePosition]: IpcContract<
-    LX.List.ListActionMusicUpdatePosition,
+    Coral.List.ListActionMusicUpdatePosition,
     void
   >;
   [ipcChannels.winMain.downloadListClear]: IpcContract<undefined, void>;
-  [ipcChannels.winMain.downloadListAdd]: IpcContract<LX.Download.saveDownloadMusicInfo, void>;
-  [ipcChannels.winMain.downloadListGet]: IpcContract<undefined, LX.Download.ListItem[]>;
+  [ipcChannels.winMain.downloadListAdd]: IpcContract<Coral.Download.saveDownloadMusicInfo, void>;
+  [ipcChannels.winMain.downloadListGet]: IpcContract<undefined, Coral.Download.ListItem[]>;
   [ipcChannels.winMain.downloadListRemove]: IpcContract<string[], void>;
-  [ipcChannels.winMain.downloadListUpdate]: IpcContract<LX.Download.ListItem[], void>;
-  [ipcChannels.winMain.downloadTaskPause]: IpcContract<string, LX.Download.ListItem | null>;
+  [ipcChannels.winMain.downloadListUpdate]: IpcContract<Coral.Download.ListItem[], void>;
+  [ipcChannels.winMain.downloadTaskPause]: IpcContract<string, Coral.Download.ListItem | null>;
   [ipcChannels.winMain.downloadTaskRetry]: IpcContract<
     IpcDownloadTaskStartParams,
-    LX.Download.ListItem
+    Coral.Download.ListItem
   >;
   [ipcChannels.winMain.downloadTaskStart]: IpcContract<
     IpcDownloadTaskStartParams,
-    LX.Download.ListItem
+    Coral.Download.ListItem
   >;
+  [ipcChannels.winMain.webDavAccountList]: IpcContract<undefined, Coral.WebDav.SafeAccount[]>;
+  [ipcChannels.winMain.webDavAccountSave]: IpcContract<
+    Coral.WebDav.Account,
+    Coral.WebDav.SafeAccount[]
+  >;
+  [ipcChannels.winMain.webDavAccountRemove]: IpcContract<string, Coral.WebDav.SafeAccount[]>;
+  [ipcChannels.winMain.webDavAccountTest]: IpcContract<
+    Coral.WebDav.Account,
+    Coral.WebDav.TestResult
+  >;
+  [ipcChannels.winMain.webDavListDir]: IpcContract<
+    Coral.WebDav.ListDirParams,
+    Coral.WebDav.ListDirResult
+  >;
+  [ipcChannels.winMain.webDavCreateStreamUrl]: IpcContract<
+    Coral.WebDav.StreamUrlParams,
+    Coral.WebDav.StreamUrlResult
+  >;
+  [ipcChannels.winMain.webDavRevokeStreamUrl]: IpcContract<string, void>;
   [ipcChannels.winMain.externalDecoderProbe]: IpcContract<
     ExternalDecoderProbeParams,
     ExternalDecoderProbeResult
@@ -237,17 +269,17 @@ export interface CoralIpcInvokeMap {
   >;
   [ipcChannels.winMain.getData]: IpcContract<string, unknown>;
   [ipcChannels.winMain.getThemes]: IpcContract<undefined, IpcThemeCollection>;
-  [ipcChannels.winMain.getUserApiList]: IpcContract<undefined, LX.UserApi.UserApiInfo[]>;
-  [ipcChannels.winMain.getUserApiStatus]: IpcContract<undefined, LX.UserApi.UserApiStatus>;
-  [ipcChannels.winMain.importUserApi]: IpcContract<string, LX.UserApi.ImportUserApi>;
-  [ipcChannels.winMain.openApiAction]: IpcContract<LX.OpenAPI.Actions, LX.OpenAPI.Status>;
-  [ipcChannels.winMain.removeUserApi]: IpcContract<string[], LX.UserApi.UserApiInfo[]>;
-  [ipcChannels.winMain.requestUserApi]: IpcContract<LX.UserApi.UserApiRequestParams, unknown>;
+  [ipcChannels.winMain.getUserApiList]: IpcContract<undefined, Coral.UserApi.UserApiInfo[]>;
+  [ipcChannels.winMain.getUserApiStatus]: IpcContract<undefined, Coral.UserApi.UserApiStatus>;
+  [ipcChannels.winMain.importUserApi]: IpcContract<string, Coral.UserApi.ImportUserApi>;
+  [ipcChannels.winMain.openApiAction]: IpcContract<Coral.OpenAPI.Actions, Coral.OpenAPI.Status>;
+  [ipcChannels.winMain.removeUserApi]: IpcContract<string[], Coral.UserApi.UserApiInfo[]>;
+  [ipcChannels.winMain.requestUserApi]: IpcContract<Coral.UserApi.UserApiRequestParams, unknown>;
   [ipcChannels.winMain.removeTheme]: IpcContract<string, void>;
-  [ipcChannels.winMain.saveTheme]: IpcContract<LX.Theme, void>;
+  [ipcChannels.winMain.saveTheme]: IpcContract<Coral.Theme, void>;
   [ipcChannels.winMain.setUserApi]: IpcContract<string, void>;
   [ipcChannels.winMain.setUserApiAllowUpdateAlert]: IpcContract<
-    LX.UserApi.UserApiSetAllowUpdateAlertParams,
+    Coral.UserApi.UserApiSetAllowUpdateAlertParams,
     void
   >;
   [ipcChannels.winMain.showSelectDialog]: IpcContract<
@@ -260,66 +292,66 @@ export interface CoralIpcInvokeMap {
   >;
   [ipcChannels.winMain.getCacheSize]: IpcContract<undefined, number>;
   [ipcChannels.winMain.clearCache]: IpcContract<undefined, void>;
-  [ipcChannels.winMain.getOtherSource]: IpcContract<string, LX.Music.MusicInfoOnline[]>;
-  [ipcChannels.winMain.saveOtherSource]: IpcContract<LX.Music.MusicInfoOtherSourceSave, void>;
+  [ipcChannels.winMain.getOtherSource]: IpcContract<string, Coral.Music.MusicInfoOnline[]>;
+  [ipcChannels.winMain.saveOtherSource]: IpcContract<Coral.Music.MusicInfoOtherSourceSave, void>;
   [ipcChannels.winMain.getOtherSourceCount]: IpcContract<undefined, number>;
   [ipcChannels.winMain.clearOtherSource]: IpcContract<undefined, void>;
   [ipcChannels.winMain.getMusicUrlCount]: IpcContract<undefined, number>;
   [ipcChannels.winMain.getMusicUrl]: IpcContract<string, string>;
-  [ipcChannels.winMain.saveMusicUrl]: IpcContract<LX.Music.MusicUrlInfo, void>;
+  [ipcChannels.winMain.saveMusicUrl]: IpcContract<Coral.Music.MusicUrlInfo, void>;
   [ipcChannels.winMain.clearMusicUrl]: IpcContract<undefined, void>;
-  [ipcChannels.winMain.getLyricRaw]: IpcContract<string, LX.Music.LyricInfo>;
-  [ipcChannels.winMain.getLyricEdited]: IpcContract<string, LX.Music.LyricInfo>;
-  [ipcChannels.winMain.saveLyricRaw]: IpcContract<LX.Music.LyricInfoSave, void>;
-  [ipcChannels.winMain.saveLyricEdited]: IpcContract<LX.Music.LyricInfoSave, void>;
+  [ipcChannels.winMain.getLyricRaw]: IpcContract<string, Coral.Music.LyricInfo>;
+  [ipcChannels.winMain.getLyricEdited]: IpcContract<string, Coral.Music.LyricInfo>;
+  [ipcChannels.winMain.saveLyricRaw]: IpcContract<Coral.Music.LyricInfoSave, void>;
+  [ipcChannels.winMain.saveLyricEdited]: IpcContract<Coral.Music.LyricInfoSave, void>;
   [ipcChannels.winMain.removeLyricEdited]: IpcContract<string, void>;
   [ipcChannels.winMain.getLyricRawCount]: IpcContract<undefined, number>;
   [ipcChannels.winMain.clearLyricRaw]: IpcContract<undefined, void>;
   [ipcChannels.winMain.getLyricEditedCount]: IpcContract<undefined, number>;
   [ipcChannels.winMain.clearLyricEdited]: IpcContract<undefined, void>;
   [ipcChannels.winMain.hotKeyEnable]: IpcContract<boolean, void>;
-  [ipcChannels.winMain.hotKeySetConfig]: IpcContract<LX.HotKeyActions, void>;
-  [ipcChannels.winMain.hotKeyStatus]: IpcContract<undefined, LX.HotKeyState>;
-  [ipcChannels.winMain.syncAction]: IpcContract<LX.Sync.SyncServiceActions, unknown>;
-  [ipcChannels.winMain.syncGetServerDevices]: IpcContract<undefined, LX.Sync.ServerDevices>;
+  [ipcChannels.winMain.hotKeySetConfig]: IpcContract<Coral.HotKeyActions, void>;
+  [ipcChannels.winMain.hotKeyStatus]: IpcContract<undefined, Coral.HotKeyState>;
+  [ipcChannels.winMain.syncAction]: IpcContract<Coral.Sync.SyncServiceActions, unknown>;
+  [ipcChannels.winMain.syncGetServerDevices]: IpcContract<undefined, Coral.Sync.ServerDevices>;
   [ipcChannels.winMain.syncRemoveServerDevice]: IpcContract<string, void>;
   [ipcChannels.winMain.close]: IpcContract<undefined, void>;
   [ipcChannels.winMain.min]: IpcContract<undefined, void>;
   [ipcChannels.winMain.max]: IpcContract<undefined, boolean>;
   [ipcChannels.winMain.fullscreen]: IpcContract<boolean, boolean>;
-  [ipcChannels.winLyric.getConfig]: IpcContract<undefined, LX.DesktopLyric.Config>;
-  [ipcChannels.winLyric.setConfig]: IpcContract<Partial<LX.DesktopLyric.Config>, void>;
+  [ipcChannels.winLyric.getConfig]: IpcContract<undefined, Coral.DesktopLyric.Config>;
+  [ipcChannels.winLyric.setConfig]: IpcContract<Partial<Coral.DesktopLyric.Config>, void>;
 }
 
 export interface CoralIpcSendMap {
   [ipcChannels.common.clearEnvParamsDeeplink]: undefined;
-  [ipcChannels.player.invokePlayMusic]: LX.Music.MusicInfo | undefined;
+  [ipcChannels.player.invokePlayMusic]: Coral.Music.MusicInfo | undefined;
   [ipcChannels.player.invokePlayNext]: undefined;
   [ipcChannels.player.invokePlayPrev]: undefined;
   [ipcChannels.player.invokeTogglePlay]: undefined;
   [ipcChannels.winMain.inited]: undefined;
   [ipcChannels.winMain.openDirInExplorer]: string;
-  [ipcChannels.winMain.playerStatus]: Partial<LX.Player.Status>;
+  [ipcChannels.winMain.playerStatus]: Partial<Coral.Player.Status>;
   [ipcChannels.winMain.saveData]: IpcDataSaveParams;
   [ipcChannels.winLyric.mouseEnterLeave]: boolean;
   [ipcChannels.winLyric.requestMainWindowChannel]: undefined;
-  [ipcChannels.winLyric.setWinBounds]: LX.DesktopLyric.NewBounds;
+  [ipcChannels.winLyric.setWinBounds]: Coral.DesktopLyric.NewBounds;
   [ipcChannels.winLyric.setWinResizeable]: boolean;
 }
 
 export interface CoralIpcEventMap {
   [ipcChannels.common.deeplink]: string;
-  [ipcChannels.common.themeChange]: LX.ThemeSetting;
-  [ipcChannels.dislike.addDislikeMusicInfos]: LX.Dislike.DislikeMusicInfo[];
+  [ipcChannels.common.themeChange]: Coral.ThemeSetting;
+  [ipcChannels.dislike.addDislikeMusicInfos]: Coral.Dislike.DislikeMusicInfo[];
   [ipcChannels.dislike.clearDislikeMusicInfos]: undefined;
-  [ipcChannels.dislike.overwriteDislikeMusicInfos]: LX.Dislike.DislikeRules;
-  [ipcChannels.winMain.onConfigChange]: Partial<LX.AppSetting>;
+  [ipcChannels.dislike.overwriteDislikeMusicInfos]: Coral.Dislike.DislikeRules;
+  [ipcChannels.winMain.onConfigChange]: Partial<Coral.AppSetting>;
   [ipcChannels.winMain.downloadTaskAction]: IpcDownloadTaskAction;
   [ipcChannels.winMain.playerActionOnButtonClick]: IpcPlayerActionClick;
-  [ipcChannels.winMain.syncAction]: LX.Sync.SyncMainWindowActions;
+  [ipcChannels.winMain.syncAction]: Coral.Sync.SyncMainWindowActions;
   [ipcChannels.winLyric.mainWindowInited]: undefined;
   [ipcChannels.winLyric.mouseEnterLeave]: boolean;
-  [ipcChannels.winLyric.onConfigChange]: Partial<LX.DesktopLyric.Config>;
+  [ipcChannels.winLyric.onConfigChange]: Partial<Coral.DesktopLyric.Config>;
   [ipcChannels.winLyric.provideMainWindowChannel]: undefined;
 }
 

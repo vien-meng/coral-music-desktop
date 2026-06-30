@@ -64,7 +64,7 @@ interface DuplicateMusicReviewItem {
   groupIndex: number;
   index: number;
   isRetained: boolean;
-  musicInfo: LX.Music.MusicInfo;
+  musicInfo: Coral.Music.MusicInfo;
 }
 
 const duplicateVariantPattern = /(\(|（).+(\)|）)/g;
@@ -89,10 +89,10 @@ const normalizeDuplicateMusicName = (name: string): string =>
     .replace(duplicatePunctuationPattern, '') || name.toLocaleLowerCase().replace(/\s+/g, '');
 
 const sortMusicInfos = (
-  musicInfos: LX.Music.MusicInfo[],
+  musicInfos: Coral.Music.MusicInfo[],
   sortField: MusicSortField,
   sortDirection: SortDirection,
-): LX.Music.MusicInfo[] =>
+): Coral.Music.MusicInfo[] =>
   musicInfos.slice().sort((left, right) => {
     let result = 0;
 
@@ -117,7 +117,7 @@ const sortMusicInfos = (
     return sortDirection === 'asc' ? result : -result;
   });
 
-const shuffleMusicInfos = (musicInfos: LX.Music.MusicInfo[]): LX.Music.MusicInfo[] => {
+const shuffleMusicInfos = (musicInfos: Coral.Music.MusicInfo[]): Coral.Music.MusicInfo[] => {
   const nextMusics = musicInfos.slice();
 
   for (let index = nextMusics.length - 1; index > 0; index -= 1) {
@@ -131,9 +131,9 @@ const shuffleMusicInfos = (musicInfos: LX.Music.MusicInfo[]): LX.Music.MusicInfo
 };
 
 const getDuplicateMusicReviewItems = (
-  musicInfos: LX.Music.MusicInfo[],
+  musicInfos: Coral.Music.MusicInfo[],
 ): DuplicateMusicReviewItem[] => {
-  const groupMap = new Map<string, Array<{ index: number; musicInfo: LX.Music.MusicInfo }>>();
+  const groupMap = new Map<string, Array<{ index: number; musicInfo: Coral.Music.MusicInfo }>>();
 
   musicInfos.forEach((musicInfo, index) => {
     const duplicateName = normalizeDuplicateMusicName(musicInfo.name);
@@ -175,17 +175,17 @@ export const LocalListRoutePanel = observer(() => {
   const [sortField, setSortField] = useState<MusicSortField>('name');
   const [duplicateReviewItems, setDuplicateReviewItems] = useState<DuplicateMusicReviewItem[]>([]);
   const [isDuplicateReviewOpen, setIsDuplicateReviewOpen] = useState(false);
-  const [sourceToggleMusic, setSourceToggleMusic] = useState<LX.Music.MusicInfo | null>(null);
-  const [sourceToggleCandidates, setSourceToggleCandidates] = useState<LX.Music.MusicInfo[]>([]);
+  const [sourceToggleMusic, setSourceToggleMusic] = useState<Coral.Music.MusicInfo | null>(null);
+  const [sourceToggleCandidates, setSourceToggleCandidates] = useState<Coral.Music.MusicInfo[]>([]);
   const [sourceToggleSearchText, setSourceToggleSearchText] = useState('');
   const [isSourceToggleOpen, setIsSourceToggleOpen] = useState(false);
   const [isLoadingSourceToggleCandidates, setIsLoadingSourceToggleCandidates] = useState(false);
   const [isDraggingMode, setIsDraggingMode] = useState(false);
-  const [dragList, setDragList] = useState<LX.Music.MusicInfo[]>([]);
-  const [batchDownloadModalMusics, setBatchDownloadModalMusics] = useState<LX.Music.MusicInfo[]>(
+  const [dragList, setDragList] = useState<Coral.Music.MusicInfo[]>([]);
+  const [batchDownloadModalMusics, setBatchDownloadModalMusics] = useState<Coral.Music.MusicInfo[]>(
     [],
   );
-  const [downloadModalMusic, setDownloadModalMusic] = useState<LX.Music.MusicInfo | null>(null);
+  const [downloadModalMusic, setDownloadModalMusic] = useState<Coral.Music.MusicInfo | null>(null);
   const normalizedFilterText = filterText.trim().toLocaleLowerCase();
   const filteredMusics = normalizedFilterText
     ? list.selectedMusics.filter((musicInfo) =>
@@ -293,6 +293,11 @@ export const LocalListRoutePanel = observer(() => {
   const handlePlaySelectedMusics = (): void => {
     if (!selectedMusics.length) return;
     player.playFromQueue(selectedMusics[0], selectedMusics, selectedListId ?? null);
+  };
+
+  const handlePlayAllMusics = (): void => {
+    if (!sortedMusics.length) return;
+    player.playFromQueue(sortedMusics[0], sortedMusics, selectedListId ?? null);
   };
 
   const handleRemoveSelectedMusics = (): void => {
@@ -510,7 +515,7 @@ export const LocalListRoutePanel = observer(() => {
       });
   };
 
-  const handleCopyMusicName = (musicInfo: LX.Music.MusicInfo): void => {
+  const handleCopyMusicName = (musicInfo: Coral.Music.MusicInfo): void => {
     const musicName = `${musicInfo.name}${musicInfo.singer ? ` - ${musicInfo.singer}` : ''}`;
 
     navigator.clipboard
@@ -523,7 +528,7 @@ export const LocalListRoutePanel = observer(() => {
       });
   };
 
-  const handleSearchMusic = (musicInfo: LX.Music.MusicInfo): void => {
+  const handleSearchMusic = (musicInfo: Coral.Music.MusicInfo): void => {
     const searchText = `${musicInfo.name} ${musicInfo.singer}`.trim();
 
     if (musicSearchSources.includes(musicInfo.source as SupportedMusicSearchSource)) {
@@ -551,7 +556,7 @@ export const LocalListRoutePanel = observer(() => {
       setIsLoadingSourceToggleCandidates(false);
     }
   };
-  const handleOpenSourceToggle = (musicInfo: LX.Music.MusicInfo): void => {
+  const handleOpenSourceToggle = (musicInfo: Coral.Music.MusicInfo): void => {
     const searchText = `${musicInfo.name} ${musicInfo.singer}`.trim();
 
     setSourceToggleMusic(musicInfo);
@@ -561,7 +566,7 @@ export const LocalListRoutePanel = observer(() => {
     searchSourceToggleCandidates(searchText);
   };
 
-  const handleDownload = (musicInfo: LX.Music.MusicInfo): void => {
+  const handleDownload = (musicInfo: Coral.Music.MusicInfo): void => {
     const selectedCount = selectedMusics.length;
     if (selectedCount > 1 && selectedMusics.some((m) => m.id === musicInfo.id)) {
       setBatchDownloadModalMusics(selectedMusics);
@@ -570,11 +575,11 @@ export const LocalListRoutePanel = observer(() => {
     }
   };
 
-  const handleOpenSourceDetail = (musicInfo: LX.Music.MusicInfo): void => {
+  const handleOpenSourceDetail = (musicInfo: Coral.Music.MusicInfo): void => {
     musicDetailService.openMusicDetail(musicInfo);
   };
 
-  const handleConfirmSourceToggle = (targetMusicInfo: LX.Music.MusicInfo): void => {
+  const handleConfirmSourceToggle = (targetMusicInfo: Coral.Music.MusicInfo): void => {
     if (!sourceToggleMusic) return;
 
     const duplicateTarget = list.selectedMusics.some(
@@ -612,7 +617,7 @@ export const LocalListRoutePanel = observer(() => {
   }, [ui.pendingQuickAction]);
 
   return (
-    <Space direction="vertical" size="middle" className="coral-wide coral-local-page">
+    <Space orientation="vertical" size="middle" className="coral-wide coral-local-page">
       <Space wrap className="coral-route-controls coral-local-primary-controls">
         <Select
           value={selectedListId}
@@ -629,6 +634,13 @@ export const LocalListRoutePanel = observer(() => {
         />
         <Button icon={<ReloadOutlined />} loading={list.isLoadingMusics} onClick={loadSelectedList}>
           歌曲
+        </Button>
+        <Button
+          icon={<PlayCircleOutlined />}
+          disabled={!sortedMusics.length}
+          onClick={handlePlayAllMusics}
+        >
+          播放全部
         </Button>
         <Button
           icon={<ImportOutlined />}
@@ -904,12 +916,12 @@ export const LocalListRoutePanel = observer(() => {
         </Button>
       </Space>
 
-      {list.hydrateError ? <Alert showIcon type="error" message={list.hydrateError} /> : null}
-      {list.actionError ? <Alert showIcon type="error" message={list.actionError} /> : null}
-      {list.musicError ? <Alert showIcon type="error" message={list.musicError} /> : null}
+      {list.hydrateError ? <Alert showIcon type="error" title={list.hydrateError} /> : null}
+      {list.actionError ? <Alert showIcon type="error" title={list.actionError} /> : null}
+      {list.musicError ? <Alert showIcon type="error" title={list.musicError} /> : null}
 
       {isDraggingMode && dragList.length ? (
-        <Space direction="vertical" size="small" className="coral-wide">
+        <Space orientation="vertical" size="small" className="coral-wide">
           <DraggableMusicList
             list={dragList}
             onReorder={handleDragReorder}
@@ -1062,7 +1074,7 @@ export const LocalListRoutePanel = observer(() => {
               setIsSourceToggleOpen(false);
             }}
           >
-            <Space direction="vertical" size="middle" className="coral-wide">
+            <Space orientation="vertical" size="middle" className="coral-wide">
               <Input.Search
                 allowClear
                 value={sourceToggleSearchText}

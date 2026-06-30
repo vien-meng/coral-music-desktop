@@ -11,11 +11,11 @@
 
 ### 1. backupService.ts（严重问题修复）
 
-**问题 1（严重）**：`saveLxConfigFile`（`@common/utils/nodejs.ts:148`）使用回调式 `fs.writeFile`，不返回 Promise，调用方 `await` 无效。
+**问题 1（严重）**：`saveCoralConfigFile`（`@common/utils/nodejs.ts:148`）使用回调式 `fs.writeFile`，不返回 Promise，调用方 `await` 无效。
 
 **修复**：在 `backupService.ts` 内部封装 `safeSaveLxConfigFile`，使用 `zlib.gzip` + `fs/promises.writeFile` 正确返回 Promise。不修改共享的 `@common/utils/nodejs.ts` 以避免影响遗留代码。
 
-**问题 2**：`readLxConfigFile` 返回 `any`，缺少类型安全。
+**问题 2**：`readCoralConfigFile` 返回 `any`，缺少类型安全。
 
 **修复**：定义 `ConfigFile` 联合类型（`AllDataV2 | AllDataV1 | SettingV2 | SettingV1 | PlayListV2 | PlayListV1 | DefaultListV1`），对返回值进行类型断言。
 
@@ -23,9 +23,9 @@
 
 **修复**：在 `importAllData`、`exportAllData`、`importSetting`、`exportSetting`、`importPlayList`、`exportPlayList`、`exportPlayListToText`、`exportPlayListToCsv` 中包裹 try/catch，失败时通过 Ant Design `message.error` 提示用户。
 
-**问题 4**：不必要的类型断言 `as Partial<LX.AppSetting>`。
+**问题 4**：不必要的类型断言 `as Partial<Coral.AppSetting>`。
 
-**修复**：移除 `migrateSetting(setting) as Partial<LX.AppSetting>` 中的断言，因为 `migrateSetting` 已返回正确类型。
+**修复**：移除 `migrateSetting(setting) as Partial<Coral.AppSetting>` 中的断言，因为 `migrateSetting` 已返回正确类型。
 
 ### 2. ThemeEditModal.tsx（多项主要问题修复）
 
@@ -41,7 +41,7 @@
 
 **修复**：在模态框关闭的 `useEffect` 中，若 `tempBgRef.current` 存在（即未保存），调用 `removeFile` 清理。
 
-**问题 4（主要）**：`buildTheme()` 返回结构与 `LX.Theme` 类型不匹配。类型要求 `config: { themeColors: ThemeColors, extInfo: { ... } }`，但原代码将所有颜色放入 `themeColors`，`--background-image` 直接挂在 `config` 下。
+**问题 4（主要）**：`buildTheme()` 返回结构与 `Coral.Theme` 类型不匹配。类型要求 `config: { themeColors: ThemeColors, extInfo: { ... } }`，但原代码将所有颜色放入 `themeColors`，`--background-image` 直接挂在 `config` 下。
 
 **修复**：定义 `EXT_INFO_KEYS` 集合区分颜色归属。`buildTheme()` 中将 `--color-app-background`、`--color-main-background`、`--color-nav-font`、`--background-image`、`--color-badge-*`、`--color-btn-*` 放入 `extInfo`；`createThemeColors` 派生色 + `--color-primary` + `--color-1000` 放入 `themeColors`。同步修改 `useEffect` 中读取逻辑，从 `themeColors` + `extInfo` 合并读取。
 
@@ -77,7 +77,7 @@
 
 **问题 5（次要）**：动态删除属性键触发 `no-dynamic-delete` lint 规则。
 
-**修复**：将 `keys` 对象断言为 `Record<string, LX.HotKey>` 后再 `delete`，绕过 lint 规则同时保持类型安全。
+**修复**：将 `keys` 对象断言为 `Record<string, Coral.HotKey>` 后再 `delete`，绕过 lint 规则同时保持类型安全。
 
 ### 4. DislikeListModal.tsx（修复）
 

@@ -12,8 +12,8 @@ import { encodePath } from '@common/utils/electron';
 let browserWindow: Electron.BrowserWindow | null = null;
 let isWinBoundsUpdateing = false;
 
-const saveBoundsConfig = debounce((config: Partial<LX.AppSetting>) => {
-  global.lx.event_app.update_config(config);
+const saveBoundsConfig = debounce((config: Partial<Coral.AppSetting>) => {
+  global.coral.event_app.update_config(config);
   if (isWinBoundsUpdateing) isWinBoundsUpdateing = false;
 }, 500);
 
@@ -21,9 +21,9 @@ const winEvent = () => {
   if (!browserWindow) return;
 
   // browserWindow.on('close', () => {
-  //   if (global.lx.appSetting['desktopLyric.enable'] && !global.lx.mainWindowClosed) {
+  //   if (global.coral.appSetting['desktopLyric.enable'] && !global.coral.mainWindowClosed) {
   //     browserWindow = null
-  //     global.lx.event_app.update_config({ 'desktopLyric.enable': false })
+  //     global.coral.event_app.update_config({ 'desktopLyric.enable': false })
   //   }
   // })
 
@@ -46,10 +46,10 @@ const winEvent = () => {
       // Linux 不允许将窗口设置出屏幕之外，MacOS未知，故只在Windows下执行强制设置
       // 非主动调整窗口触发的窗口位置变化将重置回设置值
       browserWindow!.setBounds({
-        x: global.lx.appSetting['desktopLyric.x'] ?? 0,
-        y: global.lx.appSetting['desktopLyric.y'] ?? 0,
-        width: global.lx.appSetting['desktopLyric.width'],
-        height: global.lx.appSetting['desktopLyric.height'],
+        x: global.coral.appSetting['desktopLyric.x'] ?? 0,
+        y: global.coral.appSetting['desktopLyric.y'] ?? 0,
+        width: global.coral.appSetting['desktopLyric.width'],
+        height: global.coral.appSetting['desktopLyric.height'],
       });
     }
   });
@@ -76,18 +76,18 @@ const winEvent = () => {
 
   browserWindow.once('ready-to-show', () => {
     showWindow();
-    if (global.lx.appSetting['desktopLyric.isLock']) {
+    if (global.coral.appSetting['desktopLyric.isLock']) {
       browserWindow!.setIgnoreMouseEvents(true, {
-        forward: !isLinux && global.lx.appSetting['desktopLyric.isHoverHide'],
+        forward: !isLinux && global.coral.appSetting['desktopLyric.isHoverHide'],
       });
     }
     // linux下每次重开时貌似要重新设置置顶
-    // if (isLinux && global.lx.appSetting['desktopLyric.isAlwaysOnTop']) {
-    //   browserWindow!.setAlwaysOnTop(global.lx.appSetting['desktopLyric.isAlwaysOnTop'], 'screen-saver')
+    // if (isLinux && global.coral.appSetting['desktopLyric.isAlwaysOnTop']) {
+    //   browserWindow!.setAlwaysOnTop(global.coral.appSetting['desktopLyric.isAlwaysOnTop'], 'screen-saver')
     // }
     if (
-      global.lx.appSetting['desktopLyric.isAlwaysOnTop'] &&
-      global.lx.appSetting['desktopLyric.isAlwaysOnTopLoop']
+      global.coral.appSetting['desktopLyric.isAlwaysOnTop'] &&
+      global.coral.appSetting['desktopLyric.isAlwaysOnTopLoop']
     )
       alwaysOnTopTools.startLoop();
     browserWindow!.blur();
@@ -97,23 +97,23 @@ const winEvent = () => {
 export const createWindow = () => {
   closeWindow();
   if (!global.envParams.workAreaSize) return;
-  let x = global.lx.appSetting['desktopLyric.x'];
-  let y = global.lx.appSetting['desktopLyric.y'];
-  let width = global.lx.appSetting['desktopLyric.width'];
-  let height = global.lx.appSetting['desktopLyric.height'];
-  let isAlwaysOnTop = global.lx.appSetting['desktopLyric.isAlwaysOnTop'];
-  // let isLockScreen = global.lx.appSetting['desktopLyric.isLockScreen']
-  let isShowTaskbar = global.lx.appSetting['desktopLyric.isShowTaskbar'];
+  let x = global.coral.appSetting['desktopLyric.x'];
+  let y = global.coral.appSetting['desktopLyric.y'];
+  let width = global.coral.appSetting['desktopLyric.width'];
+  let height = global.coral.appSetting['desktopLyric.height'];
+  let isAlwaysOnTop = global.coral.appSetting['desktopLyric.isAlwaysOnTop'];
+  // let isLockScreen = global.coral.appSetting['desktopLyric.isLockScreen']
+  let isShowTaskbar = global.coral.appSetting['desktopLyric.isShowTaskbar'];
   // let { width: screenWidth, height: screenHeight } = global.envParams.workAreaSize
   const winSize = initWindowSize(x, y, width, height);
-  global.lx.event_app.update_config({
+  global.coral.event_app.update_config({
     'desktopLyric.x': winSize.x,
     'desktopLyric.y': winSize.y,
     'desktopLyric.width': winSize.width,
     'desktopLyric.height': winSize.height,
   });
 
-  const { shouldUseDarkColors, theme } = global.lx.theme;
+  const { shouldUseDarkColors, theme } = global.coral.theme;
 
   /**
    * Initial window options
@@ -163,7 +163,7 @@ export const createWindow = () => {
 
   winEvent();
   // browserWindow.webContents.openDevTools()
-  global.lx.event_app.desktop_lyric_window_created(browserWindow);
+  global.coral.event_app.desktop_lyric_window_created(browserWindow);
 };
 export const isExistWindow = (): boolean => !!browserWindow;
 
@@ -244,7 +244,7 @@ export const alwaysOnTopTools: AlwaysOnTopTools = {
   timeout: null,
   setAlwaysOnTop(isLoop) {
     this.clearLoop();
-    setAlwaysOnTop(global.lx.appSetting['desktopLyric.isAlwaysOnTop'], 'screen-saver');
+    setAlwaysOnTop(global.coral.appSetting['desktopLyric.isAlwaysOnTop'], 'screen-saver');
     // console.log(isLoop)
     if (isLoop) this.startLoop();
   },

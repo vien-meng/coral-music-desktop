@@ -3,7 +3,7 @@ import type WS from 'ws';
 type DefaultEventsMap = Record<string, (...args: any[]) => void>;
 
 declare global {
-  namespace LX {
+  namespace Coral {
     namespace Sync {
       namespace Client {
         interface Socket extends WS.WebSocket {
@@ -18,9 +18,9 @@ declare global {
           };
 
           onClose: (handler: (err: Error) => void | Promise<void>) => () => void;
-          remote: LX.Sync.ServerSyncActions;
-          remoteQueueList: LX.Sync.ServerSyncListActions;
-          remoteQueueDislike: LX.Sync.ServerSyncDislikeActions;
+          remote: Coral.Sync.ServerSyncActions;
+          remoteQueueList: Coral.Sync.ServerSyncListActions;
+          remoteQueueDislike: Coral.Sync.ServerSyncDislikeActions;
         }
 
         interface UrlInfo {
@@ -36,7 +36,7 @@ declare global {
           isReady: boolean;
           userInfo: { name: 'default' };
           keyInfo: ServerKeyInfo;
-          feature: LX.Sync.EnabledFeatures;
+          feature: Coral.Sync.EnabledFeatures;
           moduleReadys: {
             list: boolean;
             dislike: boolean;
@@ -45,9 +45,9 @@ declare global {
           onClose: (handler: (err: Error) => void | Promise<void>) => () => void;
           broadcast: (handler: (client: Socket) => void) => void;
 
-          remote: LX.Sync.ClientSyncActions;
-          remoteQueueList: LX.Sync.ClientSyncListActions;
-          remoteQueueDislike: LX.Sync.ClientSyncDislikeActions;
+          remote: Coral.Sync.ClientSyncActions;
+          remoteQueueList: Coral.Sync.ClientSyncListActions;
+          remoteQueueDislike: Coral.Sync.ClientSyncDislikeActions;
         }
         type SocketServer = WS.Server<Socket>;
       }

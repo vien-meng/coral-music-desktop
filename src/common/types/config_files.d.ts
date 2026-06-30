@@ -1,8 +1,11 @@
-declare namespace LX {
+declare namespace Coral {
   namespace ConfigFile {
     interface MyListInfoPart {
       type: 'playListPart_v2';
-      data: LX.List.MyDefaultListInfoFull | LX.List.MyLoveListInfoFull | LX.List.UserListInfoFull;
+      data:
+        | Coral.List.MyDefaultListInfoFull
+        | Coral.List.MyLoveListInfoFull
+        | Coral.List.UserListInfoFull;
     }
   }
 }

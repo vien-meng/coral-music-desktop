@@ -8,42 +8,46 @@ import {
 } from '../downloadRuntime';
 
 export default () => {
-  mainHandle<LX.Download.ListItem[]>(WIN_MAIN_RENDERER_EVENT_NAME.download_list_get, async () =>
-    global.lx.worker.dbService.getDownloadList(),
+  mainHandle<Coral.Download.ListItem[]>(WIN_MAIN_RENDERER_EVENT_NAME.download_list_get, async () =>
+    global.coral.worker.dbService.getDownloadList(),
   );
-  mainHandle<LX.Download.saveDownloadMusicInfo>(
+  mainHandle<Coral.Download.saveDownloadMusicInfo>(
     WIN_MAIN_RENDERER_EVENT_NAME.download_list_add,
     async ({ params: { list, addMusicLocationType } }) => {
-      await global.lx.worker.dbService.downloadInfoSave(list, addMusicLocationType);
+      await global.coral.worker.dbService.downloadInfoSave(list, addMusicLocationType);
     },
   );
-  mainHandle<LX.Download.ListItem[]>(
+  mainHandle<Coral.Download.ListItem[]>(
     WIN_MAIN_RENDERER_EVENT_NAME.download_list_update,
     async ({ params: list }) => {
-      await global.lx.worker.dbService.downloadInfoUpdate(list);
+      await global.coral.worker.dbService.downloadInfoUpdate(list);
     },
   );
   mainHandle<string[]>(
     WIN_MAIN_RENDERER_EVENT_NAME.download_list_remove,
     async ({ params: ids }) => {
       await removeDownloadTasks(ids);
-      await global.lx.worker.dbService.downloadInfoRemove(ids);
+      await global.coral.worker.dbService.downloadInfoRemove(ids);
     },
   );
   mainHandle(WIN_MAIN_RENDERER_EVENT_NAME.download_list_clear, async () => {
     await clearDownloadTasks();
-    await global.lx.worker.dbService.downloadInfoClear();
+    await global.coral.worker.dbService.downloadInfoClear();
   });
-  mainHandle<{ task: LX.Download.ListItem; url: string; isRetry?: boolean }, LX.Download.ListItem>(
-    WIN_MAIN_RENDERER_EVENT_NAME.download_task_start,
-    async ({ params }) => startDownloadTask(params),
+  mainHandle<
+    { task: Coral.Download.ListItem; url: string; isRetry?: boolean },
+    Coral.Download.ListItem
+  >(WIN_MAIN_RENDERER_EVENT_NAME.download_task_start, async ({ params }) =>
+    startDownloadTask(params),
   );
-  mainHandle<string, LX.Download.ListItem | null>(
+  mainHandle<string, Coral.Download.ListItem | null>(
     WIN_MAIN_RENDERER_EVENT_NAME.download_task_pause,
     async ({ params: taskId }) => pauseDownloadTask(taskId),
   );
-  mainHandle<{ task: LX.Download.ListItem; url: string; isRetry?: boolean }, LX.Download.ListItem>(
-    WIN_MAIN_RENDERER_EVENT_NAME.download_task_retry,
-    async ({ params }) => startDownloadTask({ ...params, isRetry: true }),
+  mainHandle<
+    { task: Coral.Download.ListItem; url: string; isRetry?: boolean },
+    Coral.Download.ListItem
+  >(WIN_MAIN_RENDERER_EVENT_NAME.download_task_retry, async ({ params }) =>
+    startDownloadTask({ ...params, isRetry: true }),
   );
 };

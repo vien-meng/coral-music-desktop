@@ -12,6 +12,7 @@ import { SyncStore } from './domains/syncStore';
 import { ThemeStore } from './domains/themeStore';
 import { UiStore } from './domains/uiStore';
 import { UserApiStore } from './domains/userApiStore';
+import { WebDavStore } from './domains/webDavStore';
 
 export class RootStore {
   settings = new SettingsStore();
@@ -39,6 +40,8 @@ export class RootStore {
   openApi = new OpenApiStore();
 
   userApi = new UserApiStore();
+
+  webDav = new WebDavStore();
 
   migrationStage = 'Main renderer MobX domain foundations';
 
@@ -79,6 +82,7 @@ export class RootStore {
       this.dislike.hydrate(),
       this.sync.hydrate(),
       this.userApi.hydrate(),
+      this.webDav.hydrate(),
     ]);
   }
 }

@@ -9,28 +9,28 @@ import { setMeta, type MusicMeta } from '@common/utils/musicMeta';
 import { sendEvent } from './main';
 
 interface StartParams {
-  task: LX.Download.ListItem;
+  task: Coral.Download.ListItem;
   url: string;
   isRetry?: boolean;
 }
 
 const activeDownloads = new Map<string, DownloaderType>();
 
-const cloneTask = (task: LX.Download.ListItem): LX.Download.ListItem => ({
+const cloneTask = (task: Coral.Download.ListItem): Coral.Download.ListItem => ({
   ...task,
   metadata: {
     ...task.metadata,
   },
 });
 
-const saveTask = async (task: LX.Download.ListItem): Promise<void> => {
-  await global.lx.worker.dbService.downloadInfoUpdate([task]);
+const saveTask = async (task: Coral.Download.ListItem): Promise<void> => {
+  await global.coral.worker.dbService.downloadInfoUpdate([task]);
 };
 
-const getDownloadList = async (): Promise<LX.Download.ListItem[]> =>
-  await global.lx.worker.dbService.getDownloadList();
+const getDownloadList = async (): Promise<Coral.Download.ListItem[]> =>
+  await global.coral.worker.dbService.getDownloadList();
 
-const emitAction = (task: LX.Download.ListItem, action: LX.Download.DownloadTaskActions) => {
+const emitAction = (task: Coral.Download.ListItem, action: Coral.Download.DownloadTaskActions) => {
   sendEvent(WIN_MAIN_RENDERER_EVENT_NAME.download_task_action, {
     action,
     task,
@@ -39,10 +39,10 @@ const emitAction = (task: LX.Download.ListItem, action: LX.Download.DownloadTask
 };
 
 const setTaskStatus = (
-  task: LX.Download.ListItem,
-  status: LX.Download.DownloadTaskStatus,
+  task: Coral.Download.ListItem,
+  status: Coral.Download.DownloadTaskStatus,
   statusText: string,
-): LX.Download.ListItem => {
+): Coral.Download.ListItem => {
   task.status = status;
   task.statusText = statusText;
   task.isComplate = status === DOWNLOAD_STATUS.COMPLETED;
@@ -50,8 +50,8 @@ const setTaskStatus = (
   return task;
 };
 
-const resolveTaskFilePath = async (task: LX.Download.ListItem): Promise<string> => {
-  const savePath = global.lx.appSetting['download.savePath'];
+const resolveTaskFilePath = async (task: Coral.Download.ListItem): Promise<string> => {
+  const savePath = global.coral.appSetting['download.savePath'];
   const fileName = task.metadata.fileName || `${task.metadata.musicInfo.name}.${task.metadata.ext}`;
   const filePath = path.join(savePath, fileName);
 
@@ -63,10 +63,10 @@ const resolveTaskFilePath = async (task: LX.Download.ListItem): Promise<string> 
 };
 
 const completeExistingFile = async (
-  task: LX.Download.ListItem,
+  task: Coral.Download.ListItem,
   filePath: string,
-): Promise<LX.Download.ListItem | null> => {
-  if (!global.lx.appSetting['download.skipExistFile']) return null;
+): Promise<Coral.Download.ListItem | null> => {
+  if (!global.coral.appSetting['download.skipExistFile']) return null;
   if (!(await checkPath(filePath))) return null;
 
   const stats = await getFileStats(filePath);
@@ -83,7 +83,7 @@ const completeExistingFile = async (
   return task;
 };
 
-const markTaskError = (task: LX.Download.ListItem, error: unknown): LX.Download.ListItem => {
+const markTaskError = (task: Coral.Download.ListItem, error: unknown): Coral.Download.ListItem => {
   const message = error instanceof Error ? error.message : String(error);
   setTaskStatus(task, DOWNLOAD_STATUS.ERROR, message || '下载失败');
   saveTask(task);
@@ -95,7 +95,7 @@ const markTaskError = (task: LX.Download.ListItem, error: unknown): LX.Download.
 };
 
 const encodeLyricText = (text: string): string | Buffer =>
-  global.lx.appSetting['download.lrcFormat'] === 'gbk' ? iconv.encode(text, 'gb18030') : text;
+  global.coral.appSetting['download.lrcFormat'] === 'gbk' ? iconv.encode(text, 'gb18030') : text;
 
 const writeLyricFile = async (
   filePath: string,
@@ -107,50 +107,50 @@ const writeLyricFile = async (
   await fs.writeFile(path.join(parsed.dir, `${parsed.name}${suffix}`), encodeLyricText(content));
 };
 
-const writeDownloadLyricFiles = async (task: LX.Download.ListItem): Promise<void> => {
-  if (!global.lx.appSetting['download.isDownloadLrc']) return;
+const writeDownloadLyricFiles = async (task: Coral.Download.ListItem): Promise<void> => {
+  if (!global.coral.appSetting['download.isDownloadLrc']) return;
   if (!task.metadata.filePath) return;
 
-  const lyricInfo = await global.lx.worker.dbService.getPlayerLyric(task.metadata.musicInfo.id);
+  const lyricInfo = await global.coral.worker.dbService.getPlayerLyric(task.metadata.musicInfo.id);
   await Promise.all([
     writeLyricFile(task.metadata.filePath, '.lrc', lyricInfo.lyric),
-    global.lx.appSetting['download.isDownloadLxLrc']
+    global.coral.appSetting['download.isDownloadLxLrc']
       ? writeLyricFile(task.metadata.filePath, '.lx.lrc', lyricInfo.lxlyric)
       : Promise.resolve(),
-    global.lx.appSetting['download.isDownloadTLrc']
+    global.coral.appSetting['download.isDownloadTLrc']
       ? writeLyricFile(task.metadata.filePath, '.tlrc', lyricInfo.tlyric)
       : Promise.resolve(),
-    global.lx.appSetting['download.isDownloadRLrc']
+    global.coral.appSetting['download.isDownloadRLrc']
       ? writeLyricFile(task.metadata.filePath, '.rlrc', lyricInfo.rlyric)
       : Promise.resolve(),
   ]);
 };
 
-const buildEmbeddedLyric = (lyricInfo: LX.Player.LyricInfo): string | null => {
+const buildEmbeddedLyric = (lyricInfo: Coral.Player.LyricInfo): string | null => {
   const lyrics = [
-    global.lx.appSetting['download.isEmbedLyric'] ? lyricInfo.lyric : '',
-    global.lx.appSetting['download.isEmbedLyricLx'] ? lyricInfo.lxlyric : '',
-    global.lx.appSetting['download.isEmbedLyricT'] ? lyricInfo.tlyric : '',
-    global.lx.appSetting['download.isEmbedLyricR'] ? lyricInfo.rlyric : '',
+    global.coral.appSetting['download.isEmbedLyric'] ? lyricInfo.lyric : '',
+    global.coral.appSetting['download.isEmbedLyricLx'] ? lyricInfo.lxlyric : '',
+    global.coral.appSetting['download.isEmbedLyricT'] ? lyricInfo.tlyric : '',
+    global.coral.appSetting['download.isEmbedLyricR'] ? lyricInfo.rlyric : '',
   ].filter(Boolean);
 
   return lyrics.length ? lyrics.join('\n') : null;
 };
 
-const writeDownloadMetadata = async (task: LX.Download.ListItem): Promise<void> => {
+const writeDownloadMetadata = async (task: Coral.Download.ListItem): Promise<void> => {
   if (!task.metadata.filePath) return;
   if (!/\.flac$|\.mp3$/i.test(task.metadata.filePath)) return;
 
   const shouldEmbedLyric =
-    global.lx.appSetting['download.isEmbedLyric'] ||
-    global.lx.appSetting['download.isEmbedLyricLx'] ||
-    global.lx.appSetting['download.isEmbedLyricT'] ||
-    global.lx.appSetting['download.isEmbedLyricR'];
-  const shouldEmbedPic = global.lx.appSetting['download.isEmbedPic'];
+    global.coral.appSetting['download.isEmbedLyric'] ||
+    global.coral.appSetting['download.isEmbedLyricLx'] ||
+    global.coral.appSetting['download.isEmbedLyricT'] ||
+    global.coral.appSetting['download.isEmbedLyricR'];
+  const shouldEmbedPic = global.coral.appSetting['download.isEmbedPic'];
   if (!shouldEmbedLyric && !shouldEmbedPic) return;
 
   const lyricInfo = shouldEmbedLyric
-    ? await global.lx.worker.dbService.getPlayerLyric(task.metadata.musicInfo.id)
+    ? await global.coral.worker.dbService.getPlayerLyric(task.metadata.musicInfo.id)
     : null;
   const meta: MusicMeta = {
     APIC: shouldEmbedPic ? (task.metadata.musicInfo.meta.picUrl ?? null) : null,
@@ -163,14 +163,14 @@ const writeDownloadMetadata = async (task: LX.Download.ListItem): Promise<void> 
   setMeta(task.metadata.filePath, meta);
 };
 
-const verifyCompletedFile = async (task: LX.Download.ListItem): Promise<void> => {
+const verifyCompletedFile = async (task: Coral.Download.ListItem): Promise<void> => {
   const stats = await getFileStats(task.metadata.filePath);
   if (!stats?.size) throw new Error('下载完成文件不存在或为空');
   task.downloaded = stats.size;
   task.total = Math.max(task.total, stats.size);
 };
 
-const runCompleteSideEffects = async (task: LX.Download.ListItem): Promise<void> => {
+const runCompleteSideEffects = async (task: Coral.Download.ListItem): Promise<void> => {
   try {
     await writeDownloadLyricFiles(task);
     await writeDownloadMetadata(task);
@@ -181,7 +181,7 @@ const runCompleteSideEffects = async (task: LX.Download.ListItem): Promise<void>
 };
 
 const completeDownloadTask = async (
-  task: LX.Download.ListItem,
+  task: Coral.Download.ListItem,
   statusText: string,
 ): Promise<void> => {
   try {
@@ -202,7 +202,7 @@ export const startDownloadTask = async ({
   task: rawTask,
   url,
   isRetry = false,
-}: StartParams): Promise<LX.Download.ListItem> => {
+}: StartParams): Promise<Coral.Download.ListItem> => {
   const task = cloneTask(rawTask);
   const previous = activeDownloads.get(task.id);
   if (previous) {
@@ -291,7 +291,9 @@ export const startDownloadTask = async ({
   }
 };
 
-export const pauseDownloadTask = async (taskId: string): Promise<LX.Download.ListItem | null> => {
+export const pauseDownloadTask = async (
+  taskId: string,
+): Promise<Coral.Download.ListItem | null> => {
   const downloader = activeDownloads.get(taskId);
   if (!downloader) {
     const task = (await getDownloadList()).find((item) => item.id === taskId);

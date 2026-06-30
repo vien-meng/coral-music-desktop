@@ -79,7 +79,7 @@ class Store {
 export default (name: string, isIgnoredError = true, isShowErrorAlert = true): Store => {
   if (stores[name]) return stores[name];
   let store: Store;
-  const storePath = path.join(global.lxDataPath, `${name}.json`);
+  const storePath = path.join(global.coralDataPath, `${name}.json`);
   try {
     store = stores[name] = new Store(storePath, false);
   } catch (err: any) {

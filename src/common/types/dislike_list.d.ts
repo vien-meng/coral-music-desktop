@@ -1,4 +1,4 @@
-declare namespace LX {
+declare namespace Coral {
   namespace Dislike {
     // interface ListItemMusicText {
     //   id?: string
@@ -10,7 +10,7 @@ declare namespace LX {
     //   id?: number
     //   type: 'musicId'
     //   musicId: string
-    //   meta: LX.Music.MusicInfo
+    //   meta: Coral.Music.MusicInfo
     // }
     // type ListItem = ListItemMusicText
     // type ListItem = string
@@ -28,7 +28,7 @@ declare namespace LX {
       names: Set<string>;
       musicNames: Set<string>;
       singerNames: Set<string>;
-      // list: LX.Dislike.ListItem[]
+      // list: Coral.Dislike.ListItem[]
       rules: DislikeRules;
     }
   }

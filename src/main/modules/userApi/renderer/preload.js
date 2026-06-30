@@ -212,7 +212,7 @@ const initEnv = (userApi) => {
   proxy.host = userApi.proxy.host;
   proxy.port = userApi.proxy.port;
 
-  contextBridge.exposeInMainWorld('lx', {
+  const apiBridge = {
     EVENT_NAMES,
     request(url, { method = 'get', timeout, headers, body, form, formData }, callback) {
       let options = {
@@ -384,7 +384,10 @@ const initEnv = (userApi) => {
     //     handlers.splice(0, handlers.length)
     //   }
     // },
-  });
+  };
+
+  contextBridge.exposeInMainWorld('coral', apiBridge);
+  contextBridge.exposeInMainWorld('lx', apiBridge);
 
   contextBridge.exposeInMainWorld('__lx_init_error_handler__', {
     sendError(errorMessage) {

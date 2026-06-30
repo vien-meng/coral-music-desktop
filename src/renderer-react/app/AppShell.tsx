@@ -63,7 +63,7 @@ export const AppShell = observer(() => {
                   if (ui.isRouteTransitioning) return;
                   ui.setActiveRoute('search');
                   rootStore.search.setSearchText(text);
-                  void ui.withGlobalLoading(() => rootStore.search.submitSearch(), '搜索中...');
+                  ui.withGlobalLoading(() => rootStore.search.submitSearch(), '搜索中...');
                 }}
               />
             </div>
@@ -136,7 +136,7 @@ export const AppShell = observer(() => {
       </Layout>
       {ui.isGlobalLoading ? (
         <div className="coral-global-loading" aria-live="polite" aria-busy="true">
-          <Spin size="large" tip={ui.globalLoadingText || '加载中...'}>
+          <Spin size="large" description={ui.globalLoadingText || '加载中...'}>
             <div className="coral-global-loading-tip" />
           </Spin>
         </div>

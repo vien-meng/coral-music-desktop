@@ -64,7 +64,7 @@ Use Ant Design as the default React UI kit for the migration.
   - `https://ant.design/llms-full-cn.txt` for full Chinese component documentation.
   - `https://ant.design/llms-semantic-cn.md` for component semantics and usage patterns.
   - Component Markdown docs by appending `.md` or `-cn.md` to component URLs when a specific component is involved, for example `https://ant.design/components/button-cn.md`.
-- Use Ant Design theme tokens and `ConfigProvider` to map the current LX theme system into React instead of scattering hard-coded colors.
+- Use Ant Design theme tokens and `ConfigProvider` to map the current Coral theme system into React instead of scattering hard-coded colors.
 - Use Ant Design controls for settings pages: `Form`, `Input`, `Select`, `Switch`, `Radio`, `Slider`, `InputNumber`, `Tabs`, `Modal`, `Drawer`, `Tooltip`, `Popconfirm`, `Upload`, `ColorPicker`, and feedback components.
 - Use Ant Design layout/data components where appropriate, but keep high-performance music lists on a dedicated virtualized implementation if Ant Design `List` or `Table` cannot meet the current behavior/performance.
 - Keep desktop lyric UI mostly custom. Ant Design may be useful for the unlocked control bar or settings-style overlays, but lyric text layout, drag/resize, hover-hide, pause-hide, and visualization should remain domain-specific.
@@ -115,14 +115,14 @@ Goal: make Electron boundaries explicit before React rewrites.
 1. Create `src/shared/ipc/contracts.ts` with channel, request, response, and event payload types.
 2. Wrap current `ipcNames.ts` strings instead of renaming channels.
 3. Add preload bridges:
-   - `window.lxBridge.app`
-   - `window.lxBridge.player`
-   - `window.lxBridge.list`
-   - `window.lxBridge.dislike`
-   - `window.lxBridge.sync`
-   - `window.lxBridge.openAPI`
-   - `window.lxBridge.userApi`
-   - `window.lxBridge.lyric`
+   - `window.coralBridge.app`
+   - `window.coralBridge.player`
+   - `window.coralBridge.list`
+   - `window.coralBridge.dislike`
+   - `window.coralBridge.sync`
+   - `window.coralBridge.openAPI`
+   - `window.coralBridge.userApi`
+   - `window.coralBridge.lyric`
 4. Keep `rendererIpc.ts` as a compatibility adapter that delegates to the bridge.
 5. Only after adapters are complete, plan `contextIsolation: true` for main and lyric windows.
 
@@ -208,7 +208,7 @@ Goal: make Vite-built workers and packaged native dependencies reliable.
 
 1. Convert high-traffic `.js` modules after their domain is migrated.
 2. Remove Vue-specific helpers from shared utilities.
-3. Replace global `LX` namespace only if doing so does not explode churn; otherwise keep it and tighten module boundaries first.
+3. Replace global `Coral` namespace only if doing so does not explode churn; otherwise keep it and tighten module boundaries first.
 4. Turn on stricter TS checks gradually:
    - `noImplicitAny`.
    - `strictNullChecks`.

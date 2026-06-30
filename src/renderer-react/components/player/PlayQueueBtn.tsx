@@ -11,7 +11,7 @@ const { Text } = Typography;
 
 const isDownloadMusicInfo = (
   musicInfo: PlayerRuntimeMusicInfo,
-): musicInfo is LX.Download.ListItem => 'progress' in musicInfo && 'metadata' in musicInfo;
+): musicInfo is Coral.Download.ListItem => 'progress' in musicInfo && 'metadata' in musicInfo;
 
 const getQueueMusicId = (musicInfo: PlayerRuntimeMusicInfo): string => musicInfo.id;
 

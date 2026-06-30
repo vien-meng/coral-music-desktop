@@ -35,19 +35,28 @@ export async function rendererInvoke<T, V>(name: string, params?: T): Promise<V>
   return getIpcRenderer().invoke(name, params);
 }
 
-export function rendererOn(name: string, listener: LX.IpcRendererEventListener): void;
-export function rendererOn<T>(name: string, listener: LX.IpcRendererEventListenerParams<T>): void;
-export function rendererOn<T>(name: string, listener: LX.IpcRendererEventListenerParams<T>): void {
+export function rendererOn(name: string, listener: Coral.IpcRendererEventListener): void;
+export function rendererOn<T>(
+  name: string,
+  listener: Coral.IpcRendererEventListenerParams<T>,
+): void;
+export function rendererOn<T>(
+  name: string,
+  listener: Coral.IpcRendererEventListenerParams<T>,
+): void {
   getIpcRenderer().on(name, (event, params) => {
     listener({ event, params });
   });
 }
 
-export function rendererOnce(name: string, listener: LX.IpcRendererEventListener): void;
-export function rendererOnce<T>(name: string, listener: LX.IpcRendererEventListenerParams<T>): void;
+export function rendererOnce(name: string, listener: Coral.IpcRendererEventListener): void;
 export function rendererOnce<T>(
   name: string,
-  listener: LX.IpcRendererEventListenerParams<T>,
+  listener: Coral.IpcRendererEventListenerParams<T>,
+): void;
+export function rendererOnce<T>(
+  name: string,
+  listener: Coral.IpcRendererEventListenerParams<T>,
 ): void {
   getIpcRenderer().once(name, (event, params) => {
     listener({ event, params });

@@ -8,16 +8,19 @@ const { Text } = Typography;
 
 interface HotKeyState {
   status: boolean;
-  info: LX.HotKey;
+  info: Coral.HotKey;
 }
 
-const omitHotKey = (keys: Record<string, LX.HotKey>, key: string): Record<string, LX.HotKey> => {
+const omitHotKey = (
+  keys: Record<string, Coral.HotKey>,
+  key: string,
+): Record<string, Coral.HotKey> => {
   const { [key]: _removed, ...nextKeys } = keys;
   return nextKeys;
 };
 
 class HotKeyStore {
-  config: LX.HotKeyConfigAll = {
+  config: Coral.HotKeyConfigAll = {
     local: { enable: false, keys: {} },
     global: { enable: false, keys: {} },
   };
@@ -30,12 +33,12 @@ class HotKeyStore {
     makeAutoObservable(this);
   }
 
-  setConfig(config: LX.HotKeyConfigAll): void {
+  setConfig(config: Coral.HotKeyConfigAll): void {
     this.config = config;
     this.isLoaded = true;
   }
 
-  setStatus(status: LX.HotKeyState): void {
+  setStatus(status: Coral.HotKeyState): void {
     const result: Record<string, HotKeyState> = {};
     for (const [key, value] of status.entries()) {
       result[key] = value;
@@ -51,7 +54,7 @@ class HotKeyStore {
     type: 'local' | 'global',
     oldKey: string | null,
     newKey: string | null,
-    info: LX.HotKey,
+    info: Coral.HotKey,
   ): void {
     runInAction(() => {
       if (oldKey) {
@@ -72,8 +75,8 @@ class HotKeyStore {
     });
   }
 
-  buildConfigMap(type: 'local' | 'global'): Record<string, { key: string; info: LX.HotKey }> {
-    const result: Record<string, { key: string; info: LX.HotKey }> = {};
+  buildConfigMap(type: 'local' | 'global'): Record<string, { key: string; info: Coral.HotKey }> {
+    const result: Record<string, { key: string; info: Coral.HotKey }> = {};
     for (const [key, info] of Object.entries(this.config[type].keys)) {
       if (info.name) {
         result[info.name] = { key, info };
@@ -86,9 +89,9 @@ class HotKeyStore {
 const hotKeyStore = new HotKeyStore();
 
 interface HotKeyItemInputProps {
-  info: LX.HotKey;
+  info: Coral.HotKey;
   type: 'local' | 'global';
-  configMap: Record<string, { key: string; info: LX.HotKey }>;
+  configMap: Record<string, { key: string; info: Coral.HotKey }>;
   onSaved: () => Promise<void>;
 }
 
@@ -212,8 +215,8 @@ const refreshStatus = async (): Promise<void> => {
 export const HotKeySection = observer(() => {
   useEffect(() => {
     const init = async (): Promise<void> => {
-      const envParams = (globalThis as { lx?: { appHotKeyConfig?: LX.HotKeyConfigAll } }).lx
-        ?.appHotKeyConfig;
+      const envParams = (globalThis as { coral?: { appHotKeyConfig?: Coral.HotKeyConfigAll } })
+        .coral?.appHotKeyConfig;
       if (envParams) {
         hotKeyStore.setConfig(envParams);
       }

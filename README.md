@@ -122,4 +122,6 @@ ELECTRON_CACHE=/private/tmp/coral-electron-cache npm run pack:dir
 
 ## 致谢
 
-本项目基于 Apache License 2.0 开源协议发布。感谢原始项目作者与开源社区的长期贡献。
+- 本项目基于最早基于lx music(落雪音乐)重构而来，全新架构设计和技术栈，今后将以全新的发展路线迭代。
+- 本项目遵守 Apache License 2.0 开源协议发布。
+- 感谢原始项目作者与开源社区的长期贡献。

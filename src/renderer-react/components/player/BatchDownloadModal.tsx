@@ -25,14 +25,15 @@ const qualityLabels: Record<string, string> = {
 };
 
 export interface BatchDownloadModalProps {
-  musics: LX.Music.MusicInfo[];
+  musics: Coral.Music.MusicInfo[];
   onClose: () => void;
 }
 
 export const BatchDownloadModal = ({ musics, onClose }: BatchDownloadModalProps) => {
   const [isCreating, setIsCreating] = useState(false);
   const onlineMusics = musics.filter(
-    (musicInfo): musicInfo is LX.Music.MusicInfoOnline => musicInfo.source !== 'local',
+    (musicInfo): musicInfo is Coral.Music.MusicInfoOnline =>
+      musicInfo.source !== 'local' && musicInfo.source !== 'webdav',
   );
   const availableQualities = batchDownloadQualities.filter((quality) => {
     const qualityIndex = QUALITYS.indexOf(quality);
@@ -45,12 +46,12 @@ export const BatchDownloadModal = ({ musics, onClose }: BatchDownloadModalProps)
     );
   });
 
-  const handleDownloadAll = async (quality: LX.Quality): Promise<void> => {
+  const handleDownloadAll = async (quality: Coral.Quality): Promise<void> => {
     if (!onlineMusics.length) return;
 
     setIsCreating(true);
     try {
-      const qualityList = onlineMusics.reduce<LX.QualityList>((list, musicInfo) => {
+      const qualityList = onlineMusics.reduce<Coral.QualityList>((list, musicInfo) => {
         list[musicInfo.source] = [quality];
         return list;
       }, {});
@@ -77,7 +78,7 @@ export const BatchDownloadModal = ({ musics, onClose }: BatchDownloadModalProps)
       closeIcon={<CloseOutlined />}
       onCancel={onClose}
     >
-      <Space direction="vertical" size="small" className="coral-wide">
+      <Space orientation="vertical" size="small" className="coral-wide">
         <Text type="secondary">选择音质后，所有在线歌曲将按该音质或可用低档音质添加到下载列表</Text>
         <PlainList
           items={musics.slice(0, 100)}

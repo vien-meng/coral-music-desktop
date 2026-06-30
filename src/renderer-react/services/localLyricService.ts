@@ -5,7 +5,7 @@ const lrcTimestampRxp = /\[\d{1,2}:\d{1,2}(?:[.:]\d+)?]/;
 const textDecoder = new TextDecoder('utf-8', { fatal: false });
 let gbkDecoder: TextDecoder | null | undefined;
 
-const emptyLyricInfo: LX.Music.LyricInfo = {
+const emptyLyricInfo: Coral.Music.LyricInfo = {
   lyric: '',
   lxlyric: '',
   rlyric: '',
@@ -40,7 +40,7 @@ const decodeLrcBuffer = (buffer: Buffer): string => {
   }
 };
 
-const getCandidateNames = (musicInfo: LX.Music.MusicInfoLocal): string[] => {
+const getCandidateNames = (musicInfo: Coral.Music.MusicInfoLocal): string[] => {
   const fileBaseName = basename(musicInfo.meta.filePath, extname(musicInfo.meta.filePath));
   const title = musicInfo.name.trim();
   const singer = musicInfo.singer.trim();
@@ -56,7 +56,7 @@ const getCandidateNames = (musicInfo: LX.Music.MusicInfoLocal): string[] => {
   );
 };
 
-const findLocalLrcPath = async (musicInfo: LX.Music.MusicInfoLocal): Promise<string | null> => {
+const findLocalLrcPath = async (musicInfo: Coral.Music.MusicInfoLocal): Promise<string | null> => {
   const dirPath = dirname(musicInfo.meta.filePath);
   const entries = await readDirectory(dirPath).catch(() => []);
   const lrcEntries = entries.filter((entry) => entry.isFile && /\.lrc$/i.test(entry.name));
@@ -80,8 +80,8 @@ const findLocalLrcPath = async (musicInfo: LX.Music.MusicInfoLocal): Promise<str
 };
 
 export const getLocalLyricInfo = async (
-  musicInfo: LX.Music.MusicInfoLocal,
-): Promise<LX.Music.LyricInfo> => {
+  musicInfo: Coral.Music.MusicInfoLocal,
+): Promise<Coral.Music.LyricInfo> => {
   const lrcPath = await findLocalLrcPath(musicInfo);
   if (!lrcPath) return emptyLyricInfo;
 
@@ -94,8 +94,8 @@ export const getLocalLyricInfo = async (
 };
 
 export const getFallbackOnlineLyricInfo = async (
-  musicInfo: LX.Music.MusicInfoLocal,
-): Promise<LX.Music.LyricInfo> =>
+  musicInfo: Coral.Music.MusicInfoLocal,
+): Promise<Coral.Music.LyricInfo> =>
   onlineMediaService.getOnlineLyricInfoByKeyword({
     interval: musicInfo.interval ?? '',
     name: musicInfo.name,

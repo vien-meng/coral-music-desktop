@@ -1,10 +1,10 @@
-declare namespace LX {
+declare namespace Coral {
   namespace List {
     interface UserListInfo {
       id: string;
       name: string;
-      // list: LX.Music.MusicInfo[]
-      source?: LX.OnlineSource;
+      // list: Coral.Music.MusicInfo[]
+      source?: Coral.OnlineSource;
       sourceListId?: string;
       // position?: number
       locationUpdateTime: number | null;
@@ -14,20 +14,20 @@ declare namespace LX {
       id: 'default';
       name: 'list__name_default';
       // name: '试听列表'
-      // list: LX.Music.MusicInfo[]
+      // list: Coral.Music.MusicInfo[]
     }
 
     interface MyLoveListInfo {
       id: 'love';
       name: 'list__name_love';
       // name: '我的收藏'
-      // list: LX.Music.MusicInfo[]
+      // list: Coral.Music.MusicInfo[]
     }
 
     interface MyTempListInfo {
       id: 'temp';
       name: '临时列表';
-      // list: LX.Music.MusicInfo[]
+      // list: Coral.Music.MusicInfo[]
       // TODO: save default lists info
       meta: {
         id?: string;
@@ -61,10 +61,10 @@ declare namespace LX {
         }
       | {
           type: 'downloadList';
-          data: LX.Download.ListItem[];
+          data: Coral.Download.ListItem[];
         };
 
-    type ListActionDataOverwrite = MakeOptional<LX.List.ListDataFull, 'tempList'>;
+    type ListActionDataOverwrite = MakeOptional<Coral.List.ListDataFull, 'tempList'>;
     interface ListActionAdd {
       position: number;
       listInfos: UserListInfo[];
@@ -84,15 +84,15 @@ declare namespace LX {
 
     interface ListActionMusicAdd {
       id: string;
-      musicInfos: LX.Music.MusicInfo[];
-      addMusicLocationType: LX.AddMusicLocationType;
+      musicInfos: Coral.Music.MusicInfo[];
+      addMusicLocationType: Coral.AddMusicLocationType;
     }
 
     interface ListActionMusicMove {
       fromId: string;
       toId: string;
-      musicInfos: LX.Music.MusicInfo[];
-      addMusicLocationType: LX.AddMusicLocationType;
+      musicInfos: Coral.Music.MusicInfo[];
+      addMusicLocationType: Coral.AddMusicLocationType;
     }
 
     interface ListActionCheckMusicExistList {
@@ -107,7 +107,7 @@ declare namespace LX {
 
     type ListActionMusicUpdate = Array<{
       id: string;
-      musicInfo: LX.Music.MusicInfo;
+      musicInfo: Coral.Music.MusicInfo;
     }>;
 
     interface ListActionMusicUpdatePosition {
@@ -118,29 +118,29 @@ declare namespace LX {
 
     interface ListActionMusicOverwrite {
       listId: string;
-      musicInfos: LX.Music.MusicInfo[];
+      musicInfos: Coral.Music.MusicInfo[];
     }
 
     type ListActionMusicClear = string[];
 
     interface MyDefaultListInfoFull extends MyDefaultListInfo {
-      list: LX.Music.MusicInfo[];
+      list: Coral.Music.MusicInfo[];
     }
     interface MyLoveListInfoFull extends MyLoveListInfo {
-      list: LX.Music.MusicInfo[];
+      list: Coral.Music.MusicInfo[];
     }
     interface UserListInfoFull extends UserListInfo {
-      list: LX.Music.MusicInfo[];
+      list: Coral.Music.MusicInfo[];
     }
     interface MyTempListInfoFull extends MyTempListInfo {
-      list: LX.Music.MusicInfo[];
+      list: Coral.Music.MusicInfo[];
     }
 
     interface ListDataFull {
-      defaultList: LX.Music.MusicInfo[];
-      loveList: LX.Music.MusicInfo[];
+      defaultList: Coral.Music.MusicInfo[];
+      loveList: Coral.Music.MusicInfo[];
       userList: UserListInfoFull[];
-      tempList: LX.Music.MusicInfo[];
+      tempList: Coral.Music.MusicInfo[];
     }
   }
 }

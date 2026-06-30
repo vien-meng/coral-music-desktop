@@ -6,7 +6,7 @@ interface MusicSdkSource {
   getLyric?: (
     musicInfo: unknown,
     isGetLyricx?: boolean,
-  ) => { promise: Promise<LX.Music.LyricInfo> };
+  ) => { promise: Promise<Coral.Music.LyricInfo> };
   getPic?: (musicInfo: unknown) => Promise<string>;
 }
 
@@ -20,26 +20,26 @@ type MusicSdk = Record<string, unknown> & {
   }) => Promise<unknown[]>;
 };
 
-const emptyLyricInfo: LX.Music.LyricInfo = {
+const emptyLyricInfo: Coral.Music.LyricInfo = {
   lyric: '',
   lxlyric: '',
   rlyric: '',
   tlyric: '',
 };
 
-const hasLyricContent = (lyricInfo: LX.Music.LyricInfo): boolean =>
+const hasLyricContent = (lyricInfo: Coral.Music.LyricInfo): boolean =>
   [lyricInfo.lyric, lyricInfo.lxlyric, lyricInfo.tlyric, lyricInfo.rlyric].some(Boolean);
 
 const normalizeLyricInfo = (
-  lyricInfo?: Partial<LX.Music.LyricInfo> | null,
-): LX.Music.LyricInfo => ({
+  lyricInfo?: Partial<Coral.Music.LyricInfo> | null,
+): Coral.Music.LyricInfo => ({
   lyric: lyricInfo?.lyric ?? '',
   lxlyric: lyricInfo?.lxlyric ?? '',
   rlyric: lyricInfo?.rlyric ?? '',
   tlyric: lyricInfo?.tlyric ?? '',
 });
 
-const toOnlineMusicInfo = (musicInfo: unknown): LX.Music.MusicInfoOnline | null => {
+const toOnlineMusicInfo = (musicInfo: unknown): Coral.Music.MusicInfoOnline | null => {
   if (typeof musicInfo !== 'object' || musicInfo == null) return null;
 
   const oldMusicInfo = musicInfo as Record<string, any>;
@@ -61,7 +61,7 @@ const toOnlineMusicInfo = (musicInfo: unknown): LX.Music.MusicInfoOnline | null 
     meta,
     name: oldMusicInfo.name ?? '',
     singer: oldMusicInfo.singer ?? '',
-    source: source as LX.OnlineSource,
+    source: source as Coral.OnlineSource,
   };
 
   switch (source) {
@@ -82,7 +82,7 @@ const toOnlineMusicInfo = (musicInfo: unknown): LX.Music.MusicInfoOnline | null 
       break;
   }
 
-  return newMusicInfo as unknown as LX.Music.MusicInfoOnline;
+  return newMusicInfo as unknown as Coral.Music.MusicInfoOnline;
 };
 
 const loadMusicSdk = async (): Promise<MusicSdk> => {
@@ -91,15 +91,15 @@ const loadMusicSdk = async (): Promise<MusicSdk> => {
   return module.default as MusicSdk;
 };
 
-const getSourceSdk = (sdk: MusicSdk, source: LX.OnlineSource): MusicSdkSource | null => {
+const getSourceSdk = (sdk: MusicSdk, source: Coral.OnlineSource): MusicSdkSource | null => {
   const sourceSdk = sdk[source];
   if (typeof sourceSdk !== 'object' || sourceSdk == null || Array.isArray(sourceSdk)) return null;
   return sourceSdk as MusicSdkSource;
 };
 
 export const getOnlineLyricInfo = async (
-  musicInfo: LX.Music.MusicInfoOnline,
-): Promise<LX.Music.LyricInfo> => {
+  musicInfo: Coral.Music.MusicInfoOnline,
+): Promise<Coral.Music.LyricInfo> => {
   const [editedLyric, rawLyric] = await Promise.all([
     lyricService.getLyricEdited(musicInfo),
     lyricService.getLyricRaw(musicInfo),
@@ -126,7 +126,7 @@ export const getOnlineLyricInfoByKeyword = async (musicInfo: {
   interval: string;
   name: string;
   singer: string;
-}): Promise<LX.Music.LyricInfo> => {
+}): Promise<Coral.Music.LyricInfo> => {
   const sdk = await loadMusicSdk();
   const rawList =
     (await sdk
@@ -141,7 +141,7 @@ export const getOnlineLyricInfoByKeyword = async (musicInfo: {
 
   const candidates = rawList
     .map(toOnlineMusicInfo)
-    .filter((item): item is LX.Music.MusicInfoOnline => item != null);
+    .filter((item): item is Coral.Music.MusicInfoOnline => item != null);
 
   for (const candidate of candidates.slice(0, 5)) {
     const lyricInfo = await getOnlineLyricInfo(candidate).catch(() => emptyLyricInfo);
@@ -151,7 +151,7 @@ export const getOnlineLyricInfoByKeyword = async (musicInfo: {
   return emptyLyricInfo;
 };
 
-export const getOnlinePicUrl = async (musicInfo: LX.Music.MusicInfoOnline): Promise<string> => {
+export const getOnlinePicUrl = async (musicInfo: Coral.Music.MusicInfoOnline): Promise<string> => {
   if (musicInfo.meta.picUrl) return musicInfo.meta.picUrl;
 
   const sdk = await loadMusicSdk();

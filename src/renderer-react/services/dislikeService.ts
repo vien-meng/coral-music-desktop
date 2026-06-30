@@ -2,17 +2,21 @@ import { ipcChannels } from '@shared/ipc/contracts';
 import { ipcClient } from './ipc/client';
 import { isElectronRenderer } from './appService';
 
-export const getDislikeMusicInfos = async (): Promise<LX.Dislike.DislikeInfo | null> => {
+export const getDislikeMusicInfos = async (): Promise<Coral.Dislike.DislikeInfo | null> => {
   if (!isElectronRenderer()) return null;
   return await ipcClient.invoke(ipcChannels.dislike.getDislikeMusicInfos);
 };
 
-export const addDislikeMusicInfos = async (infos: LX.Dislike.DislikeMusicInfo[]): Promise<void> => {
+export const addDislikeMusicInfos = async (
+  infos: Coral.Dislike.DislikeMusicInfo[],
+): Promise<void> => {
   if (!isElectronRenderer()) return;
   await ipcClient.invoke(ipcChannels.dislike.addDislikeMusicInfos, infos);
 };
 
-export const overwriteDislikeMusicInfos = async (rules: LX.Dislike.DislikeRules): Promise<void> => {
+export const overwriteDislikeMusicInfos = async (
+  rules: Coral.Dislike.DislikeRules,
+): Promise<void> => {
   if (!isElectronRenderer()) return;
   await ipcClient.invoke(ipcChannels.dislike.overwriteDislikeMusicInfos, rules);
 };
@@ -23,14 +27,14 @@ export const clearDislikeMusicInfos = async (): Promise<void> => {
 };
 
 export const onAddDislikeMusicInfos = (
-  listener: (infos: LX.Dislike.DislikeMusicInfo[]) => void,
+  listener: (infos: Coral.Dislike.DislikeMusicInfo[]) => void,
 ): (() => void) => {
   if (!isElectronRenderer()) return () => {};
   return ipcClient.on(ipcChannels.dislike.addDislikeMusicInfos, listener);
 };
 
 export const onOverwriteDislikeMusicInfos = (
-  listener: (rules: LX.Dislike.DislikeRules) => void,
+  listener: (rules: Coral.Dislike.DislikeRules) => void,
 ): (() => void) => {
   if (!isElectronRenderer()) return () => {};
   return ipcClient.on(ipcChannels.dislike.overwriteDislikeMusicInfos, listener);

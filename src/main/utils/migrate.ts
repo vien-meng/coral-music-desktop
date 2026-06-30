@@ -9,7 +9,7 @@ import { APP_EVENT_NAMES, STORE_NAMES } from '@common/constants';
  * @returns
  */
 export const parseDataFile = async <T>(name: string): Promise<T | null> => {
-  const path = joinPath(global.lxOldDataPath, name);
+  const path = joinPath(global.coralOldDataPath, name);
   if (await checkPath(path)) {
     try {
       return JSON.parse((await fs.promises.readFile(path)).toString());
@@ -23,7 +23,7 @@ export const parseDataFile = async <T>(name: string): Promise<T | null> => {
 interface OldUserListInfo {
   name: string;
   id: string;
-  source?: LX.OnlineSource;
+  source?: Coral.OnlineSource;
   sourceListId?: string;
   locationUpdateTime?: number;
   list: any[];
@@ -40,7 +40,7 @@ export const migrateDBData = async () => {
     tempList?: { list: any[] };
     userList?: OldUserListInfo[];
   }>('playList.json');
-  let listDataAll: LX.List.ListDataFull = {
+  let listDataAll: Coral.List.ListDataFull = {
     defaultList: [],
     loveList: [],
     userList: [],
@@ -77,20 +77,21 @@ export const migrateDBData = async () => {
       isRequiredSave = true;
     }
   }
-  if (isRequiredSave) await global.lx.worker.dbService.listDataOverwrite(listDataAll);
+  if (isRequiredSave) await global.coral.worker.dbService.listDataOverwrite(listDataAll);
 
-  const lyricData = await parseDataFile<Record<string, LX.Music.LyricInfo>>('lyrics_edited.json');
+  const lyricData =
+    await parseDataFile<Record<string, Coral.Music.LyricInfo>>('lyrics_edited.json');
   if (lyricData) {
     for await (const [id, info] of Object.entries(lyricData)) {
-      await global.lx.worker.dbService.editedLyricAdd(id, info);
+      await global.coral.worker.dbService.editedLyricAdd(id, info);
     }
   }
 };
 
 // 迁移文件
 const migrateFile = async (name: string, targetName: string) => {
-  let path = joinPath(global.lxDataPath, targetName);
-  let oldPath = joinPath(global.lxOldDataPath, name);
+  let path = joinPath(global.coralDataPath, targetName);
+  let oldPath = joinPath(global.coralOldDataPath, name);
   if (!(await checkPath(path)) && (await checkPath(oldPath))) {
     await fs.promises
       .copyFile(oldPath, path)
@@ -108,7 +109,7 @@ const migrateFile = async (name: string, targetName: string) => {
  * @returns
  */
 export const migrateDataJson = async () => {
-  const path = joinPath(global.lxDataPath, 'data.json');
+  const path = joinPath(global.coralDataPath, 'data.json');
   if (await checkPath(path)) return;
   const oldDataFile = await parseDataFile<{
     searchHistoryList?: string[];
@@ -134,7 +135,7 @@ const hotKeyNameMap = {
   mainWindow: APP_EVENT_NAMES.winMainName,
   winLyric: APP_EVENT_NAMES.winLyricName,
 } as const;
-const updateHotKeyTypeName = (config: LX.HotKeyConfig) => {
+const updateHotKeyTypeName = (config: Coral.HotKeyConfig) => {
   for (const keyConfig of Object.values(config.keys)) {
     if (hotKeyNameMap[keyConfig.type as keyof typeof hotKeyNameMap])
       keyConfig.type = hotKeyNameMap[keyConfig.type as keyof typeof hotKeyNameMap];
@@ -145,10 +146,10 @@ const updateHotKeyTypeName = (config: LX.HotKeyConfig) => {
  * @returns
  */
 export const migrateHotKey = async () => {
-  const oldConfig = await parseDataFile<LX.HotKeyConfigAll>('hotKey.json');
+  const oldConfig = await parseDataFile<Coral.HotKeyConfigAll>('hotKey.json');
   if (oldConfig) {
-    let localConfig: LX.HotKeyConfig;
-    let globalConfig: LX.HotKeyConfig;
+    let localConfig: Coral.HotKeyConfig;
+    let globalConfig: Coral.HotKeyConfig;
     updateHotKeyTypeName(oldConfig.local);
     updateHotKeyTypeName(oldConfig.global);
 

@@ -95,7 +95,7 @@
 **目标**：迁移列表/设置/全量数据的导入导出功能。
 
 #### 42.1 依赖分析
-- 需要 worker 通道：`readLxConfigFile` / `saveLxConfigFile` / `exportPlayListToText` / `exportPlayListToCSV`
+- 需要 worker 通道：`readCoralConfigFile` / `saveCoralConfigFile` / `exportPlayListToText` / `exportPlayListToCSV`
 - 需要 `showSelectDialog`（已存在）+ `showSaveDialog`（Step 40 添加）
 - 需要 `listStore` 的 `getListMusics` / `overwriteListFull` / `overwriteListMusics`
 - 需要 `migrateSetting` 工具（`@common/utils/migrateSetting`）

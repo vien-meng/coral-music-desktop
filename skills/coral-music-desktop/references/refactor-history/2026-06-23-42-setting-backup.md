@@ -9,7 +9,7 @@
 
 ### 42.1 backupService
 - Created `src/renderer-react/services/backupService.ts`
-- Uses `@common/utils/nodejs` (`readLxConfigFile`, `saveLxConfigFile`, `saveStrToFile`, `joinPath`)
+- Uses `@common/utils/nodejs` (`readCoralConfigFile`, `saveCoralConfigFile`, `saveStrToFile`, `joinPath`)
 - Uses `@common/utils/common` (`filterFileName`)
 - Uses `@common/utils/tools` (`filterMusicList`, `fixNewMusicInfoQuality`, `toNewMusicInfo`)
 - Uses `@common/utils/migrateSetting` for old setting migration

@@ -1,14 +1,14 @@
 import { QUALITYS } from '@common/constants';
 
-export const PLAY_QUALITIES: LX.Quality[] = QUALITYS.filter(
+export const PLAY_QUALITIES: Coral.Quality[] = QUALITYS.filter(
   (quality) => quality !== 'wav' && quality !== 'ape',
 );
 
 export const getAvailableOnlineMusicQualities = (
-  musicInfo: LX.Music.MusicInfoOnline,
-): LX.Quality[] => {
+  musicInfo: Coral.Music.MusicInfoOnline,
+): Coral.Quality[] => {
   const qualityMap = musicInfo.meta._qualitys ?? {};
-  const qualitySet = new Set<LX.Quality>();
+  const qualitySet = new Set<Coral.Quality>();
 
   for (const quality of PLAY_QUALITIES) {
     if (qualityMap[quality]) qualitySet.add(quality);
@@ -22,9 +22,9 @@ export const getAvailableOnlineMusicQualities = (
 };
 
 export const getPreferredOnlineMusicQuality = (
-  preferredQuality: LX.Quality,
-  musicInfo: LX.Music.MusicInfoOnline,
-): LX.Quality => {
+  preferredQuality: Coral.Quality,
+  musicInfo: Coral.Music.MusicInfoOnline,
+): Coral.Quality => {
   const availableQualities = getAvailableOnlineMusicQualities(musicInfo);
   if (!availableQualities.length) return musicInfo.meta.qualitys[0]?.type ?? '128k';
   if (!PLAY_QUALITIES.includes(preferredQuality)) return availableQualities.at(-1) ?? '128k';

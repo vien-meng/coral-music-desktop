@@ -15,32 +15,34 @@ import {
 import { SYNC_CLOSE_CODE } from '@common/constants_sync';
 // import { LIST_IDS } from '@common/constants'
 
-// type ListInfoType = LX.List.UserListInfoFull | LX.List.MyDefaultListInfoFull | LX.List.MyLoveListInfoFull
+// type ListInfoType = Coral.List.UserListInfoFull | Coral.List.MyDefaultListInfoFull | Coral.List.MyLoveListInfoFull
 
-// let wss: LX.Sync.Server.SocketServer | null
+// let wss: Coral.Sync.Server.SocketServer | null
 let syncingId: string | null = null;
 const wait = async (time = 1000) =>
   await new Promise((resolve, _reject) => setTimeout(resolve, time));
 
-const patchListData = (listData: Partial<LX.Sync.List.ListData>): LX.Sync.List.ListData => ({
+const patchListData = (listData: Partial<Coral.Sync.List.ListData>): Coral.Sync.List.ListData => ({
   defaultList: [],
   loveList: [],
   userList: [],
   ...listData,
 });
 
-const getRemoteListData = async (socket: LX.Sync.Server.Socket): Promise<LX.Sync.List.ListData> => {
+const getRemoteListData = async (
+  socket: Coral.Sync.Server.Socket,
+): Promise<Coral.Sync.List.ListData> => {
   console.log('getRemoteListData');
   return patchListData(await socket.remoteQueueList.list_sync_get_list_data());
 };
 
-const getRemoteListMD5 = async (socket: LX.Sync.Server.Socket): Promise<string> =>
+const getRemoteListMD5 = async (socket: Coral.Sync.Server.Socket): Promise<string> =>
   socket.remoteQueueList.list_sync_get_md5();
 
-// const getLocalListData = async(socket: LX.Sync.Server.Socket): Promise<LX.Sync.List.ListData> => {
+// const getLocalListData = async(socket: Coral.Sync.Server.Socket): Promise<Coral.Sync.List.ListData> => {
 //   return getUserSpace(socket.userInfo.name).listManage.getListData()
 // }
-const getSyncMode = async (socket: LX.Sync.Server.Socket): Promise<LX.Sync.List.SyncMode> =>
+const getSyncMode = async (socket: Coral.Sync.Server.Socket): Promise<Coral.Sync.List.SyncMode> =>
   new Promise((resolve, reject) => {
     const handleDisconnect = (err: Error) => {
       sendCloseSelectMode();
@@ -58,23 +60,26 @@ const getSyncMode = async (socket: LX.Sync.Server.Socket): Promise<LX.Sync.List.
       removeEventClose();
     });
   });
-// const getSyncMode = async(socket: LX.Sync.Server.Socket): Promise<LX.Sync.List.SyncMode> => {
+// const getSyncMode = async(socket: Coral.Sync.Server.Socket): Promise<Coral.Sync.List.SyncMode> => {
 //   return socket.remoteQueueList.list_sync_get_sync_mode()
 // }
 
-const finishedSync = async (socket: LX.Sync.Server.Socket) => {
+const finishedSync = async (socket: Coral.Sync.Server.Socket) => {
   await socket.remoteQueueList.list_sync_finished();
 };
 
-const setLocalList = async (socket: LX.Sync.Server.Socket, listData: LX.Sync.List.ListData) => {
+const setLocalList = async (
+  socket: Coral.Sync.Server.Socket,
+  listData: Coral.Sync.List.ListData,
+) => {
   await setLocalListData(listData);
   const userSpace = getUserSpace(socket.userInfo.name);
   return userSpace.listManage.createSnapshot();
 };
 
 const overwriteRemoteListData = async (
-  socket: LX.Sync.Server.Socket,
-  listData: LX.Sync.List.ListData,
+  socket: Coral.Sync.Server.Socket,
+  listData: Coral.Sync.List.ListData,
   key: string,
   excludeIds: string[] = [],
 ) => {
@@ -106,8 +111,8 @@ const overwriteRemoteListData = async (
   await Promise.all(tasks);
 };
 const setRemotelList = async (
-  socket: LX.Sync.Server.Socket,
-  listData: LX.Sync.List.ListData,
+  socket: Coral.Sync.Server.Socket,
+  listData: Coral.Sync.List.ListData,
   key: string,
 ): Promise<void> => {
   await socket.remoteQueueList.list_sync_set_list_data(listData);
@@ -115,18 +120,18 @@ const setRemotelList = async (
   await userSpace.listManage.updateDeviceSnapshotKey(socket.keyInfo.clientId, key);
 };
 
-type UserDataObj = Map<string, LX.List.UserListInfoFull>;
-const createUserListDataObj = (listData: LX.Sync.List.ListData): UserDataObj => {
+type UserDataObj = Map<string, Coral.List.UserListInfoFull>;
+const createUserListDataObj = (listData: Coral.Sync.List.ListData): UserDataObj => {
   const userListDataObj: UserDataObj = new Map();
   for (const list of listData.userList) userListDataObj.set(list.id, list);
   return userListDataObj;
 };
 
 const handleMergeList = (
-  sourceList: LX.Music.MusicInfo[],
-  targetList: LX.Music.MusicInfo[],
-  addMusicLocationType: LX.AddMusicLocationType,
-): LX.Music.MusicInfo[] => {
+  sourceList: Coral.Music.MusicInfo[],
+  targetList: Coral.Music.MusicInfo[],
+  addMusicLocationType: Coral.AddMusicLocationType,
+): Coral.Music.MusicInfo[] => {
   let newList;
   switch (addMusicLocationType) {
     case 'top':
@@ -137,7 +142,7 @@ const handleMergeList = (
       newList = [...sourceList, ...targetList];
       break;
   }
-  const map = new Map<string | number, LX.Music.MusicInfo>();
+  const map = new Map<string | number, Coral.Music.MusicInfo>();
   const ids: Array<string | number> = [];
   switch (addMusicLocationType) {
     case 'top':
@@ -159,15 +164,15 @@ const handleMergeList = (
       }
       break;
   }
-  return ids.map((id) => map.get(id)) as LX.Music.MusicInfo[];
+  return ids.map((id) => map.get(id)) as Coral.Music.MusicInfo[];
 };
 const mergeList = (
-  socket: LX.Sync.Server.Socket,
-  sourceListData: LX.Sync.List.ListData,
-  targetListData: LX.Sync.List.ListData,
-): LX.Sync.List.ListData => {
+  socket: Coral.Sync.Server.Socket,
+  sourceListData: Coral.Sync.List.ListData,
+  targetListData: Coral.Sync.List.ListData,
+): Coral.Sync.List.ListData => {
   const addMusicLocationType = getUserConfig(socket.userInfo.name)['list.addMusicLocationType'];
-  const newListData: LX.Sync.List.ListData = {
+  const newListData: Coral.Sync.List.ListData = {
     defaultList: [],
     loveList: [],
     userList: [],
@@ -211,10 +216,10 @@ const mergeList = (
   return newListData;
 };
 const overwriteList = (
-  sourceListData: LX.Sync.List.ListData,
-  targetListData: LX.Sync.List.ListData,
-): LX.Sync.List.ListData => {
-  const newListData: LX.Sync.List.ListData = {
+  sourceListData: Coral.Sync.List.ListData,
+  targetListData: Coral.Sync.List.ListData,
+): Coral.Sync.List.ListData => {
+  const newListData: Coral.Sync.List.ListData = {
     defaultList: [],
     loveList: [],
     userList: [],
@@ -238,9 +243,9 @@ const overwriteList = (
 };
 
 const handleMergeListData = async (
-  socket: LX.Sync.Server.Socket,
-): Promise<[LX.Sync.List.ListData, boolean, boolean]> => {
-  const mode: LX.Sync.List.SyncMode = await getSyncMode(socket);
+  socket: Coral.Sync.Server.Socket,
+): Promise<[Coral.Sync.List.ListData, boolean, boolean]> => {
+  const mode: Coral.Sync.List.SyncMode = await getSyncMode(socket);
 
   if (mode == 'cancel') throw new Error('cancel');
   const [remoteListData, localListData] = await Promise.all([
@@ -248,7 +253,7 @@ const handleMergeListData = async (
     getLocalListData(),
   ]);
   console.log('handleMergeListData', 'remoteListData, localListData');
-  let listData: LX.Sync.List.ListData;
+  let listData: Coral.Sync.List.ListData;
   let requiredUpdateLocalListData = true;
   let requiredUpdateRemoteListData = true;
   switch (mode) {
@@ -280,7 +285,7 @@ const handleMergeListData = async (
   return [listData, requiredUpdateLocalListData, requiredUpdateRemoteListData];
 };
 
-const handleSyncList = async (socket: LX.Sync.Server.Socket) => {
+const handleSyncList = async (socket: Coral.Sync.Server.Socket) => {
   const [remoteListData, localListData] = await Promise.all([
     getRemoteListData(socket),
     getLocalListData(),
@@ -352,11 +357,11 @@ const handleSyncList = async (socket: LX.Sync.Server.Socket) => {
 };
 
 const mergeListDataFromSnapshot = (
-  sourceList: LX.Music.MusicInfo[],
-  targetList: LX.Music.MusicInfo[],
-  snapshotList: LX.Music.MusicInfo[],
-  addMusicLocationType: LX.AddMusicLocationType,
-): LX.Music.MusicInfo[] => {
+  sourceList: Coral.Music.MusicInfo[],
+  targetList: Coral.Music.MusicInfo[],
+  snapshotList: Coral.Music.MusicInfo[],
+  addMusicLocationType: Coral.AddMusicLocationType,
+): Coral.Music.MusicInfo[] => {
   const removedListIds = new Set<string | number>();
   const sourceListItemIds = new Set<string | number>();
   const targetListItemIds = new Set<string | number>();
@@ -369,7 +374,7 @@ const mergeListDataFromSnapshot = (
   }
 
   let newList;
-  const map = new Map<string | number, LX.Music.MusicInfo>();
+  const map = new Map<string | number, Coral.Music.MusicInfo>();
   const ids = [];
   switch (addMusicLocationType) {
     case 'top':
@@ -391,9 +396,9 @@ const mergeListDataFromSnapshot = (
       }
       break;
   }
-  return ids.map((id) => map.get(id)) as LX.Music.MusicInfo[];
+  return ids.map((id) => map.get(id)) as Coral.Music.MusicInfo[];
 };
-const checkListLatest = async (socket: LX.Sync.Server.Socket) => {
+const checkListLatest = async (socket: Coral.Sync.Server.Socket) => {
   const remoteListMD5 = await getRemoteListMD5(socket);
   const userSpace = getUserSpace(socket.userInfo.name);
   const userCurrentListInfoKey = await userSpace.listManage.getDeviceCurrentSnapshotKey(
@@ -411,8 +416,8 @@ const selectData = <T>(snapshot: T | null, local: T, remote: T): T =>
     : // ? (snapshot == remote ? snapshot as T : remote)
       local;
 const handleMergeListDataFromSnapshot = async (
-  socket: LX.Sync.Server.Socket,
-  snapshot: LX.Sync.List.ListData,
+  socket: Coral.Sync.Server.Socket,
+  snapshot: Coral.Sync.List.ListData,
 ) => {
   if (await checkListLatest(socket)) return;
 
@@ -421,7 +426,7 @@ const handleMergeListDataFromSnapshot = async (
     getRemoteListData(socket),
     getLocalListData(),
   ]);
-  const newListData: LX.Sync.List.ListData = {
+  const newListData: Coral.Sync.List.ListData = {
     defaultList: [],
     loveList: [],
     userList: [],
@@ -452,11 +457,11 @@ const handleMergeListDataFromSnapshot = async (
     if (!localUserListIds.has(l.id) || !remoteUserListIds.has(l.id)) removedListIds.add(l.id);
   }
 
-  let newUserList: LX.List.UserListInfoFull[] = [];
+  let newUserList: Coral.List.UserListInfoFull[] = [];
   for (const list of localListData.userList) {
     if (removedListIds.has(list.id)) continue;
     const remoteList = remoteUserListData.get(list.id);
-    let newList: LX.List.UserListInfoFull;
+    let newList: Coral.List.UserListInfoFull;
     if (remoteList) {
       const snapshotList = snapshotUserListData.get(list.id) ?? {
         name: null,
@@ -514,7 +519,7 @@ const handleMergeListDataFromSnapshot = async (
   if (err) throw err;
 };
 
-const syncList = async (socket: LX.Sync.Server.Socket) => {
+const syncList = async (socket: Coral.Sync.Server.Socket) => {
   // socket.data.snapshotFilePath = getSnapshotFilePath(socket.keyInfo)
   // console.log(socket.keyInfo)
   if (!socket.feature.list) throw new Error('list feature options not available');
@@ -535,7 +540,7 @@ const syncList = async (socket: LX.Sync.Server.Socket) => {
   await handleSyncList(socket);
 };
 
-// export default async(_wss: LX.Sync.Server.SocketServer, socket: LX.Sync.Server.Socket) => {
+// export default async(_wss: Coral.Sync.Server.SocketServer, socket: Coral.Sync.Server.Socket) => {
 //   if (!wss) {
 //     wss = _wss
 //     _wss.addListener('close', () => {
@@ -563,12 +568,12 @@ const syncList = async (socket: LX.Sync.Server.Socket) => {
 //   })
 // }
 
-// const removeSnapshot = async(keyInfo: LX.Sync.KeyInfo) => {
+// const removeSnapshot = async(keyInfo: Coral.Sync.KeyInfo) => {
 //   const filePath = getSnapshotFilePath(keyInfo)
 //   await fsPromises.unlink(filePath)
 // }
 
-export const sync = async (socket: LX.Sync.Server.Socket) => {
+export const sync = async (socket: Coral.Sync.Server.Socket) => {
   let disconnected = false;
   socket.onClose(() => {
     disconnected = true;

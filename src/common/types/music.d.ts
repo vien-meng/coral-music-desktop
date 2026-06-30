@@ -1,13 +1,13 @@
-declare namespace LX {
+declare namespace Coral {
   namespace Music {
     interface MusicQualityType {
       // {"type": "128k", size: "3.56M"}
-      type: LX.Quality;
+      type: Coral.Quality;
       size: string | null;
     }
     interface MusicQualityTypeKg {
       // {"type": "128k", size: "3.56M"}
-      type: LX.Quality;
+      type: Coral.Quality;
       size: string | null;
       hash: string;
     }
@@ -50,7 +50,17 @@ declare namespace LX {
       sampleRate?: number | null;
     }
 
-    interface MusicInfoBase<S = LX.Source> {
+    interface MusicInfoMeta_webdav extends MusicInfoMetaBase {
+      accountId: string;
+      contentLength?: number | null;
+      contentType?: string | null;
+      ext: string;
+      href: string;
+      lastModified?: string | null;
+      provider: Coral.WebDav.Provider;
+    }
+
+    interface MusicInfoBase<S = Coral.Source> {
       id: string;
       name: string; // 歌曲名
       singer: string; // 艺术家名
@@ -61,6 +71,10 @@ declare namespace LX {
 
     interface MusicInfoLocal extends MusicInfoBase<'local'> {
       meta: MusicInfoMeta_local;
+    }
+
+    interface MusicInfoWebDav extends MusicInfoBase<'webdav'> {
+      meta: MusicInfoMeta_webdav;
     }
 
     interface MusicInfo_online_common extends MusicInfoBase<'kw' | 'wy'> {
@@ -96,7 +110,7 @@ declare namespace LX {
     }
 
     type MusicInfoOnline = MusicInfo_online_common | MusicInfo_kg | MusicInfo_tx | MusicInfo_mg;
-    type MusicInfo = MusicInfoOnline | MusicInfoLocal;
+    type MusicInfo = MusicInfoOnline | MusicInfoLocal | MusicInfoWebDav;
 
     interface LyricInfo {
       // 歌曲歌词

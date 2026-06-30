@@ -6,7 +6,7 @@ import { rootStore } from '../../stores/rootStore';
 
 const { Text } = Typography;
 
-const qualityLabels: Partial<Record<LX.Quality, string>> = {
+const qualityLabels: Partial<Record<Coral.Quality, string>> = {
   '128k': '128k',
   '192k': '192k',
   '320k': '320k',
@@ -19,8 +19,8 @@ const qualityLabels: Partial<Record<LX.Quality, string>> = {
 };
 
 const isDownloadMusicInfo = (
-  musicInfo: LX.Music.MusicInfo | LX.Download.ListItem | null,
-): musicInfo is LX.Download.ListItem =>
+  musicInfo: Coral.Music.MusicInfo | Coral.Download.ListItem | null,
+): musicInfo is Coral.Download.ListItem =>
   Boolean(musicInfo && 'progress' in musicInfo && 'metadata' in musicInfo);
 
 export const QualitySwitchBtn = observer(() => {
@@ -32,6 +32,7 @@ export const QualitySwitchBtn = observer(() => {
     !currentMusic ||
     !displayMusicInfo ||
     displayMusicInfo.source === 'local' ||
+    displayMusicInfo.source === 'webdav' ||
     isDownloadMusicInfo(currentMusic)
   )
     return null;
@@ -47,7 +48,7 @@ export const QualitySwitchBtn = observer(() => {
         <Text strong>播放音质</Text>
         <Text type="secondary">不支持时自动降级</Text>
       </div>
-      <Space direction="vertical" size={6} className="coral-quality-switch-list">
+      <Space orientation="vertical" size={6} className="coral-quality-switch-list">
         {playableQualities.map((quality) => (
           <Button
             key={quality}

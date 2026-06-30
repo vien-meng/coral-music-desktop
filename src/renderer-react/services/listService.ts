@@ -3,7 +3,7 @@ import { filterMusicList, fixNewMusicInfoQuality, toNewMusicInfo } from '@common
 import { ipcChannels } from '@shared/ipc/contracts';
 import { ipcClient } from './ipc/client';
 import { isElectronRenderer } from './appService';
-import { readLxConfigFile, saveLxConfigFile } from './nodeBridgeService';
+import { readCoralConfigFile, saveCoralConfigFile } from './nodeBridgeService';
 
 interface PlayListPartV1 {
   type: 'playListPart';
@@ -17,23 +17,23 @@ interface PlayListPartV2 {
 
 interface ImportedPlayListPart {
   id: string;
-  list: LX.Music.MusicInfo[];
+  list: Coral.Music.MusicInfo[];
   locationUpdateTime?: number | null;
   name: string;
-  source?: LX.OnlineSource;
+  source?: Coral.OnlineSource;
   sourceListId?: string;
 }
 
 type PlayListPartConfig = PlayListPartV1 | PlayListPartV2;
 
-export const getUserLists = async (): Promise<LX.List.UserListInfo[]> => {
+export const getUserLists = async (): Promise<Coral.List.UserListInfo[]> => {
   if (!isElectronRenderer()) return [];
   return await ipcClient.invoke(ipcChannels.player.listGet);
 };
 
 export const createUserLists = async (
   position: number,
-  listInfos: LX.List.UserListInfo[],
+  listInfos: Coral.List.UserListInfo[],
 ): Promise<void> => {
   if (!isElectronRenderer()) return;
   await ipcClient.invoke(ipcChannels.player.listAdd, {
@@ -47,7 +47,7 @@ export const removeUserLists = async (ids: string[]): Promise<void> => {
   await ipcClient.invoke(ipcChannels.player.listRemove, ids);
 };
 
-export const updateUserLists = async (listInfos: LX.List.UserListInfo[]): Promise<void> => {
+export const updateUserLists = async (listInfos: Coral.List.UserListInfo[]): Promise<void> => {
   if (!isElectronRenderer()) return;
   await ipcClient.invoke(ipcChannels.player.listUpdate, listInfos);
 };
@@ -60,15 +60,15 @@ export const updateUserListsPosition = async (position: number, ids: string[]): 
   });
 };
 
-export const getListMusics = async (listId: string): Promise<LX.Music.MusicInfo[]> => {
+export const getListMusics = async (listId: string): Promise<Coral.Music.MusicInfo[]> => {
   if (!isElectronRenderer()) return [];
   return await ipcClient.invoke(ipcChannels.player.listMusicGet, listId);
 };
 
 export const addListMusics = async (
   listId: string,
-  musicInfos: LX.Music.MusicInfo[],
-  addMusicLocationType: LX.AddMusicLocationType,
+  musicInfos: Coral.Music.MusicInfo[],
+  addMusicLocationType: Coral.AddMusicLocationType,
 ): Promise<void> => {
   if (!isElectronRenderer()) return;
   await ipcClient.invoke(ipcChannels.player.listMusicAdd, {
@@ -89,8 +89,8 @@ export const removeListMusics = async (listId: string, ids: string[]): Promise<v
 export const moveListMusics = async (
   fromId: string,
   toId: string,
-  musicInfos: LX.Music.MusicInfo[],
-  addMusicLocationType: LX.AddMusicLocationType,
+  musicInfos: Coral.Music.MusicInfo[],
+  addMusicLocationType: Coral.AddMusicLocationType,
 ): Promise<void> => {
   if (!isElectronRenderer()) return;
   await ipcClient.invoke(ipcChannels.player.listMusicMove, {
@@ -119,7 +119,9 @@ export const clearListMusics = async (ids: string[]): Promise<void> => {
   await ipcClient.invoke(ipcChannels.player.listMusicClear, ids);
 };
 
-export const overwriteListFull = async (data: LX.List.ListActionDataOverwrite): Promise<void> => {
+export const overwriteListFull = async (
+  data: Coral.List.ListActionDataOverwrite,
+): Promise<void> => {
   if (!isElectronRenderer()) return;
   await ipcClient.invoke(ipcChannels.player.listDataOverwrite, data);
 };
@@ -153,11 +155,11 @@ const normalizeImportedListPart = (configData: unknown): ImportedPlayListPart =>
 
 export const exportListPart = async (
   filePath: string,
-  listInfo: LX.List.UserListInfo,
-  musicInfos: LX.Music.MusicInfo[],
+  listInfo: Coral.List.UserListInfo,
+  musicInfos: Coral.Music.MusicInfo[],
 ): Promise<void> => {
   if (!isElectronRenderer()) return;
-  await saveLxConfigFile(filePath, {
+  await saveCoralConfigFile(filePath, {
     data: {
       ...listInfo,
       list: musicInfos,
@@ -168,16 +170,16 @@ export const exportListPart = async (
 
 export const importListPartAsUserList = async (
   filePath: string,
-  userLists: LX.List.UserListInfo[],
+  userLists: Coral.List.UserListInfo[],
   position: number,
-  addMusicLocationType: LX.AddMusicLocationType,
-): Promise<LX.List.UserListInfo | null> => {
+  addMusicLocationType: Coral.AddMusicLocationType,
+): Promise<Coral.List.UserListInfo | null> => {
   if (!isElectronRenderer()) return null;
 
-  const listPart = normalizeImportedListPart(await readLxConfigFile(filePath));
+  const listPart = normalizeImportedListPart(await readCoralConfigFile(filePath));
   const usedIds = new Set([LIST_IDS.DEFAULT, LIST_IDS.LOVE, ...userLists.map((list) => list.id)]);
   const listId = usedIds.has(listPart.id) ? `${listPart.id}__${Date.now()}` : listPart.id;
-  const listInfo: LX.List.UserListInfo = {
+  const listInfo: Coral.List.UserListInfo = {
     id: listId,
     locationUpdateTime: listPart.locationUpdateTime ?? null,
     name: listPart.name,

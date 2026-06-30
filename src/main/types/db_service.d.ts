@@ -1,4 +1,4 @@
-declare namespace LX {
+declare namespace Coral {
   namespace DBService {
     interface MusicInfo {
       id: string;
@@ -6,7 +6,7 @@ declare namespace LX {
       name: string;
       singer: string;
       interval: string | null;
-      source: LX.Music.MusicInfo['source'];
+      source: Coral.Music.MusicInfo['source'];
       meta: string;
       order: number;
     }
@@ -34,7 +34,7 @@ declare namespace LX {
     interface UserListInfo {
       id: string;
       name: string;
-      source?: LX.OnlineSource;
+      source?: Coral.OnlineSource;
       sourceListId?: string;
       position: number;
       locationUpdateTime: number | null;
@@ -49,7 +49,7 @@ declare namespace LX {
         }
       | {
           id: string;
-          type: keyof Omit<LX.Music.LyricInfo, 'lyric'>;
+          type: keyof Omit<Coral.Music.LyricInfo, 'lyric'>;
           text: string | null;
           source: 'raw' | 'edited';
         };
@@ -62,13 +62,13 @@ declare namespace LX {
     interface DownloadMusicInfo {
       id: string;
       isComplate: 0 | 1;
-      status: LX.Download.DownloadTaskStatus;
+      status: Coral.Download.DownloadTaskStatus;
       statusText: string;
       progress_downloaded: number;
       progress_total: number;
       url: string | null;
-      quality: LX.Quality;
-      ext: LX.Download.FileExt;
+      quality: Coral.Quality;
+      ext: Coral.Download.FileExt;
       fileName: string;
       filePath: string;
       musicInfo: string;

@@ -153,7 +153,7 @@ export const ThemeEditModal = observer(
     const [bgPath, setBgPath] = useState('');
     const [colors, setColors] = useState<Record<string, string>>({});
     const containerRefs = useRef<Record<string, HTMLDivElement | null>>({});
-    const originalThemeRef = useRef<LX.Theme | null>(null);
+    const originalThemeRef = useRef<Coral.Theme | null>(null);
     const tempBgRef = useRef<string | null>(null);
     const isDarkRef = useRef(false);
     const isDarkFontRef = useRef(false);
@@ -173,7 +173,7 @@ export const ThemeEditModal = observer(
       const themeInfo = theme.themeInfo;
       if (!themeInfo) return;
 
-      let editingTheme: LX.Theme | undefined;
+      let editingTheme: Coral.Theme | undefined;
       if (themeId) {
         editingTheme = [...themeInfo.themes, ...themeInfo.userThemes].find((t) => t.id === themeId);
       }
@@ -358,7 +358,7 @@ export const ThemeEditModal = observer(
       tempBgRef.current = null;
     };
 
-    const buildTheme = (): LX.Theme => {
+    const buildTheme = (): Coral.Theme => {
       const themeColors: Record<string, string> = {};
       const extInfo: Record<string, string> = {};
 
@@ -394,7 +394,7 @@ export const ThemeEditModal = observer(
         isDarkFont,
         isCustom: true,
         config: {
-          themeColors: themeColors as unknown as LX.ThemeColors,
+          themeColors: themeColors as unknown as Coral.ThemeColors,
           extInfo: {
             '--color-app-background': extInfo['--color-app-background'] ?? 'rgba(255, 255, 255, 1)',
             '--color-main-background':
@@ -630,7 +630,7 @@ export const ThemeEditModal = observer(
             <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
               主题信息
             </Text>
-            <Space direction="vertical" style={{ width: '100%' }}>
+            <Space orientation="vertical" style={{ width: '100%' }}>
               <Input
                 placeholder="主题名称（最长 20 字符）"
                 maxLength={20}

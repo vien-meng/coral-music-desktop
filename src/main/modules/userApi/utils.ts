@@ -4,7 +4,7 @@ import { STORE_NAMES } from '@common/constants';
 import getStore from '@main/utils/store';
 import zlib from 'node:zlib';
 
-let userApis: LX.UserApi.UserApiInfo[] | null;
+let userApis: Coral.UserApi.UserApiInfo[] | null;
 let scripts = new Map<string, string>();
 
 const saveData = () => {
@@ -17,11 +17,12 @@ const saveData = () => {
   );
 };
 
-export const getUserApis = (): LX.UserApi.UserApiInfo[] => {
+export const getUserApis = (): Coral.UserApi.UserApiInfo[] => {
   if (userApis) return userApis;
 
   const electronStore_userApi = getStore(STORE_NAMES.USER_API);
-  let infoFull = electronStore_userApi.get('userApis') as LX.UserApi.UserApiInfoFull[] | undefined;
+  let infoFull = electronStore_userApi.get('userApis') as
+    Coral.UserApi.UserApiInfoFull[] | undefined;
   let requiredUpdate = false;
   if (infoFull) {
     for (let i = 0; i < infoFull.length; i++) {
@@ -113,7 +114,7 @@ const inflateScript = async (script: string) =>
       });
     } else resolve(script);
   });
-export const importApi = async (scriptRaw: string): Promise<LX.UserApi.UserApiInfo> => {
+export const importApi = async (scriptRaw: string): Promise<Coral.UserApi.UserApiInfo> => {
   let scriptInfo = parseScriptInfo(scriptRaw);
   const script = await deflateScript(scriptRaw);
   userApis ??= [];
@@ -155,7 +156,7 @@ export const setAllowShowUpdateAlert = (id: string, enable: boolean) => {
 
 export const updateApiRuntimeInfo = (
   id: string,
-  runtimeInfo: Pick<LX.UserApi.UserApiInfo, 'sources'>,
+  runtimeInfo: Pick<Coral.UserApi.UserApiInfo, 'sources'>,
 ) => {
   const targetApi = getUserApis().find((api) => api.id === id);
   if (!targetApi) return;

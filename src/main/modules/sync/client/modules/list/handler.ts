@@ -21,7 +21,7 @@ const logInfo = (eventName: string, success = false) => {
 // const logError = (eventName: string, err: Error) => {
 //   log.error(`[${eventName}]${eventName.replace('list:sync:list_sync_', '').replaceAll('_', ' ')} error: ${err.message}`)
 // }
-const getSyncMode = async (socket: LX.Sync.Client.Socket): Promise<LX.Sync.List.SyncMode> =>
+const getSyncMode = async (socket: Coral.Sync.Client.Socket): Promise<Coral.Sync.List.SyncMode> =>
   new Promise((resolve, reject) => {
     const handleDisconnect = (err: Error) => {
       sendCloseSelectMode();
@@ -40,7 +40,7 @@ const getSyncMode = async (socket: LX.Sync.Client.Socket): Promise<LX.Sync.List.
     });
   });
 
-const handler: LX.Sync.ClientSyncHandlerListActions<LX.Sync.Client.Socket> = {
+const handler: Coral.Sync.ClientSyncHandlerListActions<Coral.Sync.Client.Socket> = {
   async onListSyncAction(socket, action) {
     if (!socket.moduleReadys?.list) return;
     await handleRemoteListAction(action);

@@ -8,7 +8,7 @@ Step 52 made the React player runtime able to play local files and already cache
 
 - Extended `src/renderer-react/services/playerRuntime/musicUrlResolver.ts` with fresh online URL fetching.
   - Loads `src/renderer/utils/musicSdk` through a dynamic import so the larger provider SDK stays out of the first renderer chunk.
-  - Converts the new `LX.Music.MusicInfoOnline` shape into the smaller old SDK payload locally, without importing `@common/utils/tools` or legacy Vue state.
+  - Converts the new `Coral.Music.MusicInfoOnline` shape into the smaller old SDK payload locally, without importing `@common/utils/tools` or legacy Vue state.
   - Resolves playback in this order: local file URL, cached online URL, fresh provider URL.
   - Writes fresh provider URLs back through the Step 52 typed cache IPC boundary.
 - Hardened `src/renderer-react/services/playerRuntime/htmlAudioRuntime.ts`.

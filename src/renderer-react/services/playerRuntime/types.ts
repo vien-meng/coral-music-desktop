@@ -1,5 +1,5 @@
-export type PlayerRuntimeStatus = Partial<LX.Player.Status> & {
-  actualQuality?: LX.Quality;
+export type PlayerRuntimeStatus = Partial<Coral.Player.Status> & {
+  actualQuality?: Coral.Quality;
   errorText?: string;
   isEnded?: boolean;
   /** 在线音频探测到的实际采样率 (Hz) */
@@ -10,7 +10,7 @@ export type PlayerRuntimeStatus = Partial<LX.Player.Status> & {
   probeFormat?: string | null;
 };
 export type PlayerStatusListener = (status: PlayerRuntimeStatus) => void;
-export type PlayerRuntimeMusicInfo = LX.Music.MusicInfo | LX.Download.ListItem;
+export type PlayerRuntimeMusicInfo = Coral.Music.MusicInfo | Coral.Download.ListItem;
 export type PlayerEqFrequency = 31 | 62 | 125 | 250 | 500 | 1000 | 2000 | 4000 | 8000 | 16000;
 
 export interface PlayerSoundEffectConfig {
@@ -22,7 +22,7 @@ export interface PlayerSoundEffectConfig {
 
 export interface PlayerRuntimePlayOptions {
   isRefresh?: boolean;
-  preferredQuality?: LX.Quality;
+  preferredQuality?: Coral.Quality;
 }
 
 export interface PlayerRuntimeBridge {

@@ -6,13 +6,13 @@
 - [x] 封装 safeSaveLxConfigFile（Promise 包装回调式 fs.writeFile）
 - [x] 修复 overwriteListFull 参数类型
 - [x] 所有导入/导出函数添加 try/catch
-- [x] readLxConfigFile 返回值类型守卫
+- [x] readCoralConfigFile 返回值类型守卫
 
 ### 45.2 ThemeEditModal.tsx
 - [x] Pickr change 回调闭包过期（isDark/isDarkFont 用 ref）
 - [x] 预览 CSS 关闭时清理
 - [x] 临时背景图文件泄漏清理
-- [x] buildTheme() 结构匹配 LX.Theme 类型（themeColors + extInfo）
+- [x] buildTheme() 结构匹配 Coral.Theme 类型（themeColors + extInfo）
 - [x] 移除死代码（timeouts 数组、pickrRefs）
 - [x] 保存操作添加 try/catch
 

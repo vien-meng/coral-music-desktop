@@ -7,11 +7,16 @@ import { listService } from './listService';
 import { settingService } from './settingService';
 import { cacheService } from './cacheService';
 import { isElectronRenderer } from './appService';
-import { joinPath, readLxConfigFile, saveLxConfigFile, saveStrToFile } from './nodeBridgeService';
+import {
+  joinPath,
+  readCoralConfigFile,
+  saveCoralConfigFile,
+  saveStrToFile,
+} from './nodeBridgeService';
 
 interface BackupListInfo {
   id: string;
-  list: LX.Music.MusicInfo[];
+  list: Coral.Music.MusicInfo[];
   name?: string;
   source?: string;
   sourceListId?: string;
@@ -20,20 +25,20 @@ interface BackupListInfo {
 
 interface AllDataV2 {
   type: 'allData_v2';
-  setting: Partial<LX.AppSetting>;
+  setting: Partial<Coral.AppSetting>;
   playList: BackupListInfo[];
 }
 
 interface AllDataV1 {
   type: 'allData';
-  defaultList?: { list: LX.Music.MusicInfo[] };
+  defaultList?: { list: Coral.Music.MusicInfo[] };
   playList: BackupListInfo[];
   setting: Record<string, unknown>;
 }
 
 interface SettingV2 {
   type: 'setting_v2';
-  data: Partial<LX.AppSetting>;
+  data: Partial<Coral.AppSetting>;
 }
 
 interface SettingV1 {
@@ -53,7 +58,7 @@ interface PlayListV1 {
 
 interface DefaultListV1 {
   type: 'defautlList';
-  data: { list: LX.Music.MusicInfo[] };
+  data: { list: Coral.Music.MusicInfo[] };
 }
 
 type ConfigFile =
@@ -120,7 +125,7 @@ const importOldSettingData = (setting: Record<string, unknown>): void => {
   settingService.updateAppSetting(migrated);
 };
 
-const importNewSettingData = (setting: Partial<LX.AppSetting>): void => {
+const importNewSettingData = (setting: Partial<Coral.AppSetting>): void => {
   setting['common.isAgreePact'] = false;
   settingService.updateAppSetting(setting);
 };
@@ -128,7 +133,7 @@ const importNewSettingData = (setting: Partial<LX.AppSetting>): void => {
 export const importAllData = async (path: string): Promise<void> => {
   if (!isElectronRenderer()) return;
   try {
-    const allData = (await readLxConfigFile(path)) as ConfigFile;
+    const allData = (await readCoralConfigFile(path)) as ConfigFile;
     if (!allData) return;
 
     switch (allData.type) {
@@ -157,7 +162,7 @@ export const importAllData = async (path: string): Promise<void> => {
   }
 };
 
-export const exportAllData = async (path: string, appSetting: LX.AppSetting): Promise<void> => {
+export const exportAllData = async (path: string, appSetting: Coral.AppSetting): Promise<void> => {
   if (!isElectronRenderer()) return;
   try {
     const allData: AllDataV2 = {
@@ -165,7 +170,7 @@ export const exportAllData = async (path: string, appSetting: LX.AppSetting): Pr
       setting: { ...appSetting },
       playList: await getAllLists(),
     };
-    await saveLxConfigFile(path, allData);
+    await saveCoralConfigFile(path, allData);
   } catch (err) {
     message.error(`导出失败：${err instanceof Error ? err.message : String(err)}`);
   }
@@ -174,7 +179,7 @@ export const exportAllData = async (path: string, appSetting: LX.AppSetting): Pr
 export const importSetting = async (path: string): Promise<void> => {
   if (!isElectronRenderer()) return;
   try {
-    const settingData = (await readLxConfigFile(path)) as ConfigFile;
+    const settingData = (await readCoralConfigFile(path)) as ConfigFile;
     if (!settingData) return;
 
     switch (settingData.type) {
@@ -192,14 +197,14 @@ export const importSetting = async (path: string): Promise<void> => {
   }
 };
 
-export const exportSetting = async (path: string, appSetting: LX.AppSetting): Promise<void> => {
+export const exportSetting = async (path: string, appSetting: Coral.AppSetting): Promise<void> => {
   if (!isElectronRenderer()) return;
   try {
     const data: SettingV2 = {
       type: 'setting_v2',
       data: { ...appSetting },
     };
-    await saveLxConfigFile(path, data);
+    await saveCoralConfigFile(path, data);
   } catch (err) {
     message.error(`导出失败：${err instanceof Error ? err.message : String(err)}`);
   }
@@ -208,7 +213,7 @@ export const exportSetting = async (path: string, appSetting: LX.AppSetting): Pr
 export const importPlayList = async (path: string): Promise<void> => {
   if (!isElectronRenderer()) return;
   try {
-    const listData = (await readLxConfigFile(path)) as ConfigFile;
+    const listData = (await readCoralConfigFile(path)) as ConfigFile;
     if (!listData) return;
 
     switch (listData.type) {
@@ -241,7 +246,7 @@ export const exportPlayList = async (path: string): Promise<void> => {
       type: 'playList_v2',
       data: await getAllLists(),
     };
-    await saveLxConfigFile(path, data);
+    await saveCoralConfigFile(path, data);
   } catch (err) {
     message.error(`导出失败：${err instanceof Error ? err.message : String(err)}`);
   }

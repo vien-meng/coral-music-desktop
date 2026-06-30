@@ -39,11 +39,11 @@ if (shouldEnableElectronDebug) {
 }
 
 app.on('ready', () => {
-  global.lx.event_app.on('main_window_created', (win) => {
+  global.coral.event_app.on('main_window_created', (win) => {
     if (shouldOpenMainDevTools) openDevTools(win.webContents);
     maybeInstallReactDevTools('main window', win);
   });
-  global.lx.event_app.on('desktop_lyric_window_created', (win) => {
+  global.coral.event_app.on('desktop_lyric_window_created', (win) => {
     if (shouldOpenLyricDevTools) openDevTools(win.webContents);
     maybeInstallReactDevTools('lyric window', win);
   });

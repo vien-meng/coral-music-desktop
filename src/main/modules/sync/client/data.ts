@@ -3,11 +3,11 @@ import path from 'node:path';
 import { File } from '../../../../common/constants_sync';
 import { exists } from '../utils';
 
-let syncAuthKeys: Record<string, LX.Sync.ClientKeyInfo>;
+let syncAuthKeys: Record<string, Coral.Sync.ClientKeyInfo>;
 
 const saveSyncAuthKeys = async () => {
   const syncAuthKeysFilePath = path.join(
-    global.lxDataPath,
+    global.coralDataPath,
     File.clientDataPath,
     File.syncAuthKeysJSON,
   );
@@ -17,7 +17,7 @@ const saveSyncAuthKeys = async () => {
 export const initClientInfo = async () => {
   if (syncAuthKeys != null) return;
   const syncAuthKeysFilePath = path.join(
-    global.lxDataPath,
+    global.coralDataPath,
     File.clientDataPath,
     File.syncAuthKeysJSON,
   );
@@ -32,7 +32,7 @@ export const initClientInfo = async () => {
   } else {
     // eslint-disable-next-line require-atomic-updates
     syncAuthKeys = {};
-    const syncDataPath = path.join(global.lxDataPath, File.clientDataPath);
+    const syncDataPath = path.join(global.coralDataPath, File.clientDataPath);
     if (!(await exists(syncDataPath))) {
       await fs.promises.mkdir(syncDataPath, { recursive: true });
     }
@@ -44,7 +44,7 @@ export const getSyncAuthKey = async (serverId: string) => {
   await initClientInfo();
   return syncAuthKeys[serverId] ?? null;
 };
-export const setSyncAuthKey = async (serverId: string, info: LX.Sync.ClientKeyInfo) => {
+export const setSyncAuthKey = async (serverId: string, info: Coral.Sync.ClientKeyInfo) => {
   await initClientInfo();
   syncAuthKeys[serverId] = info;
   saveSyncAuthKeys();

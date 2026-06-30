@@ -15,11 +15,11 @@ export const applyLyricLanguage = (langId: string | null | undefined): void => {
   window.setLang?.(languageId);
 };
 
-export const applyLyricTheme = (setting: LX.ThemeSetting): void => {
+export const applyLyricTheme = (setting: Coral.ThemeSetting): void => {
   window.setTheme?.(setting.theme.colors);
 };
 
-export const applyLyricColors = (config: LX.DesktopLyric.Config): void => {
+export const applyLyricColors = (config: Coral.DesktopLyric.Config): void => {
   const shadowColor = config['desktopLyric.style.lyricShadowColor'];
 
   window.setLyricColor?.({

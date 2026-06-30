@@ -2,7 +2,7 @@ type WarpSyncHandlerActions<Socket, Actions> = {
   [K in keyof Actions]: (...args: [Socket, ...Parameters<Actions[K]>]) => ReturnType<Actions[K]>;
 };
 
-declare namespace LX {
+declare namespace Coral {
   namespace Sync {
     type ServerSyncActions = WarpPromiseRecord<{
       onFeatureChanged: (feature: EnabledFeatures) => void;
@@ -10,7 +10,7 @@ declare namespace LX {
     type ServerSyncHandlerActions<Socket> = WarpSyncHandlerActions<Socket, ServerSyncActions>;
 
     type ServerSyncListActions = WarpPromiseRecord<{
-      onListSyncAction: (action: LX.Sync.List.ActionList) => void;
+      onListSyncAction: (action: Coral.Sync.List.ActionList) => void;
     }>;
     type ServerSyncHandlerListActions<Socket> = WarpSyncHandlerActions<
       Socket,
@@ -18,7 +18,7 @@ declare namespace LX {
     >;
 
     type ServerSyncDislikeActions = WarpPromiseRecord<{
-      onDislikeSyncAction: (action: LX.Sync.Dislike.ActionList) => void;
+      onDislikeSyncAction: (action: Coral.Sync.Dislike.ActionList) => void;
     }>;
     type ServerSyncHandlerDislikeActions<Socket> = WarpSyncHandlerActions<
       Socket,
@@ -35,11 +35,11 @@ declare namespace LX {
     type ClientSyncHandlerActions<Socket> = WarpSyncHandlerActions<Socket, ClientSyncActions>;
 
     type ClientSyncListActions = WarpPromiseRecord<{
-      onListSyncAction: (action: LX.Sync.List.ActionList) => void;
+      onListSyncAction: (action: Coral.Sync.List.ActionList) => void;
       list_sync_get_md5: () => string;
-      list_sync_get_sync_mode: () => LX.Sync.List.SyncMode;
-      list_sync_get_list_data: () => LX.Sync.List.ListData;
-      list_sync_set_list_data: (data: LX.Sync.List.ListData) => void;
+      list_sync_get_sync_mode: () => Coral.Sync.List.SyncMode;
+      list_sync_get_list_data: () => Coral.Sync.List.ListData;
+      list_sync_set_list_data: (data: Coral.Sync.List.ListData) => void;
       list_sync_finished: () => void;
     }>;
     type ClientSyncHandlerListActions<Socket> = WarpSyncHandlerActions<
@@ -48,11 +48,11 @@ declare namespace LX {
     >;
 
     type ClientSyncDislikeActions = WarpPromiseRecord<{
-      onDislikeSyncAction: (action: LX.Sync.Dislike.ActionList) => void;
+      onDislikeSyncAction: (action: Coral.Sync.Dislike.ActionList) => void;
       dislike_sync_get_md5: () => string;
-      dislike_sync_get_sync_mode: () => LX.Sync.Dislike.SyncMode;
-      dislike_sync_get_list_data: () => LX.Dislike.DislikeRules;
-      dislike_sync_set_list_data: (data: LX.Dislike.DislikeRules) => void;
+      dislike_sync_get_sync_mode: () => Coral.Sync.Dislike.SyncMode;
+      dislike_sync_get_list_data: () => Coral.Dislike.DislikeRules;
+      dislike_sync_set_list_data: (data: Coral.Dislike.DislikeRules) => void;
       dislike_sync_finished: () => void;
     }>;
     type ClientSyncHandlerDislikeActions<Socket> = WarpSyncHandlerActions<

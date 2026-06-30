@@ -5,11 +5,11 @@ import { type Message } from '@root/lang';
 // }
 
 declare global {
-  namespace LX {
+  namespace Coral {
     namespace Download {
       type DownloadTaskStatus = 'run' | 'waiting' | 'pause' | 'error' | 'completed';
 
-      type FileExt = 'mp3' | 'flac' | 'wav' | 'ape';
+      type FileExt = 'mp3' | 'flac' | 'wav' | 'ape' | 'm4a' | 'aac' | 'ogg' | 'opus';
 
       interface ProgressInfo {
         progress: number;
@@ -54,9 +54,9 @@ declare global {
         speed: string;
         writeQueue: number;
         metadata: {
-          musicInfo: LX.Music.MusicInfoOnline;
+          musicInfo: Coral.Music.MusicInfo;
           url: string | null;
-          quality: LX.Quality;
+          quality: Coral.Quality;
           ext: FileExt;
           fileName: string;
           filePath: string;
@@ -66,7 +66,7 @@ declare global {
 
       interface saveDownloadMusicInfo {
         list: ListItem[];
-        addMusicLocationType: LX.AddMusicLocationType;
+        addMusicLocationType: Coral.AddMusicLocationType;
       }
     }
   }

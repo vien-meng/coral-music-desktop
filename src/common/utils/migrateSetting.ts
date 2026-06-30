@@ -17,7 +17,7 @@ const oldThemeMap = {
   9: 'happy_new_year',
 } as const;
 
-export default (setting: any): Partial<LX.AppSetting> => {
+export default (setting: any): Partial<Coral.AppSetting> => {
   setting = { ...setting };
 
   // 迁移 v2.0.0 之前的配置

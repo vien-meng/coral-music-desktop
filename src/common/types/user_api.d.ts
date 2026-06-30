@@ -1,4 +1,4 @@
-declare namespace LX {
+declare namespace Coral {
   namespace UserApi {
     type UserApiSourceInfoType = 'music';
     type UserApiSourceInfoActions = 'musicUrl' | 'lyric' | 'pic';
@@ -7,10 +7,10 @@ declare namespace LX {
       name: string;
       type: UserApiSourceInfoType;
       actions: UserApiSourceInfoActions[];
-      qualitys: LX.Quality[];
+      qualitys: Coral.Quality[];
     }
 
-    type UserApiSources = Record<LX.Source, UserApiSourceInfo>;
+    type UserApiSources = Record<Coral.Source, UserApiSourceInfo>;
 
     interface UserApiInfoFull {
       id: string;

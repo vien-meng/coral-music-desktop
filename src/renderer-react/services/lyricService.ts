@@ -1,7 +1,7 @@
 import { ipcChannels } from '@shared/ipc/contracts';
 import { ipcClient } from './ipc/client';
 
-const emptyLyricInfo: LX.Music.LyricInfo = {
+const emptyLyricInfo: Coral.Music.LyricInfo = {
   lyric: '',
   lxlyric: '',
   rlyric: '',
@@ -9,22 +9,24 @@ const emptyLyricInfo: LX.Music.LyricInfo = {
 };
 
 const normalizeLyricInfo = (
-  lyricInfo: LX.Music.LyricInfo | null | undefined,
-): LX.Music.LyricInfo => ({
+  lyricInfo: Coral.Music.LyricInfo | null | undefined,
+): Coral.Music.LyricInfo => ({
   lyric: lyricInfo?.lyric ?? '',
   lxlyric: lyricInfo?.lxlyric ?? '',
   rlyric: lyricInfo?.rlyric ?? '',
   tlyric: lyricInfo?.tlyric ?? '',
 });
 
-export const getLyricRaw = async (musicInfo: LX.Music.MusicInfo): Promise<LX.Music.LyricInfo> => {
+export const getLyricRaw = async (
+  musicInfo: Coral.Music.MusicInfo,
+): Promise<Coral.Music.LyricInfo> => {
   if (!ipcClient.canUseIpc()) return emptyLyricInfo;
   return normalizeLyricInfo(await ipcClient.invoke(ipcChannels.winMain.getLyricRaw, musicInfo.id));
 };
 
 export const getLyricEdited = async (
-  musicInfo: LX.Music.MusicInfo,
-): Promise<LX.Music.LyricInfo> => {
+  musicInfo: Coral.Music.MusicInfo,
+): Promise<Coral.Music.LyricInfo> => {
   if (!ipcClient.canUseIpc()) return emptyLyricInfo;
   return normalizeLyricInfo(
     await ipcClient.invoke(ipcChannels.winMain.getLyricEdited, musicInfo.id),
@@ -32,8 +34,8 @@ export const getLyricEdited = async (
 };
 
 export const saveLyricEdited = async (
-  musicInfo: LX.Music.MusicInfo,
-  lyricInfo: LX.Music.LyricInfo,
+  musicInfo: Coral.Music.MusicInfo,
+  lyricInfo: Coral.Music.LyricInfo,
 ): Promise<void> => {
   if (!ipcClient.canUseIpc()) return;
   await ipcClient.invoke(ipcChannels.winMain.saveLyricEdited, {
@@ -43,8 +45,8 @@ export const saveLyricEdited = async (
 };
 
 export const saveLyricRaw = async (
-  musicInfo: LX.Music.MusicInfo,
-  lyricInfo: LX.Music.LyricInfo,
+  musicInfo: Coral.Music.MusicInfo,
+  lyricInfo: Coral.Music.LyricInfo,
 ): Promise<void> => {
   if (!ipcClient.canUseIpc()) return;
   await ipcClient.invoke(ipcChannels.winMain.saveLyricRaw, {
@@ -53,7 +55,7 @@ export const saveLyricRaw = async (
   });
 };
 
-export const removeLyricEdited = async (musicInfo: LX.Music.MusicInfo): Promise<void> => {
+export const removeLyricEdited = async (musicInfo: Coral.Music.MusicInfo): Promise<void> => {
   if (!ipcClient.canUseIpc()) return;
   await ipcClient.invoke(ipcChannels.winMain.removeLyricEdited, musicInfo.id);
 };

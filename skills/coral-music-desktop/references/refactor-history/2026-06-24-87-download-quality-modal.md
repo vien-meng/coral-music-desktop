@@ -5,7 +5,7 @@ Date: 2026-06-24
 ## Summary
 
 - Continued List route parity after download row action.
-- Created React `DownloadQualityModal` component, which mirrors the legacy `DownloadModal.vue` behavior: shows available quality options for a music item and triggers download via the legacy worker (`window.lx.worker.download.createDownloadTasks`) + typed IPC (`winMain.downloadListAdd`).
+- Created React `DownloadQualityModal` component, which mirrors the legacy `DownloadModal.vue` behavior: shows available quality options for a music item and triggers download via the legacy worker (`window.coral.worker.download.createDownloadTasks`) + typed IPC (`winMain.downloadListAdd`).
 - Added `downloadListAdd` IPC channel to `src/shared/ipc/contracts.ts`.
 - Successfully built.
 
@@ -14,7 +14,7 @@ Date: 2026-06-24
 - `src/renderer-react/components/player/DownloadQualityModal.tsx` (new)
   - Accepts `musicInfo`, `listId`, `onClose`.
   - Renders quality buttons from `musicInfo.meta.qualitys`.
-  - Calls `window.lx.worker.download.createDownloadTasks()` then `ipcClient.invoke(winMain.downloadListAdd, ...)`.
+  - Calls `window.coral.worker.download.createDownloadTasks()` then `ipcClient.invoke(winMain.downloadListAdd, ...)`.
 - `src/shared/ipc/contracts.ts`
   - Added `winMain.downloadListAdd` IPC channel definition.
 - `src/renderer-react/features/list/LocalListRoutePanel.tsx`

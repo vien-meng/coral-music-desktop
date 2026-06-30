@@ -19,7 +19,7 @@ export const createQueryStatement = () => {
  */
 export const createInsertStatement = () => {
   const db = getDB();
-  return db.prepare<[LX.DBService.MusicUrlInfo]>(`
+  return db.prepare<[Coral.DBService.MusicUrlInfo]>(`
     INSERT INTO "main"."music_url" ("id", "url")
     VALUES (@id, @url)`);
 };
@@ -53,7 +53,7 @@ export const createDeleteStatement = () => {
  */
 export const createUpdateStatement = () => {
   const db = getDB();
-  return db.prepare<[LX.DBService.MusicUrlInfo]>(`
+  return db.prepare<[Coral.DBService.MusicUrlInfo]>(`
     UPDATE "main"."music_url"
     SET "url"=@url
     WHERE "id"=@id`);

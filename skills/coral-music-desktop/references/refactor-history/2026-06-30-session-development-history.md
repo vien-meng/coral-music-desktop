@@ -7,6 +7,9 @@ This note records the practical implementation history from the recent Codex ses
 ## Product Identity And Migration
 
 - Replaced remaining LX Music-facing product labels with Coral Music / 珊瑚音乐 in the React desktop UI and shared branding paths.
+- Refactored project variables and namespaces from old inherited naming to Coral-oriented names.
+- Preserved `lxlyric` naming because it refers to the lyric/word-timing format rather than product identity.
+- Renamed data directory compatibility names to Coral naming.
 - Preserved LX compatibility globals and User API concepts where they are part of third-party source compatibility, not product branding.
 - Added Chinese source display mapping for online platforms so users see readable names such as 酷我音乐, 酷狗音乐, QQ音乐, 网易云音乐, 咪咕音乐, rather than `KW/KG/TX/WY/MG`.
 
@@ -125,6 +128,44 @@ This note records the practical implementation history from the recent Codex ses
   - current selected count / current visible list count
 - Switching download tabs clears selection to avoid hidden selected tasks affecting button state.
 - Selection is cleaned when refreshed tasks no longer contain old IDs.
+
+## WebDAV Cloud Playback Plan And First Implementation
+
+- Added implementation plan at `skills/coral-music-desktop/references/refactor-history/2026-06-30-webdav-cloud-playback-plan.md`.
+- First version intentionally supports user-provided WebDAV endpoints only; Baidu, Xunlei, Quark, Aliyun, 115, Tianyi, UC, and custom providers are presets/display labels, not bundled official cloud-drive APIs.
+- Added WebDAV settings/types:
+  - `Coral.WebDav.Provider`
+  - `Coral.WebDav.Account`
+  - `Coral.WebDav.SafeAccount`
+  - `Coral.WebDav.FileItem`
+  - `Coral.Music.MusicInfoWebDav`
+  - `webdav.accounts`
+  - `webdav.activeAccountId`
+  - `webdav.proxy.enabled`
+- Added WebDAV IPC:
+  - account list/save/remove/test
+  - directory listing
+  - short-lived stream URL create/revoke
+- Added main-process `webDavService`:
+  - stores accounts through app settings
+  - performs PROPFIND directory reads
+  - normalizes WebDAV file items
+  - filters known audio extensions
+  - creates a local `127.0.0.1` authenticated stream proxy with Range forwarding
+- Added renderer `webDavService` and `WebDavStore` for account state, directory state, breadcrumbs, current-directory search, and audio item conversion.
+- Added `网盘资源` route with:
+  - account selector
+  - add/edit/delete account modal
+  - connection test
+  - directory breadcrumb
+  - refresh
+  - current-directory search
+  - directory/file list
+  - play/add-to-list/download actions for audio files
+- Added WebDAV playback branch in `resolvePlayableMusicUrl`; WebDAV files resolve to the local proxy URL and do not enter User API or online quality switching.
+- Added WebDAV download task creation with original extension preservation and automatic start through the existing download queue.
+- Updated source labels and quality controls so WebDAV appears as `网盘资源` and hides online quality switching.
+- Updated old-info conversion and download lyric caching so WebDAV is treated as remote file content, not as an online SDK music source.
 
 ## DevTools And Startup
 

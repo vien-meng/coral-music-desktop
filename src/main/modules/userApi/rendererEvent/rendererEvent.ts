@@ -5,8 +5,8 @@ import { createWindow, getProxy, isUserApiWindowAlive, openDevTools, sendEvent }
 import { getUserApis, updateApiRuntimeInfo } from '../utils';
 import { sendShowUpdateAlert, sendStatusChange } from '@main/modules/winMain';
 
-let userApi: LX.UserApi.UserApiInfo;
-let apiStatus: LX.UserApi.UserApiStatus = { status: true };
+let userApi: Coral.UserApi.UserApiInfo;
+let apiStatus: Coral.UserApi.UserApiStatus = { status: true };
 let pendingInitResolve: (() => void) | null = null;
 let pendingInitTimer: NodeJS.Timeout | null = null;
 const requestQueue = new Map();
@@ -19,7 +19,7 @@ interface InitParams {
   params: {
     status: boolean;
     message: string;
-    data: LX.UserApi.UserApiInfo;
+    data: Coral.UserApi.UserApiInfo;
   };
 }
 interface ResponseParams {
@@ -46,7 +46,7 @@ export const init = () => {
     // console.log('inited')
     // if (!status) {
     //   console.log('init failed:', message)
-    //   global.lx_event.userApi.status(status = { status: true, apiInfo: { ...userApi, sources: apiInfo.sources } })
+    //   global.coral_event.userApi.status(status = { status: true, apiInfo: { ...userApi, sources: apiInfo.sources } })
     //   return
     // }
     if (status) {
@@ -147,9 +147,9 @@ export const loadApi = async (apiId: string) => {
   const waitInit = waitApiInit();
   await createWindow(userApi);
   await waitInit;
-  // if (!userApi) return global.lx_event.userApi.status(status = { status: false, message: 'api script is not found' })
+  // if (!userApi) return global.coral_event.userApi.status(status = { status: false, message: 'api script is not found' })
   // if (!global.modules.userApiWindow) {
-  //   global.lx_event.userApi.status(status = { status: false, message: 'user api runtime is not defined' })
+  //   global.coral_event.userApi.status(status = { status: false, message: 'user api runtime is not defined' })
   //   throw new Error('user api window is not defined')
   // }
 
@@ -171,7 +171,7 @@ export const cancelRequest = (requestKey: string) => {
 export const request = async ({
   requestKey,
   data,
-}: LX.UserApi.UserApiRequestParams): Promise<any> =>
+}: Coral.UserApi.UserApiRequestParams): Promise<any> =>
   await new Promise((resolve, reject) => {
     if (!userApi) {
       reject(new Error('user api is not load'));
@@ -203,7 +203,7 @@ export const request = async ({
     sendRequest({ requestKey, data });
   });
 
-export const getStatus = (): LX.UserApi.UserApiStatus => apiStatus;
+export const getStatus = (): Coral.UserApi.UserApiStatus => apiStatus;
 
 export const updateAllowShowUpdateAlert = (id: string, enable: boolean) => {
   if (!userApi || userApi.id != id) return;

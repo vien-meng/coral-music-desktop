@@ -1,4 +1,4 @@
-declare namespace LX {
+declare namespace Coral {
   namespace Sync {
     namespace Dislike {
       interface ListInfo {
@@ -16,8 +16,8 @@ declare namespace LX {
         ? SyncActionBase<A>
         : SyncActionData<A, D>;
       type ActionList =
-        | SyncAction<'dislike_data_overwrite', LX.Dislike.DislikeRules>
-        | SyncAction<'dislike_music_add', LX.Dislike.DislikeMusicInfo[]>
+        | SyncAction<'dislike_data_overwrite', Coral.Dislike.DislikeRules>
+        | SyncAction<'dislike_music_add', Coral.Dislike.DislikeMusicInfo[]>
         | SyncAction<'dislike_music_clear'>;
 
       type SyncMode =

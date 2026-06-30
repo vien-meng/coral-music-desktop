@@ -1,14 +1,14 @@
 import { makeAutoObservable, observable } from 'mobx';
 import { loadOnlineMusicService } from '../../services/onlineMusicServiceLoader';
 
-const defaultSongListSources: LX.OnlineSource[] = ['kw', 'kg', 'tx', 'wy', 'mg'];
+const defaultSongListSources: Coral.OnlineSource[] = ['kw', 'kg', 'tx', 'wy', 'mg'];
 
 export interface SongListSortInfo {
   id: string;
   name: string;
 }
 
-export interface SongListTagItem<T extends LX.OnlineSource = LX.OnlineSource> {
+export interface SongListTagItem<T extends Coral.OnlineSource = Coral.OnlineSource> {
   id: string;
   name: string;
   parent_id: string;
@@ -16,12 +16,12 @@ export interface SongListTagItem<T extends LX.OnlineSource = LX.OnlineSource> {
   source: T;
 }
 
-export interface SongListTagGroup<Source extends LX.OnlineSource = LX.OnlineSource> {
+export interface SongListTagGroup<Source extends Coral.OnlineSource = Coral.OnlineSource> {
   list: Array<SongListTagItem<Source>>;
   name: string;
 }
 
-export interface SongListTagInfo<Source extends LX.OnlineSource = LX.OnlineSource> {
+export interface SongListTagInfo<Source extends Coral.OnlineSource = Coral.OnlineSource> {
   hotTag: Array<SongListTagItem<Source>>;
   source: Source;
   tags: Array<SongListTagGroup<Source>>;
@@ -34,7 +34,7 @@ export interface SongListItem {
   img: string;
   name: string;
   play_count: string;
-  source: LX.OnlineSource;
+  source: Coral.OnlineSource;
   time?: string;
   total?: string;
 }
@@ -46,7 +46,7 @@ export interface SongListInfo {
   noItemLabel: string;
   page: number;
   sortId: string;
-  source?: LX.OnlineSource;
+  source?: Coral.OnlineSource;
   tagId: string;
   total: number;
 }
@@ -63,10 +63,10 @@ export interface SongListDetailInfo {
   };
   key: string | null;
   limit: number;
-  list: LX.Music.MusicInfoOnline[];
+  list: Coral.Music.MusicInfoOnline[];
   noItemLabel: string;
   page: number;
-  source: LX.OnlineSource;
+  source: Coral.OnlineSource;
   total: number;
 }
 
@@ -124,13 +124,13 @@ export class SongListStore {
 
   selectListInfo: SongListItem | null = null;
 
-  sortList: Partial<Record<LX.OnlineSource, SongListSortInfo[]>> = {};
+  sortList: Partial<Record<Coral.OnlineSource, SongListSortInfo[]>> = {};
 
-  sources: LX.OnlineSource[] = defaultSongListSources;
+  sources: Coral.OnlineSource[] = defaultSongListSources;
 
   tagError: string | null = null;
 
-  tags: Partial<Record<LX.OnlineSource, SongListTagInfo>> = {};
+  tags: Partial<Record<Coral.OnlineSource, SongListTagInfo>> = {};
 
   constructor() {
     makeAutoObservable(
@@ -146,7 +146,7 @@ export class SongListStore {
     );
   }
 
-  get activeSource(): LX.OnlineSource {
+  get activeSource(): Coral.OnlineSource {
     return this.listInfo.source ?? 'kw';
   }
 

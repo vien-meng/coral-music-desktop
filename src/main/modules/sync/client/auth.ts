@@ -5,7 +5,7 @@ import { aesDecrypt, aesEncrypt, getComputerName, rsaDecrypt } from '../utils';
 import { toMD5 } from '@common/utils/nodejs';
 import { SYNC_CODE } from '@common/constants_sync';
 
-const hello = async (urlInfo: LX.Sync.Client.UrlInfo) =>
+const hello = async (urlInfo: Coral.Sync.Client.UrlInfo) =>
   request(`${urlInfo.httpProtocol}//${urlInfo.hostPath}/hello`)
     .then(({ text }) => text == SYNC_CODE.helloMsg)
     .catch((err: any) => {
@@ -14,7 +14,7 @@ const hello = async (urlInfo: LX.Sync.Client.UrlInfo) =>
       return false;
     });
 
-const getServerId = async (urlInfo: LX.Sync.Client.UrlInfo) =>
+const getServerId = async (urlInfo: Coral.Sync.Client.UrlInfo) =>
   request(`${urlInfo.httpProtocol}//${urlInfo.hostPath}/id`)
     .then(({ text }) => {
       if (!text.startsWith(SYNC_CODE.idPrefix)) return '';
@@ -26,7 +26,7 @@ const getServerId = async (urlInfo: LX.Sync.Client.UrlInfo) =>
       throw err;
     });
 
-const codeAuth = async (urlInfo: LX.Sync.Client.UrlInfo, serverId: string, authCode: string) => {
+const codeAuth = async (urlInfo: Coral.Sync.Client.UrlInfo, serverId: string, authCode: string) => {
   let key = toMD5(authCode).substring(0, 16);
   // const iv = Buffer.from(key.split('').reverse().join('')).toString('base64')
   key = Buffer.from(key).toString('base64');
@@ -60,14 +60,14 @@ const codeAuth = async (urlInfo: LX.Sync.Client.UrlInfo, serverId: string, authC
       }
       // console.log(msg)
       if (!msg) return Promise.reject(new Error(SYNC_CODE.authFailed));
-      const info = JSON.parse(msg) as LX.Sync.ClientKeyInfo;
+      const info = JSON.parse(msg) as Coral.Sync.ClientKeyInfo;
       setSyncAuthKey(serverId, info);
       return info;
     },
   );
 };
 
-const keyAuth = async (urlInfo: LX.Sync.Client.UrlInfo, keyInfo: LX.Sync.ClientKeyInfo) => {
+const keyAuth = async (urlInfo: Coral.Sync.Client.UrlInfo, keyInfo: Coral.Sync.ClientKeyInfo) => {
   const msg = aesEncrypt(SYNC_CODE.authMsg + getComputerName(), keyInfo.key);
   // eslint-disable-next-line @typescript-eslint/promise-function-async
   return request(`${urlInfo.httpProtocol}//${urlInfo.hostPath}/ah`, {
@@ -86,7 +86,7 @@ const keyAuth = async (urlInfo: LX.Sync.Client.UrlInfo, keyInfo: LX.Sync.ClientK
   });
 };
 
-const auth = async (urlInfo: LX.Sync.Client.UrlInfo, serverId: string, authCode?: string) => {
+const auth = async (urlInfo: Coral.Sync.Client.UrlInfo, serverId: string, authCode?: string) => {
   if (authCode) return codeAuth(urlInfo, serverId, authCode);
   const keyInfo = await getSyncAuthKey(serverId);
   if (!keyInfo) throw new Error(SYNC_CODE.missingAuthCode);
@@ -94,7 +94,7 @@ const auth = async (urlInfo: LX.Sync.Client.UrlInfo, serverId: string, authCode?
   return keyInfo;
 };
 
-export default async (urlInfo: LX.Sync.Client.UrlInfo, authCode?: string) => {
+export default async (urlInfo: Coral.Sync.Client.UrlInfo, authCode?: string) => {
   console.log('connect: ', urlInfo.href, authCode);
   if (!(await hello(urlInfo))) throw new Error(SYNC_CODE.connectServiceFailed);
   const serverId = await getServerId(urlInfo);

@@ -34,7 +34,7 @@ Production build is `node build-config/pack.js`; it clears `dist/**` and `build/
 ```mermaid
 flowchart TD
   Main["Electron main process\nsrc/main/index.ts"] --> AppInit["app.ts\nsingle instance, userData, deeplink, settings"]
-  AppInit --> Events["global.lx event buses\nAppEvent, ListEvent, DislikeEvent"]
+  AppInit --> Events["global.coral event buses\nAppEvent, ListEvent, DislikeEvent"]
   AppInit --> DBWorker["dbService worker\nbetter-sqlite3"]
   Events --> WinMain["Main BrowserWindow\nsrc/main/modules/winMain"]
   Events --> WinLyric["Desktop lyric BrowserWindow\nsrc/main/modules/winLyric"]
@@ -53,16 +53,16 @@ flowchart TD
 `src/main/index.ts` performs these steps:
 
 1. Import logging and common error handling.
-2. `initGlobalData()` parses CLI/deeplink params and creates `global.lx`.
+2. `initGlobalData()` parses CLI/deeplink params and creates `global.coral`.
 3. `initSingleInstanceHandle()` enforces one app instance and forwards deeplink/show behavior.
 4. `applyElectronEnvParams()` applies GPU, hardware media key, proxy, and Linux GL flags.
-5. `setUserDataPath()` chooses portable/user data paths and `LxDatas`.
+5. `setUserDataPath()` chooses portable/user data paths and `CoralDatas`.
 6. `registerDeeplink(init)` registers `coralmusic://`.
 7. `listenerAppEvent(init)` attaches navigation guards, native theme, proxy, and app lifecycle handlers.
 8. `app.whenReady()` calls `init()`, delayed on Linux.
 9. `init()` loads hotkey/settings/DB/theme, registers modules, then emits `app_inited`.
 
-`global.lx` is the main-process compatibility hub. It stores:
+`global.coral` is the main-process compatibility hub. It stores:
 
 - `event_app`, `event_list`, `event_dislike`.
 - `appSetting`.
@@ -88,7 +88,7 @@ Active React shell: `src/renderer-react/main.tsx` mounts `App.tsx`, wraps the ap
 
 Legacy Vue reference: `src/renderer/main.ts`:
 
-1. Imports common error handling and creates `window.lx` / `window.lxData` via `core/globalData`.
+1. Imports common error handling and creates `window.coral` / `window.coralData` via `core/globalData`.
 2. Registers renderer events and workers.
 3. Fetches settings through IPC.
 4. Sets language, adjusts invalid window size, initializes `store/setting`.
@@ -128,8 +128,8 @@ Legacy Vue reference: `src/renderer-lyric/main.ts` fetches desktop lyric config 
 
 - Renderer actions usually call `src/renderer/utils/ipc.ts`.
 - IPC reaches `src/main/modules/winMain/rendererEvent/*` or `src/main/modules/commonRenderers/*`.
-- List/dislike mutations go through `global.lx.event_list` or `global.lx.event_dislike`.
-- Those events write to `global.lx.worker.dbService` first, then broadcast to renderers and sync modules.
+- List/dislike mutations go through `global.coral.event_list` or `global.coral.event_dislike`.
+- Those events write to `global.coral.worker.dbService` first, then broadcast to renderers and sync modules.
 - DB worker caches list/download data in memory after first load.
 
 ## Security And Compatibility Notes

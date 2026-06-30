@@ -10,55 +10,55 @@ let isMainWidnowFullscreen = false;
 
 export default () => {
   initRendererEvent();
-  // global.lx.event_app.winLyric = new Event()
+  // global.coral.event_app.winLyric = new Event()
   // global.app_event.winMain.
 
-  global.lx.event_app.on('main_window_inited', () => {
-    isMainWidnowFullscreen = global.lx.appSetting['common.startInFullscreen'];
+  global.coral.event_app.on('main_window_inited', () => {
+    isMainWidnowFullscreen = global.coral.appSetting['common.startInFullscreen'];
 
-    if (global.lx.appSetting['desktopLyric.enable']) {
-      if (global.lx.appSetting['desktopLyric.fullscreenHide'] && isMainWidnowFullscreen) {
+    if (global.coral.appSetting['desktopLyric.enable']) {
+      if (global.coral.appSetting['desktopLyric.fullscreenHide'] && isMainWidnowFullscreen) {
         closeWindow();
       } else if (isExistWindow()) sendMainWindowInitedEvent();
       else createWindow();
     }
   });
-  global.lx.event_app.on('updated_config', (keys, setting) => {
+  global.coral.event_app.on('updated_config', (keys, setting) => {
     setLrcConfig(keys, setting);
     if (
       keys.includes('desktopLyric.fullscreenHide') &&
-      global.lx.appSetting['desktopLyric.enable'] &&
+      global.coral.appSetting['desktopLyric.enable'] &&
       isMainWidnowFullscreen
     ) {
-      if (global.lx.appSetting['desktopLyric.fullscreenHide']) closeWindow();
+      if (global.coral.appSetting['desktopLyric.fullscreenHide']) closeWindow();
       else if (!isExistWindow()) createWindow();
     }
   });
-  global.lx.event_app.on('main_window_close', () => {
+  global.coral.event_app.on('main_window_close', () => {
     closeWindow();
   });
-  global.lx.event_app.on('main_window_fullscreen', (isFullscreen) => {
+  global.coral.event_app.on('main_window_fullscreen', (isFullscreen) => {
     isMainWidnowFullscreen = isFullscreen;
     if (
-      global.lx.appSetting['desktopLyric.enable'] &&
-      global.lx.appSetting['desktopLyric.fullscreenHide']
+      global.coral.appSetting['desktopLyric.enable'] &&
+      global.coral.appSetting['desktopLyric.fullscreenHide']
     ) {
       if (isFullscreen) closeWindow();
       else if (!isExistWindow()) createWindow();
     }
   });
 
-  // global.lx_event.mainWindow.on(MAIN_WINDOW_EVENT_NAME.setLyricInfo, info => {
+  // global.coral_event.mainWindow.on(MAIN_WINDOW_EVENT_NAME.setLyricInfo, info => {
   //   if (!global.modules.lyricWindow) return
   //   mainSend(global.modules.lyricWindow, ipcWinLyricNames.set_lyric_info, info)
   // })
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  global.lx.event_app.on('hot_key_down', ({ type, key }) => {
-    let info = global.lx.hotKey.config.global.keys[key];
+  global.coral.event_app.on('hot_key_down', ({ type, key }) => {
+    let info = global.coral.hotKey.config.global.keys[key];
     if (!info || info.type != APP_EVENT_NAMES.winLyricName) return;
-    let newSetting: Partial<LX.AppSetting> = {};
-    let settingKey: keyof LX.AppSetting;
+    let newSetting: Partial<Coral.AppSetting> = {};
+    let settingKey: keyof Coral.AppSetting;
     switch (info.action) {
       case HOTKEY_DESKTOP_LYRIC.toggle_visible.action:
         settingKey = 'desktopLyric.enable';
@@ -72,9 +72,9 @@ export default () => {
       default:
         return;
     }
-    newSetting[settingKey] = !global.lx.appSetting[settingKey];
+    newSetting[settingKey] = !global.coral.appSetting[settingKey];
 
-    global.lx.event_app.update_config(newSetting);
+    global.coral.event_app.update_config(newSetting);
   });
 };
 export * from './main';

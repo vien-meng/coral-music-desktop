@@ -22,7 +22,7 @@ import {
  */
 export const queryLyric = (id: string) => {
   const lyricQueryStatement = createLyricQueryStatement();
-  return lyricQueryStatement.all(id) as LX.DBService.Lyricnfo[];
+  return lyricQueryStatement.all(id) as Coral.DBService.Lyricnfo[];
 };
 
 /**
@@ -32,17 +32,17 @@ export const queryLyric = (id: string) => {
  */
 export const queryRawLyric = (id: string) => {
   const rawLyricQueryStatement = createRawLyricQueryStatement();
-  return rawLyricQueryStatement.all(id) as LX.DBService.Lyricnfo[];
+  return rawLyricQueryStatement.all(id) as Coral.DBService.Lyricnfo[];
 };
 
 /**
  * 批量插入原始歌词
  * @param lyrics 列表
  */
-export const insertRawLyric = (lyrics: LX.DBService.Lyricnfo[]) => {
+export const insertRawLyric = (lyrics: Coral.DBService.Lyricnfo[]) => {
   const db = getDB();
   const rawLyricInsertStatement = createRawLyricInsertStatement();
-  db.transaction((lyrics: LX.DBService.Lyricnfo[]) => {
+  db.transaction((lyrics: Coral.DBService.Lyricnfo[]) => {
     for (const lyric of lyrics) rawLyricInsertStatement.run(lyric);
   })(lyrics);
 };
@@ -63,10 +63,10 @@ export const deleteRawLyric = (ids: string[]) => {
  * 批量更新原始歌词
  * @param lyrics 列表
  */
-export const updateRawLyric = (lyrics: LX.DBService.Lyricnfo[]) => {
+export const updateRawLyric = (lyrics: Coral.DBService.Lyricnfo[]) => {
   const db = getDB();
   const rawLyricUpdateStatement = createRawLyricUpdateStatement();
-  db.transaction((lyrics: LX.DBService.Lyricnfo[]) => {
+  db.transaction((lyrics: Coral.DBService.Lyricnfo[]) => {
     for (const lyric of lyrics) rawLyricUpdateStatement.run(lyric);
   })(lyrics);
 };
@@ -94,17 +94,17 @@ export const countRawLyric = () => {
  */
 export const queryEditedLyric = (id: string) => {
   const rawLyricQueryStatement = createEditedLyricQueryStatement();
-  return rawLyricQueryStatement.all(id) as LX.DBService.Lyricnfo[];
+  return rawLyricQueryStatement.all(id) as Coral.DBService.Lyricnfo[];
 };
 
 /**
  * 批量插入已编辑歌词
  * @param lyrics 列表
  */
-export const insertEditedLyric = (lyrics: LX.DBService.Lyricnfo[]) => {
+export const insertEditedLyric = (lyrics: Coral.DBService.Lyricnfo[]) => {
   const db = getDB();
   const rawLyricInsertStatement = createEditedLyricInsertStatement();
-  db.transaction((lyrics: LX.DBService.Lyricnfo[]) => {
+  db.transaction((lyrics: Coral.DBService.Lyricnfo[]) => {
     for (const lyric of lyrics) rawLyricInsertStatement.run(lyric);
   })(lyrics);
 };
@@ -125,10 +125,10 @@ export const deleteEditedLyric = (ids: string[]) => {
  * 批量更新已编辑歌词
  * @param lyrics 列表
  */
-export const updateEditedLyric = (lyrics: LX.DBService.Lyricnfo[]) => {
+export const updateEditedLyric = (lyrics: Coral.DBService.Lyricnfo[]) => {
   const db = getDB();
   const rawLyricUpdateStatement = createEditedLyricUpdateStatement();
-  db.transaction((lyrics: LX.DBService.Lyricnfo[]) => {
+  db.transaction((lyrics: Coral.DBService.Lyricnfo[]) => {
     for (const lyric of lyrics) rawLyricUpdateStatement.run(lyric);
   })(lyrics);
 };

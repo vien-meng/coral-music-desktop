@@ -1,4 +1,4 @@
-declare namespace LX {
+declare namespace Coral {
   namespace OpenAPI {
     interface Status {
       status: boolean;

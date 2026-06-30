@@ -5,7 +5,7 @@ export interface UserSpace {
   dataManage: UserDataManage;
   listManage: ListManage;
   dislikeManage: DislikeManage;
-  getDecices: () => Promise<LX.Sync.ServerKeyInfo[]>;
+  getDecices: () => Promise<Coral.Sync.ServerKeyInfo[]>;
   removeDevice: (clientId: string) => Promise<void>;
 }
 const users = new Map<string, UserSpace>();

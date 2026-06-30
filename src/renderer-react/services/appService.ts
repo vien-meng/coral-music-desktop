@@ -3,7 +3,7 @@ import { ipcClient } from './ipc/client';
 
 export const isElectronRenderer = (): boolean => ipcClient.canUseIpc();
 
-export const getEnvParams = async (): Promise<LX.EnvParams | null> => {
+export const getEnvParams = async (): Promise<Coral.EnvParams | null> => {
   if (!isElectronRenderer()) return null;
   return await ipcClient.invoke(ipcChannels.common.getEnvParams);
 };

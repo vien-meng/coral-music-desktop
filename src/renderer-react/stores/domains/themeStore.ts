@@ -11,9 +11,9 @@ export class ThemeStore {
 
   isHydrating = false;
 
-  themeInfo: LX.ThemeInfo | null = null;
+  themeInfo: Coral.ThemeInfo | null = null;
 
-  themeSetting: LX.ThemeSetting | null = themeService.getInitialThemeSetting();
+  themeSetting: Coral.ThemeSetting | null = themeService.getInitialThemeSetting();
 
   private readonly disposers: Array<() => void> = [];
 
@@ -28,16 +28,16 @@ export class ThemeStore {
     );
   }
 
-  get allThemes(): LX.Theme[] {
+  get allThemes(): Coral.Theme[] {
     if (!this.themeInfo) return [];
     return [...this.themeInfo.themes, ...this.themeInfo.userThemes];
   }
 
-  get lightThemes(): LX.Theme[] {
+  get lightThemes(): Coral.Theme[] {
     return this.allThemes.filter((theme) => !theme.isDark);
   }
 
-  get darkThemes(): LX.Theme[] {
+  get darkThemes(): Coral.Theme[] {
     return this.allThemes.filter((theme) => theme.isDark);
   }
 
@@ -71,7 +71,7 @@ export class ThemeStore {
     const appSetting = this.settings.appSetting;
     if (!appSetting || appSetting['theme.lightId'] === id) return;
 
-    const nextSetting: Partial<LX.AppSetting> = { 'theme.lightId': id };
+    const nextSetting: Partial<Coral.AppSetting> = { 'theme.lightId': id };
     this.settings.mergeAppSetting(nextSetting);
     await settingService.updateAppSetting(nextSetting);
   }
@@ -80,7 +80,7 @@ export class ThemeStore {
     const appSetting = this.settings.appSetting;
     if (!appSetting || appSetting['theme.darkId'] === id) return;
 
-    const nextSetting: Partial<LX.AppSetting> = { 'theme.darkId': id };
+    const nextSetting: Partial<Coral.AppSetting> = { 'theme.darkId': id };
     this.settings.mergeAppSetting(nextSetting);
     await settingService.updateAppSetting(nextSetting);
   }
@@ -91,7 +91,7 @@ export class ThemeStore {
 
     const themeId = mode === 'dark' ? appSetting['theme.darkId'] : appSetting['theme.lightId'];
 
-    const nextSetting: Partial<LX.AppSetting> = {
+    const nextSetting: Partial<Coral.AppSetting> = {
       'theme.id': themeId,
     };
 
@@ -109,7 +109,7 @@ export class ThemeStore {
     }
   }
 
-  async saveUserTheme(theme: LX.Theme): Promise<void> {
+  async saveUserTheme(theme: Coral.Theme): Promise<void> {
     await themeService.saveTheme(theme);
     if (this.themeInfo) {
       const existingIndex = this.themeInfo.userThemes.findIndex((item) => item.id === theme.id);

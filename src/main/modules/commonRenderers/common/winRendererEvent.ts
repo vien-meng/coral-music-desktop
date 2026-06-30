@@ -9,14 +9,14 @@ export const registerRendererEvents = (
     sendEvent(CMMON_EVENT_NAME.deeplink, link);
   };
   const sendSystemThemeChange = () => {
-    sendEvent(CMMON_EVENT_NAME.theme_change, global.lx.theme);
+    sendEvent(CMMON_EVENT_NAME.theme_change, global.coral.theme);
   };
 
-  global.lx.event_app.on('deeplink', sendDeeplink);
-  global.lx.event_app.on('theme_change', sendSystemThemeChange);
+  global.coral.event_app.on('deeplink', sendDeeplink);
+  global.coral.event_app.on('theme_change', sendSystemThemeChange);
 
   return () => {
-    global.lx.event_app.off('deeplink', sendDeeplink);
-    global.lx.event_app.off('theme_change', sendSystemThemeChange);
+    global.coral.event_app.off('deeplink', sendDeeplink);
+    global.coral.event_app.off('theme_change', sendSystemThemeChange);
   };
 };
