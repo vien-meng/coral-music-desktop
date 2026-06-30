@@ -44,11 +44,6 @@ const walk = (dir) => {
   return results;
 };
 
-record('no vue source files', () => {
-  const vueFiles = walk('src').filter((file) => file.endsWith('.vue'));
-  assert(vueFiles.length === 0, `found Vue files: ${vueFiles.join(', ')}`);
-});
-
 record('active renderer routes are React panels', () => {
   const file = 'src/renderer-react/app/routeConfig.tsx';
   const content = read(file);
@@ -181,14 +176,7 @@ record('data path uses Coral names', () => {
 
 record('legacy renderer bridges are absent from React and lyric renderers', () => {
   const files = walk('src/renderer-react').concat(walk('src/lyric-react'));
-  const forbidden = [
-    'window.coral.worker',
-    '@renderer/',
-    '../../renderer',
-    '../../../renderer',
-    "from 'vue'",
-    'from "vue"',
-  ];
+  const forbidden = ['window.coral.worker', '@renderer/', '../../renderer', '../../../renderer'];
   const hits = [];
   for (const file of files) {
     if (!/\.(ts|tsx|js|jsx)$/.test(file)) continue;

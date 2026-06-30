@@ -75,7 +75,7 @@ record('readme release status is coral-specific', () => {
   assertNotIncludes(
     content,
     [
-      'img.shields.io/github/release/lyswhut/' + 'coral-music-' + 'desktop',
+      'img.shields.io/github/release/vien-meng/' + 'coral-music-' + 'desktop',
       'coral-music-' + 'desktop/workflows/Build/badge.svg',
     ],
     file,
@@ -101,8 +101,8 @@ record('user-facing upstream links are centralized', () => {
     assertNotIncludes(
       content,
       [
-        'github.com/lyswhut/' + 'coral-music-' + 'desktop',
-        'lyswhut.github.io/' + 'coral-music-' + 'doc',
+        'github.com/vien-meng/' + 'coral-music-' + 'desktop',
+        'vien-meng.github.io/' + 'coral-music-' + 'doc',
       ],
       file,
     );
@@ -170,7 +170,7 @@ record('publish target is explicit', () => {
     ['CORAL_PUBLISH_OWNER', 'CORAL_PUBLISH_REPO', 'Missing CORAL_PUBLISH_OWNER/CORAL_PUBLISH_REPO'],
     file,
   );
-  assertNotIncludes(content, ["owner: 'lyswhut'", "repo: 'coral-music-" + "desktop'"], file);
+  assertNotIncludes(content, ["owner: 'vien-meng'", "repo: 'coral-music-" + "desktop'"], file);
 });
 
 record('deep link scheme uses coral identity', () => {
