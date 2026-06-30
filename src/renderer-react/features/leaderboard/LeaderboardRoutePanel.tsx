@@ -1,7 +1,7 @@
-import { ReloadOutlined } from '@ant-design/icons';
+import { PlayCircleOutlined, ReloadOutlined } from '@ant-design/icons';
 import { Alert, Button, Divider, Segmented, Space, Spin, Tag, Typography } from 'antd';
 import { observer } from 'mobx-react-lite';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { OnlineBoardSelector, OnlineSourceSelect } from '../online/OnlineControls';
 import { OnlineMusicRowActions } from '../online/OnlineMusicRowActions';
 import { OnlineMusicPreviewList, OnlinePager } from '../online/OnlinePreviewList';
@@ -10,11 +10,13 @@ import { rootStore } from '../../stores/rootStore';
 const { Text } = Typography;
 
 export const LeaderboardRoutePanel = observer(() => {
-  const { leaderboard, list } = rootStore;
-  const [viewMode, setViewMode] = useState<'board' | 'music'>('board');
+  const { leaderboard, list, player } = rootStore;
   const activeBoardId = leaderboard.listDetailInfo.id || leaderboard.boardId;
   const activeBoardName =
     leaderboard.activeBoardList.find((board) => board.id === activeBoardId)?.name ?? '当前榜单';
+  const currentQueueId = activeBoardId
+    ? `leaderboard:${leaderboard.source}:${activeBoardId}:${leaderboard.listDetailInfo.page}`
+    : null;
 
   const maxPage =
     leaderboard.listDetailInfo.total > 0
@@ -26,7 +28,7 @@ export const LeaderboardRoutePanel = observer(() => {
       : leaderboard.listDetailInfo.list.length >= leaderboard.listDetailInfo.limit;
 
   const handlePageChange = (page: number): void => {
-    if (!activeBoardId) return;
+    if (!activeBoardId || leaderboard.isLoadingDetail) return;
     leaderboard.loadListDetail(activeBoardId, page);
   };
 
@@ -36,12 +38,11 @@ export const LeaderboardRoutePanel = observer(() => {
       await leaderboard.loadBoards(source);
       const firstBoardId = leaderboard.activeBoardList[0]?.id ?? leaderboard.boardId;
       if (!firstBoardId) {
-        setViewMode('board');
+        leaderboard.setViewMode('board');
         return;
       }
 
       await leaderboard.loadListDetail(firstBoardId);
-      setViewMode('music');
     },
     [leaderboard],
   );
@@ -59,6 +60,12 @@ export const LeaderboardRoutePanel = observer(() => {
     ],
     [],
   );
+
+  const handlePlayAll = (): void => {
+    const queue = leaderboard.listDetailInfo.list;
+    if (!queue.length) return;
+    player.playFromQueue(queue[0], queue, currentQueueId);
+  };
 
   return (
     <div className="coral-leaderboard-route">
@@ -90,10 +97,11 @@ export const LeaderboardRoutePanel = observer(() => {
             onChange={handlePageChange}
           />
           <Segmented
-            value={viewMode}
+            value={leaderboard.viewMode}
             options={boardListOptions}
+            disabled={leaderboard.isLoadingBoards || leaderboard.isLoadingDetail}
             onChange={(value) => {
-              setViewMode(value as 'board' | 'music');
+              leaderboard.setViewMode(value as 'board' | 'music');
             }}
           />
         </Space>
@@ -127,9 +135,11 @@ export const LeaderboardRoutePanel = observer(() => {
             <OnlineBoardSelector
               activeBoardId={leaderboard.boardId}
               boards={leaderboard.activeBoardList}
+              disabled={leaderboard.isLoadingDetail}
               onSelect={(board) => {
+                if (leaderboard.isLoadingDetail) return;
                 leaderboard.loadListDetail(board.id);
-                setViewMode('music');
+                leaderboard.setViewMode('music');
               }}
             />
           </Spin>
@@ -137,13 +147,13 @@ export const LeaderboardRoutePanel = observer(() => {
 
         {/* Detail content */}
         <div className="coral-leaderboard-detail">
-          {viewMode === 'board' && !leaderboard.boardId ? (
+          {leaderboard.viewMode === 'board' && !leaderboard.boardId ? (
             <div style={{ textAlign: 'center', padding: 40 }}>
               <Text type="secondary">选择一个榜单以查看歌曲</Text>
             </div>
           ) : null}
 
-          {viewMode === 'music' && (
+          {leaderboard.viewMode === 'music' && (
             <div className="coral-leaderboard-music-view">
               {leaderboard.boardId ? (
                 <>
@@ -151,6 +161,15 @@ export const LeaderboardRoutePanel = observer(() => {
                     <Space>
                       <Text strong>{activeBoardName}</Text>
                       <Tag>{`${leaderboard.listDetailInfo.total} 首`}</Tag>
+                      <Button
+                        size="small"
+                        type="primary"
+                        icon={<PlayCircleOutlined />}
+                        disabled={!leaderboard.listDetailInfo.list.length}
+                        onClick={handlePlayAll}
+                      >
+                        播放全部
+                      </Button>
                     </Space>
                   </Divider>
                   <Spin spinning={leaderboard.isLoadingDetail} className="coral-leaderboard-spin">
@@ -162,7 +181,7 @@ export const LeaderboardRoutePanel = observer(() => {
                           key="actions"
                           musicInfo={item}
                           queue={leaderboard.listDetailInfo.list}
-                          queueId={`leaderboard:${leaderboard.source}:${leaderboard.boardId}:${leaderboard.listDetailInfo.page}`}
+                          queueId={currentQueueId}
                         />,
                       ]}
                     />

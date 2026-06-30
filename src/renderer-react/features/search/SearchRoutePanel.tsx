@@ -23,9 +23,18 @@ export const SearchRoutePanel = observer(() => {
   const resultMaxPage = resultState.maxPage > 0 ? resultState.maxPage : undefined;
   const hasNextPage = resultMaxPage != null ? search.page < resultMaxPage : false;
 
+  const submitSearchWithLoading = (): void => {
+    if (search.isSearching || ui.isGlobalLoading) return;
+    if (!search.hasQuery) {
+      void search.submitSearch();
+      return;
+    }
+    void ui.withGlobalLoading(() => search.submitSearch(), '搜索中...');
+  };
+
   const handlePageChange = (page: number): void => {
     search.setPage(page);
-    if (search.hasQuery) search.submitSearch();
+    submitSearchWithLoading();
   };
 
   return (
@@ -38,12 +47,14 @@ export const SearchRoutePanel = observer(() => {
             value={search.searchType}
             onChange={(value) => {
               search.setSearchType(value as SearchRouteType);
+              submitSearchWithLoading();
             }}
           />
           <OnlineSourceSelect
             value={search.source}
             onChange={(source) => {
               search.setSource(source);
+              submitSearchWithLoading();
             }}
             sources={search.sources}
           />
@@ -58,7 +69,7 @@ export const SearchRoutePanel = observer(() => {
               search.setSearchText(event.target.value);
             }}
             onSearch={() => {
-              search.submitSearch();
+              submitSearchWithLoading();
             }}
           />
           <OnlinePager
@@ -113,7 +124,10 @@ export const SearchRoutePanel = observer(() => {
             emptyText={search.hasQuery ? '暂无结果' : '等待搜索'}
             onOpen={(item) => {
               ui.setActiveRoute('song-list');
-              songList.loadListDetail(item.id, item.source);
+              void ui.withGlobalLoading(
+                () => songList.loadListDetail(item.id, item.source),
+                '正在打开歌单...',
+              );
             }}
           />
         )}

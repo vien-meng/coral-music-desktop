@@ -25,6 +25,7 @@ import { LyricSelectionPanel } from './LyricSelectionPanel';
 import { MusicCommentPanel } from './MusicCommentPanel';
 import { PlaybackRateBtn } from './PlaybackRateBtn';
 import { PlayDetailLyricView } from './PlayDetailLyricView';
+import { PlayQueueBtn } from './PlayQueueBtn';
 import { ProgressBar } from './ProgressBar';
 import { QualitySwitchBtn } from './QualitySwitchBtn';
 import { SoundEffectBtn } from './SoundEffectBtn';
@@ -315,6 +316,7 @@ export const PlayDetailOverlay = observer(() => {
             />
             <LyricMenu />
             <QualitySwitchBtn />
+            <PlayQueueBtn />
             <VolumeBtn />
             <TogglePlayModeBtn />
             <SoundEffectBtn />

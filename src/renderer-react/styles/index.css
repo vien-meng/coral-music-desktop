@@ -227,6 +227,27 @@ body {
   min-height: 160px;
 }
 
+.coral-global-loading {
+  align-items: center;
+  backdrop-filter: blur(5px);
+  background: rgba(255, 255, 255, 0.48);
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  left: 0;
+  pointer-events: auto;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 2100;
+  -webkit-app-region: no-drag !important;
+}
+
+.coral-global-loading-tip {
+  height: 56px;
+  width: 180px;
+}
+
 .coral-player-slot {
   background: rgba(255, 255, 255, 0.82);
   border-top: 1px solid rgba(240, 100, 90, 0.08);
@@ -1113,7 +1134,7 @@ body {
 }
 
 .coral-page-input {
-  min-width: 96px;
+  min-width: 72px;
 }
 
 .coral-page-input .ant-input-number-input {
@@ -1139,6 +1160,11 @@ body {
 .coral-search-results .coral-result-list {
   height: 100%;
   max-height: none;
+}
+
+.coral-search-song-list-grid {
+  align-content: flex-start;
+  padding-bottom: 16px;
 }
 
 .coral-leaderboard-route {
@@ -1170,13 +1196,26 @@ body {
 
 .coral-leaderboard-sidebar {
   flex: 0 0 180px;
+  height: 100%;
   min-height: 0;
+  overflow: auto;
 }
 
 .coral-leaderboard-sidebar .ant-spin-nested-loading,
 .coral-leaderboard-sidebar .ant-spin-container {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   height: 100%;
   min-height: 0;
+}
+
+.coral-leaderboard-sidebar .coral-board-list {
+  flex: 1 1 auto;
+  height: auto;
+  max-height: none;
+  min-height: 0;
+  overflow: auto;
 }
 
 .coral-leaderboard-detail {
@@ -1195,16 +1234,20 @@ body {
 }
 
 .coral-leaderboard-spin,
+.coral-leaderboard-detail .ant-spin-nested-loading,
 .coral-leaderboard-spin .ant-spin-container {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
   min-height: 0;
+  overflow: auto;
 }
 
 .coral-leaderboard-detail .coral-result-list {
   flex: 1 1 auto;
   max-height: none;
+  min-height: 0;
+  overflow: auto;
 }
 
 .coral-tag-row {
@@ -1230,6 +1273,59 @@ body {
   overflow: auto;
 }
 
+.coral-play-queue-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.coral-play-queue-header {
+  align-items: center;
+  border-bottom: 1px solid rgba(112, 128, 144, 0.12);
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+}
+
+.coral-play-queue-list {
+  flex: 1 1 auto;
+  max-height: none;
+  overflow: auto;
+}
+
+.coral-play-queue-drawer .ant-drawer-content-wrapper {
+  max-width: 92vw;
+}
+
+.coral-play-queue-drawer .ant-drawer-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.coral-play-queue-panel .ant-spin-nested-loading,
+.coral-play-queue-panel .ant-spin-container {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.coral-play-queue-list .coral-plain-list-item {
+  padding: 10px 8px;
+}
+
+.coral-play-queue-list .coral-plain-list-item.is-active {
+  background: rgba(240, 100, 90, 0.12);
+}
+
+.coral-play-queue-list .coral-plain-list-item.is-active .coral-plain-list-meta-title {
+  color: #e85f56;
+  font-weight: 700;
+}
+
 .coral-board-list .coral-plain-list-item {
   padding-inline: 0;
 }
@@ -1252,6 +1348,11 @@ body {
 
 .coral-board-native-button:hover {
   background: rgba(5, 5, 5, 0.06);
+}
+
+.coral-board-native-button:disabled {
+  cursor: wait;
+  opacity: 0.56;
 }
 
 .coral-board-native-button.is-active {

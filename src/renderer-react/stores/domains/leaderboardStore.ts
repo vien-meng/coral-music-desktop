@@ -53,6 +53,8 @@ export class LeaderboardStore {
 
   sources: LX.OnlineSource[] = defaultLeaderboardSources;
 
+  viewMode: 'board' | 'music' = 'board';
+
   constructor() {
     makeAutoObservable(
       this,
@@ -88,6 +90,10 @@ export class LeaderboardStore {
     this.boardId = boardId;
   }
 
+  setViewMode(viewMode: 'board' | 'music'): void {
+    this.viewMode = viewMode;
+  }
+
   async loadBoards(source = this.source): Promise<void> {
     this.isLoadingBoards = true;
     this.detailError = null;
@@ -98,6 +104,7 @@ export class LeaderboardStore {
       const board = await onlineMusicService.getLeaderboardBoards(source);
       this.setBoard(board);
       if (!this.boardId) this.boardId = board.list[0]?.id ?? null;
+      if (this.boardId) this.viewMode = 'music';
     } catch (error) {
       this.detailError = error instanceof Error ? error.message : String(error);
     } finally {
@@ -106,6 +113,7 @@ export class LeaderboardStore {
   }
 
   async loadListDetail(id: string, page = 1): Promise<void> {
+    if (this.isLoadingDetail) return;
     const [source, boardId] = id.split('__') as [LX.OnlineSource, string];
     const key = `${id}__${page}`;
     this.isLoadingDetail = true;
@@ -134,6 +142,7 @@ export class LeaderboardStore {
         source,
         total: result.total,
       });
+      this.viewMode = 'music';
     } catch (error) {
       this.detailError = error instanceof Error ? error.message : String(error);
       this.setListDetailInfo({

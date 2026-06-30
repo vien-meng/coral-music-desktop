@@ -11,6 +11,7 @@ import { observer } from 'mobx-react-lite';
 import { rootStore } from '../../stores/rootStore';
 import { PlaybackRateBtn } from './PlaybackRateBtn';
 import { PlayDetailOverlay } from './PlayDetailOverlay';
+import { PlayQueueBtn } from './PlayQueueBtn';
 import { ProgressBar } from './ProgressBar';
 import { QualitySwitchBtn } from './QualitySwitchBtn';
 import { SoundEffectBtn } from './SoundEffectBtn';
@@ -135,6 +136,7 @@ export const PlayBar = observer(() => {
             />
           </Tooltip>
           <QualitySwitchBtn />
+          <PlayQueueBtn />
           <VolumeBtn />
           <TogglePlayModeBtn />
           <SoundEffectBtn />

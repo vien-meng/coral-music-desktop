@@ -61,6 +61,10 @@ export class DownloadStore {
     return this.tasks.filter((task) => task.status === 'completed' || task.isComplate).length;
   }
 
+  get waitingTaskCount(): number {
+    return this.tasks.filter((task) => task.status === 'waiting').length;
+  }
+
   get playableTasks(): LX.Download.ListItem[] {
     return this.tasks.filter((task) => task.status === 'completed' || task.isComplate);
   }
@@ -74,7 +78,8 @@ export class DownloadStore {
   }
 
   get queuedTaskCount(): number {
-    return this.queuedTaskIds.size;
+    return this.tasks.filter((task) => this.queuedTaskIds.has(task.id) || task.status === 'waiting')
+      .length;
   }
 
   async hydrate(): Promise<void> {

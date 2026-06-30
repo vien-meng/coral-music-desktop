@@ -24,7 +24,7 @@ import {
   Typography,
 } from 'antd';
 import { observer } from 'mobx-react-lite';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PlainList, PlainListItem, PlainListMeta } from '../../components/base';
 import type { SearchSource } from '../../stores/domains/searchStore';
 import { rootStore } from '../../stores/rootStore';
@@ -67,6 +67,7 @@ export const DownloadRoutePanel = observer(() => {
 
   const selectedTaskIdSet = new Set(selectedTaskIds);
   const selectedTasks = download.tasks.filter((task) => selectedTaskIdSet.has(task.id));
+  const selectedVisibleTasks = filteredTasks.filter((task) => selectedTaskIdSet.has(task.id));
   const selectedPlayableTasks = selectedTasks.filter(
     (task) => task.status === 'completed' || task.isComplate,
   );
@@ -76,6 +77,11 @@ export const DownloadRoutePanel = observer(() => {
   const selectedRunningTasks = selectedTasks.filter((task) => task.status === 'run');
   const isAllSelected =
     Boolean(filteredTasks.length) && filteredTasks.every((task) => selectedTaskIdSet.has(task.id));
+
+  useEffect(() => {
+    const existingTaskIds = new Set(download.tasks.map((task) => task.id));
+    setSelectedTaskIds((ids) => ids.filter((id) => existingTaskIds.has(id)));
+  }, [download.tasks]);
 
   const handleClearTasks = (): void => {
     if (!download.taskCount) return;
@@ -207,13 +213,14 @@ export const DownloadRoutePanel = observer(() => {
             </Button>
           </Space>
           <Space>
+            <Tag>总任务 {download.taskCount}</Tag>
             <Tag>已完成 {download.completedTaskCount}</Tag>
             <Tag>
               下载中 {download.runningTaskCount} / {download.maxConcurrentTaskCount}
             </Tag>
-            <Tag>排队 {download.queuedTaskCount}</Tag>
+            <Tag>等待 {download.waitingTaskCount}</Tag>
             <Tag>
-              选中 {selectedTasks.length} / {download.taskCount}
+              当前选中 {selectedVisibleTasks.length} / {filteredTasks.length}
             </Tag>
           </Space>
         </Space>
@@ -226,6 +233,7 @@ export const DownloadRoutePanel = observer(() => {
           options={TAB_OPTIONS}
           onChange={(value) => {
             setActiveTab(value as DownloadTab);
+            setSelectedTaskIds([]);
           }}
         />
       </div>
