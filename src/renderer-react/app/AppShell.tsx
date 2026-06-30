@@ -24,7 +24,7 @@ export const AppShell = observer(() => {
   const isFullscreen = false;
 
   return (
-    <Layout className="coral-shell">
+    <Layout className={`coral-shell is-${theme.themeMode}`}>
       <div className="coral-window-drag-strip" aria-hidden="true" />
       <Sider width={224} className="coral-sider">
         <div className="coral-brand">
