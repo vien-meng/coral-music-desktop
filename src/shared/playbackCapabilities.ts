@@ -1,5 +1,8 @@
 export type ExternalDecoderProvider = 'none' | 'foobar2000' | 'ffmpeg';
 export type ExternalDecoderOutput = 'wav' | 'pcm';
+export type AudioOutputMode = 'system' | 'exclusive';
+export type ExclusiveAudioOutputBackend = 'wasapi';
+export type ExclusiveAudioSampleRatePolicy = 'source' | 'deviceDefault' | 'resample';
 
 export interface ExternalDecoderProbeParams {
   executablePath: string;
@@ -39,6 +42,51 @@ export interface ExternalDecoderTranscodeResult {
   outputPath: string;
   output: ExternalDecoderOutput;
   warnings: string[];
+}
+
+export interface ExclusiveAudioDevice {
+  backend: ExclusiveAudioOutputBackend;
+  id: string;
+  isDefault: boolean;
+  name: string;
+  sampleRates: number[];
+}
+
+export interface ExclusiveAudioOutputProbeParams {
+  backend: ExclusiveAudioOutputBackend;
+  deviceId: string;
+  bufferMs: number;
+  sampleRatePolicy: ExclusiveAudioSampleRatePolicy;
+}
+
+export interface ExclusiveAudioOutputProbeResult {
+  backend: ExclusiveAudioOutputBackend;
+  canUseExclusive: boolean;
+  deviceId: string;
+  errors: string[];
+  helperAvailable: boolean;
+  platform: NodeJS.Platform;
+  warnings: string[];
+}
+
+export interface ExclusiveAudioOutputStartParams {
+  backend: ExclusiveAudioOutputBackend;
+  bufferMs: number;
+  deviceId: string;
+  sampleRatePolicy: ExclusiveAudioSampleRatePolicy;
+  sourceUrl: string;
+}
+
+export interface ExclusiveAudioOutputStatus {
+  backend: ExclusiveAudioOutputBackend;
+  deviceId: string;
+  duration: number;
+  errorText: string;
+  helperAvailable: boolean;
+  mode: AudioOutputMode;
+  platform: NodeJS.Platform;
+  progress: number;
+  status: 'idle' | 'opening' | 'playing' | 'paused' | 'stoped' | 'error';
 }
 
 export const nativeLocalAudioExtensions = [
@@ -83,6 +131,11 @@ export const playbackCapabilityRoadmap = {
   externalDecoder: {
     supportedProviders: ['none', 'foobar2000', 'ffmpeg'] as const,
     preferredOutputs: ['wav', 'pcm'] as const,
+  },
+  audioOutput: {
+    modes: ['system', 'exclusive'] as const,
+    exclusiveBackends: ['wasapi'] as const,
+    sampleRatePolicies: ['source', 'deviceDefault', 'resample'] as const,
   },
   sourcePlugin: {
     usesUserApiRuntime: true,

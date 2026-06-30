@@ -167,6 +167,14 @@ This note records the practical implementation history from the recent Codex ses
 - Updated source labels and quality controls so WebDAV appears as `网盘资源` and hides online quality switching.
 - Updated old-info conversion and download lyric caching so WebDAV is treated as remote file content, not as an online SDK music source.
 
+## USB Exclusive Output Plan And First Implementation
+
+- Added implementation history at `skills/coral-music-desktop/references/refactor-history/2026-06-30-usb-exclusive-output-plan.md`.
+- First version targets Windows WASAPI Exclusive and keeps macOS/Linux behind an explicit unsupported probe result.
+- Added shared audio-output settings, typed IPC contracts, renderer service, main-process capability gate, and Settings UI controls.
+- Added a hybrid player runtime so the existing HTMLAudio/Web Audio path remains the default system output, while exclusive mode can fail back to system output.
+- Reserved the out-of-process `coral-wasapi-helper.exe` contract; the real helper still needs to be implemented or bundled before hardware exclusive playback works.
+
 ## DevTools And Startup
 
 - Prevented automatic double DevTools windows during normal `npm run dev`.

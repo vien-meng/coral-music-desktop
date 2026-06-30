@@ -148,6 +148,36 @@ declare global {
       'player.isMediaDeviceRemovedStopPlay': boolean;
 
       /**
+       * 音频输出模式，system 走系统混音，exclusive 走独占输出后端
+       */
+      'player.audioOutput.mode': 'system' | 'exclusive';
+
+      /**
+       * 独占输出后端
+       */
+      'player.audioOutput.exclusiveBackend': 'wasapi';
+
+      /**
+       * 独占输出设备id
+       */
+      'player.audioOutput.exclusiveDeviceId': string;
+
+      /**
+       * 独占输出失败时是否回落到系统输出
+       */
+      'player.audioOutput.exclusiveFallbackToSystem': boolean;
+
+      /**
+       * 独占输出缓冲时长
+       */
+      'player.audioOutput.exclusiveBufferMs': number;
+
+      /**
+       * 独占输出采样率策略
+       */
+      'player.audioOutput.exclusiveSampleRatePolicy': 'source' | 'deviceDefault' | 'resample';
+
+      /**
        * 是否显示歌词翻译
        */
       'player.isShowLyricTranslation': boolean;

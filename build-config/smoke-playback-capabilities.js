@@ -207,7 +207,7 @@ record('external decoder probe is typed and non-executing', () => {
     read('src/main/modules/winMain/externalDecoderProbe.ts'),
     [
       'probeExternalDecoder',
-      'fs.stat',
+      '.stat(path)',
       'FFmpeg will be resolved from PATH',
       'isBareExecutableCommand',
       'Foobar2000 component probing is Windows-focused',
@@ -221,7 +221,8 @@ record('external decoder probe is typed and non-executing', () => {
       'transcodeExternalDecoder',
       "params.executablePath.trim() || 'ffmpeg'",
       'isBareExecutableCommand',
-      'spawn(executablePath',
+      'spawn(',
+      'executablePath',
       '未找到 FFmpeg',
       'FFmpeg 无法执行',
       "'-i'",
@@ -339,7 +340,7 @@ record('user api playback selection validates musicUrl capability', () => {
   assertIncludes(
     read('src/renderer-react/features/settings/SettingsRoutePanel.tsx'),
     [
-      'userApi.canPlay(apiInfo)',
+      'userApi.canPlay(runtimeApiInfo)',
       '该 User API 没有声明任何平台的 musicUrl 能力',
       '可播放',
       '不可播放',

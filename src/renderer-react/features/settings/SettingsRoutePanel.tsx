@@ -36,8 +36,11 @@ import { coralProjectLinks } from '@shared/brand';
 import {
   externalDecoderExtensions,
   normalizeAudioExtension,
+  type ExclusiveAudioDevice,
+  type ExclusiveAudioOutputProbeResult,
   type ExternalDecoderProbeResult,
 } from '@shared/playbackCapabilities';
+import { audioOutputService } from '../../services/audioOutputService';
 import { PlainList, PlainListItem, PlainListMeta } from '../../components/base';
 import { appService } from '../../services/appService';
 import { backupService } from '../../services/backupService';
@@ -377,6 +380,11 @@ export const SettingsRoutePanel = observer(() => {
     null,
   );
   const [isProbingDecoder, setIsProbingDecoder] = useState(false);
+  const [exclusiveDevices, setExclusiveDevices] = useState<ExclusiveAudioDevice[]>([]);
+  const [exclusiveProbeResult, setExclusiveProbeResult] =
+    useState<ExclusiveAudioOutputProbeResult | null>(null);
+  const [isLoadingExclusiveDevices, setIsLoadingExclusiveDevices] = useState(false);
+  const [isProbingExclusiveOutput, setIsProbingExclusiveOutput] = useState(false);
   const externalDecoderSectionRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -387,6 +395,11 @@ export const SettingsRoutePanel = observer(() => {
     appSetting?.['player.externalDecoder.extensions'],
     appSetting?.['player.externalDecoder.pluginDirs'],
   ]);
+
+  useEffect(() => {
+    if (appSetting?.['player.audioOutput.mode'] !== 'exclusive') return;
+    loadExclusiveDevices();
+  }, [appSetting?.['player.audioOutput.mode']]);
 
   useEffect(() => {
     if (!appSetting) return;
@@ -522,6 +535,31 @@ export const SettingsRoutePanel = observer(() => {
       [key]: value,
     };
     applySetting(nextSetting);
+  };
+
+  const loadExclusiveDevices = async (): Promise<void> => {
+    setIsLoadingExclusiveDevices(true);
+    try {
+      const devices = await audioOutputService.listExclusiveAudioDevices();
+      setExclusiveDevices(devices);
+    } finally {
+      setIsLoadingExclusiveDevices(false);
+    }
+  };
+
+  const handleProbeExclusiveOutput = async (): Promise<void> => {
+    setIsProbingExclusiveOutput(true);
+    try {
+      const result = await audioOutputService.probeExclusiveAudioOutput({
+        backend: appSetting['player.audioOutput.exclusiveBackend'],
+        bufferMs: appSetting['player.audioOutput.exclusiveBufferMs'],
+        deviceId: appSetting['player.audioOutput.exclusiveDeviceId'],
+        sampleRatePolicy: appSetting['player.audioOutput.exclusiveSampleRatePolicy'],
+      });
+      setExclusiveProbeResult(result);
+    } finally {
+      setIsProbingExclusiveOutput(false);
+    }
   };
 
   const currentUserApi = userApi.userApis.find((api) => api.id === appSetting['common.apiSource']);
@@ -774,6 +812,147 @@ export const SettingsRoutePanel = observer(() => {
               }}
             />
           </Form.Item>
+          <Form.Item label="音频输出模式">
+            <Radio.Group
+              value={appSetting['player.audioOutput.mode']}
+              optionType="button"
+              buttonStyle="solid"
+              options={[
+                { label: '系统输出', value: 'system' },
+                { label: 'USB 独占输出', value: 'exclusive' },
+              ]}
+              onChange={(event) => {
+                const mode = event.target.value;
+                applySetting({
+                  'player.audioOutput.mode': mode,
+                });
+                setExclusiveProbeResult(null);
+                if (mode === 'exclusive') loadExclusiveDevices();
+              }}
+            />
+          </Form.Item>
+          {appSetting['player.audioOutput.mode'] === 'exclusive' ? (
+            <>
+              <Form.Item label="独占输出状态" className="coral-settings-wide-item">
+                <Alert
+                  showIcon
+                  type="warning"
+                  title="USB 独占输出第一版仅面向 Windows WASAPI；当前不保留均衡器、声像、变调和可视化效果。"
+                  description="普通音频输出设备选择仍属于系统输出模式；独占模式会尝试接管所选 DAC 设备，失败时可自动回落到系统输出。"
+                />
+              </Form.Item>
+              <Form.Item label="独占设备" className="coral-settings-wide-item">
+                <Space wrap>
+                  <Select
+                    value={appSetting['player.audioOutput.exclusiveDeviceId']}
+                    placeholder="选择 USB / DAC 输出设备"
+                    className="coral-settings-select"
+                    loading={isLoadingExclusiveDevices}
+                    options={[
+                      ...(appSetting['player.audioOutput.exclusiveDeviceId'] &&
+                      !exclusiveDevices.some(
+                        (device) =>
+                          device.id === appSetting['player.audioOutput.exclusiveDeviceId'],
+                      )
+                        ? [
+                            {
+                              label: appSetting['player.audioOutput.exclusiveDeviceId'],
+                              value: appSetting['player.audioOutput.exclusiveDeviceId'],
+                            },
+                          ]
+                        : []),
+                      ...exclusiveDevices.map((device) => ({
+                        label: `${device.name}${device.isDefault ? '（默认）' : ''}`,
+                        value: device.id,
+                      })),
+                    ]}
+                    onChange={(value) => {
+                      updateSetting('player.audioOutput.exclusiveDeviceId', value);
+                      setExclusiveProbeResult(null);
+                    }}
+                  />
+                  <Button
+                    icon={<ReloadOutlined />}
+                    loading={isLoadingExclusiveDevices}
+                    onClick={() => {
+                      loadExclusiveDevices();
+                    }}
+                  >
+                    刷新设备
+                  </Button>
+                  <Button
+                    icon={<CheckCircleOutlined />}
+                    loading={isProbingExclusiveOutput}
+                    onClick={() => {
+                      handleProbeExclusiveOutput();
+                    }}
+                  >
+                    探测独占
+                  </Button>
+                </Space>
+              </Form.Item>
+              <Form.Item label="缓冲时长">
+                <Space.Compact>
+                  <InputNumber
+                    min={20}
+                    max={500}
+                    value={appSetting['player.audioOutput.exclusiveBufferMs']}
+                    onChange={(value) => {
+                      if (value != null) {
+                        updateSetting('player.audioOutput.exclusiveBufferMs', value);
+                        setExclusiveProbeResult(null);
+                      }
+                    }}
+                  />
+                  <Button disabled>ms</Button>
+                </Space.Compact>
+              </Form.Item>
+              <Form.Item label="采样率策略">
+                <Radio.Group
+                  value={appSetting['player.audioOutput.exclusiveSampleRatePolicy']}
+                  optionType="button"
+                  buttonStyle="solid"
+                  options={[
+                    { label: '跟随源', value: 'source' },
+                    { label: '设备默认', value: 'deviceDefault' },
+                    { label: '重采样', value: 'resample' },
+                  ]}
+                  onChange={(event) => {
+                    updateSetting(
+                      'player.audioOutput.exclusiveSampleRatePolicy',
+                      event.target.value,
+                    );
+                    setExclusiveProbeResult(null);
+                  }}
+                />
+              </Form.Item>
+              <SettingSwitch
+                appSetting={appSetting}
+                label="失败时回落到系统输出"
+                settingKey="player.audioOutput.exclusiveFallbackToSystem"
+                updateSetting={applySetting}
+              />
+              {exclusiveProbeResult ? (
+                <Form.Item label="独占探测结果" className="coral-settings-wide-item">
+                  <Alert
+                    showIcon
+                    type={exclusiveProbeResult.canUseExclusive ? 'success' : 'warning'}
+                    title={
+                      exclusiveProbeResult.canUseExclusive
+                        ? '独占输出可用'
+                        : '独占输出暂不可用'
+                    }
+                    description={[
+                      `平台 ${exclusiveProbeResult.platform}`,
+                      `helper ${exclusiveProbeResult.helperAvailable ? '可用' : '不可用'}`,
+                      ...exclusiveProbeResult.errors,
+                      ...exclusiveProbeResult.warnings,
+                    ].join(' · ')}
+                  />
+                </Form.Item>
+              ) : null}
+            </>
+          ) : null}
         </SettingSection>
 
         <div ref={externalDecoderSectionRef}>

@@ -1,7 +1,7 @@
 import { ipcChannels, type IpcPlayerActionClick } from '@shared/ipc/contracts';
 import { ipcClient } from './ipc/client';
 import { isElectronRenderer } from './appService';
-import { createHtmlAudioPlayerRuntimeBackend } from './playerRuntime/htmlAudioRuntime';
+import { createHybridAudioPlayerRuntimeBackend } from './playerRuntime/hybridAudioRuntime';
 import type {
   PlayerRuntimeBridge,
   PlayerRuntimeMusicInfo,
@@ -55,7 +55,7 @@ class IpcPlayerRuntimeBridge implements PlayerRuntimeBridge {
   private isDisposed = false;
 
   constructor(
-    private readonly backend: PlayerRuntimeBridge = createHtmlAudioPlayerRuntimeBackend(),
+    private readonly backend: PlayerRuntimeBridge = createHybridAudioPlayerRuntimeBackend(),
   ) {
     this.disposers.push(
       backend.onStatus((status) => {

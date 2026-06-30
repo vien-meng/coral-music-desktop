@@ -27,11 +27,26 @@ import { getAllThemes, removeTheme, saveTheme, setPowerSaveBlocker } from '@main
 import { openDirInExplorer } from '@common/utils/electron';
 import { probeExternalDecoder } from '../externalDecoderProbe';
 import { transcodeExternalDecoder } from '../externalDecoderRuntime';
+import {
+  listExclusiveAudioDevices,
+  pauseExclusiveAudioOutput,
+  probeExclusiveAudioOutput,
+  resumeExclusiveAudioOutput,
+  seekExclusiveAudioOutput,
+  setExclusiveAudioOutputStatusSender,
+  startExclusiveAudioOutput,
+  stopExclusiveAudioOutput,
+} from '../exclusiveAudioOutputService';
 import type {
   ExternalDecoderProbeParams,
   ExternalDecoderProbeResult,
   ExternalDecoderTranscodeParams,
   ExternalDecoderTranscodeResult,
+  ExclusiveAudioDevice,
+  ExclusiveAudioOutputProbeParams,
+  ExclusiveAudioOutputProbeResult,
+  ExclusiveAudioOutputStartParams,
+  ExclusiveAudioOutputStatus,
 } from '@shared/playbackCapabilities';
 
 export default () => {
@@ -69,6 +84,37 @@ export default () => {
   mainHandle<ExternalDecoderTranscodeParams, ExternalDecoderTranscodeResult>(
     WIN_MAIN_RENDERER_EVENT_NAME.external_decoder_transcode,
     async ({ params }) => transcodeExternalDecoder(params),
+  );
+  setExclusiveAudioOutputStatusSender((status) => {
+    sendEvent(WIN_MAIN_RENDERER_EVENT_NAME.audio_output_status, status);
+  });
+  mainHandle<undefined, ExclusiveAudioDevice[]>(
+    WIN_MAIN_RENDERER_EVENT_NAME.audio_output_list_devices,
+    async () => listExclusiveAudioDevices(),
+  );
+  mainHandle<ExclusiveAudioOutputProbeParams, ExclusiveAudioOutputProbeResult>(
+    WIN_MAIN_RENDERER_EVENT_NAME.audio_output_probe_exclusive,
+    async ({ params }) => probeExclusiveAudioOutput(params),
+  );
+  mainHandle<ExclusiveAudioOutputStartParams, ExclusiveAudioOutputStatus>(
+    WIN_MAIN_RENDERER_EVENT_NAME.audio_output_start,
+    async ({ params }) => startExclusiveAudioOutput(params),
+  );
+  mainHandle<undefined, ExclusiveAudioOutputStatus>(
+    WIN_MAIN_RENDERER_EVENT_NAME.audio_output_pause,
+    async () => pauseExclusiveAudioOutput(),
+  );
+  mainHandle<undefined, ExclusiveAudioOutputStatus>(
+    WIN_MAIN_RENDERER_EVENT_NAME.audio_output_resume,
+    async () => resumeExclusiveAudioOutput(),
+  );
+  mainHandle<number, ExclusiveAudioOutputStatus>(
+    WIN_MAIN_RENDERER_EVENT_NAME.audio_output_seek,
+    async ({ params }) => seekExclusiveAudioOutput(params),
+  );
+  mainHandle<undefined, ExclusiveAudioOutputStatus>(
+    WIN_MAIN_RENDERER_EVENT_NAME.audio_output_stop,
+    async () => stopExclusiveAudioOutput(),
   );
   mainHandle<boolean | undefined, void>(
     WIN_MAIN_RENDERER_EVENT_NAME.close,
