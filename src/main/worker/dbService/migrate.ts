@@ -37,6 +37,22 @@ const migrateV1 = (db: Database.Database) => {
   }
 };
 
+const ensureTable = (db: Database.Database, tableName: string) => {
+  const existsTable = db
+    .prepare("SELECT name FROM \"main\".sqlite_master WHERE type='table' AND name=?;")
+    .get(tableName);
+  if (existsTable) return;
+
+  const sql = tables.get(tableName as Parameters<typeof tables.get>[0]);
+  if (sql) db.exec(sql);
+};
+
+const migrateV2 = (db: Database.Database) => {
+  ensureTable(db, 'play_history');
+  ensureTable(db, 'favorite_songlist');
+  ensureTable(db, 'favorite_album');
+};
+
 export default (db: Database.Database) => {
   // PRAGMA user_version = x
   // console.log(db.prepare('PRAGMA user_version').get().user_version)
@@ -49,6 +65,14 @@ export default (db: Database.Database) => {
   switch (version) {
     case '1':
       migrateV1(db);
+      migrateV2(db);
+      db.prepare('UPDATE "main"."db_info" SET "field_value"=@value WHERE "field_name"=@name').run({
+        name: 'version',
+        value: DB_VERSION,
+      });
+      break;
+    case '2':
+      migrateV2(db);
       db.prepare('UPDATE "main"."db_info" SET "field_value"=@value WHERE "field_name"=@name').run({
         name: 'version',
         value: DB_VERSION,

@@ -2,6 +2,7 @@ import { makeAutoObservable } from 'mobx';
 import { DislikeStore } from './domains/dislikeStore';
 import { DownloadStore } from './domains/downloadStore';
 import { LeaderboardStore } from './domains/leaderboardStore';
+import { LibraryStore } from './domains/libraryStore';
 import { ListStore } from './domains/listStore';
 import { OpenApiStore } from './domains/openApiStore';
 import { PlayerStore } from './domains/playerStore';
@@ -23,7 +24,9 @@ export class RootStore {
 
   dislike = new DislikeStore();
 
-  player = new PlayerStore(this.settings, this.dislike);
+  library = new LibraryStore();
+
+  player = new PlayerStore(this.settings, this.dislike, this.library);
 
   list = new ListStore();
 
@@ -78,6 +81,7 @@ export class RootStore {
     await Promise.all([
       this.theme.hydrate(),
       this.list.hydrate(),
+      this.library.hydrate(),
       this.download.hydrate(),
       this.dislike.hydrate(),
       this.sync.hydrate(),

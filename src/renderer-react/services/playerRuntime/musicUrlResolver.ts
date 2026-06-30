@@ -58,8 +58,8 @@ interface MusicSdk {
   [source: string]: unknown;
 }
 
-const loadMusicSdk = async (): Promise<MusicSdk> => {
-  await musicSdkRuntime.sync();
+const loadMusicSdk = async (options?: { forceSync?: boolean }): Promise<MusicSdk> => {
+  await musicSdkRuntime.sync({ force: options?.forceSync });
   const module = await import('../musicSdk/sdk');
   return module.default as MusicSdk;
 };
@@ -333,8 +333,9 @@ const getSourceSdk = (sdk: MusicSdk, source: Coral.OnlineSource): MusicSdkSource
 export const fetchFreshOnlineMusicUrl = async (
   musicInfo: Coral.Music.MusicInfoOnline,
   quality: Coral.Quality,
+  options?: { forceSync?: boolean },
 ): Promise<MusicUrlResult> => {
-  const sdk = await loadMusicSdk();
+  const sdk = await loadMusicSdk(options);
   const request = getSourceSdk(sdk, musicInfo.source)?.getMusicUrl?.(
     toOldPlayableMusicInfo(musicInfo),
     quality,
@@ -344,6 +345,23 @@ export const fetchFreshOnlineMusicUrl = async (
   const result = await request.promise;
   if (!result.url) throw new Error('music url is empty');
   return result;
+};
+
+const isMissingMusicSourceError = (message: string): boolean =>
+  message === 'Api is not found' || /^music url source not found:/.test(message);
+
+const fetchFreshOnlineMusicUrlWithReadyRetry = async (
+  musicInfo: Coral.Music.MusicInfoOnline,
+  quality: Coral.Quality,
+): Promise<MusicUrlResult> => {
+  try {
+    return await fetchFreshOnlineMusicUrl(musicInfo, quality);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!isMissingMusicSourceError(message)) throw error;
+
+    return await fetchFreshOnlineMusicUrl(musicInfo, quality, { forceSync: true });
+  }
 };
 
 const createOtherSourceCacheKey = (musicInfo: Coral.Music.MusicInfoOnline): string =>
@@ -412,7 +430,7 @@ const resolveOnlineMusicUrl = async (
   if (options.allowFresh === false) return null;
 
   try {
-    const freshUrl = await fetchFreshOnlineMusicUrl(musicInfo, quality);
+    const freshUrl = await fetchFreshOnlineMusicUrlWithReadyRetry(musicInfo, quality);
     await cacheService.saveCachedMusicUrl(musicInfo, freshUrl.type, freshUrl.url);
 
     return {
@@ -423,7 +441,7 @@ const resolveOnlineMusicUrl = async (
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    if (message === 'Api is not found' || /^music url source not found:/.test(message)) {
+    if (isMissingMusicSourceError(message)) {
       throw new Error('当前没有可用音源，请先通过“添加音源”导入并启用 User API。');
     }
     if (options.allowToggleSource === false || message === TOO_MANY_REQUESTS_MESSAGE) throw err;

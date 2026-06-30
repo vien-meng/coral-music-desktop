@@ -7,6 +7,7 @@ import {
   music_other_source,
   download,
   dislike_list,
+  library,
 } from './modules/index';
 
 const common = {
@@ -14,7 +15,7 @@ const common = {
 };
 
 exposeWorker(
-  Object.assign(common, list, lyric, music_url, music_other_source, download, dislike_list),
+  Object.assign(common, list, lyric, music_url, music_other_source, download, dislike_list, library),
 );
 
 export type workerDBSeriveTypes = typeof common &
@@ -23,4 +24,5 @@ export type workerDBSeriveTypes = typeof common &
   typeof music_url &
   typeof music_other_source &
   typeof download &
-  typeof dislike_list;
+  typeof dislike_list &
+  typeof library;

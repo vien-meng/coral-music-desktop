@@ -1,13 +1,137 @@
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { Button, Card, Empty, Image, InputNumber, Space, Tag, Tooltip, Typography } from 'antd';
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { PlainList, PlainListItem, PlainListMeta } from '../../components/base';
+import { onlineMediaService } from '../../services/onlineMediaService';
 import { getSourceDisplayName } from '../../services/sourceNameService';
 
 const { Text } = Typography;
 
 const transparentImage =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+
+const isUsableCoverUrl = (url?: string | null): url is string =>
+  Boolean(url && url !== transparentImage && /^(https?:|data:image\/)/i.test(url));
+
+const onlineCoverCache = new Map<string, string | null>();
+const onlineCoverRequests = new Map<string, Promise<string>>();
+
+const getOnlineCoverCacheKey = (musicInfo: Coral.Music.MusicInfo): string =>
+  `${musicInfo.source}:${musicInfo.id}`;
+
+const canLoadOnlineCover = (
+  musicInfo: Coral.Music.MusicInfo,
+): musicInfo is Coral.Music.MusicInfoOnline =>
+  musicInfo.source !== 'local' && musicInfo.source !== 'webdav';
+
+const loadOnlineCover = async (musicInfo: Coral.Music.MusicInfoOnline): Promise<string> => {
+  const key = getOnlineCoverCacheKey(musicInfo);
+  if (onlineCoverCache.has(key)) return onlineCoverCache.get(key) ?? '';
+
+  const pending = onlineCoverRequests.get(key);
+  if (pending) return pending;
+
+  const request = onlineMediaService
+    .getOnlinePicUrl(musicInfo)
+    .then((url) => {
+      const nextUrl = isUsableCoverUrl(url) ? url : '';
+      onlineCoverCache.set(key, nextUrl || null);
+      return nextUrl;
+    })
+    .catch(() => {
+      onlineCoverCache.set(key, null);
+      return '';
+    })
+    .finally(() => {
+      onlineCoverRequests.delete(key);
+    });
+
+  onlineCoverRequests.set(key, request);
+  return request;
+};
+
+interface OnlineMusicCoverProps {
+  musicInfo: Coral.Music.MusicInfo;
+}
+
+const OnlineMusicCover = ({ musicInfo }: OnlineMusicCoverProps) => {
+  const cacheKey = getOnlineCoverCacheKey(musicInfo);
+  const initialCoverUrl = isUsableCoverUrl(musicInfo.meta.picUrl)
+    ? musicInfo.meta.picUrl
+    : (onlineCoverCache.get(cacheKey) ?? '');
+  const [coverUrl, setCoverUrl] = useState(initialCoverUrl);
+  const coverRef = useRef<HTMLSpanElement | null>(null);
+  const shouldLoadCover = !coverUrl && canLoadOnlineCover(musicInfo);
+
+  useEffect(() => {
+    setCoverUrl(
+      isUsableCoverUrl(musicInfo.meta.picUrl)
+        ? musicInfo.meta.picUrl
+        : (onlineCoverCache.get(cacheKey) ?? ''),
+    );
+  }, [cacheKey, musicInfo.meta.picUrl]);
+
+  useEffect(() => {
+    if (!shouldLoadCover) return undefined;
+    const node = coverRef.current;
+    if (!node) return undefined;
+
+    let cancelled = false;
+    const fetchCover = (): void => {
+      if (!canLoadOnlineCover(musicInfo)) return;
+      loadOnlineCover(musicInfo).then((url) => {
+        if (!cancelled && isUsableCoverUrl(url)) setCoverUrl(url);
+      });
+    };
+
+    if (!('IntersectionObserver' in window)) {
+      fetchCover();
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        observer.disconnect();
+        fetchCover();
+      },
+      { rootMargin: '160px 0px' },
+    );
+
+    observer.observe(node);
+    return () => {
+      cancelled = true;
+      observer.disconnect();
+    };
+  }, [musicInfo, shouldLoadCover]);
+
+  return (
+    <span
+      ref={coverRef}
+      className={`coral-online-music-cover-shell${
+        isUsableCoverUrl(coverUrl) ? '' : ' is-cover-missing'
+      }`}
+    >
+      {isUsableCoverUrl(coverUrl) ? (
+        <img
+          src={coverUrl}
+          alt={`${musicInfo.name} 封面`}
+          className="coral-online-music-cover"
+          loading="lazy"
+          onError={() => {
+            onlineCoverCache.set(cacheKey, null);
+            setCoverUrl('');
+          }}
+        />
+      ) : null}
+      <span className="coral-online-music-cover-placeholder" aria-hidden="true">
+        ♪
+      </span>
+    </span>
+  );
+};
 
 const formatPlayCount = (count: string): string => {
   const n = Number(count);
@@ -111,12 +235,13 @@ export const OnlineMusicPreviewList = ({
   list,
 }: OnlineMusicPreviewListProps) => (
   <PlainList
-    className="coral-result-list"
+    className="coral-result-list coral-online-music-list"
     items={list}
     empty={empty ?? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyText} />}
     renderItem={(item) => (
       <PlainListItem key={item.id} actions={actions?.(item)}>
         <PlainListMeta
+          avatar={<OnlineMusicCover musicInfo={item} />}
           title={<Text ellipsis>{item.name}</Text>}
           description={
             <Text

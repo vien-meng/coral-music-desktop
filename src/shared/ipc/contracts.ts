@@ -11,6 +11,11 @@ import type {
   ExternalDecoderProbeResult,
   ExternalDecoderTranscodeParams,
   ExternalDecoderTranscodeResult,
+  ExclusiveAudioDevice,
+  ExclusiveAudioOutputProbeParams,
+  ExclusiveAudioOutputProbeResult,
+  ExclusiveAudioOutputStartParams,
+  ExclusiveAudioOutputStatus,
 } from '@shared/playbackCapabilities';
 
 interface IpcContract<Params = undefined, Result = void> {
@@ -92,6 +97,44 @@ export const ipcChannels = {
       WIN_MAIN_RENDERER_EVENT_NAME.external_decoder_probe as 'winMain_external_decoder_probe',
     externalDecoderTranscode:
       WIN_MAIN_RENDERER_EVENT_NAME.external_decoder_transcode as 'winMain_external_decoder_transcode',
+    audioOutputListDevices:
+      WIN_MAIN_RENDERER_EVENT_NAME.audio_output_list_devices as 'winMain_audio_output_list_devices',
+    audioOutputProbeExclusive:
+      WIN_MAIN_RENDERER_EVENT_NAME.audio_output_probe_exclusive as 'winMain_audio_output_probe_exclusive',
+    audioOutputStart:
+      WIN_MAIN_RENDERER_EVENT_NAME.audio_output_start as 'winMain_audio_output_start',
+    audioOutputPause:
+      WIN_MAIN_RENDERER_EVENT_NAME.audio_output_pause as 'winMain_audio_output_pause',
+    audioOutputResume:
+      WIN_MAIN_RENDERER_EVENT_NAME.audio_output_resume as 'winMain_audio_output_resume',
+    audioOutputSeek: WIN_MAIN_RENDERER_EVENT_NAME.audio_output_seek as 'winMain_audio_output_seek',
+    audioOutputStop: WIN_MAIN_RENDERER_EVENT_NAME.audio_output_stop as 'winMain_audio_output_stop',
+    audioOutputStatus:
+      WIN_MAIN_RENDERER_EVENT_NAME.audio_output_status as 'winMain_audio_output_status',
+    libraryHistoryList:
+      WIN_MAIN_RENDERER_EVENT_NAME.library_history_list as 'winMain_library_history_list',
+    libraryHistoryAdd:
+      WIN_MAIN_RENDERER_EVENT_NAME.library_history_add as 'winMain_library_history_add',
+    libraryHistoryRemove:
+      WIN_MAIN_RENDERER_EVENT_NAME.library_history_remove as 'winMain_library_history_remove',
+    libraryHistoryClear:
+      WIN_MAIN_RENDERER_EVENT_NAME.library_history_clear as 'winMain_library_history_clear',
+    libraryFavoriteSongListList:
+      WIN_MAIN_RENDERER_EVENT_NAME.library_favorite_songlist_list as 'winMain_library_favorite_songlist_list',
+    libraryFavoriteSongListToggle:
+      WIN_MAIN_RENDERER_EVENT_NAME.library_favorite_songlist_toggle as 'winMain_library_favorite_songlist_toggle',
+    libraryFavoriteSongListRemove:
+      WIN_MAIN_RENDERER_EVENT_NAME.library_favorite_songlist_remove as 'winMain_library_favorite_songlist_remove',
+    libraryFavoriteAlbumList:
+      WIN_MAIN_RENDERER_EVENT_NAME.library_favorite_album_list as 'winMain_library_favorite_album_list',
+    libraryFavoriteAlbumToggle:
+      WIN_MAIN_RENDERER_EVENT_NAME.library_favorite_album_toggle as 'winMain_library_favorite_album_toggle',
+    libraryFavoriteAlbumRemove:
+      WIN_MAIN_RENDERER_EVENT_NAME.library_favorite_album_remove as 'winMain_library_favorite_album_remove',
+    libraryCategoryGroups:
+      WIN_MAIN_RENDERER_EVENT_NAME.library_category_groups as 'winMain_library_category_groups',
+    libraryCategoryItems:
+      WIN_MAIN_RENDERER_EVENT_NAME.library_category_items as 'winMain_library_category_items',
     getData: WIN_MAIN_RENDERER_EVENT_NAME.get_data as 'winMain_get_data',
     getThemes: WIN_MAIN_RENDERER_EVENT_NAME.get_themes as 'winMain_get_themes',
     getUserApiList: WIN_MAIN_RENDERER_EVENT_NAME.get_user_api_list as 'winMain_get_user_api_list',
@@ -267,6 +310,58 @@ export interface CoralIpcInvokeMap {
     ExternalDecoderTranscodeParams,
     ExternalDecoderTranscodeResult
   >;
+  [ipcChannels.winMain.audioOutputListDevices]: IpcContract<undefined, ExclusiveAudioDevice[]>;
+  [ipcChannels.winMain.audioOutputProbeExclusive]: IpcContract<
+    ExclusiveAudioOutputProbeParams,
+    ExclusiveAudioOutputProbeResult
+  >;
+  [ipcChannels.winMain.audioOutputStart]: IpcContract<
+    ExclusiveAudioOutputStartParams,
+    ExclusiveAudioOutputStatus
+  >;
+  [ipcChannels.winMain.audioOutputPause]: IpcContract<undefined, ExclusiveAudioOutputStatus>;
+  [ipcChannels.winMain.audioOutputResume]: IpcContract<undefined, ExclusiveAudioOutputStatus>;
+  [ipcChannels.winMain.audioOutputSeek]: IpcContract<number, ExclusiveAudioOutputStatus>;
+  [ipcChannels.winMain.audioOutputStop]: IpcContract<undefined, ExclusiveAudioOutputStatus>;
+  [ipcChannels.winMain.libraryHistoryList]: IpcContract<undefined, Coral.Library.PlayRecord[]>;
+  [ipcChannels.winMain.libraryHistoryAdd]: IpcContract<
+    Coral.Library.PlayRecordInput,
+    Coral.Library.PlayRecord[]
+  >;
+  [ipcChannels.winMain.libraryHistoryRemove]: IpcContract<string[], Coral.Library.PlayRecord[]>;
+  [ipcChannels.winMain.libraryHistoryClear]: IpcContract<undefined, Coral.Library.PlayRecord[]>;
+  [ipcChannels.winMain.libraryFavoriteSongListList]: IpcContract<
+    undefined,
+    Coral.Library.FavoriteSongList[]
+  >;
+  [ipcChannels.winMain.libraryFavoriteSongListToggle]: IpcContract<
+    Coral.Library.FavoriteSongList,
+    Coral.Library.FavoriteSongList[]
+  >;
+  [ipcChannels.winMain.libraryFavoriteSongListRemove]: IpcContract<
+    string[],
+    Coral.Library.FavoriteSongList[]
+  >;
+  [ipcChannels.winMain.libraryFavoriteAlbumList]: IpcContract<
+    undefined,
+    Coral.Library.FavoriteAlbum[]
+  >;
+  [ipcChannels.winMain.libraryFavoriteAlbumToggle]: IpcContract<
+    Coral.Library.FavoriteAlbum,
+    Coral.Library.FavoriteAlbum[]
+  >;
+  [ipcChannels.winMain.libraryFavoriteAlbumRemove]: IpcContract<
+    string[],
+    Coral.Library.FavoriteAlbum[]
+  >;
+  [ipcChannels.winMain.libraryCategoryGroups]: IpcContract<
+    Coral.Library.CategoryType,
+    Coral.Library.MusicCategoryGroup[]
+  >;
+  [ipcChannels.winMain.libraryCategoryItems]: IpcContract<
+    Coral.Library.CategoryItemsQuery,
+    Coral.Library.MusicCategory
+  >;
   [ipcChannels.winMain.getData]: IpcContract<string, unknown>;
   [ipcChannels.winMain.getThemes]: IpcContract<undefined, IpcThemeCollection>;
   [ipcChannels.winMain.getUserApiList]: IpcContract<undefined, Coral.UserApi.UserApiInfo[]>;
@@ -277,7 +372,7 @@ export interface CoralIpcInvokeMap {
   [ipcChannels.winMain.requestUserApi]: IpcContract<Coral.UserApi.UserApiRequestParams, unknown>;
   [ipcChannels.winMain.removeTheme]: IpcContract<string, void>;
   [ipcChannels.winMain.saveTheme]: IpcContract<Coral.Theme, void>;
-  [ipcChannels.winMain.setUserApi]: IpcContract<string, void>;
+  [ipcChannels.winMain.setUserApi]: IpcContract<Coral.UserApi.UserApiSetApiParams, void>;
   [ipcChannels.winMain.setUserApiAllowUpdateAlert]: IpcContract<
     Coral.UserApi.UserApiSetAllowUpdateAlertParams,
     void
@@ -347,6 +442,7 @@ export interface CoralIpcEventMap {
   [ipcChannels.dislike.overwriteDislikeMusicInfos]: Coral.Dislike.DislikeRules;
   [ipcChannels.winMain.onConfigChange]: Partial<Coral.AppSetting>;
   [ipcChannels.winMain.downloadTaskAction]: IpcDownloadTaskAction;
+  [ipcChannels.winMain.audioOutputStatus]: ExclusiveAudioOutputStatus;
   [ipcChannels.winMain.playerActionOnButtonClick]: IpcPlayerActionClick;
   [ipcChannels.winMain.syncAction]: Coral.Sync.SyncMainWindowActions;
   [ipcChannels.winLyric.mainWindowInited]: undefined;

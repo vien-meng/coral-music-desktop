@@ -24,8 +24,8 @@ export const removeApi = async (ids: string[]): Promise<Coral.UserApi.UserApiInf
   return getUserApis();
 };
 
-export const setApi = async (id: string) => {
-  if (userApiId === id) return;
+export const setApi = async (id: string, force = false) => {
+  if (userApiId === id && !force) return;
   if (userApiId) {
     userApiId = null;
     await closeWindow();

@@ -10,6 +10,7 @@ import { Button, Flex, Space, Tooltip, Typography } from 'antd';
 import { observer } from 'mobx-react-lite';
 import { rootStore } from '../../stores/rootStore';
 import { PlaybackRateBtn } from './PlaybackRateBtn';
+import { FavoriteSongBtn } from './FavoriteSongBtn';
 import { PlayDetailOverlay } from './PlayDetailOverlay';
 import { PlayQueueBtn } from './PlayQueueBtn';
 import { ProgressBar } from './ProgressBar';
@@ -37,6 +38,7 @@ export const PlayBar = observer(() => {
 
   const nowPlayTimeStr = formatTime(player.currentTime);
   const maxPlayTimeStr = formatTime(player.maxPlayTime);
+  const favoriteMusicInfo = player.displayMusicInfo;
 
   const handleSeek = (seconds: number): void => {
     player.seek(seconds);
@@ -136,6 +138,7 @@ export const PlayBar = observer(() => {
             />
           </Tooltip>
           <QualitySwitchBtn />
+          <FavoriteSongBtn musicInfo={favoriteMusicInfo} />
           <PlayQueueBtn />
           <VolumeBtn />
           <TogglePlayModeBtn />

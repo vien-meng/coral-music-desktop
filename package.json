@@ -66,6 +66,8 @@
     "smoke:package": "node build-config/smoke-package-audit.js",
     "smoke:bundle": "node build-config/smoke-bundle-config.js",
     "smoke:playback-capabilities": "node build-config/smoke-playback-capabilities.js",
+    "smoke:audio-output-capabilities": "node build-config/smoke-audio-output-capabilities.js",
+    "smoke:library-capabilities": "node build-config/smoke-library-capabilities.js",
     "smoke:dist": "node build-config/smoke-dist-output.js",
     "smoke:download": "cross-env CORAL_DOWNLOAD_SMOKE=true NODE_OPTIONS=--max-http-header-size=200000 node build-config/runner-dev.js",
     "smoke:release": "npm run smoke:migration && npm run smoke:package && npm run smoke:bundle && npm run smoke:playback-capabilities && npm run typecheck:react",

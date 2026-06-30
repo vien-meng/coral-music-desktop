@@ -44,7 +44,12 @@ declare namespace Coral {
       data: any;
     }
     type UserApiRequestCancelParams = string;
-    type UserApiSetApiParams = string;
+    type UserApiSetApiParams =
+      | string
+      | {
+          force?: boolean;
+          id: string;
+        };
 
     interface UserApiSetAllowUpdateAlertParams {
       id: string;
