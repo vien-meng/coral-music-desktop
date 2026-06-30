@@ -122,6 +122,11 @@ ELECTRON_CACHE=/private/tmp/coral-electron-cache npm run pack:dir
 
 ## 致谢
 
-- 本项目基于最早基于lx music(落雪音乐)重构而来，全新架构设计和技术栈，今后将以全新的发展路线迭代。
+- 本项目基于最早基于[lx music(落雪音乐)](https://github.com/lyswhut/lx-music-desktop)重构而来，全新架构设计和技术栈，今后将以全新的发展路线迭代。
 - 本项目遵守 Apache License 2.0 开源协议发布。
 - 感谢原始项目作者与开源社区的长期贡献。
+
+## 赞助
+
+- 开发不易，支持开发者的话可以请开发者喝杯奶茶吧
+- <p><img width="400px" src="./doc/images/wx.jpg" alt="微信支付"> <img width="400px"src="./doc/images/zfb.jpg" alt="支付宝"></p>
