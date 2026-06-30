@@ -19,7 +19,7 @@ const defaultSetting: Coral.AppSetting = {
   'common.isAgreePact': false,
   'common.controlBtnPosition': isMac ? 'left' : 'right',
   'common.playBarProgressStyle': 'mini',
-  'common.transparentWindow': !isMac,
+  'common.transparentWindow': false,
   'common.tryAutoUpdate': true,
   'common.showChangeLog': true,
 
