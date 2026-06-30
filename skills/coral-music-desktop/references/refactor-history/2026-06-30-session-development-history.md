@@ -175,6 +175,14 @@ This note records the practical implementation history from the recent Codex ses
 - Added a hybrid player runtime so the existing HTMLAudio/Web Audio path remains the default system output, while exclusive mode can fail back to system output.
 - Reserved the out-of-process `coral-wasapi-helper.exe` contract; the real helper still needs to be implemented or bundled before hardware exclusive playback works.
 
+## Library History, Favorites, And Categories Plan And First Implementation
+
+- Added implementation history at `skills/coral-music-desktop/references/refactor-history/2026-06-30-library-history-favorites-categories-plan.md`.
+- Added playback history, favorite song-list, and favorite album database tables plus migration path to DB version 3.
+- Added a library service/store layer for playback records, favorite songs through the existing love list, favorite song lists, favorite albums, and metadata-driven category groups.
+- Added “我的收藏” and “音乐分类” routes; playback history is the first Library tab and category grouping supports album, type, artist, and year.
+- Added `smoke:library-capabilities` to guard the new schema, IPC, route, store, and playback-history write boundary.
+
 ## DevTools And Startup
 
 - Prevented automatic double DevTools windows during normal `npm run dev`.

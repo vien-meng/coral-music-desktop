@@ -9,6 +9,7 @@ import userApi from './userApi';
 import sync from './sync';
 import data from './data';
 import music from './music';
+import library from './library';
 import download from './download';
 import webDav from './webDav';
 import soundEffect from './soundEffect';
@@ -37,6 +38,7 @@ export default () => {
   sync();
   data();
   music();
+  library();
   download();
   webDav();
   soundEffect();

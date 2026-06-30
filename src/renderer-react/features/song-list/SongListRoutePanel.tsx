@@ -41,6 +41,7 @@ const formatPlayCount = (count: string): string => {
 
 export const SongListRoutePanel = observer(() => {
   const { player, songList, ui } = rootStore;
+  const { library } = rootStore;
   const [isOpenListOpen, setIsOpenListOpen] = useState(false);
   const [isDetailPlayLoading, setIsDetailPlayLoading] = useState(false);
   const [isDetailCollectLoading, setIsDetailCollectLoading] = useState(false);
@@ -140,10 +141,31 @@ export const SongListRoutePanel = observer(() => {
   const handleCollectDetail = useCallback(() => {
     if (!songList.listDetailInfo.id || !songList.listDetailInfo.list.length) return;
     setIsDetailCollectLoading(true);
-    setTimeout(() => {
-      setIsDetailCollectLoading(false);
-    }, 1000);
-  }, [songList.listDetailInfo.id, songList.listDetailInfo.list.length]);
+    library
+      .toggleFavoriteSongList({
+        author: songList.listDetailInfo.info.author ?? '',
+        createdAt: Date.now(),
+        desc: detailDesc ?? null,
+        id: songList.listDetailInfo.id,
+        img: songList.listDetailInfo.info.img ?? '',
+        name: detailTitle,
+        playCount: songList.listDetailInfo.info.play_count ?? '',
+        source: songList.listDetailInfo.source,
+      })
+      .finally(() => {
+        setIsDetailCollectLoading(false);
+      });
+  }, [
+    detailDesc,
+    detailTitle,
+    library,
+    songList.listDetailInfo.id,
+    songList.listDetailInfo.info.author,
+    songList.listDetailInfo.info.img,
+    songList.listDetailInfo.info.play_count,
+    songList.listDetailInfo.list.length,
+    songList.listDetailInfo.source,
+  ]);
 
   const handleLoadAllTags = useCallback(() => {
     songList.loadTags();

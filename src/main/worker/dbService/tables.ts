@@ -113,7 +113,10 @@ type Tables =
   | 'lyric'
   | 'music_url'
   | 'download_list'
-  | 'dislike_list';
+  | 'dislike_list'
+  | 'play_history'
+  | 'favorite_songlist'
+  | 'favorite_album';
 
 const tables = new Map<Tables, string>();
 
@@ -261,7 +264,52 @@ tables.set(
   );
 `,
 );
+tables.set(
+  'play_history',
+  `
+  CREATE TABLE "play_history" (
+    "id" TEXT NOT NULL,
+    "source" TEXT NOT NULL,
+    "musicInfo" TEXT NOT NULL,
+    "playedAt" INTEGER NOT NULL,
+    "playCount" INTEGER NOT NULL,
+    "lastDuration" REAL NOT NULL,
+    "sourceContext" TEXT,
+    PRIMARY KEY("id","source")
+  );
+`,
+);
+tables.set(
+  'favorite_songlist',
+  `
+  CREATE TABLE "favorite_songlist" (
+    "id" TEXT NOT NULL,
+    "source" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "author" TEXT NOT NULL,
+    "img" TEXT NOT NULL,
+    "desc" TEXT,
+    "playCount" TEXT NOT NULL,
+    "createdAt" INTEGER NOT NULL,
+    PRIMARY KEY("id","source")
+  );
+`,
+);
+tables.set(
+  'favorite_album',
+  `
+  CREATE TABLE "favorite_album" (
+    "id" TEXT NOT NULL,
+    "source" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "artist" TEXT NOT NULL,
+    "img" TEXT NOT NULL,
+    "createdAt" INTEGER NOT NULL,
+    PRIMARY KEY("id","source")
+  );
+`,
+);
 
 export default tables;
 
-export const DB_VERSION = '2';
+export const DB_VERSION = '3';
