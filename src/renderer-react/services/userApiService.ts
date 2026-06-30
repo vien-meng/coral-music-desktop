@@ -19,9 +19,9 @@ export const importUserApi = async (script: string): Promise<Coral.UserApi.Impor
   return await ipcClient.invoke(ipcChannels.winMain.importUserApi, script);
 };
 
-export const setUserApi = async (id: string): Promise<void> => {
+export const setUserApi = async (id: string, options?: { force?: boolean }): Promise<void> => {
   if (!isElectronRenderer()) return;
-  await ipcClient.invoke(ipcChannels.winMain.setUserApi, id);
+  await ipcClient.invoke(ipcChannels.winMain.setUserApi, options?.force ? { force: true, id } : id);
 };
 
 export const requestUserApi = async (data: unknown): Promise<unknown> => {

@@ -11,6 +11,7 @@ import { localAudioService } from '../../services/localAudioService';
 import { localLyricService } from '../../services/localLyricService';
 import { onlineMediaService } from '../../services/onlineMediaService';
 import type { DislikeStore } from './dislikeStore';
+import type { LibraryStore } from './libraryStore';
 import type { SettingsStore } from './settingsStore';
 
 const clamp = (value: number, min: number, max: number): number =>
@@ -122,12 +123,14 @@ export class PlayerStore {
   constructor(
     private readonly settings: SettingsStore | null = null,
     private readonly dislike: DislikeStore | null = null,
+    private readonly library: LibraryStore | null = null,
   ) {
     makeAutoObservable<
       this,
       | 'dislike'
       | 'enrichRequestId'
       | 'historyPlayMode'
+      | 'library'
       | 'runtime'
       | 'runtimeStatusDisposer'
       | 'settings'
@@ -138,6 +141,7 @@ export class PlayerStore {
         dislike: false,
         enrichRequestId: false,
         historyPlayMode: false,
+        library: false,
         runtime: false,
         runtimeStatusDisposer: false,
         settings: false,
@@ -398,6 +402,10 @@ export class PlayerStore {
       this.clearLyricSnapshot();
       this.syncQueueIndex(musicInfo);
       this.recordPlayedMusic(musicInfo);
+      this.library?.addPlayHistory(
+        'progress' in musicInfo ? musicInfo.metadata.musicInfo : musicInfo,
+        this.currentQueueId,
+      );
       this.enrichCurrentLocalMusicInfo(musicInfo);
       this.enrichCurrentLocalLyricInfo(musicInfo);
       this.enrichCurrentOnlineMusicInfo(musicInfo);

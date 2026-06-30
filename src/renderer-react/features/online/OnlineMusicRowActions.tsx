@@ -3,6 +3,7 @@ import { Button, Space, Tooltip } from 'antd';
 import { observer } from 'mobx-react-lite';
 import { useState } from 'react';
 import { DownloadQualityModal } from '../../components/player/DownloadQualityModal';
+import { FavoriteSongBtn } from '../../components/player/FavoriteSongBtn';
 import { createWebDavDownloadInfo } from '../../services/downloadTaskFactory';
 import { rootStore } from '../../stores/rootStore';
 
@@ -52,6 +53,7 @@ export const OnlineMusicRowActions = observer(
           <Tooltip title="播放">
             <Button type="text" size="small" icon={<PlayCircleOutlined />} onClick={handlePlay} />
           </Tooltip>
+          <FavoriteSongBtn musicInfo={musicInfo} shape={undefined} size="small" />
           <Tooltip title="添加到当前列表">
             <Button
               type="text"

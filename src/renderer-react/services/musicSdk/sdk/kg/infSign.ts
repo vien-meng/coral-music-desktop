@@ -1,4 +1,8 @@
-import './vendors/infSign.min.js';
+// Use ?raw to prevent Vite from wrapping the UMD module in its module system,
+// which would prevent infSign from being set on globalThis in production builds.
+import vendorCode from './vendors/infSign.min.js?raw';
+
+new Function(vendorCode)();
 
 type InfSign = (
   params: Record<string, unknown>,

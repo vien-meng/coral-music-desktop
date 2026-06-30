@@ -6,10 +6,10 @@ export const coralBrand = {
 } as const;
 
 export const coralProjectLinks = {
-  projectRepository: '',
-  projectReleases: '',
-  projectIssues: '',
-  projectFaq: '',
+  projectRepository: 'https://github.com/vien-meng/coral-music-desktop',
+  projectReleases: 'https://github.com/vien-meng/coral-music-desktop/releases',
+  projectIssues: 'https://github.com/vien-meng/coral-music-desktop/issues',
+  projectFaq: 'https://github.com/vien-meng/coral-music-desktop/blob/main/FAQ.md',
   customSourceDocs: '',
   songListFaq: '',
 } as const;

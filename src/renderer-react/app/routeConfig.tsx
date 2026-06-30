@@ -1,6 +1,8 @@
 import {
   CloudOutlined,
   DownloadOutlined,
+  HeartOutlined,
+  AppstoreOutlined,
   OrderedListOutlined,
   PlayCircleOutlined,
   SearchOutlined,
@@ -21,6 +23,12 @@ const LeaderboardRoutePanel = lazy(async () => ({
 const LocalListRoutePanel = lazy(async () => ({
   default: (await import('../features/list/LocalListRoutePanel')).LocalListRoutePanel,
 }));
+const FavoritesRoutePanel = lazy(async () => ({
+  default: (await import('../features/favorites/FavoritesRoutePanel')).FavoritesRoutePanel,
+}));
+const LibraryRoutePanel = lazy(async () => ({
+  default: (await import('../features/library/LibraryRoutePanel')).LibraryRoutePanel,
+}));
 const DownloadRoutePanel = lazy(async () => ({
   default: (await import('../features/download/DownloadRoutePanel')).DownloadRoutePanel,
 }));
@@ -32,7 +40,15 @@ const SettingsRoutePanel = lazy(async () => ({
 }));
 
 export type RendererRouteKey =
-  'search' | 'song-list' | 'leaderboard' | 'list' | 'webdav' | 'download' | 'setting';
+  | 'search'
+  | 'song-list'
+  | 'leaderboard'
+  | 'list'
+  | 'favorites'
+  | 'library'
+  | 'webdav'
+  | 'download'
+  | 'setting';
 
 export interface RendererRoute {
   key: RendererRouteKey;
@@ -70,6 +86,20 @@ export const rendererRoutes: RendererRoute[] = [
     label: '我的列表',
     icon: <PlayCircleOutlined />,
     element: <LocalListRoutePanel />,
+  },
+  {
+    key: 'favorites',
+    path: '/favorites',
+    label: '我的收藏',
+    icon: <HeartOutlined />,
+    element: <FavoritesRoutePanel />,
+  },
+  {
+    key: 'library',
+    path: '/library',
+    label: '音乐分类',
+    icon: <AppstoreOutlined />,
+    element: <LibraryRoutePanel />,
   },
   {
     key: 'download',

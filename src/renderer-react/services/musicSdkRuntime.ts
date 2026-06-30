@@ -33,6 +33,7 @@ interface LegacyUserApiMusicSource {
 
 let runtimeStatePromise: Promise<LegacyRuntimeState> | null = null;
 let syncedApiSource: string | null = null;
+let syncPromise: Promise<string> | null = null;
 
 const normalizeUserApiMusicUrlResult = (
   result: unknown,
@@ -144,7 +145,13 @@ const applyUserApiRuntime = async (
   runtimeState.userApi.apis = apis;
 };
 
-export const syncMusicSdkRuntime = async (): Promise<string> => {
+export interface MusicSdkRuntimeSyncOptions {
+  force?: boolean;
+}
+
+const syncMusicSdkRuntimeInternal = async ({
+  force = false,
+}: MusicSdkRuntimeSyncOptions = {}): Promise<string> => {
   const runtimeState = await loadRuntimeState();
   const setting = await settingService.getAppSetting();
   const apiSource = setting?.['common.apiSource'] || 'temp';
@@ -155,8 +162,8 @@ export const syncMusicSdkRuntime = async (): Promise<string> => {
     return apiSource;
   }
 
-  if (syncedApiSource !== apiSource) {
-    await userApiService.setUserApi(apiSource);
+  if (force || syncedApiSource !== apiSource) {
+    await userApiService.setUserApi(apiSource, { force });
     syncedApiSource = apiSource;
   }
 
@@ -167,6 +174,17 @@ export const syncMusicSdkRuntime = async (): Promise<string> => {
 
   await applyUserApiRuntime(runtimeState, status.apiInfo);
   return apiSource;
+};
+
+export const syncMusicSdkRuntime = async (
+  options: MusicSdkRuntimeSyncOptions = {},
+): Promise<string> => {
+  if (options.force) return syncMusicSdkRuntimeInternal(options);
+
+  syncPromise ??= syncMusicSdkRuntimeInternal().finally(() => {
+    syncPromise = null;
+  });
+  return syncPromise;
 };
 
 export const musicSdkRuntime = {

@@ -85,5 +85,35 @@ declare namespace Coral {
       source_id: string;
       order: number;
     }
+
+    interface PlayHistoryInfo {
+      id: string;
+      lastDuration: number;
+      musicInfo: string;
+      playedAt: number;
+      playCount: number;
+      source: Coral.Music.MusicInfo['source'];
+      sourceContext: string | null;
+    }
+
+    interface FavoriteSongListInfo {
+      author: string;
+      createdAt: number;
+      desc: string | null;
+      id: string;
+      img: string;
+      name: string;
+      playCount: string;
+      source: Coral.OnlineSource;
+    }
+
+    interface FavoriteAlbumInfo {
+      artist: string;
+      createdAt: number;
+      id: string;
+      img: string;
+      name: string;
+      source: Coral.Music.MusicInfo['source'];
+    }
   }
 }

@@ -20,6 +20,7 @@ import { useCallback, useEffect, useState, type CSSProperties } from 'react';
 import { appService } from '../../services/appService';
 import { rootStore } from '../../stores/rootStore';
 import { AudioVisualizer } from './AudioVisualizer';
+import { FavoriteSongBtn } from './FavoriteSongBtn';
 import { LyricMenu } from './LyricMenu';
 import { LyricSelectionPanel } from './LyricSelectionPanel';
 import { MusicCommentPanel } from './MusicCommentPanel';
@@ -51,6 +52,7 @@ export const PlayDetailOverlay = observer(() => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
   const isPlaying = player.isPlaying;
+  const favoriteMusicInfo = player.displayMusicInfo;
   const lyricAlign = settings.appSetting?.['playDetail.style.align'] ?? 'center';
   const lyricFontScale =
     ((settings.appSetting?.['playDetail.style.fontSize'] ?? 140) / 100) * (isFullscreen ? 1.25 : 1);
@@ -316,6 +318,7 @@ export const PlayDetailOverlay = observer(() => {
             />
             <LyricMenu />
             <QualitySwitchBtn />
+            <FavoriteSongBtn musicInfo={favoriteMusicInfo} />
             <PlayQueueBtn />
             <VolumeBtn />
             <TogglePlayModeBtn />
