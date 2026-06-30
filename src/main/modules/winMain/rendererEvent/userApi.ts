@@ -25,8 +25,10 @@ export default () => {
 
   mainHandle<Coral.UserApi.UserApiSetApiParams>(
     WIN_MAIN_RENDERER_EVENT_NAME.set_user_api,
-    async ({ params: apiId }) => {
-      await setApi(apiId);
+    async ({ params }) => {
+      const apiId = typeof params === 'string' ? params : params.id;
+      const force = typeof params === 'string' ? false : params.force === true;
+      await setApi(apiId, force);
     },
   );
 

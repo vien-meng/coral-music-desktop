@@ -372,7 +372,7 @@ export interface CoralIpcInvokeMap {
   [ipcChannels.winMain.requestUserApi]: IpcContract<Coral.UserApi.UserApiRequestParams, unknown>;
   [ipcChannels.winMain.removeTheme]: IpcContract<string, void>;
   [ipcChannels.winMain.saveTheme]: IpcContract<Coral.Theme, void>;
-  [ipcChannels.winMain.setUserApi]: IpcContract<string, void>;
+  [ipcChannels.winMain.setUserApi]: IpcContract<Coral.UserApi.UserApiSetApiParams, void>;
   [ipcChannels.winMain.setUserApiAllowUpdateAlert]: IpcContract<
     Coral.UserApi.UserApiSetAllowUpdateAlertParams,
     void

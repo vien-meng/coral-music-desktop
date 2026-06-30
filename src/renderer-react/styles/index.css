@@ -248,6 +248,15 @@ body {
   width: 180px;
 }
 
+.coral-global-loading .ant-spin {
+  max-width: min(240px, calc(100vw - 48px));
+  width: max-content;
+}
+
+.coral-global-loading .ant-spin-text {
+  white-space: nowrap;
+}
+
 .coral-player-slot {
   background: rgba(255, 255, 255, 0.82);
   border-top: 1px solid rgba(240, 100, 90, 0.08);
@@ -1200,6 +1209,46 @@ body {
   overflow: auto;
 }
 
+.coral-online-music-list .coral-plain-list-item {
+  min-height: 64px;
+  padding: 9px 0;
+}
+
+.coral-online-music-list .coral-plain-list-meta {
+  gap: 12px;
+}
+
+.coral-online-music-cover-shell {
+  align-items: center;
+  aspect-ratio: 1;
+  background: rgba(24, 37, 56, 0.06);
+  border-radius: 7px;
+  color: rgba(24, 37, 56, 0.34);
+  display: flex;
+  height: 44px;
+  justify-content: center;
+  overflow: hidden;
+  width: 44px;
+}
+
+.coral-online-music-cover {
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.coral-online-music-cover-placeholder {
+  display: none;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.coral-online-music-cover-shell.is-cover-missing .coral-online-music-cover-placeholder {
+  display: inline-flex;
+}
+
 .coral-search-results .coral-result-list {
   height: 100%;
   max-height: none;
@@ -1274,6 +1323,7 @@ body {
   flex: 1 1 auto;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
 }
 
 .coral-leaderboard-spin,
@@ -1286,11 +1336,110 @@ body {
   overflow: auto;
 }
 
+.coral-leaderboard-section-header {
+  align-items: center;
+  display: flex;
+  flex: none;
+  gap: 12px;
+  justify-content: space-between;
+  min-height: 38px;
+  padding: 2px 2px 8px;
+}
+
+.coral-leaderboard-section-title {
+  color: #182538;
+  font-size: 18px;
+  font-weight: 700;
+  height: auto;
+  line-height: 1.3;
+  padding: 2px 0;
+}
+
+.coral-leaderboard-section-title .anticon {
+  color: rgba(24, 37, 56, 0.62);
+  font-size: 12px;
+}
+
+.coral-leaderboard-section-tools {
+  flex: none;
+}
+
+.coral-leaderboard-track-grid {
+  display: grid;
+  gap: 0 28px;
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  padding-bottom: 20px;
+}
+
+.coral-leaderboard-track {
+  align-items: center;
+  border-bottom: 1px solid rgba(24, 37, 56, 0.08);
+  cursor: pointer;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  min-height: 56px;
+  outline: none;
+  padding: 7px 0;
+}
+
+.coral-leaderboard-track:hover,
+.coral-leaderboard-track:focus-visible {
+  background: rgba(79, 166, 190, 0.08);
+}
+
+.coral-leaderboard-track:focus-visible {
+  box-shadow: inset 0 0 0 2px rgba(79, 166, 190, 0.38);
+}
+
+.coral-leaderboard-track-cover {
+  aspect-ratio: 1;
+  background: rgba(24, 37, 56, 0.08);
+  border-radius: 6px;
+  height: 42px;
+  object-fit: cover;
+  width: 42px;
+}
+
+.coral-leaderboard-track-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.coral-leaderboard-track-name {
+  color: #182538;
+  font-size: 13px;
+  font-weight: 560;
+  line-height: 1.35;
+}
+
+.coral-leaderboard-track-singer {
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.coral-leaderboard-track-actions {
+  opacity: 0;
+  transition: opacity 0.16s ease;
+}
+
+.coral-leaderboard-track:hover .coral-leaderboard-track-actions,
+.coral-leaderboard-track:focus-within .coral-leaderboard-track-actions {
+  opacity: 1;
+}
+
 .coral-leaderboard-detail .coral-result-list {
   flex: 1 1 auto;
   max-height: none;
   min-height: 0;
   overflow: auto;
+}
+
+@media (max-width: 980px) {
+  .coral-leaderboard-track-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .coral-tag-row {

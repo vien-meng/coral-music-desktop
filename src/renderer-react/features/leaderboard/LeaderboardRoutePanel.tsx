@@ -1,13 +1,16 @@
-import { PlayCircleOutlined, ReloadOutlined } from '@ant-design/icons';
-import { Alert, Button, Divider, Segmented, Space, Spin, Tag, Typography } from 'antd';
+import { PlayCircleOutlined, ReloadOutlined, RightOutlined } from '@ant-design/icons';
+import { Alert, Button, Empty, Segmented, Space, Spin, Typography } from 'antd';
 import { observer } from 'mobx-react-lite';
 import { useCallback, useEffect, useMemo } from 'react';
 import { OnlineBoardSelector, OnlineSourceSelect } from '../online/OnlineControls';
 import { OnlineMusicRowActions } from '../online/OnlineMusicRowActions';
-import { OnlineMusicPreviewList, OnlinePager } from '../online/OnlinePreviewList';
+import { OnlinePager } from '../online/OnlinePreviewList';
 import { rootStore } from '../../stores/rootStore';
 
 const { Text } = Typography;
+
+const transparentImage =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 
 export const LeaderboardRoutePanel = observer(() => {
   const { leaderboard, list, player } = rootStore;
@@ -65,6 +68,11 @@ export const LeaderboardRoutePanel = observer(() => {
     const queue = leaderboard.listDetailInfo.list;
     if (!queue.length) return;
     player.playFromQueue(queue[0], queue, currentQueueId);
+  };
+
+  const handlePlayItem = (musicInfo: Coral.Music.MusicInfo): void => {
+    const queue = leaderboard.listDetailInfo.list;
+    player.playFromQueue(musicInfo, queue, currentQueueId);
   };
 
   return (
@@ -157,13 +165,21 @@ export const LeaderboardRoutePanel = observer(() => {
             <div className="coral-leaderboard-music-view">
               {leaderboard.boardId ? (
                 <>
-                  <Divider titlePlacement="left" plain style={{ fontSize: 13, margin: '0 0 8px' }}>
-                    <Space>
-                      <Text strong>{activeBoardName}</Text>
-                      <Tag>{`${leaderboard.listDetailInfo.total} 首`}</Tag>
+                  <div className="coral-leaderboard-section-header">
+                    <Button
+                      type="text"
+                      className="coral-leaderboard-section-title"
+                      onClick={handlePlayAll}
+                      disabled={!leaderboard.listDetailInfo.list.length}
+                    >
+                      <span>{activeBoardName}</span>
+                      <RightOutlined />
+                    </Button>
+                    <Space size={8} className="coral-leaderboard-section-tools">
+                      <Text type="secondary">{`${leaderboard.listDetailInfo.total} 首`}</Text>
                       <Button
                         size="small"
-                        type="primary"
+                        type="text"
                         icon={<PlayCircleOutlined />}
                         disabled={!leaderboard.listDetailInfo.list.length}
                         onClick={handlePlayAll}
@@ -171,20 +187,65 @@ export const LeaderboardRoutePanel = observer(() => {
                         播放全部
                       </Button>
                     </Space>
-                  </Divider>
+                  </div>
                   <Spin spinning={leaderboard.isLoadingDetail} className="coral-leaderboard-spin">
-                    <OnlineMusicPreviewList
-                      list={leaderboard.listDetailInfo.list}
-                      emptyText={leaderboard.listDetailInfo.noItemLabel || '暂无歌曲'}
-                      actions={(item) => [
-                        <OnlineMusicRowActions
-                          key="actions"
-                          musicInfo={item}
-                          queue={leaderboard.listDetailInfo.list}
-                          queueId={currentQueueId}
-                        />,
-                      ]}
-                    />
+                    {leaderboard.listDetailInfo.list.length ? (
+                      <div className="coral-leaderboard-track-grid">
+                        {leaderboard.listDetailInfo.list.map((item, index) => (
+                          <div
+                            key={`${item.source}__${item.id}__${index}`}
+                            className="coral-leaderboard-track"
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => {
+                              handlePlayItem(item);
+                            }}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                handlePlayItem(item);
+                              }
+                            }}
+                          >
+                            <img
+                              src={item.meta.picUrl || transparentImage}
+                              alt=""
+                              className="coral-leaderboard-track-cover"
+                              loading="lazy"
+                            />
+                            <div className="coral-leaderboard-track-meta">
+                              <Text className="coral-leaderboard-track-name" ellipsis>
+                                {item.name}
+                              </Text>
+                              <Text
+                                className="coral-leaderboard-track-singer"
+                                type="secondary"
+                                ellipsis
+                              >
+                                {item.singer || '未知歌手'}
+                              </Text>
+                            </div>
+                            <div
+                              className="coral-leaderboard-track-actions"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                              }}
+                            >
+                              <OnlineMusicRowActions
+                                musicInfo={item}
+                                queue={leaderboard.listDetailInfo.list}
+                                queueId={currentQueueId}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <Empty
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                        description={leaderboard.listDetailInfo.noItemLabel || '暂无歌曲'}
+                      />
+                    )}
                   </Spin>
                 </>
               ) : (

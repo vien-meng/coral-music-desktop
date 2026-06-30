@@ -938,9 +938,7 @@ export const SettingsRoutePanel = observer(() => {
                     showIcon
                     type={exclusiveProbeResult.canUseExclusive ? 'success' : 'warning'}
                     title={
-                      exclusiveProbeResult.canUseExclusive
-                        ? '独占输出可用'
-                        : '独占输出暂不可用'
+                      exclusiveProbeResult.canUseExclusive ? '独占输出可用' : '独占输出暂不可用'
                     }
                     description={[
                       `平台 ${exclusiveProbeResult.platform}`,
@@ -1149,11 +1147,7 @@ export const SettingsRoutePanel = observer(() => {
                     <Alert showIcon type="error" title={decoderProbeResult.errors.join('；')} />
                   ) : null}
                   {decoderProbeResult.warnings.length ? (
-                    <Alert
-                      showIcon
-                      type="warning"
-                      title={decoderProbeResult.warnings.join('；')}
-                    />
+                    <Alert showIcon type="warning" title={decoderProbeResult.warnings.join('；')} />
                   ) : null}
                   {decoderProbeResult.pluginDirs.length ? (
                     <PlainList
@@ -2259,6 +2253,9 @@ export const SettingsRoutePanel = observer(() => {
         </SettingSection>
 
         <SettingSection title="关于">
+          <Form.Item label="开发者">
+            <Text type="secondary">vien.meng</Text>
+          </Form.Item>
           <Form.Item label="项目开源地址">
             <Button
               type="link"
@@ -2269,7 +2266,7 @@ export const SettingsRoutePanel = observer(() => {
               }}
               disabled={!coralProjectLinks.projectRepository}
             >
-              GitHub
+              vien-meng/coral-music-desktop
             </Button>
           </Form.Item>
           <Form.Item label="项目最新版本">
@@ -2295,7 +2292,7 @@ export const SettingsRoutePanel = observer(() => {
               }}
               disabled={!coralProjectLinks.projectFaq}
             >
-              文档
+              FAQ.md
             </Button>
           </Form.Item>
           <Form.Item label="项目问题反馈">
@@ -2316,6 +2313,7 @@ export const SettingsRoutePanel = observer(() => {
             showIcon
             title="珊瑚音乐完全免费开源"
             description="当前迁移版仍保留部分内部兼容层；正式发布渠道请以珊瑚音乐项目配置为准。"
+            className="coral-settings-wide-item"
           />
         </SettingSection>
 
