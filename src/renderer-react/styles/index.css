@@ -1095,6 +1095,49 @@ body {
   overflow: hidden;
 }
 
+.coral-local-page .coral-result-list {
+  max-height: none;
+  overflow: visible;
+}
+
+.coral-webdav-route {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.coral-webdav-toolbar,
+.coral-webdav-breadcrumb {
+  flex: 0 0 auto;
+}
+
+.coral-webdav-breadcrumb .ant-btn-link {
+  height: auto;
+  padding: 0;
+}
+
+.coral-webdav-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 8px;
+}
+
+.coral-webdav-list .ant-list {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(112, 128, 144, 0.12);
+  border-radius: 12px;
+  min-height: 100%;
+  overflow: hidden;
+}
+
+.coral-webdav-list-item {
+  padding-inline: 12px !important;
+}
+
 .coral-local-page .coral-plain-list-item {
   border-bottom-color: rgba(112, 128, 144, 0.11);
   padding: 12px 14px;

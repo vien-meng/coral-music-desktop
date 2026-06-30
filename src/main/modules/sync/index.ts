@@ -16,8 +16,8 @@ export {
 export { connectServer, disconnectServer, getStatus as getClientStatus } from './client';
 
 export default () => {
-  global.lx.event_app.on('main_window_close', () => {
-    if (global.lx.appSetting['sync.mode'] == 'server') {
+  global.coral.event_app.on('main_window_close', () => {
+    if (global.coral.appSetting['sync.mode'] == 'server') {
       stopServer();
     } else {
       disconnectServer();

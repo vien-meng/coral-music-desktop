@@ -10,7 +10,7 @@ const defaultSearchSources: SearchSource[] = ['kw', 'kg', 'tx', 'wy', 'mg', 'all
 export interface SearchMusicListState {
   key: string | null;
   limit: number;
-  list: LX.Music.MusicInfo[];
+  list: Coral.Music.MusicInfo[];
   maxPage: number;
   noItemLabel: string;
   page: number;
@@ -24,7 +24,7 @@ export interface SearchSongListItem {
   img: string;
   name: string;
   play_count: string;
-  source: LX.OnlineSource;
+  source: Coral.OnlineSource;
   time?: string;
   total?: string;
 }

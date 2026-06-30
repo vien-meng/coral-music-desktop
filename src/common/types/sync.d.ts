@@ -1,4 +1,4 @@
-declare namespace LX {
+declare namespace Coral {
   namespace Sync {
     interface EnableServer {
       enable: boolean;
@@ -21,8 +21,8 @@ declare namespace LX {
       : SyncActionData<A, D>;
 
     interface ModeTypes {
-      list: LX.Sync.List.SyncMode;
-      dislike: LX.Sync.Dislike.SyncMode;
+      list: Coral.Sync.List.SyncMode;
+      dislike: Coral.Sync.Dislike.SyncMode;
     }
 
     type ModeType = { [K in keyof ModeTypes]: { type: K; mode: ModeTypes[K] } }[keyof ModeTypes];

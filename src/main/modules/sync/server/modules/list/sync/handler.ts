@@ -8,17 +8,17 @@ import { getUserSpace } from '@main/modules/sync/server/user';
 import { handleRemoteListAction } from '@main/modules/sync/listEvent';
 // import { encryptMsg } from '@/utils/tools'
 
-// let wss: LX.SocketServer | null
+// let wss: Coral.SocketServer | null
 // let removeListener: (() => void) | null
 
 // type listAction = 'list:action'
 
 // const registerListActionEvent = () => {
-//   const list_data_overwrite = async(listData: MakeOptional<LX.List.ListDataFull, 'tempList'>, isRemote: boolean = false) => {
+//   const list_data_overwrite = async(listData: MakeOptional<Coral.List.ListDataFull, 'tempList'>, isRemote: boolean = false) => {
 //     if (isRemote) return
 //     await sendListAction({ action: 'list_data_overwrite', data: listData })
 //   }
-//   const list_create = async(position: number, listInfos: LX.List.UserListInfo[], isRemote: boolean = false) => {
+//   const list_create = async(position: number, listInfos: Coral.List.UserListInfo[], isRemote: boolean = false) => {
 //     if (isRemote) return
 //     await sendListAction({ action: 'list_create', data: { position, listInfos } })
 //   }
@@ -26,7 +26,7 @@ import { handleRemoteListAction } from '@main/modules/sync/listEvent';
 //     if (isRemote) return
 //     await sendListAction({ action: 'list_remove', data: ids })
 //   }
-//   const list_update = async(lists: LX.List.UserListInfo[], isRemote: boolean = false) => {
+//   const list_update = async(lists: Coral.List.UserListInfo[], isRemote: boolean = false) => {
 //     if (isRemote) return
 //     await sendListAction({ action: 'list_update', data: lists })
 //   }
@@ -34,15 +34,15 @@ import { handleRemoteListAction } from '@main/modules/sync/listEvent';
 //     if (isRemote) return
 //     await sendListAction({ action: 'list_update_position', data: { position, ids } })
 //   }
-//   const list_music_overwrite = async(listId: string, musicInfos: LX.Music.MusicInfo[], isRemote: boolean = false) => {
+//   const list_music_overwrite = async(listId: string, musicInfos: Coral.Music.MusicInfo[], isRemote: boolean = false) => {
 //     if (isRemote) return
 //     await sendListAction({ action: 'list_music_overwrite', data: { listId, musicInfos } })
 //   }
-//   const list_music_add = async(id: string, musicInfos: LX.Music.MusicInfo[], addMusicLocationType: LX.AddMusicLocationType, isRemote: boolean = false) => {
+//   const list_music_add = async(id: string, musicInfos: Coral.Music.MusicInfo[], addMusicLocationType: Coral.AddMusicLocationType, isRemote: boolean = false) => {
 //     if (isRemote) return
 //     await sendListAction({ action: 'list_music_add', data: { id, musicInfos, addMusicLocationType } })
 //   }
-//   const list_music_move = async(fromId: string, toId: string, musicInfos: LX.Music.MusicInfo[], addMusicLocationType: LX.AddMusicLocationType, isRemote: boolean = false) => {
+//   const list_music_move = async(fromId: string, toId: string, musicInfos: Coral.Music.MusicInfo[], addMusicLocationType: Coral.AddMusicLocationType, isRemote: boolean = false) => {
 //     if (isRemote) return
 //     await sendListAction({ action: 'list_music_move', data: { fromId, toId, musicInfos, addMusicLocationType } })
 //   }
@@ -50,7 +50,7 @@ import { handleRemoteListAction } from '@main/modules/sync/listEvent';
 //     if (isRemote) return
 //     await sendListAction({ action: 'list_music_remove', data: { listId, ids } })
 //   }
-//   const list_music_update = async(musicInfos: LX.List.ListActionMusicUpdate, isRemote: boolean = false) => {
+//   const list_music_update = async(musicInfos: Coral.List.ListActionMusicUpdate, isRemote: boolean = false) => {
 //     if (isRemote) return
 //     await sendListAction({ action: 'list_music_update', data: musicInfos })
 //   }
@@ -94,7 +94,7 @@ import { handleRemoteListAction } from '@main/modules/sync/listEvent';
 //   // ...
 // }
 
-// const broadcast = async(socket: LX.Socket, key: string, data: any, excludeIds: string[] = []) => {
+// const broadcast = async(socket: Coral.Socket, key: string, data: any, excludeIds: string[] = []) => {
 //   if (!wss) return
 //   const dataStr = JSON.stringify({ action: 'list:sync:action', data })
 //   const userSpace = getUserSpace(socket.userInfo.name)
@@ -110,13 +110,13 @@ import { handleRemoteListAction } from '@main/modules/sync/listEvent';
 //   }
 // }
 
-// export const sendListAction = async(action: LX.Sync.List.ActionList) => {
+// export const sendListAction = async(action: Coral.Sync.List.ActionList) => {
 //   console.log('sendListAction', action.action)
 //   // io.sockets
 //   await broadcast('list:sync:action', action)
 // }
 
-// export const registerListHandler = (_wss: LX.SocketServer, socket: LX.Socket) => {
+// export const registerListHandler = (_wss: Coral.SocketServer, socket: Coral.Socket) => {
 //   if (!wss) {
 //     wss = _wss
 //     // removeListener = registerListActionEvent()
@@ -146,7 +146,7 @@ import { handleRemoteListAction } from '@main/modules/sync/listEvent';
 //   // }
 // }
 
-const handler: LX.Sync.ServerSyncHandlerListActions<LX.Sync.Server.Socket> = {
+const handler: Coral.Sync.ServerSyncHandlerListActions<Coral.Sync.Server.Socket> = {
   async onListSyncAction(socket, action) {
     if (!socket.moduleReadys.list) return;
     await handleRemoteListAction(action);

@@ -7,12 +7,12 @@ import {
   clearDownloadList,
 } from './dbHelper';
 
-let list: LX.Download.ListItem[];
+let list: Coral.Download.ListItem[];
 
 const toDBDownloadInfo = (
-  musicInfos: LX.Download.ListItem[],
+  musicInfos: Coral.Download.ListItem[],
   offset: number = 0,
-): LX.DBService.DownloadMusicInfo[] =>
+): Coral.DBService.DownloadMusicInfo[] =>
   musicInfos.map((info, index) => ({
     id: info.id,
     isComplate: info.isComplate ? 1 : 0,
@@ -31,7 +31,7 @@ const toDBDownloadInfo = (
 
 const initDownloadList = () => {
   list = queryDownloadList().map((item) => {
-    const musicInfo = JSON.parse(item.musicInfo) as LX.Music.MusicInfoOnline;
+    const musicInfo = JSON.parse(item.musicInfo) as Coral.Music.MusicInfoOnline;
     return {
       id: item.id,
       isComplate: item.isComplate == 1,
@@ -60,7 +60,7 @@ const initDownloadList = () => {
  * 获取下载列表
  * @returns 下载列表
  */
-export const getDownloadList = (): LX.Download.ListItem[] => {
+export const getDownloadList = (): Coral.Download.ListItem[] => {
   if (!list) initDownloadList();
   return list;
 };
@@ -70,8 +70,8 @@ export const getDownloadList = (): LX.Download.ListItem[] => {
  * @param downloadInfos url信息
  */
 export const downloadInfoSave = (
-  downloadInfos: LX.Download.ListItem[],
-  addMusicLocationType: LX.AddMusicLocationType,
+  downloadInfos: Coral.Download.ListItem[],
+  addMusicLocationType: Coral.AddMusicLocationType,
 ) => {
   if (!list) initDownloadList();
   if (addMusicLocationType == 'top') {
@@ -94,7 +94,7 @@ export const downloadInfoSave = (
  * 批量更新列表信息
  * @param lists 列表信息
  */
-export const downloadInfoUpdate = (lists: LX.Download.ListItem[]) => {
+export const downloadInfoUpdate = (lists: Coral.Download.ListItem[]) => {
   updateDownloadList(toDBDownloadInfo(lists));
   if (list) {
     for (const item of lists) {

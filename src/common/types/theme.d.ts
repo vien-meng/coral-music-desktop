@@ -1,4 +1,4 @@
-declare namespace LX {
+declare namespace Coral {
   interface ThemeColors {
     '--color-000': string;
     '--color-050': string;
@@ -286,8 +286,8 @@ declare namespace LX {
   }
 
   interface ThemeInfo {
-    themes: LX.Theme[];
-    userThemes: LX.Theme[];
+    themes: Coral.Theme[];
+    userThemes: Coral.Theme[];
     dataPath: string;
   }
 

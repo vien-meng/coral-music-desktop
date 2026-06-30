@@ -11,15 +11,15 @@ export default {
     writeLog.error(...params);
   },
   info(...params: any[]) {
-    // if (global.lx.isEnableSyncLog) writeLog.info(...params)
+    // if (global.coral.isEnableSyncLog) writeLog.info(...params)
     console.log(...params);
   },
   warn(...params: any[]) {
-    // if (global.lx.isEnableSyncLog) writeLog.warn(...params)
+    // if (global.coral.isEnableSyncLog) writeLog.warn(...params)
     console.warn(...params);
   },
   error(...params: any[]) {
-    // if (global.lx.isEnableSyncLog) writeLog.error(...params)
+    // if (global.coral.isEnableSyncLog) writeLog.error(...params)
     console.warn(...params);
   },
 };

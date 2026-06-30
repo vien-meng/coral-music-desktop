@@ -142,7 +142,7 @@ export const gunzipData = async (buf: Buffer): Promise<string> =>
  * @param path 保存路径
  * @param data 数据
  */
-export const saveLxConfigFile = async (path: string, data: any) => {
+export const saveCoralConfigFile = async (path: string, data: any) => {
   if (!path.endsWith('.lxmc')) path += '.lxmc';
   fs.writeFile(path, await gzipData(JSON.stringify(data)), 'binary', (err) => {
     console.log(err);
@@ -154,7 +154,7 @@ export const saveLxConfigFile = async (path: string, data: any) => {
  * @param path 文件路径
  * @returns 数据
  */
-export const readLxConfigFile = async (path: string): Promise<any> => {
+export const readCoralConfigFile = async (path: string): Promise<any> => {
   let isJSON = path.endsWith('.json');
   let data: string | Buffer = await fs.promises.readFile(path, isJSON ? 'utf8' : 'binary');
   if (!data) return data;

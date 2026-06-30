@@ -581,7 +581,7 @@ Acceptance:
 
 Goal: remove legacy Vue sources after parity.
 
-Status on 2026-06-24: completed for Vue and renderer compatibility cleanup. Steps 104-105 removed the remaining Vue SFCs and Vue scaffold. Steps 106-108 moved the React-used music SDK into `src/renderer-react/services/musicSdk`, replaced `window.lx.worker.download.createDownloadTasks` with a React task factory, and deleted the remaining `src/renderer` directory.
+Status on 2026-06-24: completed for Vue and renderer compatibility cleanup. Steps 104-105 removed the remaining Vue SFCs and Vue scaffold. Steps 106-108 moved the React-used music SDK into `src/renderer-react/services/musicSdk`, replaced `window.coral.worker.download.createDownloadTasks` with a React task factory, and deleted the remaining `src/renderer` directory.
 
 Tasks:
 

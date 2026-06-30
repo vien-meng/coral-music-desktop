@@ -10,7 +10,7 @@ interface SnapshotInfo {
   latest: string | null;
   time: number;
   list: string[];
-  clients: Record<string, LX.Sync.Dislike.ListInfo>;
+  clients: Record<string, Coral.Sync.Dislike.ListInfo>;
 }
 export class SnapshotDataManage {
   userDataManage: UserDataManage;
@@ -32,7 +32,7 @@ export class SnapshotDataManage {
   clearOldSnapshot = async () => {
     if (!this.snapshotInfo) return;
     const snapshotList = this.snapshotInfo.list.filter((key) => !this.isIncluedsDevice(key));
-    // console.log(snapshotList.length, lx.config.maxSnapshotNum)
+    // console.log(snapshotList.length, coral.config.maxSnapshotNum)
     const userMaxSnapshotNum = getUserConfig(this.userDataManage.userName).maxSnapshotNum;
     let requiredSave = snapshotList.length > userMaxSnapshotNum;
     while (snapshotList.length > userMaxSnapshotNum) {
@@ -83,7 +83,7 @@ export class SnapshotDataManage {
 
   getSnapshot = async (name: string) => {
     const filePath = path.join(this.snapshotDir, `snapshot_${name}`);
-    let listData: LX.Dislike.DislikeRules;
+    let listData: Coral.Dislike.DislikeRules;
     try {
       listData = (await fs.promises.readFile(filePath)).toString('utf-8');
     } catch (err) {
@@ -142,7 +142,7 @@ export class SnapshotDataManage {
 }
 // type UserDataManages = Map<string, UserDataManage>
 
-// export const createUserDataManage = (user: LX.UserConfig) => {
+// export const createUserDataManage = (user: Coral.UserConfig) => {
 //   const manage = Object.create(userDataManage) as typeof userDataManage
 //   manage.userDir = user.dataPath
 // }

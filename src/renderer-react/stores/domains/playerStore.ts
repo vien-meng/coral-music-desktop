@@ -26,13 +26,13 @@ const getRuntimeMusicId = (musicInfo: PlayerRuntimeMusicInfo): string =>
 
 const isDownloadMusicInfo = (
   musicInfo: PlayerRuntimeMusicInfo,
-): musicInfo is LX.Download.ListItem => 'progress' in musicInfo && 'metadata' in musicInfo;
+): musicInfo is Coral.Download.ListItem => 'progress' in musicInfo && 'metadata' in musicInfo;
 
 const getRandomIndex = (length: number): number => Math.floor(Math.random() * length);
 
-type PlayMode = LX.AppSetting['player.togglePlayMethod'];
+type PlayMode = Coral.AppSetting['player.togglePlayMethod'];
 
-const createSoundEffectConfig = (setting: LX.AppSetting): PlayerSoundEffectConfig => ({
+const createSoundEffectConfig = (setting: Coral.AppSetting): PlayerSoundEffectConfig => ({
   eqGains: {
     31: setting['player.soundEffect.biquadFilter.hz31'],
     62: setting['player.soundEffect.biquadFilter.hz62'],
@@ -59,6 +59,18 @@ const cleanLyricBlock = (lyric: string | null | undefined): string =>
     .map((line) => line.replace(lrcTimeTagRxp, '').replace(lrcMetaTagRxp, '').trim())
     .filter(Boolean)
     .join('\n');
+
+const emptyLyricStatus: Pick<
+  PlayerRuntimeStatus,
+  'lyric' | 'lyricLineAllText' | 'lyricLineText' | 'lxlyric' | 'rlyric' | 'tlyric'
+> = {
+  lyric: '',
+  lyricLineAllText: '',
+  lyricLineText: '',
+  lxlyric: '',
+  rlyric: '',
+  tlyric: '',
+};
 
 export class PlayerStore {
   currentMusic: PlayerRuntimeMusicInfo | null = null;
@@ -149,7 +161,7 @@ export class PlayerStore {
     return this.currentMusic;
   }
 
-  get displayMusicInfo(): LX.Music.MusicInfo | null {
+  get displayMusicInfo(): Coral.Music.MusicInfo | null {
     if (!this.currentMusic) return null;
     return 'progress' in this.currentMusic
       ? this.currentMusic.metadata.musicInfo
@@ -194,7 +206,7 @@ export class PlayerStore {
 
     // 音质到理论规格的映射（作为探测失败时的回退）
     const qualitySpecs: Partial<
-      Record<LX.Quality, { kbps: number; sampleRate: number; lossless: boolean }>
+      Record<Coral.Quality, { kbps: number; sampleRate: number; lossless: boolean }>
     > = {
       '128k': { kbps: 128, sampleRate: 44100, lossless: false },
       '192k': { kbps: 192, sampleRate: 44100, lossless: false },
@@ -235,7 +247,7 @@ export class PlayerStore {
     return details.join(' · ');
   }
 
-  get actualQuality(): LX.Quality | null {
+  get actualQuality(): Coral.Quality | null {
     return this.status?.actualQuality ?? null;
   }
 
@@ -247,7 +259,7 @@ export class PlayerStore {
         : this.settings?.appSetting?.['player.playQuality']);
     if (!quality) return '';
 
-    const labels: Partial<Record<LX.Quality, string>> = {
+    const labels: Partial<Record<Coral.Quality, string>> = {
       '128k': '128k',
       '192k': '192k',
       '320k': '320k',
@@ -286,7 +298,7 @@ export class PlayerStore {
     );
   }
 
-  get currentLyricInfo(): LX.Music.LyricInfo {
+  get currentLyricInfo(): Coral.Music.LyricInfo {
     return {
       lyric: this.status?.lyric ?? '',
       lxlyric: this.status?.lxlyric ?? '',
@@ -383,6 +395,7 @@ export class PlayerStore {
   playMusic(musicInfo?: PlayerRuntimeMusicInfo, options: PlayerRuntimePlayOptions = {}): void {
     if (musicInfo) {
       this.currentMusic = musicInfo;
+      this.clearLyricSnapshot();
       this.syncQueueIndex(musicInfo);
       this.recordPlayedMusic(musicInfo);
       this.enrichCurrentLocalMusicInfo(musicInfo);
@@ -534,7 +547,7 @@ export class PlayerStore {
     }
   }
 
-  updateLyricSnapshot(lyricInfo: LX.Music.LyricInfo): void {
+  updateLyricSnapshot(lyricInfo: Coral.Music.LyricInfo): void {
     this.status = {
       ...this.status,
       lyric: lyricInfo.lyric,
@@ -544,11 +557,19 @@ export class PlayerStore {
     };
   }
 
-  refreshCurrentMusicWithQuality(quality: LX.Quality): void {
+  clearLyricSnapshot(): void {
+    this.status = {
+      ...this.status,
+      ...emptyLyricStatus,
+    };
+  }
+
+  refreshCurrentMusicWithQuality(quality: Coral.Quality): void {
     if (
       !this.currentMusic ||
       isDownloadMusicInfo(this.currentMusic) ||
-      this.currentMusic.source === 'local'
+      this.currentMusic.source === 'local' ||
+      this.currentMusic.source === 'webdav'
     )
       return;
     this.settings?.updateAppSetting({ 'player.playQuality': quality });
@@ -593,7 +614,7 @@ export class PlayerStore {
     this.currentQueueIndex = this.findQueueIndex(musicInfo);
   }
 
-  private getPlayMode(): LX.AppSetting['player.togglePlayMethod'] {
+  private getPlayMode(): Coral.AppSetting['player.togglePlayMethod'] {
     return this.settings?.appSetting?.['player.togglePlayMethod'] ?? 'listLoop';
   }
 
@@ -671,7 +692,12 @@ export class PlayerStore {
   }
 
   private enrichCurrentOnlineMusicInfo(musicInfo: PlayerRuntimeMusicInfo): void {
-    if (isDownloadMusicInfo(musicInfo) || musicInfo.source === 'local') return;
+    if (
+      isDownloadMusicInfo(musicInfo) ||
+      musicInfo.source === 'local' ||
+      musicInfo.source === 'webdav'
+    )
+      return;
 
     const requestId = ++this.enrichRequestId;
     const musicId = getRuntimeMusicId(musicInfo);
@@ -693,7 +719,7 @@ export class PlayerStore {
           meta: {
             ...musicInfo.meta,
           },
-        } as LX.Music.MusicInfoOnline;
+        } as Coral.Music.MusicInfoOnline;
         const nextStatus: PlayerRuntimeStatus = {};
 
         if (picResult.status === 'fulfilled' && picResult.value && !nextMusicInfo.meta.picUrl) {

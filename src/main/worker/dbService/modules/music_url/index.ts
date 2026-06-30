@@ -20,7 +20,7 @@ export const getMusicUrl = (id: string): string | null => {
  * 保存歌曲url
  * @param urlInfos url信息
  */
-export const musicUrlSave = (urlInfos: LX.Music.MusicUrlInfo[]) => {
+export const musicUrlSave = (urlInfos: Coral.Music.MusicUrlInfo[]) => {
   insertMusicUrl(urlInfos);
 };
 

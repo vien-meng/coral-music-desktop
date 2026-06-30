@@ -15,7 +15,7 @@
   - Checks migrated panels use `rootStore` and key store methods for search, song-list, leaderboard, local-list, and download.
   - Checks download task IPC names/contracts, main runtime handlers, renderer service, and download store runtime binding.
   - Checks `npm run smoke:download` remains available.
-  - Checks React and lyric renderers do not reference `window.lx.worker`, `@renderer/`, or deleted `src/renderer` paths.
+  - Checks React and lyric renderers do not reference `window.coral.worker`, `@renderer/`, or deleted `src/renderer` paths.
 - Added `npm run smoke:migration`.
 - Updated `component-migration-plan.md` to move the next batch to Step 117 bundle warning cleanup, Step 118 polish, Step 119 release readiness, and Step 120 optional UI automation.
 

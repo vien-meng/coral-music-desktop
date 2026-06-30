@@ -11,11 +11,11 @@ let userApiId: string | null;
 
 export const getApiList = getUserApis;
 
-export const importApi = async (script: string): Promise<LX.UserApi.ImportUserApi> => ({
+export const importApi = async (script: string): Promise<Coral.UserApi.ImportUserApi> => ({
   apiInfo: await handleImportApi(script),
   apiList: getUserApis(),
 });
-export const removeApi = async (ids: string[]): Promise<LX.UserApi.UserApiInfo[]> => {
+export const removeApi = async (ids: string[]): Promise<Coral.UserApi.UserApiInfo[]> => {
   if (userApiId && ids.includes(userApiId)) {
     userApiId = null;
     await closeWindow();
@@ -46,7 +46,7 @@ export * from './rendererEvent/rendererEvent';
 export default () => {
   init();
 
-  global.lx.event_app.on('main_window_close', () => {
+  global.coral.event_app.on('main_window_close', () => {
     closeWindow();
   });
 };

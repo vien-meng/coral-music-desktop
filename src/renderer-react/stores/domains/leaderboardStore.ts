@@ -1,7 +1,7 @@
 import { makeAutoObservable, observable } from 'mobx';
 import { loadOnlineMusicService } from '../../services/onlineMusicServiceLoader';
 
-const defaultLeaderboardSources: LX.OnlineSource[] = ['kw', 'kg', 'tx', 'wy', 'mg'];
+const defaultLeaderboardSources: Coral.OnlineSource[] = ['kw', 'kg', 'tx', 'wy', 'mg'];
 
 export interface LeaderboardBoardItem {
   bangid: string;
@@ -11,17 +11,17 @@ export interface LeaderboardBoardItem {
 
 export interface LeaderboardBoard {
   list: LeaderboardBoardItem[];
-  source: LX.OnlineSource;
+  source: Coral.OnlineSource;
 }
 
 export interface LeaderboardListDetailInfo {
   id: string;
   key: string | null;
   limit: number;
-  list: LX.Music.MusicInfoOnline[];
+  list: Coral.Music.MusicInfoOnline[];
   noItemLabel: string;
   page: number;
-  source: LX.OnlineSource | null;
+  source: Coral.OnlineSource | null;
   total: number;
 }
 
@@ -39,7 +39,7 @@ const createListDetailInfo = (): LeaderboardListDetailInfo => ({
 export class LeaderboardStore {
   boardId: string | null = null;
 
-  boards: Partial<Record<LX.OnlineSource, LeaderboardBoard>> = {};
+  boards: Partial<Record<Coral.OnlineSource, LeaderboardBoard>> = {};
 
   detailError: string | null = null;
 
@@ -49,9 +49,9 @@ export class LeaderboardStore {
 
   listDetailInfo: LeaderboardListDetailInfo = createListDetailInfo();
 
-  source: LX.OnlineSource = 'kw';
+  source: Coral.OnlineSource = 'kw';
 
-  sources: LX.OnlineSource[] = defaultLeaderboardSources;
+  sources: Coral.OnlineSource[] = defaultLeaderboardSources;
 
   viewMode: 'board' | 'music' = 'board';
 
@@ -85,7 +85,7 @@ export class LeaderboardStore {
     };
   }
 
-  setRouteState(source: LX.OnlineSource, boardId: string | null): void {
+  setRouteState(source: Coral.OnlineSource, boardId: string | null): void {
     this.source = source;
     this.boardId = boardId;
   }
@@ -114,7 +114,7 @@ export class LeaderboardStore {
 
   async loadListDetail(id: string, page = 1): Promise<void> {
     if (this.isLoadingDetail) return;
-    const [source, boardId] = id.split('__') as [LX.OnlineSource, string];
+    const [source, boardId] = id.split('__') as [Coral.OnlineSource, string];
     const key = `${id}__${page}`;
     this.isLoadingDetail = true;
     this.detailError = null;

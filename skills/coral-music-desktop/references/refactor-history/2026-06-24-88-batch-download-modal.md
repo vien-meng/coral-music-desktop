@@ -7,7 +7,7 @@ Date: 2026-06-24
 - Added a React `BatchDownloadModal` component for downloading multiple selected musics at once.
 - When the user clicks "下载" on a row that is part of a multi-selection, the batch modal appears instead of the single quality modal.
 - The batch modal lists up to 100 selected songs and offers quality choice buttons for mass download.
-- Download creation still goes through the legacy worker (`window.lx.worker.download.createDownloadTasks`) + typed IPC (`winMain_download_list_add`).
+- Download creation still goes through the legacy worker (`window.coral.worker.download.createDownloadTasks`) + typed IPC (`winMain_download_list_add`).
 - Deleted the now-unused `DuplicateMusicModal.vue` (MyList component) since React's duplicate review modal in Step 79 fully covers it.
 
 ## Changed Files

@@ -2,6 +2,7 @@ import '@common/types/utils';
 import '@common/types/app_setting';
 import '@common/types/common';
 import '@common/types/user_api';
+import '@common/types/webdav';
 import '@common/types/sync';
 import '@common/types/list';
 import '@common/types/list_sync';

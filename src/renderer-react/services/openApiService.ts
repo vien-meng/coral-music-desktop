@@ -3,8 +3,8 @@ import { ipcClient } from './ipc/client';
 import { isElectronRenderer } from './appService';
 
 export const sendOpenApiAction = async (
-  action: LX.OpenAPI.Actions,
-): Promise<LX.OpenAPI.Status | null> => {
+  action: Coral.OpenAPI.Actions,
+): Promise<Coral.OpenAPI.Status | null> => {
   if (!isElectronRenderer()) return null;
   return await ipcClient.invoke(ipcChannels.winMain.openApiAction, action);
 };

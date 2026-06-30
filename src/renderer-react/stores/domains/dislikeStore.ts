@@ -2,7 +2,7 @@ import { makeAutoObservable, observable } from 'mobx';
 import { SPLIT_CHAR } from '@common/constants';
 import { dislikeService } from '../../services/dislikeService';
 
-const createDislikeInfo = (): LX.Dislike.DislikeInfo => ({
+const createDislikeInfo = (): Coral.Dislike.DislikeInfo => ({
   musicNames: new Set(),
   names: new Set(),
   rules: '',
@@ -16,7 +16,7 @@ const normalizeRulePart = (value: string): string =>
     .trim();
 
 export class DislikeStore {
-  dislikeInfo: LX.Dislike.DislikeInfo = createDislikeInfo();
+  dislikeInfo: Coral.Dislike.DislikeInfo = createDislikeInfo();
 
   hydrateError: string | null = null;
 
@@ -57,7 +57,7 @@ export class DislikeStore {
     }
   }
 
-  async addDislikeMusicInfos(infos: LX.Dislike.DislikeMusicInfo[]): Promise<void> {
+  async addDislikeMusicInfos(infos: Coral.Dislike.DislikeMusicInfo[]): Promise<void> {
     await dislikeService.addDislikeMusicInfos(infos);
     this.addDislikeMusicInfosLocal(infos);
   }
@@ -71,7 +71,7 @@ export class DislikeStore {
     for (const dispose of this.disposers.splice(0)) dispose();
   }
 
-  hasDislike(info: LX.Music.MusicInfo | LX.Download.ListItem): boolean {
+  hasDislike(info: Coral.Music.MusicInfo | Coral.Download.ListItem): boolean {
     const musicInfo = 'progress' in info ? info.metadata.musicInfo : info;
     const name = normalizeRulePart(musicInfo.name ?? '');
     const singer = normalizeRulePart(musicInfo.singer ?? '');
@@ -83,12 +83,12 @@ export class DislikeStore {
     );
   }
 
-  async overwriteDislikeMusicInfos(rules: LX.Dislike.DislikeRules): Promise<void> {
+  async overwriteDislikeMusicInfos(rules: Coral.Dislike.DislikeRules): Promise<void> {
     await dislikeService.overwriteDislikeMusicInfos(rules);
     this.overwriteDislikeMusicInfosLocal(rules);
   }
 
-  private addDislikeMusicInfosLocal(infos: LX.Dislike.DislikeMusicInfo[]): void {
+  private addDislikeMusicInfosLocal(infos: Coral.Dislike.DislikeMusicInfo[]): void {
     const nextRules = [
       this.dislikeInfo.rules,
       ...infos.map((info) => `${info.name ?? ''}${SPLIT_CHAR.DISLIKE_NAME}${info.singer ?? ''}`),
@@ -99,7 +99,7 @@ export class DislikeStore {
     this.overwriteDislikeMusicInfosLocal(nextRules);
   }
 
-  private applyDislikeInfo(dislikeInfo: LX.Dislike.DislikeInfo): void {
+  private applyDislikeInfo(dislikeInfo: Coral.Dislike.DislikeInfo): void {
     this.dislikeInfo = {
       musicNames: new Set(dislikeInfo.musicNames),
       names: new Set(dislikeInfo.names),
@@ -109,7 +109,7 @@ export class DislikeStore {
     this.syncRuleCount();
   }
 
-  private overwriteDislikeMusicInfosLocal(rules: LX.Dislike.DislikeRules): void {
+  private overwriteDislikeMusicInfosLocal(rules: Coral.Dislike.DislikeRules): void {
     const names = new Set<string>();
     const musicNames = new Set<string>();
     const singerNames = new Set<string>();

@@ -3,7 +3,7 @@ import { WIN_MAIN_RENDERER_EVENT_NAME } from '@common/ipcNames';
 import { startServer, stopServer, getStatus } from '@main/modules/openApi';
 
 export default () => {
-  mainHandle<LX.OpenAPI.Actions, any>(
+  mainHandle<Coral.OpenAPI.Actions, any>(
     WIN_MAIN_RENDERER_EVENT_NAME.open_api_action,
     async ({ params: data }) => {
       switch (data.action) {

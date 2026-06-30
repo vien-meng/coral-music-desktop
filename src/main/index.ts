@@ -19,7 +19,7 @@ const init = () => {
   console.log('init');
   initAppSetting().then(() => {
     registerModules();
-    global.lx.event_app.app_inited();
+    global.coral.event_app.app_inited();
     runDownloadSmokeIfEnabled();
   });
 };

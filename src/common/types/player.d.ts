@@ -1,4 +1,4 @@
-declare namespace LX {
+declare namespace Coral {
   namespace Player {
     interface ProgressBarOptions {
       progress: number;
@@ -8,8 +8,8 @@ declare namespace LX {
     type StatusButtonActions =
       'unCollect' | 'collect' | 'prev' | 'pause' | 'play' | 'next' | 'seek' | 'volume' | 'mute';
 
-    interface LyricInfo extends LX.Music.LyricInfo {
-      rawlrcInfo: LX.Music.LyricInfo;
+    interface LyricInfo extends Coral.Music.LyricInfo {
+      rawlrcInfo: Coral.Music.LyricInfo;
     }
 
     interface Status {

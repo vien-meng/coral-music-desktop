@@ -1,6 +1,6 @@
 import { HOTKEY_PLAYER, HOTKEY_COMMON, HOTKEY_DESKTOP_LYRIC } from './hotKey';
 
-const local: LX.HotKeyConfig = {
+const local: Coral.HotKeyConfig = {
   enable: true,
   keys: {
     'mod+f5': {
@@ -26,7 +26,7 @@ const local: LX.HotKeyConfig = {
   },
 };
 
-const global: LX.HotKeyConfig = {
+const global: Coral.HotKeyConfig = {
   enable: false,
   keys: {
     // MediaPlayPause: {

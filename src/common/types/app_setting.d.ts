@@ -1,7 +1,7 @@
 import type { I18n } from '../../lang/i18n';
 
 declare global {
-  declare namespace LX {
+  declare namespace Coral {
     type AddMusicLocationType = 'top' | 'bottom';
 
     interface AppSetting {
@@ -95,7 +95,7 @@ declare global {
       /**
        * 优先播放的音质
        */
-      'player.playQuality': LX.Quality;
+      'player.playQuality': Coral.Quality;
 
       /**
        * 是否显示任务栏进度条
@@ -545,7 +545,7 @@ declare global {
       /**
        * 添加歌曲到我的列表时的方式
        */
-      'list.addMusicLocationType': LX.AddMusicLocationType;
+      'list.addMusicLocationType': Coral.AddMusicLocationType;
 
       /**
        * 是否显示列表操作按钮列
@@ -588,7 +588,7 @@ declare global {
       'download.isDownloadLrc': boolean;
 
       /**
-       * 是否在下载 lx 歌词
+       * 是否在下载 coral 歌词
        */
       'download.isDownloadLxLrc': boolean;
 
@@ -613,7 +613,7 @@ declare global {
       'download.isEmbedPic': boolean;
 
       /**
-       * 是否在音频文件中嵌入 lx 歌词
+       * 是否在音频文件中嵌入 coral 歌词
        */
       'download.isEmbedLyricLx': boolean;
 
@@ -636,6 +636,21 @@ declare global {
        * 歌曲源不可用时，是否启用换源下载
        */
       'download.isUseOtherSource': boolean;
+
+      /**
+       * WebDAV账号列表
+       */
+      'webdav.accounts': Coral.WebDav.Account[];
+
+      /**
+       * 当前WebDAV账号ID
+       */
+      'webdav.activeAccountId': string;
+
+      /**
+       * 是否启用WebDAV本地代理
+       */
+      'webdav.proxy.enabled': boolean;
 
       /**
        * 主题id

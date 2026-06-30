@@ -1,10 +1,10 @@
 import { useCallback, useRef, type DragEvent, type ReactNode } from 'react';
 
 export interface DraggableMusicListProps {
-  actions?: (item: LX.Music.MusicInfo, index: number) => ReactNode[];
-  list: LX.Music.MusicInfo[];
+  actions?: (item: Coral.Music.MusicInfo, index: number) => ReactNode[];
+  list: Coral.Music.MusicInfo[];
   onReorder: (fromIndex: number, toIndex: number) => void;
-  renderItem: (item: LX.Music.MusicInfo, index: number) => ReactNode;
+  renderItem: (item: Coral.Music.MusicInfo, index: number) => ReactNode;
 }
 
 export const DraggableMusicList = ({ list, onReorder, renderItem }: DraggableMusicListProps) => {

@@ -13,7 +13,7 @@ const getDisplayLyric = (
     lyric: string;
     lxlyric: string | null;
   },
-  config: LX.DesktopLyric.Config,
+  config: Coral.DesktopLyric.Config,
 ): string => (config['player.isPlayLxlrc'] && lyrics.lxlyric ? lyrics.lxlyric : lyrics.lyric);
 
 const getExtendedLyrics = (
@@ -21,7 +21,7 @@ const getExtendedLyrics = (
     rlyric: string | null;
     tlyric: string | null;
   },
-  config: LX.DesktopLyric.Config,
+  config: Coral.DesktopLyric.Config,
 ): string[] => {
   const extendedLyrics: string[] = [];
 
@@ -41,7 +41,7 @@ export class LyricTimelineService {
     this.callbacks = callbacks;
   }
 
-  init(config: LX.DesktopLyric.Config): void {
+  init(config: Coral.DesktopLyric.Config): void {
     this.player = new Lyric({
       activeLineClassName: 'active',
       isVertical: config['desktopLyric.direction'] === 'vertical',
@@ -60,7 +60,7 @@ export class LyricTimelineService {
       rlyric: string | null;
       tlyric: string | null;
     },
-    config: LX.DesktopLyric.Config,
+    config: Coral.DesktopLyric.Config,
   ): void {
     this.player?.setLyric(getDisplayLyric(lyrics, config), getExtendedLyrics(lyrics, config));
   }

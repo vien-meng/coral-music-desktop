@@ -12,9 +12,9 @@ export class SyncStore {
 
   isMutating = false;
 
-  lastAction: LX.Sync.SyncMainWindowActions | null = null;
+  lastAction: Coral.Sync.SyncMainWindowActions | null = null;
 
-  serverDevices: LX.Sync.ServerDevices | null = null;
+  serverDevices: Coral.Sync.ServerDevices | null = null;
 
   private readonly disposers: Array<() => void> = [];
 
@@ -90,7 +90,7 @@ export class SyncStore {
     }
   }
 
-  async sendAction(action: LX.Sync.SyncServiceActions): Promise<unknown> {
+  async sendAction(action: Coral.Sync.SyncServiceActions): Promise<unknown> {
     return await syncService.sendSyncAction(action);
   }
 

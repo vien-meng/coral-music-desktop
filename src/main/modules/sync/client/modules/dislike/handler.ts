@@ -21,7 +21,9 @@ const logInfo = (eventName: string, success = false) => {
 // const logError = (eventName: string, err: Error) => {
 //   log.error(`[${eventName}]${eventName.replace('dislike:sync:dislike_sync_', '').replaceAll('_', ' ')} error: ${err.message}`)
 // }
-const getSyncMode = async (socket: LX.Sync.Client.Socket): Promise<LX.Sync.Dislike.SyncMode> =>
+const getSyncMode = async (
+  socket: Coral.Sync.Client.Socket,
+): Promise<Coral.Sync.Dislike.SyncMode> =>
   new Promise((resolve, reject) => {
     const handleDisconnect = (err: Error) => {
       sendCloseSelectMode();
@@ -39,7 +41,7 @@ const getSyncMode = async (socket: LX.Sync.Client.Socket): Promise<LX.Sync.Disli
       removeEventClose();
     });
   });
-const handler: LX.Sync.ClientSyncHandlerDislikeActions<LX.Sync.Client.Socket> = {
+const handler: Coral.Sync.ClientSyncHandlerDislikeActions<Coral.Sync.Client.Socket> = {
   async onDislikeSyncAction(socket, action) {
     if (!socket.moduleReadys?.dislike) return;
     await handleRemoteDislikeAction(action);

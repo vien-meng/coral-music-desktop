@@ -10,8 +10,14 @@ const getIconPath = (name: string): Electron.NativeImage =>
   nativeImage.createFromPath(path.join(global.staticPath, 'images/taskbar', `${name}.png`));
 
 export const createTaskBarButtons = (
-  { empty = false, collect = false, play = false, next = true, prev = true }: LX.TaskBarButtonFlags,
-  onClick: (action: LX.Player.StatusButtonActions) => void,
+  {
+    empty = false,
+    collect = false,
+    play = false,
+    next = true,
+    prev = true,
+  }: Coral.TaskBarButtonFlags,
+  onClick: (action: Coral.Player.StatusButtonActions) => void,
 ): Electron.ThumbarButton[] => {
   const buttons: Electron.ThumbarButton[] = [
     collect

@@ -2,12 +2,12 @@ import { ipcChannels } from '@shared/ipc/contracts';
 import { ipcClient } from './ipc/client';
 import { isElectronRenderer } from './appService';
 
-export const sendSyncAction = async (action: LX.Sync.SyncServiceActions): Promise<unknown> => {
+export const sendSyncAction = async (action: Coral.Sync.SyncServiceActions): Promise<unknown> => {
   if (!isElectronRenderer()) return null;
   return await ipcClient.invoke(ipcChannels.winMain.syncAction, action);
 };
 
-export const getSyncServerDevices = async (): Promise<LX.Sync.ServerDevices | null> => {
+export const getSyncServerDevices = async (): Promise<Coral.Sync.ServerDevices | null> => {
   if (!isElectronRenderer()) return null;
   return await ipcClient.invoke(ipcChannels.winMain.syncGetServerDevices);
 };
@@ -18,7 +18,7 @@ export const removeSyncServerDevice = async (clientId: string): Promise<void> =>
 };
 
 export const onSyncAction = (
-  listener: (action: LX.Sync.SyncMainWindowActions) => void,
+  listener: (action: Coral.Sync.SyncMainWindowActions) => void,
 ): (() => void) => {
   if (!isElectronRenderer()) return () => {};
   return ipcClient.on(ipcChannels.winMain.syncAction, listener);

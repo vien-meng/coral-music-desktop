@@ -13,8 +13,8 @@
 - Imported `HOTKEY_RENDERER_EVENT_NAME` from `@common/ipcNames`
 - Added `IpcContract` type mappings:
   - `hotKeyEnable`: `boolean` → `void`
-  - `hotKeySetConfig`: `LX.HotKeyActions` → `void`
-  - `hotKeyStatus`: `undefined` → `LX.HotKeyState`
+  - `hotKeySetConfig`: `Coral.HotKeyActions` → `void`
+  - `hotKeyStatus`: `undefined` → `Coral.HotKeyState`
 
 ### 43.2 hotKeyService
 - Created `src/renderer-react/services/hotKeyService.ts`
@@ -25,7 +25,7 @@
 ### 43.3 HotKeySection Component
 - Created `src/renderer-react/features/settings/HotKeySection.tsx`
 - MobX-based `HotKeyStore` with config and status observables
-- Loads initial config from `window.lx.appHotKeyConfig`
+- Loads initial config from `window.coral.appHotKeyConfig`
 - Local hotkey group: enable switch + key binding inputs
 - Global hotkey group: enable switch + key binding inputs + failed registration strikethrough
 - Key recording via focus/blur with `setHotKeyEnable(false/true)` guard

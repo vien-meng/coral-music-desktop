@@ -110,12 +110,9 @@ export const SongListRoutePanel = observer(() => {
   );
 
   const handleSelectSongList = useCallback(
-    (item: { id: string; source: LX.OnlineSource }) => {
+    (item: { id: string; source: Coral.OnlineSource }) => {
       if (songList.isLoadingDetail || ui.isGlobalLoading) return;
-      void ui.withGlobalLoading(
-        () => songList.loadListDetail(item.id, item.source),
-        '正在打开歌单...',
-      );
+      ui.withGlobalLoading(() => songList.loadListDetail(item.id, item.source), '正在打开歌单...');
     },
     [songList, ui],
   );
@@ -265,7 +262,7 @@ export const SongListRoutePanel = observer(() => {
         <Alert
           showIcon
           type="error"
-          message={songList.tagError}
+          title={songList.tagError}
           closable
           style={{ margin: '0 15px 8px', flex: 'none' }}
         />
@@ -274,7 +271,7 @@ export const SongListRoutePanel = observer(() => {
         <Alert
           showIcon
           type="error"
-          message={songList.listError}
+          title={songList.listError}
           closable
           style={{ margin: '0 15px 8px', flex: 'none' }}
         />
@@ -283,7 +280,7 @@ export const SongListRoutePanel = observer(() => {
         <Alert
           showIcon
           type="error"
-          message={songList.detailError}
+          title={songList.detailError}
           closable
           style={{ margin: '0 15px 8px', flex: 'none' }}
         />

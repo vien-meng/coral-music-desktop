@@ -6,24 +6,24 @@ let previousResizable: boolean | null = null;
 
 export const isElectronLyricRenderer = (): boolean => ipcClient.canUseIpc();
 
-export const getConfig = async (): Promise<LX.DesktopLyric.Config | null> => {
+export const getConfig = async (): Promise<Coral.DesktopLyric.Config | null> => {
   if (!isElectronLyricRenderer()) return null;
   return await ipcClient.invoke(ipcChannels.winLyric.getConfig);
 };
 
-export const updateConfig = async (config: Partial<LX.DesktopLyric.Config>): Promise<void> => {
+export const updateConfig = async (config: Partial<Coral.DesktopLyric.Config>): Promise<void> => {
   if (!isElectronLyricRenderer()) return;
   await ipcClient.invoke(ipcChannels.winLyric.setConfig, config);
 };
 
 export const onConfigChanged = (
-  listener: (config: Partial<LX.DesktopLyric.Config>) => void,
+  listener: (config: Partial<Coral.DesktopLyric.Config>) => void,
 ): (() => void) => {
   if (!isElectronLyricRenderer()) return () => {};
   return ipcClient.on(ipcChannels.winLyric.onConfigChange, listener);
 };
 
-export const setWindowBounds = (bounds: LX.DesktopLyric.NewBounds): void => {
+export const setWindowBounds = (bounds: Coral.DesktopLyric.NewBounds): void => {
   if (!isElectronLyricRenderer()) return;
   ipcClient.send(ipcChannels.winLyric.setWinBounds, bounds);
 };
@@ -64,7 +64,7 @@ export const onMouseEnterLeave = (listener: (isEnter: boolean) => void): (() => 
   return ipcClient.on(ipcChannels.winLyric.mouseEnterLeave, listener);
 };
 
-export const onThemeChange = (listener: (setting: LX.ThemeSetting) => void): (() => void) => {
+export const onThemeChange = (listener: (setting: Coral.ThemeSetting) => void): (() => void) => {
   if (!isElectronLyricRenderer()) return () => {};
   return ipcClient.on(ipcChannels.common.themeChange, listener);
 };

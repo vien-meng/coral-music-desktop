@@ -4,7 +4,7 @@ import os from 'node:os';
 const isMac = process.platform == 'darwin';
 const isWin = process.platform == 'win32';
 
-const defaultSetting: LX.AppSetting = {
+const defaultSetting: Coral.AppSetting = {
   version: '2.1.0',
 
   'common.windowSizeId': 3,
@@ -138,6 +138,10 @@ const defaultSetting: LX.AppSetting = {
   'download.isEmbedLyricT': false,
   'download.isEmbedLyricR': false,
   'download.isUseOtherSource': false,
+
+  'webdav.accounts': [],
+  'webdav.activeAccountId': '',
+  'webdav.proxy.enabled': true,
 
   'search.isShowHotSearch': false,
   'search.isShowHistorySearch': false,

@@ -11,7 +11,7 @@
 ## Changes
 
 - Added `src/renderer-react/services/nodeBridgeService.ts`.
-  - Provides `joinPath`, `basename`, `checkPath`, `readFile`, `copyFile`, `moveFile`, `removeFile`, `saveStrToFile`, `saveLxConfigFile`, and `readLxConfigFile`.
+  - Provides `joinPath`, `basename`, `checkPath`, `readFile`, `copyFile`, `moveFile`, `removeFile`, `saveStrToFile`, `saveCoralConfigFile`, and `readCoralConfigFile`.
   - Uses Electron renderer runtime `globalThis.require` so Vite does not emit browser-externalized imports for `node:fs`, `node:path`, or `node:zlib`.
 - Updated React services and settings UI to use the new bridge instead of `@common/utils/nodejs`:
   - backup import/export,

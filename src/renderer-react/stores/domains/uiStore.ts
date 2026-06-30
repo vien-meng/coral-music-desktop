@@ -1,4 +1,4 @@
-import { makeAutoObservable } from 'mobx';
+import { makeAutoObservable, runInAction } from 'mobx';
 
 export type UiQuickAction =
   'configureExternalDecoder' | 'importLocalAudio' | 'importUserApiFile' | 'importUserApiOnline';
@@ -39,9 +39,11 @@ export class UiStore {
     this.showGlobalLoading('切换中...');
     if (this.routeTransitionTimer) clearTimeout(this.routeTransitionTimer);
     this.routeTransitionTimer = setTimeout(() => {
-      this.isRouteTransitioning = false;
-      this.routeTransitionTimer = null;
-      this.hideGlobalLoading();
+      runInAction(() => {
+        this.isRouteTransitioning = false;
+        this.routeTransitionTimer = null;
+        this.hideGlobalLoading();
+      });
     }, 280);
   }
 

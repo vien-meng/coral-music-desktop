@@ -159,6 +159,14 @@ const modules = {
     download_task_pause: 'download_task_pause',
     download_task_retry: 'download_task_retry',
     download_task_action: 'download_task_action',
+
+    webdav_account_list: 'webdav_account_list',
+    webdav_account_save: 'webdav_account_save',
+    webdav_account_remove: 'webdav_account_remove',
+    webdav_account_test: 'webdav_account_test',
+    webdav_list_dir: 'webdav_list_dir',
+    webdav_create_stream_url: 'webdav_create_stream_url',
+    webdav_revoke_stream_url: 'webdav_revoke_stream_url',
   },
   winLyric: {
     close: 'close',

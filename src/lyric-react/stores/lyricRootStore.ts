@@ -35,7 +35,7 @@ interface LyricCssProperties extends CSSProperties {
   '--lyric-unplay-color': string;
 }
 
-const defaultConfig: LX.DesktopLyric.Config = {
+const defaultConfig: Coral.DesktopLyric.Config = {
   'desktopLyric.enable': false,
   'desktopLyric.isLock': false,
   'desktopLyric.isAlwaysOnTop': false,
@@ -94,14 +94,14 @@ const clampLineIndex = (line: number, lines: string[]): number => {
   return line;
 };
 
-const timelineLyricConfigKeys: Array<keyof LX.DesktopLyric.Config> = [
+const timelineLyricConfigKeys: Array<keyof Coral.DesktopLyric.Config> = [
   'player.isShowLyricTranslation',
   'player.isShowLyricRoma',
   'player.isSwapLyricTranslationAndRoma',
   'player.isPlayLxlrc',
 ];
 
-const lyricColorConfigKeys: Array<keyof LX.DesktopLyric.Config> = [
+const lyricColorConfigKeys: Array<keyof Coral.DesktopLyric.Config> = [
   'desktopLyric.style.lyricPlayedColor',
   'desktopLyric.style.lyricShadowColor',
   'desktopLyric.style.lyricUnplayColor',
@@ -110,7 +110,7 @@ const lyricColorConfigKeys: Array<keyof LX.DesktopLyric.Config> = [
 export class LyricRootStore {
   analyserData: Uint8Array | null = null;
 
-  config: LX.DesktopLyric.Config = { ...defaultConfig };
+  config: Coral.DesktopLyric.Config = { ...defaultConfig };
 
   hydrateError: string | null = null;
 
@@ -140,7 +140,7 @@ export class LyricRootStore {
 
   themeMode: CoralThemeMode = 'dark';
 
-  themeSetting: LX.ThemeSetting | null = null;
+  themeSetting: Coral.ThemeSetting | null = null;
 
   timelineLines: LyricTimelineLine[] = [];
 
@@ -184,7 +184,7 @@ export class LyricRootStore {
     return this.config['desktopLyric.isLock'];
   }
 
-  get direction(): LX.DesktopLyric.Config['desktopLyric.direction'] {
+  get direction(): Coral.DesktopLyric.Config['desktopLyric.direction'] {
     return this.config['desktopLyric.direction'];
   }
 
@@ -264,7 +264,9 @@ export class LyricRootStore {
     });
   }
 
-  async setDirection(direction: LX.DesktopLyric.Config['desktopLyric.direction']): Promise<void> {
+  async setDirection(
+    direction: Coral.DesktopLyric.Config['desktopLyric.direction'],
+  ): Promise<void> {
     await this.updateConfig({
       'desktopLyric.direction': direction,
     });
@@ -306,7 +308,7 @@ export class LyricRootStore {
     });
   }
 
-  async updateConfig(config: Partial<LX.DesktopLyric.Config>): Promise<void> {
+  async updateConfig(config: Partial<Coral.DesktopLyric.Config>): Promise<void> {
     this.mergeConfig(config);
     await lyricWindowService.updateConfig(config);
   }
@@ -315,7 +317,7 @@ export class LyricRootStore {
     lyricWindowService.requestMainWindowChannel();
   }
 
-  sendDesktopLyricInfo(info: LX.DesktopLyric.WinMainActions): void {
+  sendDesktopLyricInfo(info: Coral.DesktopLyric.WinMainActions): void {
     if (!this.mainWindowPort) return;
     this.mainWindowPort.postMessage({ action: info });
   }
@@ -372,7 +374,7 @@ export class LyricRootStore {
     this.isConnectedToMainWindow = true;
 
     port.onmessage = ({ data }) => {
-      this.handleDesktopLyricMessage(data as LX.DesktopLyric.LyricActions);
+      this.handleDesktopLyricMessage(data as Coral.DesktopLyric.LyricActions);
     };
     port.onmessageerror = () => {
       this.isConnectedToMainWindow = false;
@@ -381,7 +383,7 @@ export class LyricRootStore {
     this.getInfo();
   }
 
-  private handleDesktopLyricMessage(event: LX.DesktopLyric.LyricActions): void {
+  private handleDesktopLyricMessage(event: Coral.DesktopLyric.LyricActions): void {
     switch (event.action) {
       case 'set_info':
         this.musicInfo = {
@@ -460,7 +462,7 @@ export class LyricRootStore {
     this.syncPauseHideState();
   }
 
-  private mergeConfig(config: Partial<LX.DesktopLyric.Config>): void {
+  private mergeConfig(config: Partial<Coral.DesktopLyric.Config>): void {
     const shouldRefreshLyric = timelineLyricConfigKeys.some((key) => key in config);
     const shouldUpdateVertical = 'desktopLyric.direction' in config;
     const shouldUpdatePlaybackRate = 'player.playbackRate' in config;
@@ -517,7 +519,7 @@ export class LyricRootStore {
     this.pauseHideTimer = null;
   }
 
-  private applyThemeSetting(setting: LX.ThemeSetting): void {
+  private applyThemeSetting(setting: Coral.ThemeSetting): void {
     this.themeSetting = setting;
     this.themeMode = setting.theme.isDark ? 'dark' : 'light';
     applyLyricTheme(setting);

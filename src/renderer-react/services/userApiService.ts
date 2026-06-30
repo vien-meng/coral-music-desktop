@@ -2,19 +2,19 @@ import { ipcChannels } from '@shared/ipc/contracts';
 import { ipcClient } from './ipc/client';
 import { isElectronRenderer } from './appService';
 
-export const getUserApiList = async (): Promise<LX.UserApi.UserApiInfo[]> => {
+export const getUserApiList = async (): Promise<Coral.UserApi.UserApiInfo[]> => {
   if (!isElectronRenderer()) return [];
   return await ipcClient.invoke(ipcChannels.winMain.getUserApiList);
 };
 
-export const getUserApiStatus = async (): Promise<LX.UserApi.UserApiStatus> => {
+export const getUserApiStatus = async (): Promise<Coral.UserApi.UserApiStatus> => {
   if (!isElectronRenderer()) return { status: false };
   return await ipcClient.invoke(ipcChannels.winMain.getUserApiStatus);
 };
 
-export const importUserApi = async (script: string): Promise<LX.UserApi.ImportUserApi> => {
+export const importUserApi = async (script: string): Promise<Coral.UserApi.ImportUserApi> => {
   if (!isElectronRenderer()) {
-    return { apiInfo: null as unknown as LX.UserApi.UserApiInfo, apiList: [] };
+    return { apiInfo: null as unknown as Coral.UserApi.UserApiInfo, apiList: [] };
   }
   return await ipcClient.invoke(ipcChannels.winMain.importUserApi, script);
 };
@@ -40,7 +40,7 @@ export const requestUserApi = async (data: unknown): Promise<unknown> => {
   return result;
 };
 
-export const removeUserApis = async (ids: string[]): Promise<LX.UserApi.UserApiInfo[]> => {
+export const removeUserApis = async (ids: string[]): Promise<Coral.UserApi.UserApiInfo[]> => {
   if (!isElectronRenderer() || !ids.length) return [];
   return await ipcClient.invoke(ipcChannels.winMain.removeUserApi, ids);
 };

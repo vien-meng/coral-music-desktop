@@ -10,6 +10,7 @@ import sync from './sync';
 import data from './data';
 import music from './music';
 import download from './download';
+import webDav from './webDav';
 import soundEffect from './soundEffect';
 import openAPI from './openAPI';
 import { sendEvent } from '../main';
@@ -37,10 +38,11 @@ export default () => {
   data();
   music();
   download();
+  webDav();
   soundEffect();
   openAPI();
 
-  global.lx.event_app.on('updated_config', (keys, setting) => {
+  global.coral.event_app.on('updated_config', (keys, setting) => {
     sendConfigChange(setting);
   });
 };

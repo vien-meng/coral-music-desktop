@@ -1,1 +1,1 @@
-export const userApis: LX.UserApi.UserApiInfoFull[] = [];
+export const userApis: Coral.UserApi.UserApiInfoFull[] = [];

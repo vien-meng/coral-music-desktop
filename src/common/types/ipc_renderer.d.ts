@@ -1,4 +1,4 @@
-declare namespace LX {
+declare namespace Coral {
   interface IpcRendererEvent {
     event: Electron.IpcRendererEvent;
   }
@@ -6,6 +6,6 @@ declare namespace LX {
     event: Electron.IpcRendererEvent;
     params: T;
   }
-  type IpcRendererEventListener = (params: LX.IpcRendererEvent) => any;
-  type IpcRendererEventListenerParams<T> = (params: LX.IpcRendererEventParams<T>) => any;
+  type IpcRendererEventListener = (params: Coral.IpcRendererEvent) => any;
+  type IpcRendererEventListenerParams<T> = (params: Coral.IpcRendererEventParams<T>) => any;
 }

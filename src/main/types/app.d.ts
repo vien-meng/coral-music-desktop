@@ -5,13 +5,13 @@
 import { type DislikeType, type AppType, type ListType } from '@main/event';
 import { type DBSeriveTypes } from '@main/worker/utils';
 
-interface Lx {
+interface Coral {
   inited: boolean;
-  appSetting: LX.AppSetting;
+  appSetting: Coral.AppSetting;
   hotKey: {
     enable: boolean;
-    config: LX.HotKeyConfigAll;
-    state: LX.HotKeyState;
+    config: Coral.HotKeyConfigAll;
+    state: Coral.HotKeyState;
   };
   /**
    * 是否跳过托盘退出
@@ -27,14 +27,14 @@ interface Lx {
   worker: {
     dbService: DBSeriveTypes;
   };
-  theme: LX.ThemeSetting;
-  player_status: LX.Player.Status;
+  theme: Coral.ThemeSetting;
+  player_status: Coral.Player.Status;
 }
 
 declare global {
   // declare module NodeJS {
   //   export interface Global {
-  //     lx: {
+  //     coral: {
   //       app_event: {
   //         winMain: WinMainEvent
   //         winLyric: WinLyricEvent
@@ -44,10 +44,10 @@ declare global {
   // }
 
   // var isDev: boolean
-  var envParams: LX.EnvParams;
+  var envParams: Coral.EnvParams;
   var staticPath: string;
-  var lxDataPath: string;
-  var lxOldDataPath: string;
-  var lx: Lx;
+  var coralDataPath: string;
+  var coralOldDataPath: string;
+  var coral: Coral;
   var appWorder: AppWorder;
 }

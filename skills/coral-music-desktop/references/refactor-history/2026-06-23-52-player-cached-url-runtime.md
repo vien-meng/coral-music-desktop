@@ -18,7 +18,7 @@ Step 51 已经让 React 播放器 runtime 可以通过 `HTMLAudioElement` 播放
   - `ipcChannels.winMain.saveMusicUrl`
 - 补充 invoke map：
   - `getMusicUrl`: `IpcContract<string, string>`
-  - `saveMusicUrl`: `IpcContract<LX.Music.MusicUrlInfo, void>`
+  - `saveMusicUrl`: `IpcContract<Coral.Music.MusicUrlInfo, void>`
 - 复用既有主进程 handler：
   - `WIN_MAIN_RENDERER_EVENT_NAME.get_music_url`
   - `WIN_MAIN_RENDERER_EVENT_NAME.save_music_url`

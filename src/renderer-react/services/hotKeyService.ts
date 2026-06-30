@@ -22,12 +22,12 @@ export const setHotKeyEnable = async (enable: boolean): Promise<void> => {
   await ipcClient.invoke(ipcChannels.winMain.hotKeyEnable, enable);
 };
 
-export const setHotKeyConfig = async (action: LX.HotKeyActions): Promise<void> => {
+export const setHotKeyConfig = async (action: Coral.HotKeyActions): Promise<void> => {
   if (!isElectronRenderer()) return;
   await ipcClient.invoke(ipcChannels.winMain.hotKeySetConfig, action);
 };
 
-export const getHotKeyStatus = async (): Promise<LX.HotKeyState> => {
+export const getHotKeyStatus = async (): Promise<Coral.HotKeyState> => {
   if (!isElectronRenderer()) return new Map();
   return await ipcClient.invoke(ipcChannels.winMain.hotKeyStatus);
 };

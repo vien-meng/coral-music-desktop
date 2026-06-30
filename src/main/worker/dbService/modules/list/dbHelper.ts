@@ -25,7 +25,7 @@ const idFixRxp = /\.0$/;
  * @returns
  */
 export const queryAllUserList = () => {
-  const list = createListQueryStatement().all() as LX.DBService.UserListInfo[];
+  const list = createListQueryStatement().all() as Coral.DBService.UserListInfo[];
   for (const info of list) {
     // 兼容v2.3.0之前版本插入数字类型的ID导致其意外在末尾追加 .0 的问题
     if (info.sourceListId?.endsWith?.('.0')) {
@@ -40,11 +40,14 @@ export const queryAllUserList = () => {
  * @param lists 列表
  * @param isClear 是否清空列表
  */
-export const insertUserLists = (lists: LX.DBService.UserListInfo[], isClear: boolean = false) => {
+export const insertUserLists = (
+  lists: Coral.DBService.UserListInfo[],
+  isClear: boolean = false,
+) => {
   const db = getDB();
   const listClearStatement = createListClearStatement();
   const listInsertStatement = createListInsertStatement();
-  db.transaction((lists: LX.DBService.UserListInfo[]) => {
+  db.transaction((lists: Coral.DBService.UserListInfo[]) => {
     if (isClear) listClearStatement.run();
     for (const list of lists) {
       listInsertStatement.run({
@@ -81,10 +84,10 @@ export const deleteUserLists = (listIds: string[]) => {
  * 批量更新用户列表
  * @param lists 列表
  */
-export const updateUserLists = (lists: LX.DBService.UserListInfo[]) => {
+export const updateUserLists = (lists: Coral.DBService.UserListInfo[]) => {
   const db = getDB();
   const listUpdateStatement = createListUpdateStatement();
-  db.transaction((lists: LX.DBService.UserListInfo[]) => {
+  db.transaction((lists: Coral.DBService.UserListInfo[]) => {
     for (const list of lists) listUpdateStatement.run(list);
   })(lists);
 };
@@ -93,11 +96,11 @@ export const updateUserLists = (lists: LX.DBService.UserListInfo[]) => {
  * 批量添加歌曲
  * @param list
  */
-export const insertMusicInfoList = (list: LX.DBService.MusicInfo[]) => {
+export const insertMusicInfoList = (list: Coral.DBService.MusicInfo[]) => {
   const musicInfoInsertStatement = createMusicInfoInsertStatement();
   const musicInfoOrderInsertStatement = createMusicInfoOrderInsertStatement();
   const db = getDB();
-  db.transaction((musics: LX.DBService.MusicInfo[]) => {
+  db.transaction((musics: Coral.DBService.MusicInfo[]) => {
     for (const music of musics) {
       musicInfoInsertStatement.run(music);
       musicInfoOrderInsertStatement.run({
@@ -116,9 +119,9 @@ export const insertMusicInfoList = (list: LX.DBService.MusicInfo[]) => {
  * @param listAll 原始列表歌曲，列表去重后
  */
 export const insertMusicInfoListAndRefreshOrder = (
-  list: LX.DBService.MusicInfo[],
+  list: Coral.DBService.MusicInfo[],
   listId: string,
-  listAll: LX.DBService.MusicInfo[],
+  listAll: Coral.DBService.MusicInfo[],
 ) => {
   const musicInfoInsertStatement = createMusicInfoInsertStatement();
   const musicInfoOrderInsertStatement = createMusicInfoOrderInsertStatement();
@@ -126,7 +129,7 @@ export const insertMusicInfoListAndRefreshOrder = (
 
   const db = getDB();
   db.transaction(
-    (list: LX.DBService.MusicInfo[], listId: string, listAll: LX.DBService.MusicInfo[]) => {
+    (list: Coral.DBService.MusicInfo[], listId: string, listAll: Coral.DBService.MusicInfo[]) => {
       musicInfoOrderDeleteByListIdStatement.run(listId);
       for (const music of list) {
         musicInfoInsertStatement.run(music);
@@ -151,10 +154,10 @@ export const insertMusicInfoListAndRefreshOrder = (
  * 批量更新歌曲
  * @param list
  */
-export const updateMusicInfos = (list: LX.DBService.MusicInfo[]) => {
+export const updateMusicInfos = (list: Coral.DBService.MusicInfo[]) => {
   const musicInfoUpdateStatement = createMusicInfoUpdateStatement();
   const db = getDB();
-  db.transaction((musics: LX.DBService.MusicInfo[]) => {
+  db.transaction((musics: Coral.DBService.MusicInfo[]) => {
     for (const music of musics) {
       musicInfoUpdateStatement.run(music);
     }
@@ -168,7 +171,7 @@ export const updateMusicInfos = (list: LX.DBService.MusicInfo[]) => {
  */
 export const queryMusicInfoByListId = (listId: string) => {
   const musicInfoQueryStatement = createMusicInfoQueryStatement();
-  return musicInfoQueryStatement.all({ listId }) as LX.DBService.MusicInfo[];
+  return musicInfoQueryStatement.all({ listId }) as Coral.DBService.MusicInfo[];
 };
 
 /**
@@ -180,7 +183,7 @@ export const queryMusicInfoByListId = (listId: string) => {
 export const moveMusicInfo = (
   fromId: string,
   ids: string[],
-  musicInfos: LX.DBService.MusicInfo[],
+  musicInfos: Coral.DBService.MusicInfo[],
 ) => {
   const musicInfoInsertStatement = createMusicInfoInsertStatement();
   const musicInfoOrderInsertStatement = createMusicInfoOrderInsertStatement();
@@ -189,7 +192,7 @@ export const moveMusicInfo = (
   // const musicInfoOrderDeleteByListIdStatement = createMusicInfoOrderDeleteByListIdStatement()
 
   const db = getDB();
-  db.transaction((fromId: string, ids: string[], musicInfos: LX.DBService.MusicInfo[]) => {
+  db.transaction((fromId: string, ids: string[], musicInfos: Coral.DBService.MusicInfo[]) => {
     // musicInfoOrderDeleteByListIdStatement.run(fromId)
     for (const id of ids) {
       musicInfoDeleteStatement.run({ listId: fromId, id });
@@ -217,8 +220,8 @@ export const moveMusicInfoAndRefreshOrder = (
   fromId: string,
   ids: string[],
   toId: string,
-  musicInfos: LX.DBService.MusicInfo[],
-  toListAll: LX.DBService.MusicInfo[],
+  musicInfos: Coral.DBService.MusicInfo[],
+  toListAll: Coral.DBService.MusicInfo[],
 ) => {
   const musicInfoInsertStatement = createMusicInfoInsertStatement();
   const musicInfoDeleteStatement = createMusicInfoDeleteStatement();
@@ -231,8 +234,8 @@ export const moveMusicInfoAndRefreshOrder = (
     (
       fromId: string,
       ids: string[],
-      musicInfos: LX.DBService.MusicInfo[],
-      toListAll: LX.DBService.MusicInfo[],
+      musicInfos: Coral.DBService.MusicInfo[],
+      toListAll: Coral.DBService.MusicInfo[],
     ) => {
       for (const id of ids) {
         musicInfoDeleteStatement.run({ listId: fromId, id });
@@ -303,7 +306,7 @@ export const queryMusicInfoByListIdAndMusicInfoId = (listId: string, musicInfoId
   return musicInfoByListAndMusicInfoIdQueryStatement.get({
     listId,
     musicInfoId,
-  }) as LX.DBService.MusicInfo | null;
+  }) as Coral.DBService.MusicInfo | null;
 };
 
 /**
@@ -313,7 +316,7 @@ export const queryMusicInfoByListIdAndMusicInfoId = (listId: string, musicInfoId
  */
 export const queryMusicInfoByMusicInfoId = (id: string) => {
   const musicInfoByMusicInfoIdQueryStatement = createMusicInfoByMusicInfoIdQueryStatement();
-  return musicInfoByMusicInfoIdQueryStatement.all(id) as LX.DBService.MusicInfo[];
+  return musicInfoByMusicInfoIdQueryStatement.all(id) as Coral.DBService.MusicInfo[];
 };
 
 /**
@@ -323,12 +326,12 @@ export const queryMusicInfoByMusicInfoId = (id: string) => {
  */
 export const updateMusicInfoOrder = (
   listId: string,
-  musicInfoOrders: LX.DBService.MusicInfoOrder[],
+  musicInfoOrders: Coral.DBService.MusicInfoOrder[],
 ) => {
   const db = getDB();
   const musicInfoOrderInsertStatement = createMusicInfoOrderInsertStatement();
   const musicInfoOrderDeleteByListIdStatement = createMusicInfoOrderDeleteByListIdStatement();
-  db.transaction((listId: string, musicInfoOrders: LX.DBService.MusicInfoOrder[]) => {
+  db.transaction((listId: string, musicInfoOrders: Coral.DBService.MusicInfoOrder[]) => {
     musicInfoOrderDeleteByListIdStatement.run(listId);
     for (const orderInfo of musicInfoOrders) musicInfoOrderInsertStatement.run(orderInfo);
   })(listId, musicInfoOrders);
@@ -339,13 +342,13 @@ export const updateMusicInfoOrder = (
  * @param listId 列表id
  * @param musicInfos 歌曲列表
  */
-export const overwriteMusicInfo = (listId: string, musicInfos: LX.DBService.MusicInfo[]) => {
+export const overwriteMusicInfo = (listId: string, musicInfos: Coral.DBService.MusicInfo[]) => {
   const db = getDB();
   const musicInfoDeleteByListIdStatement = createMusicInfoDeleteByListIdStatement();
   const musicInfoOrderDeleteByListIdStatement = createMusicInfoOrderDeleteByListIdStatement();
   const musicInfoInsertStatement = createMusicInfoInsertStatement();
   const musicInfoOrderInsertStatement = createMusicInfoOrderInsertStatement();
-  db.transaction((listId: string, musicInfos: LX.DBService.MusicInfo[]) => {
+  db.transaction((listId: string, musicInfos: Coral.DBService.MusicInfo[]) => {
     musicInfoDeleteByListIdStatement.run(listId);
     musicInfoOrderDeleteByListIdStatement.run(listId);
     for (const musicInfo of musicInfos) {
@@ -365,8 +368,8 @@ export const overwriteMusicInfo = (listId: string, musicInfos: LX.DBService.Musi
  * @param musicInfos 歌曲列表
  */
 export const overwriteListData = (
-  lists: LX.DBService.UserListInfo[],
-  musicInfos: LX.DBService.MusicInfo[],
+  lists: Coral.DBService.UserListInfo[],
+  musicInfos: Coral.DBService.MusicInfo[],
 ) => {
   const db = getDB();
   const listClearStatement = createListClearStatement();
@@ -375,27 +378,29 @@ export const overwriteListData = (
   const musicInfoInsertStatement = createMusicInfoInsertStatement();
   const musicInfoOrderClearStatement = createMusicInfoOrderClearStatement();
   const musicInfoOrderInsertStatement = createMusicInfoOrderInsertStatement();
-  db.transaction((lists: LX.DBService.UserListInfo[], musicInfos: LX.DBService.MusicInfo[]) => {
-    listClearStatement.run();
-    for (const list of lists) {
-      listInsertStatement.run({
-        id: list.id,
-        name: list.name,
-        source: list.source,
-        sourceListId: list.sourceListId,
-        locationUpdateTime: list.locationUpdateTime,
-        position: list.position,
-      });
-    }
-    musicInfoClearStatement.run();
-    musicInfoOrderClearStatement.run();
-    for (const musicInfo of musicInfos) {
-      musicInfoInsertStatement.run(musicInfo);
-      musicInfoOrderInsertStatement.run({
-        listId: musicInfo.listId,
-        musicInfoId: musicInfo.id,
-        order: musicInfo.order,
-      });
-    }
-  })(lists, musicInfos);
+  db.transaction(
+    (lists: Coral.DBService.UserListInfo[], musicInfos: Coral.DBService.MusicInfo[]) => {
+      listClearStatement.run();
+      for (const list of lists) {
+        listInsertStatement.run({
+          id: list.id,
+          name: list.name,
+          source: list.source,
+          sourceListId: list.sourceListId,
+          locationUpdateTime: list.locationUpdateTime,
+          position: list.position,
+        });
+      }
+      musicInfoClearStatement.run();
+      musicInfoOrderClearStatement.run();
+      for (const musicInfo of musicInfos) {
+        musicInfoInsertStatement.run(musicInfo);
+        musicInfoOrderInsertStatement.run({
+          listId: musicInfo.listId,
+          musicInfoId: musicInfo.id,
+          order: musicInfo.order,
+        });
+      }
+    },
+  )(lists, musicInfos);
 };

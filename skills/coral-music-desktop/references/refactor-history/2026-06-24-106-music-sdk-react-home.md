@@ -21,4 +21,4 @@
 - `npm run build:renderer` passed.
 
 ## Next Step
-- Step 107: remove React download task creation dependency on the old `window.lx.worker.download` global.
+- Step 107: remove React download task creation dependency on the old `window.coral.worker.download` global.

@@ -3,18 +3,19 @@ import { Button, Space, Tooltip } from 'antd';
 import { observer } from 'mobx-react-lite';
 import { useState } from 'react';
 import { DownloadQualityModal } from '../../components/player/DownloadQualityModal';
+import { createWebDavDownloadInfo } from '../../services/downloadTaskFactory';
 import { rootStore } from '../../stores/rootStore';
 
 export interface OnlineMusicRowActionsProps {
-  musicInfo: LX.Music.MusicInfo;
-  queue?: LX.Music.MusicInfo[];
+  musicInfo: Coral.Music.MusicInfo;
+  queue?: Coral.Music.MusicInfo[];
   queueId?: string | null;
 }
 
 export const OnlineMusicRowActions = observer(
   ({ musicInfo, queue, queueId = null }: OnlineMusicRowActionsProps) => {
     const { list, player, settings } = rootStore;
-    const [downloadMusicInfo, setDownloadMusicInfo] = useState<LX.Music.MusicInfo | null>(null);
+    const [downloadMusicInfo, setDownloadMusicInfo] = useState<Coral.Music.MusicInfo | null>(null);
     const addMusicLocationType = settings.appSetting?.['list.addMusicLocationType'] ?? 'top';
 
     const handlePlay = (): void => {
@@ -33,6 +34,16 @@ export const OnlineMusicRowActions = observer(
         return;
       }
       await list.addMusicsToList(list.selectedListId, [musicInfo], addMusicLocationType);
+    };
+
+    const handleDownload = async (): Promise<void> => {
+      if (musicInfo.source === 'webdav') {
+        const task = createWebDavDownloadInfo(musicInfo);
+        await rootStore.download.addAndStartTasks([task]);
+        return;
+      }
+
+      setDownloadMusicInfo(musicInfo);
     };
 
     return (
@@ -58,9 +69,7 @@ export const OnlineMusicRowActions = observer(
                 type="text"
                 size="small"
                 icon={<DownloadOutlined />}
-                onClick={() => {
-                  setDownloadMusicInfo(musicInfo);
-                }}
+                onClick={handleDownload}
               />
             </Tooltip>
           ) : null}

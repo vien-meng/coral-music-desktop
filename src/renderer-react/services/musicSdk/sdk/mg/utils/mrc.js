@@ -1,3 +1,4 @@
+/* eslint-disable no-constant-condition */
 // const key = 'karakal@123Qcomyidongtiantianhaoting'
 const DELTA = 2654435769n;
 const MIN_LENGTH = 32;

@@ -133,7 +133,9 @@ export const ControlBar = observer(() => {
             { label: '竖向', value: 'vertical' },
           ]}
           onChange={(value) => {
-            lyricRootStore.setDirection(value as LX.DesktopLyric.Config['desktopLyric.direction']);
+            lyricRootStore.setDirection(
+              value as Coral.DesktopLyric.Config['desktopLyric.direction'],
+            );
           }}
         />
         <Tag color={lyricRootStore.isConnectedToMainWindow ? 'green' : 'default'}>

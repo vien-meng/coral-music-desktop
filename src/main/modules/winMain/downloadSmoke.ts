@@ -22,7 +22,7 @@ const wait = async (time: number): Promise<void> => {
   });
 };
 
-const createSmokeMusicInfo = (id: string, name: string): LX.Music.MusicInfoOnline => ({
+const createSmokeMusicInfo = (id: string, name: string): Coral.Music.MusicInfoOnline => ({
   id,
   interval: '00:05',
   meta: {
@@ -49,7 +49,7 @@ const createSmokeTask = (
   id: string,
   fileName: string,
   musicInfo = createSmokeMusicInfo(id, fileName.replace(/\.\w+$/, '')),
-): LX.Download.ListItem => ({
+): Coral.Download.ListItem => ({
   downloaded: 0,
   id,
   isComplate: false,
@@ -136,17 +136,19 @@ const createServer = async (payload: Buffer): Promise<SmokeServer> => {
   };
 };
 
-const findTask = async (id: string): Promise<LX.Download.ListItem> => {
-  const task = (await global.lx.worker.dbService.getDownloadList()).find((item) => item.id === id);
+const findTask = async (id: string): Promise<Coral.Download.ListItem> => {
+  const task = (await global.coral.worker.dbService.getDownloadList()).find(
+    (item) => item.id === id,
+  );
   if (!task) throw new Error(`download smoke task not found: ${id}`);
   return task;
 };
 
 const waitForTask = async (
   id: string,
-  predicate: (task: LX.Download.ListItem) => boolean,
+  predicate: (task: Coral.Download.ListItem) => boolean,
   description: string,
-): Promise<LX.Download.ListItem> => {
+): Promise<Coral.Download.ListItem> => {
   const startedAt = Date.now();
   while (Date.now() - startedAt < WAIT_TIMEOUT_MS) {
     const task = await findTask(id);
@@ -159,26 +161,26 @@ const waitForTask = async (
   );
 };
 
-const saveTasks = async (tasks: LX.Download.ListItem[]): Promise<void> => {
-  await global.lx.worker.dbService.downloadInfoSave(tasks, 'top');
+const saveTasks = async (tasks: Coral.Download.ListItem[]): Promise<void> => {
+  await global.coral.worker.dbService.downloadInfoSave(tasks, 'top');
 };
 
-const configureSmokeSettings = (downloadDir: string): Partial<LX.AppSetting> => {
-  const previousSetting: Partial<LX.AppSetting> = {
-    'download.isDownloadLrc': global.lx.appSetting['download.isDownloadLrc'],
-    'download.isDownloadLxLrc': global.lx.appSetting['download.isDownloadLxLrc'],
-    'download.isDownloadRLrc': global.lx.appSetting['download.isDownloadRLrc'],
-    'download.isDownloadTLrc': global.lx.appSetting['download.isDownloadTLrc'],
-    'download.isEmbedLyric': global.lx.appSetting['download.isEmbedLyric'],
-    'download.isEmbedLyricLx': global.lx.appSetting['download.isEmbedLyricLx'],
-    'download.isEmbedLyricR': global.lx.appSetting['download.isEmbedLyricR'],
-    'download.isEmbedLyricT': global.lx.appSetting['download.isEmbedLyricT'],
-    'download.isEmbedPic': global.lx.appSetting['download.isEmbedPic'],
-    'download.savePath': global.lx.appSetting['download.savePath'],
-    'download.skipExistFile': global.lx.appSetting['download.skipExistFile'],
+const configureSmokeSettings = (downloadDir: string): Partial<Coral.AppSetting> => {
+  const previousSetting: Partial<Coral.AppSetting> = {
+    'download.isDownloadLrc': global.coral.appSetting['download.isDownloadLrc'],
+    'download.isDownloadLxLrc': global.coral.appSetting['download.isDownloadLxLrc'],
+    'download.isDownloadRLrc': global.coral.appSetting['download.isDownloadRLrc'],
+    'download.isDownloadTLrc': global.coral.appSetting['download.isDownloadTLrc'],
+    'download.isEmbedLyric': global.coral.appSetting['download.isEmbedLyric'],
+    'download.isEmbedLyricLx': global.coral.appSetting['download.isEmbedLyricLx'],
+    'download.isEmbedLyricR': global.coral.appSetting['download.isEmbedLyricR'],
+    'download.isEmbedLyricT': global.coral.appSetting['download.isEmbedLyricT'],
+    'download.isEmbedPic': global.coral.appSetting['download.isEmbedPic'],
+    'download.savePath': global.coral.appSetting['download.savePath'],
+    'download.skipExistFile': global.coral.appSetting['download.skipExistFile'],
   };
-  global.lx.appSetting = {
-    ...global.lx.appSetting,
+  global.coral.appSetting = {
+    ...global.coral.appSetting,
     'download.isDownloadLrc': true,
     'download.isDownloadLxLrc': false,
     'download.isDownloadRLrc': false,
@@ -194,15 +196,15 @@ const configureSmokeSettings = (downloadDir: string): Partial<LX.AppSetting> => 
   return previousSetting;
 };
 
-const restoreSmokeSettings = (previousSetting: Partial<LX.AppSetting>): void => {
-  global.lx.appSetting = {
-    ...global.lx.appSetting,
+const restoreSmokeSettings = (previousSetting: Partial<Coral.AppSetting>): void => {
+  global.coral.appSetting = {
+    ...global.coral.appSetting,
     ...previousSetting,
   };
 };
 
 const assertCompletedFile = async (
-  task: LX.Download.ListItem,
+  task: Coral.Download.ListItem,
   expectedSize: number,
 ): Promise<void> => {
   if (task.status !== DOWNLOAD_STATUS.COMPLETED)
@@ -238,7 +240,7 @@ const runSmoke = async (): Promise<void> => {
     const pauseRetryTask = createSmokeTask(taskIds[0], 'pause-retry.mp3');
     const failRefreshTask = createSmokeTask(taskIds[1], 'fail-refresh.mp3');
     await saveTasks([pauseRetryTask, failRefreshTask]);
-    await global.lx.worker.dbService.rawLyricAdd(pauseRetryTask.metadata.musicInfo.id, {
+    await global.coral.worker.dbService.rawLyricAdd(pauseRetryTask.metadata.musicInfo.id, {
       lyric: '[00:00.00]Coral download smoke',
     });
 
@@ -305,7 +307,7 @@ const runSmoke = async (): Promise<void> => {
     console.log('[downloadSmoke] passed');
   } finally {
     await clearDownloadTasks().catch(() => {});
-    await global.lx.worker.dbService.downloadInfoRemove(taskIds).catch(() => {});
+    await global.coral.worker.dbService.downloadInfoRemove(taskIds).catch(() => {});
     restoreSmokeSettings(previousSetting);
     await server.close().catch(() => {});
     await fs.rm(downloadDir, { force: true, recursive: true }).catch(() => {});
@@ -317,7 +319,7 @@ export const runDownloadSmokeIfEnabled = (): void => {
 
   runSmoke()
     .then(() => {
-      global.lx.isSkipTrayQuit = true;
+      global.coral.isSkipTrayQuit = true;
       app.quit();
     })
     .catch((error) => {

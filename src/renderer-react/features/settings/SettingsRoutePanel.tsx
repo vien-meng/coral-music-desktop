@@ -54,8 +54,8 @@ import { ThemeEditModal } from './ThemeEditModal';
 const { Text } = Typography;
 
 type BooleanSettingKey = {
-  [Key in keyof LX.AppSetting]: LX.AppSetting[Key] extends boolean ? Key : never;
-}[keyof LX.AppSetting];
+  [Key in keyof Coral.AppSetting]: Coral.AppSetting[Key] extends boolean ? Key : never;
+}[keyof Coral.AppSetting];
 
 interface SettingSectionProps {
   children: ReactNode;
@@ -63,14 +63,14 @@ interface SettingSectionProps {
 }
 
 interface SettingSwitchProps {
-  appSetting: LX.AppSetting;
+  appSetting: Coral.AppSetting;
   disabled?: boolean;
   label: string;
   settingKey: BooleanSettingKey;
-  updateSetting: (setting: Partial<LX.AppSetting>) => void;
+  updateSetting: (setting: Partial<Coral.AppSetting>) => void;
 }
 
-const playQualityOptions: Array<{ label: string; value: LX.Quality }> = [
+const playQualityOptions: Array<{ label: string; value: Coral.Quality }> = [
   { label: 'Master', value: 'master' },
   { label: 'Atmos Plus', value: 'atmos_plus' },
   { label: 'Atmos', value: 'atmos' },
@@ -81,7 +81,7 @@ const playQualityOptions: Array<{ label: string; value: LX.Quality }> = [
   { label: '128k', value: '128k' },
 ];
 
-const qualityNameMap: Partial<Record<LX.Quality, string>> = {
+const qualityNameMap: Partial<Record<Coral.Quality, string>> = {
   '128k': '128k',
   '192k': '192k',
   '320k': '320k',
@@ -95,10 +95,10 @@ const qualityNameMap: Partial<Record<LX.Quality, string>> = {
   wav: 'WAV',
 };
 
-const formatQualityName = (quality: LX.Quality): string => qualityNameMap[quality] ?? quality;
+const formatQualityName = (quality: Coral.Quality): string => qualityNameMap[quality] ?? quality;
 
-const getUserApiQualityNames = (apiInfo?: LX.UserApi.UserApiInfo | null): string[] => {
-  const qualities = new Set<LX.Quality>();
+const getUserApiQualityNames = (apiInfo?: Coral.UserApi.UserApiInfo | null): string[] => {
+  const qualities = new Set<Coral.Quality>();
 
   Object.values(apiInfo?.sources ?? {}).forEach((sourceInfo) => {
     if (sourceInfo.type !== 'music' || !sourceInfo.actions.includes('musicUrl')) return;
@@ -110,7 +110,7 @@ const getUserApiQualityNames = (apiInfo?: LX.UserApi.UserApiInfo | null): string
   return Array.from(qualities).map(formatQualityName);
 };
 
-const hasUserApiSourceInfo = (apiInfo?: LX.UserApi.UserApiInfo | null): boolean =>
+const hasUserApiSourceInfo = (apiInfo?: Coral.UserApi.UserApiInfo | null): boolean =>
   Object.keys(apiInfo?.sources ?? {}).length > 0;
 
 const maxDownloadOptions = [1, 2, 3, 4, 5, 6].map((value) => ({
@@ -158,7 +158,7 @@ const SettingSwitch = ({
       checked={appSetting[settingKey]}
       disabled={disabled}
       onChange={(checked) => {
-        const nextSetting: Partial<LX.AppSetting> = {
+        const nextSetting: Partial<Coral.AppSetting> = {
           [settingKey]: checked,
         };
         updateSetting(nextSetting);
@@ -218,9 +218,9 @@ const OnlineImportModal = ({ loading, onClose, onSubmit, open }: OnlineImportMod
 };
 
 interface ThemeSelectorModalProps {
-  appSetting: LX.AppSetting;
-  darkThemes: LX.Theme[];
-  lightThemes: LX.Theme[];
+  appSetting: Coral.AppSetting;
+  darkThemes: Coral.Theme[];
+  lightThemes: Coral.Theme[];
   onClose: () => void;
   onEdit: (id: string) => void;
   onRemove: (id: string) => void;
@@ -416,7 +416,7 @@ export const SettingsRoutePanel = observer(() => {
         title: '导入文件',
         properties: ['openFile'],
         filters: [
-          { name: 'LX API File', extensions: ['js'] },
+          { name: 'Coral API File', extensions: ['js'] },
           { name: 'All Files', extensions: ['*'] },
         ],
       });
@@ -432,13 +432,13 @@ export const SettingsRoutePanel = observer(() => {
     return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="设置尚未加载" />;
   }
 
-  const applySetting = (setting: Partial<LX.AppSetting>): void => {
+  const applySetting = (setting: Partial<Coral.AppSetting>): void => {
     settings.updateAppSetting(setting);
   };
 
   const syncServerDevices = sync.serverDevices ?? [];
 
-  const activateUserApi = async (apiInfo: LX.UserApi.UserApiInfo): Promise<boolean> => {
+  const activateUserApi = async (apiInfo: Coral.UserApi.UserApiInfo): Promise<boolean> => {
     await userApi.setUserApi(apiInfo.id);
 
     const runtimeApiInfo =
@@ -457,7 +457,7 @@ export const SettingsRoutePanel = observer(() => {
     return true;
   };
 
-  const removeUserApi = async (api: LX.UserApi.UserApiInfo): Promise<void> => {
+  const removeUserApi = async (api: Coral.UserApi.UserApiInfo): Promise<void> => {
     if (api.id === appSetting['common.apiSource']) {
       const fallbackApiId =
         userApi.playableUserApis.find((userApiInfo) => userApiInfo.id !== api.id)?.id ?? '';
@@ -477,7 +477,7 @@ export const SettingsRoutePanel = observer(() => {
       title: '导入文件',
       properties: ['openFile'],
       filters: [
-        { name: 'LX API File', extensions: ['js'] },
+        { name: 'Coral API File', extensions: ['js'] },
         { name: 'All Files', extensions: ['*'] },
       ],
     });
@@ -509,16 +509,16 @@ export const SettingsRoutePanel = observer(() => {
     if (apiInfo) await activateUserApi(apiInfo);
   };
 
-  const handleSetCurrentApi = async (api: LX.UserApi.UserApiInfo): Promise<void> => {
+  const handleSetCurrentApi = async (api: Coral.UserApi.UserApiInfo): Promise<void> => {
     if (api.id === appSetting['common.apiSource']) return;
     await activateUserApi(api);
   };
 
-  const updateSetting = <Key extends keyof LX.AppSetting>(
+  const updateSetting = <Key extends keyof Coral.AppSetting>(
     key: Key,
-    value: LX.AppSetting[Key],
+    value: Coral.AppSetting[Key],
   ): void => {
-    const nextSetting: Partial<LX.AppSetting> = {
+    const nextSetting: Partial<Coral.AppSetting> = {
       [key]: value,
     };
     applySetting(nextSetting);
@@ -594,20 +594,20 @@ export const SettingsRoutePanel = observer(() => {
   return (
     <Spin
       spinning={settings.isHydrating || settings.isSaving}
-      wrapperClassName="coral-settings-spin"
+      classNames={{ root: 'coral-settings-spin' }}
     >
-      <Space direction="vertical" size="middle" className="coral-wide coral-settings-panel">
+      <Space orientation="vertical" size="middle" className="coral-wide coral-settings-panel">
         {settings.hydrateError ? (
-          <Alert showIcon type="error" message={settings.hydrateError} />
+          <Alert showIcon type="error" title={settings.hydrateError} />
         ) : null}
-        {settings.saveError ? <Alert showIcon type="error" message={settings.saveError} /> : null}
+        {settings.saveError ? <Alert showIcon type="error" title={settings.saveError} /> : null}
 
         <SettingSection title="主题">
           {theme.hydrateError ? (
             <Alert
               showIcon
               type="error"
-              message={theme.hydrateError}
+              title={theme.hydrateError}
               className="coral-settings-wide-item"
             />
           ) : null}
@@ -836,7 +836,7 @@ export const SettingsRoutePanel = observer(() => {
                 type={
                   appSetting['player.externalDecoder.provider'] === 'ffmpeg' ? 'info' : 'warning'
                 }
-                message={
+                title={
                   appSetting['player.externalDecoder.provider'] === 'ffmpeg'
                     ? 'FFmpeg 会在播放 DSD/SACD 等格式时转码为临时 WAV，切歌或退出播放器后自动清理；当前仅启用 WAV 输出。'
                     : appSetting['player.externalDecoder.provider'] === 'foobar2000'
@@ -860,17 +860,19 @@ export const SettingsRoutePanel = observer(() => {
               />
             </Form.Item>
             <Form.Item label="超时">
-              <InputNumber
-                min={5}
-                max={300}
-                addonAfter="秒"
-                value={Math.round(appSetting['player.externalDecoder.timeoutMs'] / 1000)}
-                onChange={(value) => {
-                  if (value != null) {
-                    updateSetting('player.externalDecoder.timeoutMs', value * 1000);
-                  }
-                }}
-              />
+              <Space.Compact>
+                <InputNumber
+                  min={5}
+                  max={300}
+                  value={Math.round(appSetting['player.externalDecoder.timeoutMs'] / 1000)}
+                  onChange={(value) => {
+                    if (value != null) {
+                      updateSetting('player.externalDecoder.timeoutMs', value * 1000);
+                    }
+                  }}
+                />
+                <Button disabled>秒</Button>
+              </Space.Compact>
             </Form.Item>
             <Form.Item label="解码器路径" className="coral-settings-wide-item">
               <Space.Compact className="coral-settings-decoder-path">
@@ -914,7 +916,7 @@ export const SettingsRoutePanel = observer(() => {
               />
             </Form.Item>
             <Form.Item label="组件目录" className="coral-settings-wide-item">
-              <Space direction="vertical" size="small" className="coral-wide">
+              <Space orientation="vertical" size="small" className="coral-wide">
                 <Input.TextArea
                   autoSize={{ minRows: 2, maxRows: 4 }}
                   value={decoderPluginDirsDraft}
@@ -952,26 +954,26 @@ export const SettingsRoutePanel = observer(() => {
             </Form.Item>
             {decoderProbeResult ? (
               <Form.Item label="探测结果" className="coral-settings-wide-item">
-                <Space direction="vertical" size="small" className="coral-settings-probe-result">
+                <Space orientation="vertical" size="small" className="coral-settings-probe-result">
                   <Alert
                     showIcon
                     type={decoderProbeResult.canProbe ? 'success' : 'warning'}
                     icon={
                       decoderProbeResult.canProbe ? <CheckCircleOutlined /> : <WarningOutlined />
                     }
-                    message={
+                    title={
                       decoderProbeResult.canProbe ? '配置可用于下一步解码适配' : '配置尚未可用'
                     }
                     description={`平台 ${decoderProbeResult.platform} · 支持 ${decoderProbeResult.supportedExtensions.length || 0} 个扩展 · 缺失 ${decoderProbeResult.missingExtensions.length || 0} 个扩展`}
                   />
                   {decoderProbeResult.errors.length ? (
-                    <Alert showIcon type="error" message={decoderProbeResult.errors.join('；')} />
+                    <Alert showIcon type="error" title={decoderProbeResult.errors.join('；')} />
                   ) : null}
                   {decoderProbeResult.warnings.length ? (
                     <Alert
                       showIcon
                       type="warning"
-                      message={decoderProbeResult.warnings.join('；')}
+                      title={decoderProbeResult.warnings.join('；')}
                     />
                   ) : null}
                   {decoderProbeResult.pluginDirs.length ? (
@@ -1385,7 +1387,7 @@ export const SettingsRoutePanel = observer(() => {
             <Alert
               showIcon
               type="error"
-              message={sync.actionError}
+              title={sync.actionError}
               className="coral-settings-wide-item"
             />
           ) : null}
@@ -1454,7 +1456,7 @@ export const SettingsRoutePanel = observer(() => {
             />
           </Form.Item>
           <Form.Item label="服务端设备" className="coral-settings-wide-item">
-            <Space direction="vertical" size="small" className="coral-wide">
+            <Space orientation="vertical" size="small" className="coral-wide">
               <Space wrap>
                 <Button
                   icon={<ReloadOutlined />}
@@ -1544,7 +1546,7 @@ export const SettingsRoutePanel = observer(() => {
             <Alert
               showIcon
               type="error"
-              message={userApi.hydrateError}
+              title={userApi.hydrateError}
               className="coral-settings-wide-item"
             />
           ) : null}
@@ -1552,7 +1554,7 @@ export const SettingsRoutePanel = observer(() => {
             <Alert
               showIcon
               type="error"
-              message={userApi.actionError}
+              title={userApi.actionError}
               className="coral-settings-wide-item"
             />
           ) : null}
@@ -1564,7 +1566,7 @@ export const SettingsRoutePanel = observer(() => {
                   ? 'success'
                   : 'warning'
               }
-              message={currentUserApi ? currentUserApi.name : '未启用音源'}
+              title={currentUserApi ? currentUserApi.name : '未启用音源'}
               description={
                 currentUserApi
                   ? `状态：${userApi.status?.status ? '可用' : userApi.status?.message || '未就绪'} · 平台：${currentUserApiSourceNames.length ? currentUserApiSourceNames.join('、') : '暂无可播放平台'} · 音质：${currentUserApiQualityNames.length ? currentUserApiQualityNames.join('、') : '暂无'}`
@@ -1703,7 +1705,7 @@ export const SettingsRoutePanel = observer(() => {
                         </Space>
                       }
                       description={
-                        <Space direction="vertical" size={2}>
+                        <Space orientation="vertical" size={2}>
                           {api.description ? <Text type="secondary">{api.description}</Text> : null}
                           <Space wrap size={8}>
                             {api.author ? <Text type="secondary">{api.author}</Text> : null}
@@ -2133,7 +2135,7 @@ export const SettingsRoutePanel = observer(() => {
           <Alert
             type="info"
             showIcon
-            message="珊瑚音乐完全免费开源"
+            title="珊瑚音乐完全免费开源"
             description="当前迁移版仍保留部分内部兼容层；正式发布渠道请以珊瑚音乐项目配置为准。"
           />
         </SettingSection>

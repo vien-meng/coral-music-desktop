@@ -10,7 +10,7 @@
 
 - Updated `src/shared/ipc/contracts.ts`.
   - Added typed `player.listMusicUpdatePosition`.
-  - Added the invoke contract for `LX.List.ListActionMusicUpdatePosition`.
+  - Added the invoke contract for `Coral.List.ListActionMusicUpdatePosition`.
 - Updated `src/renderer-react/services/listService.ts`.
   - Added `updateListMusicsPosition(listId, position, ids)`.
 - Updated `src/renderer-react/stores/domains/listStore.ts`.

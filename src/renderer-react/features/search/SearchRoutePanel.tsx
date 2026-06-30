@@ -26,10 +26,10 @@ export const SearchRoutePanel = observer(() => {
   const submitSearchWithLoading = (): void => {
     if (search.isSearching || ui.isGlobalLoading) return;
     if (!search.hasQuery) {
-      void search.submitSearch();
+      search.submitSearch();
       return;
     }
-    void ui.withGlobalLoading(() => search.submitSearch(), '搜索中...');
+    ui.withGlobalLoading(() => search.submitSearch(), '搜索中...');
   };
 
   const handlePageChange = (page: number): void => {
@@ -88,7 +88,7 @@ export const SearchRoutePanel = observer(() => {
         <Alert
           showIcon
           type="error"
-          message={search.searchError}
+          title={search.searchError}
           closable
           style={{ margin: '0 15px 8px', flex: 'none' }}
         />
@@ -97,7 +97,7 @@ export const SearchRoutePanel = observer(() => {
         <Alert
           showIcon
           type="error"
-          message={list.actionError}
+          title={list.actionError}
           closable
           style={{ margin: '0 15px 8px', flex: 'none' }}
         />
@@ -124,7 +124,7 @@ export const SearchRoutePanel = observer(() => {
             emptyText={search.hasQuery ? '暂无结果' : '等待搜索'}
             onOpen={(item) => {
               ui.setActiveRoute('song-list');
-              void ui.withGlobalLoading(
+              ui.withGlobalLoading(
                 () => songList.loadListDetail(item.id, item.source),
                 '正在打开歌单...',
               );

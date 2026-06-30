@@ -13,7 +13,7 @@ import {
  */
 export const queryDownloadList = () => {
   const queryStatement = createQueryStatement();
-  return queryStatement.all() as LX.DBService.DownloadMusicInfo[];
+  return queryStatement.all() as Coral.DBService.DownloadMusicInfo[];
 };
 
 /**
@@ -21,13 +21,13 @@ export const queryDownloadList = () => {
  * @param mInfos 列表
  */
 export const insertDownloadList = (
-  mInfos: LX.DBService.DownloadMusicInfo[],
+  mInfos: Coral.DBService.DownloadMusicInfo[],
   listPositions: Array<{ id: string; position: number }>,
 ) => {
   const db = getDB();
   const insertStatement = createInsertStatement();
   const updatePositionStatement = createUpdatePositionStatement();
-  db.transaction((mInfos: LX.DBService.DownloadMusicInfo[]) => {
+  db.transaction((mInfos: Coral.DBService.DownloadMusicInfo[]) => {
     for (const info of mInfos) insertStatement.run(info);
     for (const info of listPositions) updatePositionStatement.run(info);
   })(mInfos);
@@ -49,10 +49,10 @@ export const deleteDownloadList = (ids: string[]) => {
  * 批量更新下载歌曲
  * @param urlInfo 列表
  */
-export const updateDownloadList = (urlInfo: LX.DBService.DownloadMusicInfo[]) => {
+export const updateDownloadList = (urlInfo: Coral.DBService.DownloadMusicInfo[]) => {
   const db = getDB();
   const updateStatement = createUpdateStatement();
-  db.transaction((urlInfo: LX.DBService.DownloadMusicInfo[]) => {
+  db.transaction((urlInfo: Coral.DBService.DownloadMusicInfo[]) => {
     for (const info of urlInfo) updateStatement.run(info);
   })(urlInfo);
 };

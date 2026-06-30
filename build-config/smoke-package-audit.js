@@ -75,8 +75,8 @@ record('readme release status is coral-specific', () => {
   assertNotIncludes(
     content,
     [
-      'img.shields.io/github/release/lyswhut/' + 'lx-music-' + 'desktop',
-      'lx-music-' + 'desktop/workflows/Build/badge.svg',
+      'img.shields.io/github/release/lyswhut/' + 'coral-music-' + 'desktop',
+      'coral-music-' + 'desktop/workflows/Build/badge.svg',
     ],
     file,
   );
@@ -100,7 +100,10 @@ record('user-facing upstream links are centralized', () => {
     assertIncludes(content, ['coralProjectLinks'], file);
     assertNotIncludes(
       content,
-      ['github.com/lyswhut/' + 'lx-music-' + 'desktop', 'lyswhut.github.io/' + 'lx-music-' + 'doc'],
+      [
+        'github.com/lyswhut/' + 'coral-music-' + 'desktop',
+        'lyswhut.github.io/' + 'coral-music-' + 'doc',
+      ],
       file,
     );
   }
@@ -111,13 +114,13 @@ record('runtime fallback labels use coral brand', () => {
     [
       'src/renderer-react/services/musicSdk/index.ts',
       ['coralBrand.englishName'],
-      ["title ||= 'LX " + "Music'"],
+      ["title ||= 'Coral " + "Music'"],
     ],
-    ['src/common/utils/renderer.ts', ['coralBrand.englishName'], ["title ||= 'LX " + "Music'"]],
+    ['src/common/utils/renderer.ts', ['coralBrand.englishName'], ["title ||= 'Coral " + "Music'"]],
     [
       'src/main/modules/tray.ts',
       ['coralBrand.englishName'],
-      ["const defaultTip = 'LX " + "Music'"],
+      ["const defaultTip = 'Coral " + "Music'"],
     ],
   ];
 
@@ -149,11 +152,11 @@ record('electron builder identity is coral', () => {
   assertNotIncludes(
     content,
     [
-      "productName: 'lx-music-" + "desktop'",
+      "productName: 'coral-music-" + "desktop'",
       "appId: 'cn.toside.music.desktop'",
-      "repo: 'lx-music-" + "desktop'",
-      "shortcutName: 'LX " + "Music'",
-      "title: 'LX " + 'Music v$' + "{version}'",
+      "repo: 'coral-music-" + "desktop'",
+      "shortcutName: 'Coral " + "Music'",
+      "title: 'Coral " + 'Music v$' + "{version}'",
     ],
     file,
   );
@@ -167,14 +170,14 @@ record('publish target is explicit', () => {
     ['CORAL_PUBLISH_OWNER', 'CORAL_PUBLISH_REPO', 'Missing CORAL_PUBLISH_OWNER/CORAL_PUBLISH_REPO'],
     file,
   );
-  assertNotIncludes(content, ["owner: 'lyswhut'", "repo: 'lx-music-" + "desktop'"], file);
+  assertNotIncludes(content, ["owner: 'lyswhut'", "repo: 'coral-music-" + "desktop'"], file);
 });
 
 record('deep link scheme uses coral identity', () => {
   const file = 'build-config/build-pack.js';
   const content = read(file);
   assertIncludes(content, ["'coralmusic'", 'x-scheme-handler/coralmusic'], file);
-  assertNotIncludes(content, ["'lx" + "music'", 'x-scheme-handler/' + 'lx' + 'music'], file);
+  assertNotIncludes(content, ["'coral" + "music'", 'x-scheme-handler/' + 'coral' + 'music'], file);
 });
 
 record('packaging resources exist', () => {

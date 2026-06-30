@@ -10,7 +10,7 @@ Step 39-44 已完成（DislikeListModal、PlayTimeoutModal、SettingOther、Sett
 
 ### 1. backupService.ts — 关键修复
 
-**问题 1（严重）**：`saveLxConfigFile`（位于 `@common/utils/nodejs.ts:148`）使用回调式 `fs.writeFile`，不返回 Promise，调用方 `await` 无效。
+**问题 1（严重）**：`saveCoralConfigFile`（位于 `@common/utils/nodejs.ts:148`）使用回调式 `fs.writeFile`，不返回 Promise，调用方 `await` 无效。
 
 - **策略**：不修改共享的 `@common/utils/nodejs.ts`（遗留代码，影响面大），在 `backupService.ts` 内部封装一个 `safeSaveLxConfigFile` wrapper，用 `Promise` + 回调包装，确保写入完成或失败后再 resolve/reject。
 
@@ -22,8 +22,8 @@ Step 39-44 已完成（DislikeListModal、PlayTimeoutModal、SettingOther、Sett
 **问题 3**：所有导入/导出函数缺少 try/catch。
 - **修复**：在 `importAllData`、`exportAllData`、`importSetting`、`exportSetting`、`importPlayList`、`exportPlayList`、`exportPlayListToText`、`exportPlayListToCsv` 中包裹 try/catch，失败时通过 Ant Design `message.error` 提示用户。
 
-**问题 4**：`readLxConfigFile` 返回 `any`，缺少类型安全。
-- **修复**：在 `backupService` 中为 `readLxConfigFile` 返回值添加类型断言/守卫，区分 `allData`/`allData_v2`/`setting`/`playList` 等格式。
+**问题 4**：`readCoralConfigFile` 返回 `any`，缺少类型安全。
+- **修复**：在 `backupService` 中为 `readCoralConfigFile` 返回值添加类型断言/守卫，区分 `allData`/`allData_v2`/`setting`/`playList` 等格式。
 
 ### 2. ThemeEditModal.tsx — 多项修复
 
@@ -39,7 +39,7 @@ Step 39-44 已完成（DislikeListModal、PlayTimeoutModal、SettingOther、Sett
 - `handleSelectBgImg` 将文件复制到 temp 目录存入 `tempBgRef.current`，若用户关闭不保存，文件残留。
 - **修复**：在模态框关闭（`open` 变 `false`）的 `useEffect` 清理函数中，若 `tempBgRef.current` 存在且未被 move（即未保存），调用 `removeFile` 清理。
 
-**问题 4（主要）**：`buildTheme()` 返回结构与 `LX.Theme` 类型不匹配。
+**问题 4（主要）**：`buildTheme()` 返回结构与 `Coral.Theme` 类型不匹配。
 - 类型要求 `config: { themeColors: ThemeColors, extInfo: { ... } }`，但当前代码将所有颜色（含 badge/btn/background）放入 `themeColors`，且 `--background-image` 直接挂在 `config` 下。
 - **修复**：在 `buildTheme()` 中将颜色分类：`createThemeColors` 返回的派生色 + `--color-primary` + `--color-1000` 放入 `themeColors`；`--color-app-background`、`--color-main-background`、`--color-nav-font`、`--background-image`、`--color-badge-*`、`--color-btn-*` 放入 `extInfo`。
 - **注意**：需同步修改 `useEffect` 中读取 `editingTheme.config.themeColors` 的逻辑，改为从 `themeColors` + `extInfo` 合并读取。

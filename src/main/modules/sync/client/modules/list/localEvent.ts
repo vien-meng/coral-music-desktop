@@ -3,7 +3,7 @@ import { registerListActionEvent } from '@main/modules/sync/listEvent';
 
 let unregisterLocalListAction: (() => void) | null;
 
-export const registerEvent = (socket: LX.Sync.Client.Socket) => {
+export const registerEvent = (socket: Coral.Sync.Client.Socket) => {
   // socket = _socket
   // socket.onClose(() => {
   //   unregisterLocalListAction?.()

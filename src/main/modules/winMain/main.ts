@@ -13,10 +13,10 @@ const winEvent = () => {
   if (!browserWindow) return;
 
   browserWindow.on('close', (event) => {
-    if (global.lx.isSkipTrayQuit || !global.lx.appSetting['tray.enable']) {
+    if (global.coral.isSkipTrayQuit || !global.coral.appSetting['tray.enable']) {
       browserWindow!.setProgressBar(-1);
-      // global.lx.mainWindowClosed = true
-      global.lx.event_app.main_window_close();
+      // global.coral.mainWindowClosed = true
+      global.coral.event_app.main_window_close();
       return;
     }
 
@@ -25,7 +25,7 @@ const winEvent = () => {
   });
 
   browserWindow.on('closed', () => {
-    // global.lx.mainWindowClosed = true
+    // global.coral.mainWindowClosed = true
     browserWindow = null;
   });
 
@@ -34,11 +34,11 @@ const winEvent = () => {
   // })
   browserWindow.on('focus', () => {
     sendFocus();
-    global.lx.event_app.main_window_focus();
+    global.coral.event_app.main_window_focus();
   });
 
   browserWindow.on('blur', () => {
-    global.lx.event_app.main_window_blur();
+    global.coral.event_app.main_window_blur();
   });
 
   browserWindow.once('ready-to-show', () => {
@@ -46,25 +46,25 @@ const winEvent = () => {
       showWindow();
       setThumbarButtons();
     }
-    global.lx.event_app.main_window_ready_to_show();
+    global.coral.event_app.main_window_ready_to_show();
   });
 
   browserWindow.on('show', () => {
-    global.lx.event_app.main_window_show();
+    global.coral.event_app.main_window_show();
 
     // 修复隐藏窗口后再显示时任务栏按钮丢失的问题
     setThumbarButtons();
   });
   browserWindow.on('hide', () => {
-    global.lx.event_app.main_window_hide();
+    global.coral.event_app.main_window_hide();
   });
 };
 
 export const createWindow = () => {
   closeWindow();
-  const windowSizeInfo = getWindowSizeInfo(global.lx.appSetting['common.windowSizeId']);
+  const windowSizeInfo = getWindowSizeInfo(global.coral.appSetting['common.windowSizeId']);
 
-  const { shouldUseDarkColors, theme } = global.lx.theme;
+  const { shouldUseDarkColors, theme } = global.coral.theme;
   const ses = session.fromPartition('persist:win-main');
   const proxy = getProxy();
   setSesProxy(ses, proxy?.host, proxy?.port);
@@ -100,7 +100,7 @@ export const createWindow = () => {
   };
   if (global.envParams.cmdParams.dt)
     options.backgroundColor = theme.colors['--color-primary-light-1000'];
-  if (global.lx.appSetting['common.startInFullscreen']) {
+  if (global.coral.appSetting['common.startInFullscreen']) {
     options.fullscreen = true;
     if (isLinux) options.resizable = true;
   }
@@ -120,9 +120,9 @@ export const createWindow = () => {
 
   if (global.envParams.cmdParams.odt) handleOpenDevTools(browserWindow.webContents);
 
-  // global.lx.mainWindowClosed = false
+  // global.coral.mainWindowClosed = false
   // browserWindow.webContents.openDevTools()
-  global.lx.event_app.main_window_created(browserWindow);
+  global.coral.event_app.main_window_created(browserWindow);
 };
 
 export const isExistWindow = (): boolean => !!browserWindow;
@@ -256,7 +256,7 @@ export const setFullScreen = (isFullscreen: boolean): boolean => {
   return isFullscreen;
 };
 
-const taskBarButtonFlags: LX.TaskBarButtonFlags = {
+const taskBarButtonFlags: Coral.TaskBarButtonFlags = {
   empty: true,
   collect: false,
   play: false,
@@ -269,7 +269,7 @@ export const setThumbarButtons = ({
   play,
   next,
   prev,
-}: LX.TaskBarButtonFlags = taskBarButtonFlags) => {
+}: Coral.TaskBarButtonFlags = taskBarButtonFlags) => {
   if (!isWin || !browserWindow) return;
   taskBarButtonFlags.empty = empty;
   taskBarButtonFlags.collect = collect;

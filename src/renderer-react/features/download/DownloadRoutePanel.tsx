@@ -58,8 +58,8 @@ export const DownloadRoutePanel = observer(() => {
 
   const filteredTasks = useMemo(() => {
     if (activeTab === 'all') return download.tasks;
-    const statusFilter: LX.Download.DownloadTaskStatus =
-      activeTab === 'error' ? 'error' : (activeTab as LX.Download.DownloadTaskStatus);
+    const statusFilter: Coral.Download.DownloadTaskStatus =
+      activeTab === 'error' ? 'error' : (activeTab as Coral.Download.DownloadTaskStatus);
     return download.tasks.filter(
       (task) => task.status === statusFilter || (activeTab === 'completed' && task.isComplate),
     );
@@ -139,7 +139,7 @@ export const DownloadRoutePanel = observer(() => {
     download.pauseTasks(selectedRunningTasks.map((task) => task.id)).catch(() => {});
   };
 
-  const handleSearchTaskMusic = (task: LX.Download.ListItem): void => {
+  const handleSearchTaskMusic = (task: Coral.Download.ListItem): void => {
     const musicInfo = task.metadata.musicInfo;
     const searchText = `${musicInfo.name} ${musicInfo.singer}`.trim();
 
@@ -243,7 +243,7 @@ export const DownloadRoutePanel = observer(() => {
         <Alert
           showIcon
           type="error"
-          message={download.hydrateError}
+          title={download.hydrateError}
           closable
           style={{ margin: '0 15px 8px', flex: 'none' }}
         />
@@ -252,7 +252,7 @@ export const DownloadRoutePanel = observer(() => {
         <Alert
           showIcon
           type="error"
-          message={download.actionError}
+          title={download.actionError}
           closable
           style={{ margin: '0 15px 8px', flex: 'none' }}
         />
@@ -385,7 +385,7 @@ export const DownloadRoutePanel = observer(() => {
                     </Space>
                   }
                   description={
-                    <Space direction="vertical" size={2} className="coral-wide">
+                    <Space orientation="vertical" size={2} className="coral-wide">
                       <Progress
                         percent={Math.round(task.progress)}
                         size="small"

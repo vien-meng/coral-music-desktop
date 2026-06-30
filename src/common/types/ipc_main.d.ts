@@ -1,4 +1,4 @@
-declare namespace LX {
+declare namespace Coral {
   interface IpcMainEvent {
     event: Electron.IpcMainEvent;
   }
@@ -6,8 +6,8 @@ declare namespace LX {
     event: Electron.IpcMainEvent;
     params: T;
   }
-  type IpcMainEventListener = (params: LX.IpcMainEvent) => void;
-  type IpcMainEventListenerParams<T> = (params: LX.IpcMainEventParams<T>) => void;
+  type IpcMainEventListener = (params: Coral.IpcMainEvent) => void;
+  type IpcMainEventListenerParams<T> = (params: Coral.IpcMainEventParams<T>) => void;
 
   interface IpcMainInvokeEvent {
     event: Electron.IpcMainInvokeEvent;
@@ -17,12 +17,12 @@ declare namespace LX {
     params: T;
   }
 
-  type IpcMainInvokeEventListener = (params: LX.IpcMainInvokeEvent) => Promise<void>;
+  type IpcMainInvokeEventListener = (params: Coral.IpcMainInvokeEvent) => Promise<void>;
   type IpcMainInvokeEventListenerParams<T> = (
-    params: LX.IpcMainInvokeEventParams<T>,
+    params: Coral.IpcMainInvokeEventParams<T>,
   ) => Promise<void>;
-  type IpcMainInvokeEventListenerValue<V> = (params: LX.IpcMainInvokeEvent) => Promise<V>;
+  type IpcMainInvokeEventListenerValue<V> = (params: Coral.IpcMainInvokeEvent) => Promise<V>;
   type IpcMainInvokeEventListenerParamsValue<T, V> = (
-    params: LX.IpcMainInvokeEventParams<T>,
+    params: Coral.IpcMainInvokeEventParams<T>,
   ) => Promise<V>;
 }

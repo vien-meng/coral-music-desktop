@@ -7,7 +7,7 @@ import { rootStore } from '../../stores/rootStore';
 
 const { Text } = Typography;
 
-const qualityLabels: Record<LX.Quality, string> = {
+const qualityLabels: Record<Coral.Quality, string> = {
   flac24bit: 'FLAC Hires',
   hires: 'Hi-Res',
   atmos: 'Atmos',
@@ -22,15 +22,21 @@ const qualityLabels: Record<LX.Quality, string> = {
 };
 
 export interface DownloadQualityModalProps {
-  musicInfo: LX.Music.MusicInfo | null;
+  musicInfo: Coral.Music.MusicInfo | null;
   listId?: string;
   onClose: () => void;
 }
 
+const isOnlineMusic = (
+  musicInfo: Coral.Music.MusicInfo | null,
+): musicInfo is Coral.Music.MusicInfoOnline =>
+  Boolean(musicInfo && musicInfo.source !== 'local' && musicInfo.source !== 'webdav');
+
 export const DownloadQualityModal = ({ musicInfo, listId, onClose }: DownloadQualityModalProps) => {
   const [isCreating, setIsCreating] = useState(false);
+  const onlineMusicInfo = isOnlineMusic(musicInfo) ? musicInfo : null;
 
-  const sourceQualities = musicInfo?.source === 'local' ? [] : (musicInfo?.meta.qualitys ?? []);
+  const sourceQualities = onlineMusicInfo?.meta.qualitys ?? [];
   const availableQualities = sourceQualities.slice().sort((left, right) => {
     const leftIndex = QUALITYS.indexOf(left.type);
     const rightIndex = QUALITYS.indexOf(right.type);
@@ -40,17 +46,17 @@ export const DownloadQualityModal = ({ musicInfo, listId, onClose }: DownloadQua
     );
   });
 
-  const handleDownload = async (quality: LX.Quality): Promise<void> => {
-    if (!musicInfo) return;
+  const handleDownload = async (quality: Coral.Quality): Promise<void> => {
+    if (!onlineMusicInfo) return;
 
     setIsCreating(true);
 
     try {
       const tasks = await downloadService.createDownloadTasks(
-        [musicInfo as LX.Music.MusicInfoOnline],
+        [onlineMusicInfo],
         quality,
         rootStore.settings.appSetting?.['download.fileName'] ?? '歌名 - 歌手',
-        { [musicInfo.source]: [quality] },
+        { [onlineMusicInfo.source]: [quality] },
         listId ?? '',
       );
       await rootStore.download.refreshTasks();
@@ -63,13 +69,13 @@ export const DownloadQualityModal = ({ musicInfo, listId, onClose }: DownloadQua
 
   return (
     <Modal
-      open={Boolean(musicInfo)}
-      title={musicInfo ? `下载：${musicInfo.name} - ${musicInfo.singer}` : '下载'}
+      open={Boolean(onlineMusicInfo)}
+      title={onlineMusicInfo ? `下载：${onlineMusicInfo.name} - ${onlineMusicInfo.singer}` : '下载'}
       footer={null}
       closeIcon={<CloseOutlined />}
       onCancel={onClose}
     >
-      <Space direction="vertical" size="small" className="coral-wide">
+      <Space orientation="vertical" size="small" className="coral-wide">
         {availableQualities.length === 0 ? (
           <Text type="secondary">暂无可用音质</Text>
         ) : (
@@ -80,10 +86,10 @@ export const DownloadQualityModal = ({ musicInfo, listId, onClose }: DownloadQua
               icon={<DownloadOutlined />}
               loading={isCreating}
               onClick={() => {
-                handleDownload(quality.type as LX.Quality);
+                handleDownload(quality.type as Coral.Quality);
               }}
             >
-              {qualityLabels[quality.type as LX.Quality] ?? quality.type}
+              {qualityLabels[quality.type as Coral.Quality] ?? quality.type}
               {quality.size ? ` - ${quality.size.toUpperCase()}` : ''}
             </Button>
           ))

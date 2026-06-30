@@ -10,6 +10,7 @@ import { musicSdkRuntime } from '../musicSdkRuntime';
 import { getPreferredOnlineMusicQuality } from '../musicQualityService';
 import { checkPath } from '../nodeBridgeService';
 import { settingService } from '../settingService';
+import { createWebDavStreamUrl } from '../webDavService';
 import {
   canDecodeLocalAudioExtension,
   decodeLocalAudioToObjectUrl,
@@ -19,8 +20,8 @@ import type { PlayerRuntimeMusicInfo } from './types';
 
 const TOO_MANY_REQUESTS_MESSAGE = 'too many requests';
 
-const pendingOtherSourcePromises = new Map<string, Promise<LX.Music.MusicInfoOnline[]>>();
-const otherSourceCache = new Map<string, LX.Music.MusicInfoOnline[]>();
+const pendingOtherSourcePromises = new Map<string, Promise<Coral.Music.MusicInfoOnline[]>>();
+const otherSourceCache = new Map<string, Coral.Music.MusicInfoOnline[]>();
 const nativeAudioSupportCache = new Map<string, boolean>();
 
 const localAudioMimeTypes: Record<string, string[]> = {
@@ -34,7 +35,7 @@ const localAudioMimeTypes: Record<string, string[]> = {
 };
 
 interface MusicUrlResult {
-  type: LX.Quality;
+  type: Coral.Quality;
   url: string;
 }
 
@@ -43,7 +44,7 @@ interface MusicUrlRequest {
 }
 
 interface MusicSdkSource {
-  getMusicUrl?: (musicInfo: unknown, quality: LX.Quality) => MusicUrlRequest;
+  getMusicUrl?: (musicInfo: unknown, quality: Coral.Quality) => MusicUrlRequest;
 }
 
 interface MusicSdk {
@@ -65,7 +66,7 @@ const loadMusicSdk = async (): Promise<MusicSdk> => {
 
 const isDownloadMusicInfo = (
   musicInfo: PlayerRuntimeMusicInfo,
-): musicInfo is LX.Download.ListItem => 'progress' in musicInfo && 'metadata' in musicInfo;
+): musicInfo is Coral.Download.ListItem => 'progress' in musicInfo && 'metadata' in musicInfo;
 
 const getFileExtension = (filePath: string): string => {
   const fileName = filePath.split(/[\\/]/).pop() ?? filePath;
@@ -97,7 +98,9 @@ const canNativeAudioPlayExtension = (extension: string): boolean => {
   return canPlay;
 };
 
-const toOldPlayableMusicInfo = (musicInfo: LX.Music.MusicInfoOnline): Record<string, unknown> => {
+const toOldPlayableMusicInfo = (
+  musicInfo: Coral.Music.MusicInfoOnline,
+): Record<string, unknown> => {
   const oldMusicInfo: Record<string, unknown> = {
     albumName: musicInfo.meta.albumName,
     img: musicInfo.meta.picUrl ?? '',
@@ -133,7 +136,7 @@ const toOldPlayableMusicInfo = (musicInfo: LX.Music.MusicInfoOnline): Record<str
   return oldMusicInfo;
 };
 
-const toOnlineMusicInfo = (musicInfo: unknown): LX.Music.MusicInfoOnline | null => {
+const toOnlineMusicInfo = (musicInfo: unknown): Coral.Music.MusicInfoOnline | null => {
   if (typeof musicInfo !== 'object' || musicInfo == null) return null;
 
   const oldMusicInfo = musicInfo as Record<string, any>;
@@ -155,7 +158,7 @@ const toOnlineMusicInfo = (musicInfo: unknown): LX.Music.MusicInfoOnline | null 
     meta,
     name: oldMusicInfo.name ?? '',
     singer: oldMusicInfo.singer ?? '',
-    source: source as LX.OnlineSource,
+    source: source as Coral.OnlineSource,
   };
 
   switch (source) {
@@ -176,7 +179,7 @@ const toOnlineMusicInfo = (musicInfo: unknown): LX.Music.MusicInfoOnline | null 
       break;
   }
 
-  return newMusicInfo as unknown as LX.Music.MusicInfoOnline;
+  return newMusicInfo as unknown as Coral.Music.MusicInfoOnline;
 };
 
 export interface ResolvedPlaybackUrl {
@@ -184,8 +187,8 @@ export interface ResolvedPlaybackUrl {
   decodedFilePath?: string;
   objectUrl?: string;
   musicInfo: PlayerRuntimeMusicInfo;
-  quality: LX.Quality;
-  source: 'cache' | 'download' | 'fresh' | 'local';
+  quality: Coral.Quality;
+  source: 'cache' | 'download' | 'fresh' | 'local' | 'webdav';
   url: string;
 }
 
@@ -193,8 +196,8 @@ export interface ResolvePlayableMusicUrlOptions {
   allowFresh?: boolean;
   allowToggleSource?: boolean;
   isRefresh?: boolean;
-  onToggleSource?: (musicInfo?: LX.Music.MusicInfoOnline) => void;
-  preferredQuality?: LX.Quality;
+  onToggleSource?: (musicInfo?: Coral.Music.MusicInfoOnline) => void;
+  preferredQuality?: Coral.Quality;
 }
 
 export const resolveLocalMusicUrl = (musicInfo?: PlayerRuntimeMusicInfo): string | null => {
@@ -290,7 +293,7 @@ const resolveExternalDecodedLocalMusicUrl = async (
 };
 
 export const resolveDownloadMusicUrl = async (
-  musicInfo: LX.Download.ListItem,
+  musicInfo: Coral.Download.ListItem,
   isRefresh = false,
 ): Promise<{
   decodedAudio?: DecodedAudioData;
@@ -317,21 +320,19 @@ export const resolveDownloadMusicUrl = async (
 };
 
 export const getPreferredPlayQuality = (
-  preferredQuality: LX.Quality,
-  musicInfo: LX.Music.MusicInfoOnline,
-): LX.Quality => {
-  return getPreferredOnlineMusicQuality(preferredQuality, musicInfo);
-};
+  preferredQuality: Coral.Quality,
+  musicInfo: Coral.Music.MusicInfoOnline,
+): Coral.Quality => getPreferredOnlineMusicQuality(preferredQuality, musicInfo);
 
-const getSourceSdk = (sdk: MusicSdk, source: LX.OnlineSource): MusicSdkSource | null => {
+const getSourceSdk = (sdk: MusicSdk, source: Coral.OnlineSource): MusicSdkSource | null => {
   const sourceSdk = sdk[source];
   if (typeof sourceSdk !== 'object' || sourceSdk == null || Array.isArray(sourceSdk)) return null;
   return sourceSdk as MusicSdkSource;
 };
 
 export const fetchFreshOnlineMusicUrl = async (
-  musicInfo: LX.Music.MusicInfoOnline,
-  quality: LX.Quality,
+  musicInfo: Coral.Music.MusicInfoOnline,
+  quality: Coral.Quality,
 ): Promise<MusicUrlResult> => {
   const sdk = await loadMusicSdk();
   const request = getSourceSdk(sdk, musicInfo.source)?.getMusicUrl?.(
@@ -345,12 +346,12 @@ export const fetchFreshOnlineMusicUrl = async (
   return result;
 };
 
-const createOtherSourceCacheKey = (musicInfo: LX.Music.MusicInfoOnline): string =>
+const createOtherSourceCacheKey = (musicInfo: Coral.Music.MusicInfoOnline): string =>
   `${musicInfo.source}_${musicInfo.id}`;
 
 const fetchOtherSourceMusicList = async (
-  musicInfo: LX.Music.MusicInfoOnline,
-): Promise<LX.Music.MusicInfoOnline[]> => {
+  musicInfo: Coral.Music.MusicInfoOnline,
+): Promise<Coral.Music.MusicInfoOnline[]> => {
   const cacheKey = createOtherSourceCacheKey(musicInfo);
   const cachedList = otherSourceCache.get(cacheKey);
   if (cachedList) return cachedList;
@@ -376,7 +377,7 @@ const fetchOtherSourceMusicList = async (
       const list =
         rawList
           ?.map(toOnlineMusicInfo)
-          .filter((item): item is LX.Music.MusicInfoOnline => item != null) ?? [];
+          .filter((item): item is Coral.Music.MusicInfoOnline => item != null) ?? [];
 
       if (otherSourceCache.size > 10) otherSourceCache.clear();
       otherSourceCache.set(cacheKey, list);
@@ -392,7 +393,7 @@ const fetchOtherSourceMusicList = async (
 };
 
 const resolveOnlineMusicUrl = async (
-  musicInfo: LX.Music.MusicInfoOnline,
+  musicInfo: Coral.Music.MusicInfoOnline,
   options: ResolvePlayableMusicUrlOptions,
 ): Promise<ResolvedPlaybackUrl | null> => {
   const quality = getPreferredPlayQuality(options.preferredQuality ?? '128k', musicInfo);
@@ -450,6 +451,22 @@ const resolveOnlineMusicUrl = async (
   }
 };
 
+const resolveWebDavMusicUrl = async (
+  musicInfo: Coral.Music.MusicInfoWebDav,
+): Promise<ResolvedPlaybackUrl> => {
+  const result = await createWebDavStreamUrl({
+    accountId: musicInfo.meta.accountId,
+    href: musicInfo.meta.href,
+  });
+
+  return {
+    musicInfo,
+    quality: musicInfo.meta.ext === 'flac' ? 'flac' : musicInfo.meta.ext === 'wav' ? 'wav' : '320k',
+    source: 'webdav',
+    url: result.url,
+  };
+};
+
 export const resolvePlayableMusicUrl = async (
   musicInfo: PlayerRuntimeMusicInfo,
   options: ResolvePlayableMusicUrlOptions = {},
@@ -467,6 +484,12 @@ export const resolvePlayableMusicUrl = async (
         url: downloadUrl.url,
       };
     }
+
+    if (musicInfo.metadata.musicInfo.source === 'webdav') {
+      return resolveWebDavMusicUrl(musicInfo.metadata.musicInfo);
+    }
+
+    if (musicInfo.metadata.musicInfo.source === 'local') return null;
 
     return resolveOnlineMusicUrl(musicInfo.metadata.musicInfo, {
       ...options,
@@ -514,6 +537,10 @@ export const resolvePlayableMusicUrl = async (
       throw new Error(`本地音频解码失败：${message}`);
     }
     return null;
+  }
+
+  if (musicInfo.source === 'webdav') {
+    return resolveWebDavMusicUrl(musicInfo);
   }
 
   return resolveOnlineMusicUrl(musicInfo, options);

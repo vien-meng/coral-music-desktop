@@ -12,7 +12,7 @@ import migrateData from '../../migrate';
 import type { Socket } from 'node:net';
 import { getAddress } from '@common/utils/nodejs';
 
-let status: LX.Sync.ServerStatus = {
+let status: Coral.Sync.ServerStatus = {
   status: false,
   message: '',
   address: [],
@@ -46,13 +46,13 @@ const codeTools: {
   },
 };
 
-const checkDuplicateClient = (newSocket: LX.Sync.Server.Socket) => {
+const checkDuplicateClient = (newSocket: Coral.Sync.Server.Socket) => {
   for (const client of [...wss!.clients]) {
     if (client === newSocket || client.keyInfo.clientId != newSocket.keyInfo.clientId) continue;
     log.info('duplicate client', client.userInfo.name, client.keyInfo.deviceName);
     client.isReady = false;
     for (const name of Object.keys(client.moduleReadys) as Array<
-      keyof LX.Sync.Server.Socket['moduleReadys']
+      keyof Coral.Sync.Server.Socket['moduleReadys']
     >) {
       client.moduleReadys[name] = false;
     }
@@ -60,7 +60,7 @@ const checkDuplicateClient = (newSocket: LX.Sync.Server.Socket) => {
   }
 };
 
-const handleConnection = async (socket: LX.Sync.Server.Socket, request: IncomingMessage) => {
+const handleConnection = async (socket: Coral.Sync.Server.Socket, request: IncomingMessage) => {
   const queryData = new URL(request.url!, host).searchParams;
   const clientId = queryData.get('i');
 
@@ -125,7 +125,7 @@ const authConnection = (
     });
 };
 
-let wss: LX.Sync.Server.SocketServer | null;
+let wss: Coral.Sync.Server.SocketServer | null;
 let httpServer: http.Server;
 let sockets = new Set<Socket>();
 
@@ -181,12 +181,12 @@ const handleStartServer = async (port = 9527, ip = '0.0.0.0') =>
         socket.isAlive = true;
       });
 
-      // const events = new Map<keyof ActionsType, Array<(err: Error | null, data: LX.Sync.ActionSyncType[keyof LX.Sync.ActionSyncType]) => void>>()
-      // const events = new Map<keyof LX.Sync.ActionSyncType, Array<(err: Error | null, data: LX.Sync.ActionSyncType[keyof LX.Sync.ActionSyncType]) => void>>()
-      // let events: Partial<{ [K in keyof LX.Sync.ActionSyncType]: Array<(data: LX.Sync.ActionSyncType[K]) => void> }> = {}
+      // const events = new Map<keyof ActionsType, Array<(err: Error | null, data: Coral.Sync.ActionSyncType[keyof Coral.Sync.ActionSyncType]) => void>>()
+      // const events = new Map<keyof Coral.Sync.ActionSyncType, Array<(err: Error | null, data: Coral.Sync.ActionSyncType[keyof Coral.Sync.ActionSyncType]) => void>>()
+      // let events: Partial<{ [K in keyof Coral.Sync.ActionSyncType]: Array<(data: Coral.Sync.ActionSyncType[K]) => void> }> = {}
       let closeEvents: Array<(err: Error) => void | Promise<void>> = [];
       let disconnected = false;
-      const msg2call = createMsg2call<LX.Sync.ClientSyncActions>({
+      const msg2call = createMsg2call<Coral.Sync.ClientSyncActions>({
         funcsObj: callObj,
         timeout: 120 * 1000,
         sendMessage(data) {
@@ -389,7 +389,7 @@ export const startServer = async (port: number) => {
   if (stopingServer) return;
   if (status.status) await handleStopServer();
 
-  await migrateData(global.lxDataPath);
+  await migrateData(global.coralDataPath);
   await initServerInfo();
 
   log.info('starting sync server');
@@ -415,7 +415,7 @@ export const startServer = async (port: number) => {
     });
 };
 
-export const getStatus = (): LX.Sync.ServerStatus => status;
+export const getStatus = (): Coral.Sync.ServerStatus => status;
 
 export const generateCode = async () => {
   status.code = handleGenerateCode();

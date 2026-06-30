@@ -19,7 +19,7 @@ interface MusicMetadataGlobal {
 export interface LocalAudioImportResult {
   candidateCount: number;
   duplicateCount: number;
-  importedMusics: LX.Music.MusicInfoLocal[];
+  importedMusics: Coral.Music.MusicInfoLocal[];
   skippedCount: number;
 }
 
@@ -128,7 +128,7 @@ const readPictureDataUrl = (metadata: IAudioMetadata): string | null => {
   return `data:${format};base64,${base64}`;
 };
 
-export const createLocalMusicInfo = (filePath: string): LX.Music.MusicInfoLocal => {
+export const createLocalMusicInfo = (filePath: string): Coral.Music.MusicInfoLocal => {
   const { name, singer } = parseLocalAudioName(filePath);
   const ext = normalizeAudioExtension(extname(filePath));
 
@@ -152,8 +152,8 @@ export const createLocalMusicInfo = (filePath: string): LX.Music.MusicInfoLocal 
 };
 
 export const enrichLocalMusicInfoWithMetadata = async (
-  musicInfo: LX.Music.MusicInfoLocal,
-): Promise<LX.Music.MusicInfoLocal> => {
+  musicInfo: Coral.Music.MusicInfoLocal,
+): Promise<Coral.Music.MusicInfoLocal> => {
   const filePath = musicInfo.meta.filePath;
   const metadata = await readLocalAudioMetadata(filePath);
   if (!metadata) return musicInfo;
@@ -191,13 +191,13 @@ export const enrichLocalMusicInfoWithMetadata = async (
 
 export const createLocalMusicInfoWithMetadata = async (
   filePath: string,
-): Promise<LX.Music.MusicInfoLocal> =>
+): Promise<Coral.Music.MusicInfoLocal> =>
   await enrichLocalMusicInfoWithMetadata(createLocalMusicInfo(filePath));
 
 export const createLocalMusicInfosFromPaths = async (
   inputPaths: string[],
   options: LocalAudioImportOptions = {},
-): Promise<LX.Music.MusicInfoLocal[]> => {
+): Promise<Coral.Music.MusicInfoLocal[]> => {
   const extensionSet = createExtensionSet(options);
   const filePaths = await collectLocalAudioFiles(inputPaths, extensionSet);
   const uniquePaths = Array.from(new Set(filePaths)).sort((left, right) =>

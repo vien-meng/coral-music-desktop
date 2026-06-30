@@ -2,21 +2,22 @@ import { makeAutoObservable, observable } from 'mobx';
 import { getSourceDisplayName } from '../../services/sourceNameService';
 import { userApiService } from '../../services/userApiService';
 
-export const getPlayableUserApiSources = (apiInfo?: LX.UserApi.UserApiInfo | null): string[] =>
+export const getPlayableUserApiSources = (apiInfo?: Coral.UserApi.UserApiInfo | null): string[] =>
   Object.entries(apiInfo?.sources ?? {})
     .filter(([, source]) => source.type === 'music' && source.actions.includes('musicUrl'))
     .map(([source]) => source);
 
-export const getPlayableUserApiSourceNames = (apiInfo?: LX.UserApi.UserApiInfo | null): string[] =>
-  getPlayableUserApiSources(apiInfo).map(getSourceDisplayName);
+export const getPlayableUserApiSourceNames = (
+  apiInfo?: Coral.UserApi.UserApiInfo | null,
+): string[] => getPlayableUserApiSources(apiInfo).map(getSourceDisplayName);
 
-export const canPlayWithUserApi = (apiInfo?: LX.UserApi.UserApiInfo | null): boolean =>
+export const canPlayWithUserApi = (apiInfo?: Coral.UserApi.UserApiInfo | null): boolean =>
   getPlayableUserApiSources(apiInfo).length > 0;
 
 const mergeStatusApiInfo = (
-  apiList: LX.UserApi.UserApiInfo[],
-  status: LX.UserApi.UserApiStatus | null,
-): LX.UserApi.UserApiInfo[] => {
+  apiList: Coral.UserApi.UserApiInfo[],
+  status: Coral.UserApi.UserApiStatus | null,
+): Coral.UserApi.UserApiInfo[] => {
   const runtimeApiInfo = status?.apiInfo;
   if (!runtimeApiInfo?.id) return apiList;
 
@@ -42,9 +43,9 @@ export class UserApiStore {
 
   isMutating = false;
 
-  status: LX.UserApi.UserApiStatus | null = null;
+  status: Coral.UserApi.UserApiStatus | null = null;
 
-  userApis: LX.UserApi.UserApiInfo[] = [];
+  userApis: Coral.UserApi.UserApiInfo[] = [];
 
   constructor() {
     makeAutoObservable(
@@ -60,15 +61,15 @@ export class UserApiStore {
     return this.userApis.length;
   }
 
-  get playableUserApis(): LX.UserApi.UserApiInfo[] {
+  get playableUserApis(): Coral.UserApi.UserApiInfo[] {
     return this.userApis.filter(canPlayWithUserApi);
   }
 
-  getPlayableSourceNames(apiInfo?: LX.UserApi.UserApiInfo | null): string[] {
+  getPlayableSourceNames(apiInfo?: Coral.UserApi.UserApiInfo | null): string[] {
     return getPlayableUserApiSourceNames(apiInfo);
   }
 
-  canPlay(apiInfo?: LX.UserApi.UserApiInfo | null): boolean {
+  canPlay(apiInfo?: Coral.UserApi.UserApiInfo | null): boolean {
     return canPlayWithUserApi(apiInfo);
   }
 
@@ -106,7 +107,7 @@ export class UserApiStore {
     }
   }
 
-  async importUserApi(script: string): Promise<LX.UserApi.UserApiInfo | null> {
+  async importUserApi(script: string): Promise<Coral.UserApi.UserApiInfo | null> {
     this.isMutating = true;
     this.actionError = null;
 

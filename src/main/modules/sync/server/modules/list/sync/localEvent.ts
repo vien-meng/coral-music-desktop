@@ -2,12 +2,12 @@ import { SYNC_CLOSE_CODE } from '@common/constants_sync';
 import { registerListActionEvent } from '../../../../listEvent';
 import { getUserSpace } from '../../../user';
 
-// let socket: LX.Sync.Server.Socket | null
+// let socket: Coral.Sync.Server.Socket | null
 let unregisterLocalListAction: (() => void) | null;
 
 const sendListAction = async (
-  wss: LX.Sync.Server.SocketServer,
-  action: LX.Sync.List.ActionList,
+  wss: Coral.Sync.Server.SocketServer,
+  action: Coral.Sync.List.ActionList,
 ) => {
   // console.log('sendListAction', action.action)
   const userSpace = getUserSpace();
@@ -29,7 +29,7 @@ const sendListAction = async (
   }
 };
 
-export const registerEvent = (wss: LX.Sync.Server.SocketServer) => {
+export const registerEvent = (wss: Coral.Sync.Server.SocketServer) => {
   // socket = _socket
   // socket.onClose(() => {
   //   unregisterLocalListAction?.()

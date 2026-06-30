@@ -1,4 +1,4 @@
-declare namespace LX {
+declare namespace Coral {
   namespace Sync {
     namespace List {
       interface ListInfo {
@@ -7,20 +7,20 @@ declare namespace LX {
       }
 
       type ActionList =
-        | LX.Sync.SyncAction<'list_data_overwrite', LX.List.ListActionDataOverwrite>
-        | SyncAction<'list_create', LX.List.ListActionAdd>
-        | SyncAction<'list_remove', LX.List.ListActionRemove>
-        | SyncAction<'list_update', LX.List.ListActionUpdate>
-        | SyncAction<'list_update_position', LX.List.ListActionUpdatePosition>
-        | SyncAction<'list_music_add', LX.List.ListActionMusicAdd>
-        | SyncAction<'list_music_move', LX.List.ListActionMusicMove>
-        | SyncAction<'list_music_remove', LX.List.ListActionMusicRemove>
-        | SyncAction<'list_music_update', LX.List.ListActionMusicUpdate>
-        | SyncAction<'list_music_update_position', LX.List.ListActionMusicUpdatePosition>
-        | SyncAction<'list_music_overwrite', LX.List.ListActionMusicOverwrite>
-        | SyncAction<'list_music_clear', LX.List.ListActionMusicClear>;
+        | Coral.Sync.SyncAction<'list_data_overwrite', Coral.List.ListActionDataOverwrite>
+        | SyncAction<'list_create', Coral.List.ListActionAdd>
+        | SyncAction<'list_remove', Coral.List.ListActionRemove>
+        | SyncAction<'list_update', Coral.List.ListActionUpdate>
+        | SyncAction<'list_update_position', Coral.List.ListActionUpdatePosition>
+        | SyncAction<'list_music_add', Coral.List.ListActionMusicAdd>
+        | SyncAction<'list_music_move', Coral.List.ListActionMusicMove>
+        | SyncAction<'list_music_remove', Coral.List.ListActionMusicRemove>
+        | SyncAction<'list_music_update', Coral.List.ListActionMusicUpdate>
+        | SyncAction<'list_music_update_position', Coral.List.ListActionMusicUpdatePosition>
+        | SyncAction<'list_music_overwrite', Coral.List.ListActionMusicOverwrite>
+        | SyncAction<'list_music_clear', Coral.List.ListActionMusicClear>;
 
-      type ListData = Omit<LX.List.ListDataFull, 'tempList'>;
+      type ListData = Omit<Coral.List.ListDataFull, 'tempList'>;
       type SyncMode =
         | 'merge_local_remote'
         | 'merge_remote_local'

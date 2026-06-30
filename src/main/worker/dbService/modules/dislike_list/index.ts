@@ -1,4 +1,4 @@
-import { SPLIT_CHAR } from '@common/constants'
+import { SPLIT_CHAR } from '@common/constants';
 import {
   queryDislikeList,
   insertDislikeList,
@@ -6,82 +6,90 @@ import {
   // updateDislikeList,
   // deleteDislikeList,
   // clearDislikeList,
-} from './dbHelper'
+} from './dbHelper';
 
-// let dislikeInfo: LX.Dislike.DislikeInfo
+// let dislikeInfo: Coral.Dislike.DislikeInfo
 
-const toDBDislikeInfo = (musicInfos: string[]): LX.DBService.DislikeInfo[] => {
-  const list: LX.DBService.DislikeInfo[] = []
+const toDBDislikeInfo = (musicInfos: string[]): Coral.DBService.DislikeInfo[] => {
+  const list: Coral.DBService.DislikeInfo[] = [];
   for (const item of musicInfos) {
-    if (!item.trim()) continue
+    if (!item.trim()) continue;
     list.push({
       content: item,
-    })
+    });
   }
-  return list
-}
+  return list;
+};
 
 const initDislikeList = () => {
-  const dislikeInfo: LX.Dislike.DislikeInfo = {
+  const dislikeInfo: Coral.Dislike.DislikeInfo = {
     // musicIds: new Set<string>(),
     names: new Set<string>(),
     singerNames: new Set<string>(),
     musicNames: new Set<string>(),
     rules: '',
-  }
-  const list: string[] = []
+  };
+  const list: string[] = [];
   for (const item of queryDislikeList()) {
-    if (!item) continue
-    let [name, singer] = item.content.split(SPLIT_CHAR.DISLIKE_NAME)
+    if (!item) continue;
+    let [name, singer] = item.content.split(SPLIT_CHAR.DISLIKE_NAME);
     if (name) {
-      name = name.replaceAll(SPLIT_CHAR.DISLIKE_NAME, SPLIT_CHAR.DISLIKE_NAME_ALIAS).toLocaleLowerCase().trim()
+      name = name
+        .replaceAll(SPLIT_CHAR.DISLIKE_NAME, SPLIT_CHAR.DISLIKE_NAME_ALIAS)
+        .toLocaleLowerCase()
+        .trim();
       if (singer) {
-        singer = singer.replaceAll(SPLIT_CHAR.DISLIKE_NAME, SPLIT_CHAR.DISLIKE_NAME_ALIAS).toLocaleLowerCase().trim()
-        const rule = `${name}${SPLIT_CHAR.DISLIKE_NAME}${singer}`
-        dislikeInfo.names.add(rule)
-        list.push(rule)
+        singer = singer
+          .replaceAll(SPLIT_CHAR.DISLIKE_NAME, SPLIT_CHAR.DISLIKE_NAME_ALIAS)
+          .toLocaleLowerCase()
+          .trim();
+        const rule = `${name}${SPLIT_CHAR.DISLIKE_NAME}${singer}`;
+        dislikeInfo.names.add(rule);
+        list.push(rule);
       } else {
-        dislikeInfo.musicNames.add(name)
-        list.push(name)
+        dislikeInfo.musicNames.add(name);
+        list.push(name);
       }
     } else if (singer) {
-      singer = singer.replaceAll(SPLIT_CHAR.DISLIKE_NAME, SPLIT_CHAR.DISLIKE_NAME_ALIAS).toLocaleLowerCase().trim()
-      dislikeInfo.singerNames.add(singer)
-      list.push(`${SPLIT_CHAR.DISLIKE_NAME}${singer}`)
+      singer = singer
+        .replaceAll(SPLIT_CHAR.DISLIKE_NAME, SPLIT_CHAR.DISLIKE_NAME_ALIAS)
+        .toLocaleLowerCase()
+        .trim();
+      dislikeInfo.singerNames.add(singer);
+      list.push(`${SPLIT_CHAR.DISLIKE_NAME}${singer}`);
     }
   }
 
-  dislikeInfo.rules = Array.from(new Set(list)).join('\n')
+  dislikeInfo.rules = Array.from(new Set(list)).join('\n');
 
-  return dislikeInfo
-}
+  return dislikeInfo;
+};
 
 /**
  * 获取不喜欢列表信息
  * @returns 不喜欢列表信息
  */
-export const getDislikeListInfo = (): LX.Dislike.DislikeInfo => {
+export const getDislikeListInfo = (): Coral.Dislike.DislikeInfo =>
   // if (!dislikeInfo) initDislikeList()
-  return initDislikeList()
-}
-
+  initDislikeList();
 
 /**
  * 添加信息
  * @param lists 列表信息
  */
-export const dislikeInfoAdd = async(lists: LX.Dislike.DislikeMusicInfo[]) => {
-  await insertDislikeList(lists.map(info => ({ content: `${info.name}${SPLIT_CHAR.DISLIKE_NAME}${info.singer}` })))
-}
+export const dislikeInfoAdd = async (lists: Coral.Dislike.DislikeMusicInfo[]) => {
+  await insertDislikeList(
+    lists.map((info) => ({ content: `${info.name}${SPLIT_CHAR.DISLIKE_NAME}${info.singer}` })),
+  );
+};
 
 /**
  * 覆盖列表信息
  * @param rules 规则信息
  */
-export const dislikeInfoOverwrite = async(rules: string) => {
-  await overwirteDislikeList(toDBDislikeInfo(rules.split('\n')))
-}
-
+export const dislikeInfoOverwrite = async (rules: string) => {
+  await overwirteDislikeList(toDBDislikeInfo(rules.split('\n')));
+};
 
 // /**
 //  * 删除不喜欢列表
@@ -97,4 +105,3 @@ export const dislikeInfoOverwrite = async(rules: string) => {
 // export const dislikeInfoClear = () => {
 //   clearDislikeList()
 // }
-

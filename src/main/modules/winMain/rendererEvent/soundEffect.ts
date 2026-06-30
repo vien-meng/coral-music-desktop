@@ -4,36 +4,36 @@ import { mainOn, mainHandle } from '@common/mainIpc';
 import getStore from '@main/utils/store';
 
 export default () => {
-  mainHandle<LX.SoundEffect.EQPreset[]>(
+  mainHandle<Coral.SoundEffect.EQPreset[]>(
     WIN_MAIN_RENDERER_EVENT_NAME.get_sound_effect_eq_preset,
     async () =>
       (getStore(STORE_NAMES.SOUND_EFFECT).get('eqPreset') as
-        LX.SoundEffect.EQPreset[] | undefined) ?? [],
+        Coral.SoundEffect.EQPreset[] | undefined) ?? [],
   );
-  mainOn<LX.SoundEffect.EQPreset[]>(
+  mainOn<Coral.SoundEffect.EQPreset[]>(
     WIN_MAIN_RENDERER_EVENT_NAME.save_sound_effect_eq_preset,
     ({ params }) => {
       getStore(STORE_NAMES.SOUND_EFFECT).set('eqPreset', params);
     },
   );
 
-  mainHandle<LX.SoundEffect.ConvolutionPreset[]>(
+  mainHandle<Coral.SoundEffect.ConvolutionPreset[]>(
     WIN_MAIN_RENDERER_EVENT_NAME.get_sound_effect_convolution_preset,
     async () =>
       (getStore(STORE_NAMES.SOUND_EFFECT).get('convolutionPreset') as
-        LX.SoundEffect.ConvolutionPreset[] | undefined) ?? [],
+        Coral.SoundEffect.ConvolutionPreset[] | undefined) ?? [],
   );
-  mainOn<LX.SoundEffect.ConvolutionPreset[]>(
+  mainOn<Coral.SoundEffect.ConvolutionPreset[]>(
     WIN_MAIN_RENDERER_EVENT_NAME.save_sound_effect_convolution_preset,
     ({ params }) => {
       getStore(STORE_NAMES.SOUND_EFFECT).set('convolutionPreset', params);
     },
   );
 
-  // mainHandle<LX.SoundEffect.PitchShifterPreset[]>(WIN_MAIN_RENDERER_EVENT_NAME.get_sound_effect_pitch_shifter_preset, async() => {
-  //   return getStore(STORE_NAMES.SOUND_EFFECT).get('pitchShifterPreset') as LX.SoundEffect.PitchShifterPreset[] | null ?? []
+  // mainHandle<Coral.SoundEffect.PitchShifterPreset[]>(WIN_MAIN_RENDERER_EVENT_NAME.get_sound_effect_pitch_shifter_preset, async() => {
+  //   return getStore(STORE_NAMES.SOUND_EFFECT).get('pitchShifterPreset') as Coral.SoundEffect.PitchShifterPreset[] | null ?? []
   // })
-  // mainOn<LX.SoundEffect.PitchShifterPreset[]>(WIN_MAIN_RENDERER_EVENT_NAME.save_sound_effect_pitch_shifter_preset, ({ params }) => {
+  // mainOn<Coral.SoundEffect.PitchShifterPreset[]>(WIN_MAIN_RENDERER_EVENT_NAME.save_sound_effect_pitch_shifter_preset, ({ params }) => {
   //   getStore(STORE_NAMES.SOUND_EFFECT).set('pitchShifterPreset', params)
   // })
 };

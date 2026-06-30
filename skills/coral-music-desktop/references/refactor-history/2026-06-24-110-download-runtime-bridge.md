@@ -4,7 +4,7 @@
 
 - Implemented the first React/Electron download runtime bridge after Step 109 dev startup stabilization.
 - Download tasks are no longer limited to creation and DB persistence: React can start, pause, retry, and receive progress/status updates through typed IPC.
-- The runtime does not restore `src/renderer` or `window.lx.worker`; URL resolution remains in `src/renderer-react`, while filesystem download execution lives in the main process.
+- The runtime does not restore `src/renderer` or `window.coral.worker`; URL resolution remains in `src/renderer-react`, while filesystem download execution lives in the main process.
 
 ## Changes
 

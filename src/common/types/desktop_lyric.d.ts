@@ -1,42 +1,42 @@
-declare namespace LX {
+declare namespace Coral {
   namespace DesktopLyric {
     interface Config {
-      'desktopLyric.enable': LX.AppSetting['desktopLyric.enable'];
-      'desktopLyric.isLock': LX.AppSetting['desktopLyric.isLock'];
-      'desktopLyric.isAlwaysOnTop': LX.AppSetting['desktopLyric.isAlwaysOnTop'];
-      'desktopLyric.isAlwaysOnTopLoop': LX.AppSetting['desktopLyric.isAlwaysOnTopLoop'];
-      'desktopLyric.isShowTaskbar': LX.AppSetting['desktopLyric.isShowTaskbar'];
-      'desktopLyric.pauseHide': LX.AppSetting['desktopLyric.pauseHide'];
-      'desktopLyric.audioVisualization': LX.AppSetting['desktopLyric.audioVisualization'];
-      'desktopLyric.width': LX.AppSetting['desktopLyric.width'];
-      'desktopLyric.height': LX.AppSetting['desktopLyric.height'];
-      'desktopLyric.x': LX.AppSetting['desktopLyric.x'];
-      'desktopLyric.y': LX.AppSetting['desktopLyric.y'];
-      'desktopLyric.isLockScreen': LX.AppSetting['desktopLyric.isLockScreen'];
-      'desktopLyric.isDelayScroll': LX.AppSetting['desktopLyric.isDelayScroll'];
-      'desktopLyric.scrollAlign': LX.AppSetting['desktopLyric.scrollAlign'];
-      'desktopLyric.isHoverHide': LX.AppSetting['desktopLyric.isHoverHide'];
-      'desktopLyric.direction': LX.AppSetting['desktopLyric.direction'];
-      'desktopLyric.style.align': LX.AppSetting['desktopLyric.style.align'];
-      'desktopLyric.style.font': LX.AppSetting['desktopLyric.style.font'];
-      'desktopLyric.style.fontSize': LX.AppSetting['desktopLyric.style.fontSize'];
-      'desktopLyric.style.lineGap': LX.AppSetting['desktopLyric.style.lineGap'];
-      'desktopLyric.style.lyricUnplayColor': LX.AppSetting['desktopLyric.style.lyricUnplayColor'];
-      'desktopLyric.style.lyricPlayedColor': LX.AppSetting['desktopLyric.style.lyricPlayedColor'];
-      'desktopLyric.style.lyricShadowColor': LX.AppSetting['desktopLyric.style.lyricShadowColor'];
-      // 'desktopLyric.style.fontWeight': LX.AppSetting['desktopLyric.style.fontWeight']
-      'desktopLyric.style.opacity': LX.AppSetting['desktopLyric.style.opacity'];
-      'desktopLyric.style.ellipsis': LX.AppSetting['desktopLyric.style.ellipsis'];
-      'desktopLyric.style.isFontWeightFont': LX.AppSetting['desktopLyric.style.isFontWeightFont'];
-      'desktopLyric.style.isFontWeightLine': LX.AppSetting['desktopLyric.style.isFontWeightLine'];
-      'desktopLyric.style.isFontWeightExtended': LX.AppSetting['desktopLyric.style.isFontWeightExtended'];
-      'desktopLyric.style.isZoomActiveLrc': LX.AppSetting['desktopLyric.style.isZoomActiveLrc'];
-      'common.langId': LX.AppSetting['common.langId'];
-      'player.isShowLyricTranslation': LX.AppSetting['player.isShowLyricTranslation'];
-      'player.isShowLyricRoma': LX.AppSetting['player.isShowLyricRoma'];
-      'player.isSwapLyricTranslationAndRoma': LX.AppSetting['player.isSwapLyricTranslationAndRoma'];
-      'player.isPlayLxlrc': LX.AppSetting['player.isPlayLxlrc'];
-      'player.playbackRate': LX.AppSetting['player.playbackRate'];
+      'desktopLyric.enable': Coral.AppSetting['desktopLyric.enable'];
+      'desktopLyric.isLock': Coral.AppSetting['desktopLyric.isLock'];
+      'desktopLyric.isAlwaysOnTop': Coral.AppSetting['desktopLyric.isAlwaysOnTop'];
+      'desktopLyric.isAlwaysOnTopLoop': Coral.AppSetting['desktopLyric.isAlwaysOnTopLoop'];
+      'desktopLyric.isShowTaskbar': Coral.AppSetting['desktopLyric.isShowTaskbar'];
+      'desktopLyric.pauseHide': Coral.AppSetting['desktopLyric.pauseHide'];
+      'desktopLyric.audioVisualization': Coral.AppSetting['desktopLyric.audioVisualization'];
+      'desktopLyric.width': Coral.AppSetting['desktopLyric.width'];
+      'desktopLyric.height': Coral.AppSetting['desktopLyric.height'];
+      'desktopLyric.x': Coral.AppSetting['desktopLyric.x'];
+      'desktopLyric.y': Coral.AppSetting['desktopLyric.y'];
+      'desktopLyric.isLockScreen': Coral.AppSetting['desktopLyric.isLockScreen'];
+      'desktopLyric.isDelayScroll': Coral.AppSetting['desktopLyric.isDelayScroll'];
+      'desktopLyric.scrollAlign': Coral.AppSetting['desktopLyric.scrollAlign'];
+      'desktopLyric.isHoverHide': Coral.AppSetting['desktopLyric.isHoverHide'];
+      'desktopLyric.direction': Coral.AppSetting['desktopLyric.direction'];
+      'desktopLyric.style.align': Coral.AppSetting['desktopLyric.style.align'];
+      'desktopLyric.style.font': Coral.AppSetting['desktopLyric.style.font'];
+      'desktopLyric.style.fontSize': Coral.AppSetting['desktopLyric.style.fontSize'];
+      'desktopLyric.style.lineGap': Coral.AppSetting['desktopLyric.style.lineGap'];
+      'desktopLyric.style.lyricUnplayColor': Coral.AppSetting['desktopLyric.style.lyricUnplayColor'];
+      'desktopLyric.style.lyricPlayedColor': Coral.AppSetting['desktopLyric.style.lyricPlayedColor'];
+      'desktopLyric.style.lyricShadowColor': Coral.AppSetting['desktopLyric.style.lyricShadowColor'];
+      // 'desktopLyric.style.fontWeight': Coral.AppSetting['desktopLyric.style.fontWeight']
+      'desktopLyric.style.opacity': Coral.AppSetting['desktopLyric.style.opacity'];
+      'desktopLyric.style.ellipsis': Coral.AppSetting['desktopLyric.style.ellipsis'];
+      'desktopLyric.style.isFontWeightFont': Coral.AppSetting['desktopLyric.style.isFontWeightFont'];
+      'desktopLyric.style.isFontWeightLine': Coral.AppSetting['desktopLyric.style.isFontWeightLine'];
+      'desktopLyric.style.isFontWeightExtended': Coral.AppSetting['desktopLyric.style.isFontWeightExtended'];
+      'desktopLyric.style.isZoomActiveLrc': Coral.AppSetting['desktopLyric.style.isZoomActiveLrc'];
+      'common.langId': Coral.AppSetting['common.langId'];
+      'player.isShowLyricTranslation': Coral.AppSetting['player.isShowLyricTranslation'];
+      'player.isShowLyricRoma': Coral.AppSetting['player.isShowLyricRoma'];
+      'player.isSwapLyricTranslationAndRoma': Coral.AppSetting['player.isSwapLyricTranslationAndRoma'];
+      'player.isPlayLxlrc': Coral.AppSetting['player.isPlayLxlrc'];
+      'player.playbackRate': Coral.AppSetting['player.playbackRate'];
     }
 
     type WinMainActions = 'get_info' | 'get_status' | 'get_analyser_data_array';

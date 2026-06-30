@@ -21,7 +21,7 @@ Start with the smallest reference that matches the task, then inspect the curren
 
 - Keep `main`, legacy `renderer`, new `renderer-react`, legacy `renderer-lyric`, new `lyric-react`, renderer workers, main DB worker, and `user-api-preload` as separate build/runtime surfaces during migration.
 - Preserve existing IPC channel names and DB schema during the first migration stages; wrap them with typed adapters before changing behavior.
-- Treat `global.lx`, `window.lx`, `window.lxData`, and `window.app_event` as compatibility surfaces. Replace them gradually with typed services and MobX stores.
+- Treat `global.coral`, `window.coral`, `window.coralData`, and `window.app_event` as compatibility surfaces. Replace them gradually with typed services and MobX stores.
 - Prefer Ant Design for common React UI controls and settings/forms; keep custom rendering for music rows, virtualized music lists, player controls, lyric rendering, audio visualization, and Electron window chrome.
 - Do not collapse the desktop lyric window into the main renderer; it is an independent Electron window with a direct `MessageChannelMain` link to the main window.
 - Keep native packaging details visible: `better-sqlite3`, `qrc_decode.node`, tray/taskbar assets, license files, and `electron-builder` hooks all affect distributable builds.

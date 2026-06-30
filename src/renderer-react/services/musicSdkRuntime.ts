@@ -4,10 +4,10 @@ import { userApiService } from './userApiService';
 type LegacyRuntimeState = typeof import('./musicSdk/sdk/runtimeState.js');
 
 interface LegacyMusicUrlResult {
-  source: LX.Source;
+  source: Coral.Source;
   action: 'musicUrl';
   data: {
-    type: LX.Quality;
+    type: Coral.Quality;
     url: string;
   };
 }
@@ -17,14 +17,14 @@ interface LegacyUserApiMusicSource {
     musicInfo: unknown,
     isGetLyricx?: boolean,
   ) => {
-    promise: Promise<LX.Music.LyricInfo>;
+    promise: Promise<Coral.Music.LyricInfo>;
   };
   getMusicUrl: (
     musicInfo: unknown,
-    quality: LX.Quality,
+    quality: Coral.Quality,
   ) => {
     promise: Promise<{
-      type: LX.Quality;
+      type: Coral.Quality;
       url: string;
     }>;
   };
@@ -36,8 +36,8 @@ let syncedApiSource: string | null = null;
 
 const normalizeUserApiMusicUrlResult = (
   result: unknown,
-  fallbackQuality: LX.Quality,
-): { type: LX.Quality; url: string } => {
+  fallbackQuality: Coral.Quality,
+): { type: Coral.Quality; url: string } => {
   if (typeof result === 'string') {
     return {
       type: fallbackQuality,
@@ -50,7 +50,7 @@ const normalizeUserApiMusicUrlResult = (
   }
 
   const rawResult = result as Partial<LegacyMusicUrlResult> & {
-    type?: LX.Quality;
+    type?: Coral.Quality;
     url?: string;
   };
   const data =
@@ -69,7 +69,7 @@ const loadRuntimeState = async (): Promise<LegacyRuntimeState> => {
   return await runtimeStatePromise;
 };
 
-const createUserApiMusicSource = (source: LX.Source): LegacyUserApiMusicSource => ({
+const createUserApiMusicSource = (source: Coral.Source): LegacyUserApiMusicSource => ({
   getLyric(musicInfo, isGetLyricx) {
     return {
       promise: userApiService
@@ -82,8 +82,8 @@ const createUserApiMusicSource = (source: LX.Source): LegacyUserApiMusicSource =
           source,
         })
         .then((result) => {
-          const lyricResult = result as Partial<LX.Music.LyricInfo> & {
-            data?: Partial<LX.Music.LyricInfo>;
+          const lyricResult = result as Partial<Coral.Music.LyricInfo> & {
+            data?: Partial<Coral.Music.LyricInfo>;
           };
           const lyricInfo = lyricResult.data ?? lyricResult;
           return {
@@ -130,12 +130,12 @@ const createUserApiMusicSource = (source: LX.Source): LegacyUserApiMusicSource =
 
 const applyUserApiRuntime = async (
   runtimeState: LegacyRuntimeState,
-  apiInfo: LX.UserApi.UserApiInfo,
+  apiInfo: Coral.UserApi.UserApiInfo,
 ): Promise<void> => {
   const apis: Record<string, LegacyUserApiMusicSource> = {};
   for (const [source, sourceInfo] of Object.entries(apiInfo.sources ?? {})) {
     if (sourceInfo.type !== 'music' || !sourceInfo.actions.includes('musicUrl')) continue;
-    apis[source] = createUserApiMusicSource(source as LX.Source);
+    apis[source] = createUserApiMusicSource(source as Coral.Source);
   }
 
   runtimeState.userApi.list = [apiInfo];

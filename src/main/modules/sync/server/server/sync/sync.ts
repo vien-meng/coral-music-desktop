@@ -1,7 +1,7 @@
 import { FeaturesList } from '../../../../../../common/constants_sync';
 import { featureVersion, modules } from '../../modules';
 
-export const sync = async (socket: LX.Sync.Server.Socket) => {
+export const sync = async (socket: Coral.Sync.Server.Socket) => {
   let disconnected = false;
   socket.onClose(() => {
     disconnected = true;

@@ -22,11 +22,11 @@ export const queryMusicUrl = (id: string) => {
  * 批量插入歌曲url
  * @param urlInfo 列表
  */
-export const insertMusicUrl = (urlInfo: LX.DBService.MusicUrlInfo[]) => {
+export const insertMusicUrl = (urlInfo: Coral.DBService.MusicUrlInfo[]) => {
   const db = getDB();
   const insertStatement = createInsertStatement();
   const deleteStatement = createDeleteStatement();
-  db.transaction((urlInfo: LX.DBService.MusicUrlInfo[]) => {
+  db.transaction((urlInfo: Coral.DBService.MusicUrlInfo[]) => {
     for (const info of urlInfo) {
       deleteStatement.run(info.id);
       insertStatement.run(info);
@@ -50,10 +50,10 @@ export const deleteMusicUrl = (ids: string[]) => {
  * 批量更新歌曲url
  * @param urlInfo 列表
  */
-// export const updateMusicUrl = (urlInfo: LX.DBService.MusicUrlInfo[]) => {
+// export const updateMusicUrl = (urlInfo: Coral.DBService.MusicUrlInfo[]) => {
 //   const db = getDB()
 //   const updateStatement = createUpdateStatement()
-//   db.transaction((urlInfo: LX.DBService.MusicUrlInfo[]) => {
+//   db.transaction((urlInfo: Coral.DBService.MusicUrlInfo[]) => {
 //     for (const info of urlInfo) updateStatement.run(info)
 //   })(urlInfo)
 // }

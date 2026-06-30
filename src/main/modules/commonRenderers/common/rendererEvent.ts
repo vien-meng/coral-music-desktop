@@ -4,15 +4,18 @@ import { getFonts } from '@main/utils/fontManage';
 
 // 公共操作事件（公共，只注册一次）
 export default () => {
-  mainHandle<LX.AppSetting>(CMMON_EVENT_NAME.get_app_setting, async () => global.lx.appSetting);
-  mainHandle<Partial<LX.AppSetting>>(
+  mainHandle<Coral.AppSetting>(
+    CMMON_EVENT_NAME.get_app_setting,
+    async () => global.coral.appSetting,
+  );
+  mainHandle<Partial<Coral.AppSetting>>(
     CMMON_EVENT_NAME.set_app_setting,
     async ({ params: config }) => {
-      global.lx.event_app.update_config(config);
+      global.coral.event_app.update_config(config);
     },
   );
 
-  mainHandle<LX.EnvParams>(CMMON_EVENT_NAME.get_env_params, async () => global.envParams);
+  mainHandle<Coral.EnvParams>(CMMON_EVENT_NAME.get_env_params, async () => global.envParams);
 
   mainOn(CMMON_EVENT_NAME.clear_env_params_deeplink, () => {
     global.envParams.deeplink = null;

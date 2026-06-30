@@ -87,7 +87,7 @@ export const saveStrToFile = async (filePath: string, content: string | Buffer):
   await getFsPromises().writeFile(filePath, content);
 };
 
-export const saveLxConfigFile = async (filePath: string, data: unknown): Promise<void> => {
+export const saveCoralConfigFile = async (filePath: string, data: unknown): Promise<void> => {
   const targetPath = filePath.endsWith('.lxmc') ? filePath : `${filePath}.lxmc`;
   const content = await new Promise<Buffer>((resolve, reject) => {
     getZlib().gzip(JSON.stringify(data), (error, result) => {
@@ -98,7 +98,7 @@ export const saveLxConfigFile = async (filePath: string, data: unknown): Promise
   await getFsPromises().writeFile(targetPath, content);
 };
 
-export const readLxConfigFile = async (filePath: string): Promise<unknown> => {
+export const readCoralConfigFile = async (filePath: string): Promise<unknown> => {
   const isJSON = filePath.endsWith('.json');
   const rawContent = await getFsPromises().readFile(filePath, isJSON ? 'utf8' : undefined);
   if (!rawContent) return rawContent;

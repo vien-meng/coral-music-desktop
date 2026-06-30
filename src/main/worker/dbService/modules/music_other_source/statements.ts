@@ -20,7 +20,7 @@ export const createMusicInfoQueryStatement = () => {
  */
 export const createMusicInfoInsertStatement = () => {
   const db = getDB();
-  return db.prepare<[LX.DBService.MusicInfoOtherSource]>(`
+  return db.prepare<[Coral.DBService.MusicInfoOtherSource]>(`
     INSERT INTO "main"."music_info_other_source" ("id", "name", "singer", "source", "meta", "source_id", "order")
     VALUES (@id, @name, @singer, @source, @meta, @source_id, @order)
   `);

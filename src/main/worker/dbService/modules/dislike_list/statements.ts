@@ -19,7 +19,7 @@ export const createQueryStatement = () => {
  */
 export const createInsertStatement = () => {
   const db = getDB();
-  return db.prepare<[LX.DBService.DislikeInfo]>(`
+  return db.prepare<[Coral.DBService.DislikeInfo]>(`
     INSERT INTO "main"."dislike_list" ("type", "content")
     VALUES ('music', @content)`);
 };
@@ -53,7 +53,7 @@ export const createClearStatement = () => {
 //  */
 // export const createUpdateStatement = () => {
 //   const db = getDB()
-//   return db.prepare<[LX.DBService.DislikeInfo]>(`
+//   return db.prepare<[Coral.DBService.DislikeInfo]>(`
 //     UPDATE "main"."dislike_list"
 //     SET "name"=@name, "singer"=@singer
 //     WHERE "id"=@id

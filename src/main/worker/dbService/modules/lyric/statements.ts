@@ -35,7 +35,7 @@ export const createRawLyricQueryStatement = () => {
  */
 export const createRawLyricInsertStatement = () => {
   const db = getDB();
-  return db.prepare<[LX.DBService.Lyricnfo]>(`
+  return db.prepare<[Coral.DBService.Lyricnfo]>(`
     INSERT INTO "main"."lyric" ("id", "type", "text", "source")
     VALUES (@id, @type, @text, '${RAW_LYRIC}')`);
 };
@@ -70,7 +70,7 @@ export const createRawLyricDeleteStatement = () => {
  */
 export const createRawLyricUpdateStatement = () => {
   const db = getDB();
-  return db.prepare<[LX.DBService.Lyricnfo]>(`
+  return db.prepare<[Coral.DBService.Lyricnfo]>(`
     UPDATE "main"."lyric"
     SET "text"=@text
     WHERE "id"=@id AND "source"='${RAW_LYRIC}' AND "type"=@type`);
@@ -106,7 +106,7 @@ export const createEditedLyricQueryStatement = () => {
  */
 export const createEditedLyricInsertStatement = () => {
   const db = getDB();
-  return db.prepare<[LX.DBService.Lyricnfo]>(`
+  return db.prepare<[Coral.DBService.Lyricnfo]>(`
     INSERT INTO "main"."lyric" ("id", "type", "text", "source")
     VALUES (@id, @type, @text, '${EDITED_LYRIC}')`);
 };
@@ -141,7 +141,7 @@ export const createEditedLyricDeleteStatement = () => {
  */
 export const createEditedLyricUpdateStatement = () => {
   const db = getDB();
-  return db.prepare<[LX.DBService.Lyricnfo]>(`
+  return db.prepare<[Coral.DBService.Lyricnfo]>(`
     UPDATE "main"."lyric"
     SET "text"=@text
     WHERE "id"=@id AND "source"='${EDITED_LYRIC}' AND "type"=@type`);

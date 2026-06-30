@@ -1,6 +1,6 @@
 // import './app_setting'
 
-declare namespace LX {
+declare namespace Coral {
   interface CmdParams {
     /**
      * 搜索，启动软件时自动在搜索框搜索指定的内容，例如：-search="突然的自我 - 伍佰"
@@ -46,7 +46,7 @@ declare namespace LX {
   }
 
   type OnlineSource = 'kw' | 'kg' | 'tx' | 'wy' | 'mg' | 'git';
-  type Source = OnlineSource | 'local';
+  type Source = OnlineSource | 'local' | 'webdav';
   type Quality =
     | '128k'
     | '320k'
@@ -60,7 +60,7 @@ declare namespace LX {
     | 'atmos_plus'
     | 'master';
 
-  type QualityList = Partial<Record<LX.Source, LX.Quality[]>>;
+  type QualityList = Partial<Record<Coral.Source, Coral.Quality[]>>;
 
   interface EnvParams {
     deeplink?: string | null;

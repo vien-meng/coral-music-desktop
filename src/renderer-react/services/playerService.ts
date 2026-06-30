@@ -19,7 +19,7 @@ export type {
   PlayerStatusListener,
 } from './playerRuntime/types';
 
-export const playMusic = (musicInfo?: LX.Music.MusicInfo): void => {
+export const playMusic = (musicInfo?: Coral.Music.MusicInfo): void => {
   if (!isElectronRenderer()) return;
   if (musicInfo) ipcClient.send(ipcChannels.player.invokePlayMusic, musicInfo);
   else ipcClient.send(ipcChannels.player.invokePlayMusic);
@@ -40,7 +40,7 @@ export const togglePlay = (): void => {
   ipcClient.send(ipcChannels.player.invokeTogglePlay);
 };
 
-export const sendPlayerStatus = (status: Partial<LX.Player.Status>): void => {
+export const sendPlayerStatus = (status: Partial<Coral.Player.Status>): void => {
   if (!isElectronRenderer()) return;
   ipcClient.send(ipcChannels.winMain.playerStatus, status);
 };
@@ -76,7 +76,7 @@ class IpcPlayerRuntimeBridge implements PlayerRuntimeBridge {
     if (!musicInfo) playMusic();
     else if (!('progress' in musicInfo)) {
       // IPC 传输需要普通对象，MobX observable 无法被 structured clone
-      playMusic(JSON.parse(JSON.stringify(musicInfo)) as LX.Music.MusicInfo);
+      playMusic(JSON.parse(JSON.stringify(musicInfo)) as Coral.Music.MusicInfo);
     }
     this.backend.playMusic(musicInfo, options);
   }

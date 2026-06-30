@@ -67,7 +67,7 @@ export const getFontSizeWithScreen = (screenWidth: number = window.innerWidth): 
           ? 20
           : 22;
 
-export const deduplicationList = <T extends LX.Music.MusicInfo>(list: T[]): T[] => {
+export const deduplicationList = <T extends Coral.Music.MusicInfo>(list: T[]): T[] => {
   const ids = new Set<string>();
   return list.filter((s) => {
     if (ids.has(s.id)) return false;

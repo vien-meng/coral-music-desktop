@@ -29,9 +29,9 @@ export class ListStore {
 
   selectedListId: string | null = null;
 
-  selectedMusics: LX.Music.MusicInfo[] = [];
+  selectedMusics: Coral.Music.MusicInfo[] = [];
 
-  userLists: LX.List.UserListInfo[] = [];
+  userLists: Coral.List.UserListInfo[] = [];
 
   constructor() {
     makeAutoObservable(
@@ -48,7 +48,7 @@ export class ListStore {
     return this.userLists.length;
   }
 
-  get selectedList(): LX.List.UserListInfo | null {
+  get selectedList(): Coral.List.UserListInfo | null {
     return this.userLists.find((list) => list.id === this.selectedListId) ?? null;
   }
 
@@ -99,8 +99,8 @@ export class ListStore {
 
   async addMusicsToList(
     listId: string,
-    musicInfos: LX.Music.MusicInfo[],
-    addMusicLocationType: LX.AddMusicLocationType,
+    musicInfos: Coral.Music.MusicInfo[],
+    addMusicLocationType: Coral.AddMusicLocationType,
   ): Promise<void> {
     this.isAddingMusic = true;
     this.actionError = null;
@@ -116,8 +116,8 @@ export class ListStore {
 
   async copyMusicsToList(
     targetListId: string,
-    musicInfos: LX.Music.MusicInfo[],
-    addMusicLocationType: LX.AddMusicLocationType,
+    musicInfos: Coral.Music.MusicInfo[],
+    addMusicLocationType: Coral.AddMusicLocationType,
   ): Promise<void> {
     if (!targetListId || !musicInfos.length) return;
 
@@ -135,8 +135,8 @@ export class ListStore {
 
   async moveMusicsToList(
     targetListId: string,
-    musicInfos: LX.Music.MusicInfo[],
-    addMusicLocationType: LX.AddMusicLocationType,
+    musicInfos: Coral.Music.MusicInfo[],
+    addMusicLocationType: Coral.AddMusicLocationType,
   ): Promise<void> {
     const sourceListId = this.selectedListId;
     if (!sourceListId || !targetListId || sourceListId === targetListId || !musicInfos.length)
@@ -181,7 +181,7 @@ export class ListStore {
 
   async importListPart(
     filePath: string,
-    addMusicLocationType: LX.AddMusicLocationType,
+    addMusicLocationType: Coral.AddMusicLocationType,
   ): Promise<void> {
     if (!filePath) return;
 
@@ -209,7 +209,7 @@ export class ListStore {
 
   async importLocalAudioPaths(
     inputPaths: string[],
-    addMusicLocationType: LX.AddMusicLocationType,
+    addMusicLocationType: Coral.AddMusicLocationType,
     options: LocalAudioImportOptions = {},
   ): Promise<LocalAudioImportResult | null> {
     const listId = this.selectedListId;
@@ -249,7 +249,7 @@ export class ListStore {
 
   async moveSelectedMusicsToPosition(
     position: number,
-    musicInfos: LX.Music.MusicInfo[],
+    musicInfos: Coral.Music.MusicInfo[],
   ): Promise<void> {
     const listId = this.selectedListId;
     if (!listId || !musicInfos.length) return;
@@ -278,7 +278,7 @@ export class ListStore {
     }
   }
 
-  async replaceSelectedMusicOrder(musicInfos: LX.Music.MusicInfo[]): Promise<void> {
+  async replaceSelectedMusicOrder(musicInfos: Coral.Music.MusicInfo[]): Promise<void> {
     const listId = this.selectedListId;
     if (!listId || musicInfos.length !== this.selectedMusics.length) return;
 
@@ -300,7 +300,7 @@ export class ListStore {
 
   async replaceSelectedListMusic(
     oldMusicId: string,
-    newMusicInfo: LX.Music.MusicInfo,
+    newMusicInfo: Coral.Music.MusicInfo,
     removeDuplicateTarget: boolean,
   ): Promise<void> {
     const listId = this.selectedListId;
@@ -349,7 +349,7 @@ export class ListStore {
     this.isMutatingList = true;
     this.actionError = null;
 
-    const listInfo: LX.List.UserListInfo = {
+    const listInfo: Coral.List.UserListInfo = {
       id: `userlist_${Date.now()}`,
       locationUpdateTime: null,
       name: listName,

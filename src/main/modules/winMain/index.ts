@@ -18,8 +18,8 @@ export default () => {
   initRendererEvent();
   initUpdate();
 
-  global.lx.event_app.on('hot_key_down', ({ type, key }) => {
-    let info = global.lx.hotKey.config.global.keys[key];
+  global.coral.event_app.on('hot_key_down', ({ type, key }) => {
+    let info = global.coral.hotKey.config.global.keys[key];
     if (info?.type != APP_EVENT_NAMES.winMainName) return;
     switch (info.action) {
       case HOTKEY_COMMON.close.action:
@@ -39,16 +39,16 @@ export default () => {
         break;
     }
   });
-  global.lx.event_app.on('hot_key_config_update', (config) => {
+  global.coral.event_app.on('hot_key_config_update', (config) => {
     hotKeyConfigUpdate(config);
   });
 
-  global.lx.event_app.on('app_inited', () => {
+  global.coral.event_app.on('app_inited', () => {
     createWindow();
   });
 
-  const keys = ['status', 'collect'] as const satisfies Array<keyof LX.Player.Status>;
-  const taskBarButtonFlags: LX.TaskBarButtonFlags = {
+  const keys = ['status', 'collect'] as const satisfies Array<keyof Coral.Player.Status>;
+  const taskBarButtonFlags: Coral.TaskBarButtonFlags = {
     empty: true,
     collect: false,
     play: false,
@@ -59,8 +59,8 @@ export default () => {
     progress: -1,
     status: 'none' as Electron.ProgressBarOptions['mode'],
   };
-  let showProgress = global.lx.appSetting['player.isShowTaskProgess'];
-  global.lx.event_app.on('player_status', (status) => {
+  let showProgress = global.coral.appSetting['player.isShowTaskProgess'];
+  global.coral.event_app.on('player_status', (status) => {
     if (status.status) {
       switch (status.status) {
         case 'paused':
@@ -96,8 +96,8 @@ export default () => {
       setThumbarButtons(taskBarButtonFlags);
     }
     if (showProgress && status.progress != null) {
-      const progress = global.lx.player_status.duration
-        ? status.progress / global.lx.player_status.duration
+      const progress = global.coral.player_status.duration
+        ? status.progress / global.coral.player_status.duration
         : 0;
       if (progress.toFixed(2) != progressStatus.progress.toFixed(2)) {
         progressStatus.progress = progress < 0.01 ? 0.01 : progress;
@@ -107,7 +107,7 @@ export default () => {
       }
     }
   });
-  global.lx.event_app.on('updated_config', (keys, setting) => {
+  global.coral.event_app.on('updated_config', (keys, setting) => {
     if (keys.includes('player.isShowTaskProgess')) {
       showProgress = setting['player.isShowTaskProgess']!;
       if (showProgress) {
@@ -120,7 +120,7 @@ export default () => {
     }
     if (
       keys.includes('network.proxy.enable') ||
-      (global.lx.appSetting['network.proxy.enable'] &&
+      (global.coral.appSetting['network.proxy.enable'] &&
         keys.some((k) => k.includes('network.proxy.')))
     ) {
       setProxy();

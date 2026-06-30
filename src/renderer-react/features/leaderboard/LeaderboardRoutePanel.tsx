@@ -112,7 +112,7 @@ export const LeaderboardRoutePanel = observer(() => {
         <Alert
           showIcon
           type="error"
-          message={leaderboard.detailError}
+          title={leaderboard.detailError}
           closable
           style={{ margin: '0 15px 8px', flex: 'none' }}
         />
@@ -121,7 +121,7 @@ export const LeaderboardRoutePanel = observer(() => {
         <Alert
           showIcon
           type="error"
-          message={list.actionError}
+          title={list.actionError}
           closable
           style={{ margin: '0 15px 8px', flex: 'none' }}
         />

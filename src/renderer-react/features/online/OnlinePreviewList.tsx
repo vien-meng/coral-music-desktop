@@ -23,7 +23,7 @@ export interface OnlineSongListPreviewItem {
   img?: string;
   name: string;
   play_count: string;
-  source: LX.OnlineSource;
+  source: Coral.OnlineSource;
   total?: string;
 }
 
@@ -37,10 +37,10 @@ export interface OnlinePagerProps {
 }
 
 export interface OnlineMusicPreviewListProps {
-  actions?: (item: LX.Music.MusicInfo) => ReactNode[];
+  actions?: (item: Coral.Music.MusicInfo) => ReactNode[];
   empty?: ReactNode;
   emptyText: string;
-  list: LX.Music.MusicInfo[];
+  list: Coral.Music.MusicInfo[];
 }
 
 export interface OnlineSongListPreviewListProps<

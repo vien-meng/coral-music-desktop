@@ -19,7 +19,7 @@
 - `src/common/ipcNames.ts`: all IPC channel names, grouped by common, player/list, dislike, winMain, winLyric, and hotKey.
 - `src/common/mainIpc.ts` and `rendererIpc.ts`: thin typed overload wrappers around Electron IPC.
 - `src/common/theme/`: built-in theme JSON, images, color utilities, and theme generation.
-- `src/common/types/`: global `LX.*` domain types for settings, music, lists, download, sync, openAPI, userApi, player, theme, IPC, and desktop lyric.
+- `src/common/types/`: global `Coral.*` domain types for settings, music, lists, download, sync, openAPI, userApi, player, theme, IPC, and desktop lyric.
 - `src/common/utils/`: shared utilities, request clients, Electron helpers, migration helpers, lyric utilities, pinyin, music metadata, and Vue helpers.
 
 ## Main Process
@@ -56,7 +56,7 @@
 
 - `src/main/worker/index.ts`: exposes `dbService`.
 - `src/main/worker/utils/`: Comlink worker-thread bridge.
-- `src/main/worker/dbService/db.ts`: opens/creates `lx.data.db`, uses native `better_sqlite3.node`, runs migrations and verification.
+- `src/main/worker/dbService/db.ts`: opens/creates `coral.data.db`, uses native `better_sqlite3.node`, runs migrations and verification.
 - `src/main/worker/dbService/tables.ts`: schema version `2`; tables for db info, lists, list music/order, other source, lyric, music URL, download list, dislike list.
 - `modules/list`: user lists and list music CRUD, ordering, overwrite, existence checks; keeps in-memory list caches.
 - `modules/lyric`: raw/edited lyric get/save/remove/count, stores text as base64.
@@ -77,7 +77,7 @@
 - `src/renderer/main.ts`: Vue app bootstrap, settings/language init, router, plugins, workers, global components.
 - `src/renderer/App.vue`: main shell layout and global modal composition.
 - `src/renderer/router.ts`: hash routes for search, song list, leaderboard, local list, download, and settings.
-- `src/renderer/core/globalData.ts`: creates `window.lx`, `window.lxData`, renderer workers, and compatibility globals.
+- `src/renderer/core/globalData.ts`: creates `window.coral`, `window.coralData`, renderer workers, and compatibility globals.
 - `src/renderer/event/`: renderer-side app/key events.
 - `src/renderer/plugins/`: i18n, SVG icons, dialogs, tips, and player/audio plugin.
 
