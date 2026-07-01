@@ -1,6 +1,7 @@
 import {
   DesktopOutlined,
   CustomerServiceOutlined,
+  LoadingOutlined,
   PauseCircleOutlined,
   PlayCircleOutlined,
   StepBackwardOutlined,
@@ -106,16 +107,26 @@ export const PlayBar = observer(() => {
             aria-label="上一首"
             icon={<StepBackwardOutlined />}
             shape="circle"
+            disabled={player.isPreparingMusic}
             onClick={() => {
               player.playPrev();
             }}
           />
           <Button
-            aria-label={isPlaying ? '暂停' : '播放'}
-            icon={isPlaying ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+            aria-label={player.isPreparingMusic ? '转码中' : isPlaying ? '暂停' : '播放'}
+            icon={
+              player.isPreparingMusic ? (
+                <LoadingOutlined />
+              ) : isPlaying ? (
+                <PauseCircleOutlined />
+              ) : (
+                <PlayCircleOutlined />
+              )
+            }
             shape="circle"
             type="primary"
             size="large"
+            disabled={player.isPreparingMusic}
             onClick={() => {
               player.togglePlay();
             }}
@@ -124,6 +135,7 @@ export const PlayBar = observer(() => {
             aria-label="下一首"
             icon={<StepForwardOutlined />}
             shape="circle"
+            disabled={player.isPreparingMusic}
             onClick={() => {
               player.playNext();
             }}

@@ -54,14 +54,13 @@ record('playback capability constants are centralized', () => {
     read(file),
     [
       'nativeLocalAudioExtensions',
+      'internalAudioDecodeExtensions',
       'externalDecoderExtensions',
       'externalDecoderExtensionAliases',
-      'foobar2000DecoderPluginHints',
       'playbackCapabilityRoadmap',
       'normalizeAudioExtension',
       'isNativeLocalAudioExtension',
       'isExternalDecoderExtension',
-      'foo_input_sacd',
       'sadc',
     ],
     file,
@@ -77,9 +76,6 @@ record('app setting schema exposes local audio and decoder settings', () => {
       "'player.localAudio.scanDirs': string[]",
       "'player.localAudio.supportedExts': string[]",
       "'player.externalDecoder.enabled': boolean",
-      "'player.externalDecoder.provider': 'none' | 'foobar2000' | 'ffmpeg'",
-      "'player.externalDecoder.executablePath': string",
-      "'player.externalDecoder.pluginDirs': string[]",
       "'player.externalDecoder.preferredOutput': 'wav' | 'pcm'",
       "'player.externalDecoder.extensions': string[]",
       "'player.externalDecoder.timeoutMs': number",
@@ -97,13 +93,16 @@ record('default settings are conservative', () => {
     [
       "'player.localAudio.enabled': true",
       "'player.localAudio.scanDirs': []",
-      "'player.localAudio.supportedExts': ['mp3', 'flac', 'wav', 'm4a', 'aac', 'ogg', 'opus']",
-      "'player.externalDecoder.enabled': false",
-      "'player.externalDecoder.provider': 'none'",
-      "'player.externalDecoder.executablePath': ''",
-      "'player.externalDecoder.pluginDirs': []",
+      "'player.localAudio.supportedExts': [",
+      "'qoa'",
+      "'aiff'",
+      "'caf'",
+      "'webm'",
+      "'amr'",
+      "'wma'",
+      "'player.externalDecoder.enabled': true",
       "'player.externalDecoder.preferredOutput': 'wav'",
-      "'player.externalDecoder.extensions': ['dsf', 'dff', 'iso', 'sacd']",
+      "'player.externalDecoder.extensions': ['dsf', 'dff', 'alac', 'ac3']",
       "'player.externalDecoder.timeoutMs': 30_000",
       "'player.sourcePlugin.allowUserApi': true",
       "'player.sourcePlugin.preferUserApi': true",
@@ -180,7 +179,6 @@ record('external decoder probe is typed and non-executing', () => {
     [
       'ExternalDecoderProbeParams',
       'ExternalDecoderProbeResult',
-      'ExternalDecoderProbePathStatus',
       'ExternalDecoderTranscodeParams',
       'ExternalDecoderTranscodeResult',
     ],
@@ -205,30 +203,21 @@ record('external decoder probe is typed and non-executing', () => {
   );
   assertIncludes(
     read('src/main/modules/winMain/externalDecoderProbe.ts'),
-    [
-      'probeExternalDecoder',
-      '.stat(path)',
-      'FFmpeg will be resolved from PATH',
-      'isBareExecutableCommand',
-      'Foobar2000 component probing is Windows-focused',
-      'canProbe',
-    ],
+    ['probeExternalDecoder', "require('ffmpeg-static')", 'canProbe', 'executableExists'],
     'src/main/modules/winMain/externalDecoderProbe.ts',
   );
   assertIncludes(
     read('src/main/modules/winMain/externalDecoderRuntime.ts'),
     [
       'transcodeExternalDecoder',
-      "params.executablePath.trim() || 'ffmpeg'",
-      'isBareExecutableCommand',
+      "require('ffmpeg-static')",
+      'resolveBundledFfmpegPath',
+      'runFfmpeg',
       'spawn(',
-      'executablePath',
-      '未找到 FFmpeg',
-      'FFmpeg 无法执行',
       "'-i'",
       "'pcm_s16le'",
       'coral-decoder',
-      'Foobar2000 已支持路径探测',
+      '内嵌 FFmpeg',
       '外部解码超时',
     ],
     'src/main/modules/winMain/externalDecoderRuntime.ts',
@@ -256,24 +245,21 @@ record('external decoder probe is typed and non-executing', () => {
   );
 });
 
-record('local playback resolver routes native and external formats separately', () => {
+record('local playback resolver unifies local files through audio-decode', () => {
   const file = 'src/renderer-react/services/playerRuntime/musicUrlResolver.ts';
   assertIncludes(
     read(file),
     [
-      'isNativeLocalAudioExtension',
       'isExternalDecoderExtension',
       'resolveExternalDecodedLocalMusicUrl',
-      'canNativeAudioPlayExtension',
       'canDecodeLocalAudioExtension',
       'resolveInternalDecodedPath',
-      'localAudioMimeTypes',
-      'audio.canPlayType(type)',
-      'if (canDecodeLocalAudioExtension(extension)) return null',
+      'return null;',
       'if (internalDecoded) return internalDecoded',
       'decodedFilePath',
       'objectUrl',
       'externalDecoderService.transcodeExternalDecoder',
+      "decodeLocalAudioToObjectUrl(result.outputPath, 'wav')",
       '本地 ${extension.toUpperCase()} 文件需要外部解码器',
       '当前外部解码器未启用',
     ],
@@ -300,18 +286,18 @@ record('local playback resolver routes native and external formats separately', 
   assertIncludes(
     read('src/renderer-react/services/playerRuntime/localAudioDecodeService.ts'),
     [
-      '@wasm-audio-decoders/flac',
+      'decodeLocalAudio',
       'decodeLocalAudioToObjectUrl',
       'encodePcm16Wav',
-      'decodeWithFlacWasm',
-      "localDecoderExtensions = new Set(['flac'])",
+      'decodeViaMainProcess',
+      'internalAudioDecodeExtensions',
       'URL.createObjectURL',
     ],
     'src/renderer-react/services/playerRuntime/localAudioDecodeService.ts',
   );
   assertIncludes(
     read('src/renderer-react/stores/domains/playerStore.ts'),
-    ['needsExternalDecoder', 'FFmpeg|外部解码|解码器|DSD|SACD|WAV|PCM|foobar'],
+    ['needsExternalDecoder', 'FFmpeg|外部解码|解码器|DSD|SACD|WAV|PCM'],
     'src/renderer-react/stores/domains/playerStore.ts',
   );
   assertIncludes(
@@ -361,9 +347,15 @@ record('feature entrypoints remain visible for local files and source plugins', 
     [
       "'player.externalDecoder.preferredOutput': 'wav'",
       "{ label: 'PCM', value: 'pcm', disabled: true }",
-      '当前仅启用 WAV 输出',
+      '内嵌 FFmpeg',
+      '用户无需配置',
     ],
     'src/renderer-react/features/settings/SettingsRoutePanel.tsx',
+  );
+  assertIncludes(
+    read('build-config/build-pack.js'),
+    ['node_modules/ffmpeg-static'],
+    'build-config/build-pack.js',
   );
   assertIncludes(
     read('src/renderer-react/stores/domains/uiStore.ts'),

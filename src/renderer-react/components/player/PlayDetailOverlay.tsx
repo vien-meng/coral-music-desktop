@@ -7,6 +7,7 @@ import {
   FileTextOutlined,
   FullscreenExitOutlined,
   FullscreenOutlined,
+  LoadingOutlined,
   MinusOutlined,
   MessageOutlined,
   PauseCircleOutlined,
@@ -272,16 +273,26 @@ export const PlayDetailOverlay = observer(() => {
               icon={<StepBackwardOutlined />}
               shape="circle"
               size="large"
+              disabled={player.isPreparingMusic}
               onClick={() => {
                 player.playPrev();
               }}
             />
             <Button
-              aria-label={isPlaying ? '暂停' : '播放'}
-              icon={isPlaying ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+              aria-label={player.isPreparingMusic ? '转码中' : isPlaying ? '暂停' : '播放'}
+              icon={
+                player.isPreparingMusic ? (
+                  <LoadingOutlined />
+                ) : isPlaying ? (
+                  <PauseCircleOutlined />
+                ) : (
+                  <PlayCircleOutlined />
+                )
+              }
               shape="circle"
               size="large"
               type="primary"
+              disabled={player.isPreparingMusic}
               onClick={() => {
                 player.togglePlay();
               }}
@@ -291,6 +302,7 @@ export const PlayDetailOverlay = observer(() => {
               icon={<StepForwardOutlined />}
               shape="circle"
               size="large"
+              disabled={player.isPreparingMusic}
               onClick={() => {
                 player.playNext();
               }}

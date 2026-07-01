@@ -7,6 +7,7 @@ import {
   WIN_MAIN_RENDERER_EVENT_NAME,
 } from '@common/ipcNames';
 import type {
+  DecodedAudioData,
   ExternalDecoderProbeParams,
   ExternalDecoderProbeResult,
   ExternalDecoderTranscodeParams,
@@ -199,6 +200,7 @@ export const ipcChannels = {
     max: WIN_MAIN_RENDERER_EVENT_NAME.max as 'winMain_max',
     fullscreen: WIN_MAIN_RENDERER_EVENT_NAME.fullscreen as 'winMain_fullscreen',
     setWindowSize: WIN_MAIN_RENDERER_EVENT_NAME.set_window_size as 'winMain_set_window_size',
+    decodeLocalAudio: WIN_MAIN_RENDERER_EVENT_NAME.decode_local_audio as 'winMain_decode_local_audio',
   },
   winLyric: {
     getConfig: WIN_LYRIC_RENDERER_EVENT_NAME.get_config as 'winLyric_get_config',
@@ -417,6 +419,9 @@ export interface CoralIpcInvokeMap {
   [ipcChannels.winMain.fullscreen]: IpcContract<boolean, boolean>;
   [ipcChannels.winLyric.getConfig]: IpcContract<undefined, Coral.DesktopLyric.Config>;
   [ipcChannels.winLyric.setConfig]: IpcContract<Partial<Coral.DesktopLyric.Config>, void>;
+
+  // 音频解码：渲染进程 → 主进程，避免 audio-decode 中 createRequire 在 Vite 打包后不可用
+  [ipcChannels.winMain.decodeLocalAudio]: IpcContract<Uint8Array, DecodedAudioData>;
 }
 
 export interface CoralIpcSendMap {

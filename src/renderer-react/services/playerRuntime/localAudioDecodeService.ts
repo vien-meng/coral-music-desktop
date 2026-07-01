@@ -1,4 +1,10 @@
-import type { FLACDecoder as FLACDecoderClass } from '@wasm-audio-decoders/flac';
+import {
+  internalAudioDecodeExtensions,
+  normalizeAudioExtension,
+  type DecodedAudioData,
+} from '@shared/playbackCapabilities';
+import { ipcChannels } from '@shared/ipc/contracts';
+import { ipcClient } from '../ipc/client';
 import { readFile } from '../nodeBridgeService';
 
 export interface DecodedAudioObjectUrl {
@@ -7,20 +13,7 @@ export interface DecodedAudioObjectUrl {
   url: string;
 }
 
-export interface DecodedAudioData {
-  channelData: Float32Array[];
-  sampleRate: number;
-}
-
-const localDecoderExtensions = new Set(['flac']);
-
-let flacDecoderModulePromise: Promise<typeof import('@wasm-audio-decoders/flac')> | null = null;
-
-const loadFlacDecoder = async (): Promise<typeof FLACDecoderClass> => {
-  flacDecoderModulePromise ??= import('@wasm-audio-decoders/flac');
-  const module = await flacDecoderModulePromise;
-  return module.FLACDecoder;
-};
+const localDecoderExtensions = new Set<string>(internalAudioDecodeExtensions);
 
 const toArrayBuffer = (buffer: Buffer): ArrayBuffer => {
   const start = buffer.byteOffset;
@@ -73,23 +66,11 @@ const encodePcm16Wav = (audioData: DecodedAudioData): ArrayBuffer => {
   return buffer;
 };
 
-const decodeWithFlacWasm = async (data: Uint8Array): Promise<DecodedAudioData> => {
-  const FLACDecoder = await loadFlacDecoder();
-  const decoder = new FLACDecoder();
-  try {
-    await decoder.ready;
-    const decoded = await decoder.decodeFile(data);
-    return {
-      channelData: decoded.channelData,
-      sampleRate: decoded.sampleRate,
-    };
-  } finally {
-    decoder.free();
-  }
-};
+const decodeViaMainProcess = async (data: Uint8Array): Promise<DecodedAudioData> =>
+  await ipcClient.invoke(ipcChannels.winMain.decodeLocalAudio, data);
 
 export const canDecodeLocalAudioExtension = (extension: string): boolean =>
-  localDecoderExtensions.has(extension);
+  localDecoderExtensions.has(normalizeAudioExtension(extension));
 
 export const decodeLocalAudioToObjectUrl = async (
   filePath: string,
@@ -99,7 +80,7 @@ export const decodeLocalAudioToObjectUrl = async (
 
   const fileBuffer = await readFile(filePath);
   const data = new Uint8Array(toArrayBuffer(fileBuffer));
-  const decoded = await decodeWithFlacWasm(data);
+  const decoded = await decodeViaMainProcess(data);
   const wavBuffer = encodePcm16Wav(decoded);
   const blob = new Blob([wavBuffer], { type: 'audio/wav' });
   const objectUrl = URL.createObjectURL(blob);

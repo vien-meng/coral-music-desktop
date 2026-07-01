@@ -38,6 +38,7 @@ import {
   stopExclusiveAudioOutput,
 } from '../exclusiveAudioOutputService';
 import type {
+  DecodedAudioData,
   ExternalDecoderProbeParams,
   ExternalDecoderProbeResult,
   ExternalDecoderTranscodeParams,
@@ -48,6 +49,7 @@ import type {
   ExclusiveAudioOutputStartParams,
   ExclusiveAudioOutputStatus,
 } from '@shared/playbackCapabilities';
+import decodeLocalAudioBuffer from '../audioDecodeMain';
 
 export default () => {
   // 设置应用名称
@@ -159,6 +161,11 @@ export default () => {
   });
 
   mainHandle<number>(WIN_MAIN_RENDERER_EVENT_NAME.get_cache_size, async () => getCacheSize());
+
+  mainHandle<Uint8Array, DecodedAudioData>(
+    WIN_MAIN_RENDERER_EVENT_NAME.decode_local_audio,
+    async ({ params: buffer }) => decodeLocalAudioBuffer(buffer),
+  );
 
   mainOn(WIN_MAIN_RENDERER_EVENT_NAME.open_dev_tools, () => {
     toggleDevTools();

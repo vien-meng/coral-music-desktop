@@ -9,16 +9,32 @@ import {
 
 const MAX_STDERR_LENGTH = 4000;
 
-const isBareExecutableCommand = (executablePath: string): boolean =>
-  Boolean(executablePath.trim()) &&
-  !path.isAbsolute(executablePath) &&
-  !/[\\/]/.test(executablePath);
+/**
+ * Resolve the bundled ffmpeg-static binary path.
+ *
+ * In development, `require('ffmpeg-static')` returns the absolute path to the
+ * platform binary under node_modules. In a packaged app (asar: false), the
+ * node_modules tree is copied verbatim, so the same require resolves to the
+ * unpacked binary inside the app folder.
+ */
+const resolveBundledFfmpegPath = (): string => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require
+  const ffmpegStatic = require('ffmpeg-static') as string;
+  if (!ffmpegStatic) {
+    throw new Error('内嵌 FFmpeg 二进制未找到，请重新安装应用。');
+  }
+  // In packaged apps with asar:false the path points inside the app directory;
+  // fix the `app.asar` segment if it slipped in (harmless in asar:false builds).
+  return ffmpegStatic.replace('app.asar', 'app.asar.unpacked');
+};
 
 const assertFile = async (filePath: string, label: string): Promise<void> => {
   if (!filePath.trim()) throw new Error(`${label} path is empty.`);
 
   const stats = await fs.stat(filePath).catch(() => null);
-  if (!stats || stats.isDirectory()) throw new Error(`${label} path is not a file.`);
+  if (!stats || stats.isDirectory()) {
+    throw new Error(`${label} path is not a file (resolved: "${filePath}").`);
+  }
 };
 
 const createOutputPath = (inputPath: string): string => {
@@ -31,42 +47,26 @@ const createOutputPath = (inputPath: string): string => {
   return path.join(tempDir, `coral-decoder-${Date.now()}-${baseName}.wav`);
 };
 
-const runFfmpeg = async (
-  params: ExternalDecoderTranscodeParams,
-  outputPath: string,
+const runProcess = async (
+  executablePath: string,
+  args: string[],
+  timeoutMs: number,
+  messages: {
+    enoent: string;
+    eacces: string;
+    timeout: string;
+  },
 ): Promise<void> => {
-  if (params.output !== 'wav') {
-    throw new Error('当前播放器运行时只能播放外部解码后的 WAV 输出，请在设置里选择 WAV。');
-  }
-
   await new Promise<void>((resolve, reject) => {
     const stderrChunks: string[] = [];
-    const executablePath = params.executablePath.trim() || 'ffmpeg';
-    const child = spawn(
-      executablePath,
-      [
-        '-y',
-        '-hide_banner',
-        '-loglevel',
-        'error',
-        '-i',
-        params.inputPath,
-        '-vn',
-        '-acodec',
-        'pcm_s16le',
-        '-ar',
-        '44100',
-        outputPath,
-      ],
-      {
-        windowsHide: true,
-      },
-    );
+    const child = spawn(executablePath, args, {
+      windowsHide: true,
+    });
 
     const timeout = setTimeout(() => {
       child.kill('SIGKILL');
-      reject(new Error('外部解码超时，请检查文件、解码器路径或调大超时时间。'));
-    }, params.timeoutMs);
+      reject(new Error(messages.timeout));
+    }, timeoutMs);
 
     child.stderr.on('data', (chunk: Buffer) => {
       if (stderrChunks.join('').length < MAX_STDERR_LENGTH) {
@@ -76,18 +76,14 @@ const runFfmpeg = async (
     child.on('error', (error: NodeJS.ErrnoException) => {
       clearTimeout(timeout);
       if (error.code === 'ENOENT') {
-        reject(
-          new Error(
-            '未找到 FFmpeg，请先安装 FFmpeg，或在“设置 > 本地解码”填写 ffmpeg 可执行文件路径。',
-          ),
-        );
+        reject(new Error(messages.enoent));
         return;
       }
       if (error.code === 'EACCES') {
-        reject(new Error('FFmpeg 无法执行，请检查解码器路径的执行权限。'));
+        reject(new Error(messages.eacces));
         return;
       }
-      reject(new Error(error.message || 'FFmpeg 启动失败。'));
+      reject(new Error(error.message || '外部解码器启动失败。'));
     });
     child.on('close', (code) => {
       clearTimeout(timeout);
@@ -102,30 +98,50 @@ const runFfmpeg = async (
   });
 };
 
+const runFfmpeg = async (
+  params: ExternalDecoderTranscodeParams,
+  outputPath: string,
+): Promise<void> => {
+  if (params.output !== 'wav') {
+    throw new Error('当前播放器运行时只能播放外部解码后的 WAV 输出，请在设置里选择 WAV。');
+  }
+
+  const ffmpegPath = resolveBundledFfmpegPath();
+  await assertFile(ffmpegPath, 'FFmpeg 可执行文件');
+
+  await runProcess(
+    ffmpegPath,
+    [
+      '-y',
+      '-hide_banner',
+      '-loglevel',
+      'error',
+      '-i',
+      params.inputPath,
+      '-vn',
+      '-acodec',
+      'pcm_s16le',
+      '-ar',
+      '44100',
+      outputPath,
+    ],
+    params.timeoutMs,
+    {
+      eacces: 'FFmpeg 无法执行，请检查应用完整性或重新安装。',
+      enoent: '内嵌 FFmpeg 未找到，请重新安装应用。',
+      timeout: '外部解码超时，请检查文件或调大超时时间。',
+    },
+  );
+};
+
 export const transcodeExternalDecoder = async (
   params: ExternalDecoderTranscodeParams,
 ): Promise<ExternalDecoderTranscodeResult> => {
   await assertFile(params.inputPath, 'Input');
 
-  if (params.provider === 'none') {
-    throw new Error('外部解码器未启用。');
-  }
-
-  if (params.provider === 'foobar2000') {
-    await assertFile(params.executablePath, 'External decoder executable');
-    throw new Error(
-      'Foobar2000 已支持路径探测，但当前还没有可靠的无交互转码适配；请先使用 FFmpeg 作为外部解码器播放 DSD/SACD 文件。',
-    );
-  }
-
-  const executablePath = params.executablePath.trim() || 'ffmpeg';
-  if (!isBareExecutableCommand(executablePath)) {
-    await assertFile(executablePath, 'External decoder executable');
-  }
-
   const outputPath = createOutputPath(params.inputPath);
   try {
-    await runFfmpeg({ ...params, executablePath }, outputPath);
+    await runFfmpeg(params, outputPath);
     await assertFile(outputPath, 'Decoded output');
   } catch (error) {
     await fs.rm(outputPath, { force: true }).catch(() => {});

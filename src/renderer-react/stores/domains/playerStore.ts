@@ -7,6 +7,7 @@ import {
   type PlayerSoundEffectConfig,
   type PlayerRuntimeStatus,
 } from '../../services/playerService';
+import { isExternalDecoderLocalMusic } from '../../services/playerRuntime/musicUrlResolver';
 import { localAudioService } from '../../services/localAudioService';
 import { localLyricService } from '../../services/localLyricService';
 import { onlineMediaService } from '../../services/onlineMediaService';
@@ -82,6 +83,11 @@ export class PlayerStore {
 
   isPlaying = false;
 
+  /** 外部解码转码中（DFF/DSF 等），驱动播放按钮 loading */
+  isPreparingMusic = false;
+
+  private pendingMusic: PlayerRuntimeMusicInfo | null = null;
+
   isHydrated = false;
 
   playQueue: PlayerRuntimeMusicInfo[] = [];
@@ -131,6 +137,7 @@ export class PlayerStore {
       | 'enrichRequestId'
       | 'historyPlayMode'
       | 'library'
+      | 'pendingMusic'
       | 'runtime'
       | 'runtimeStatusDisposer'
       | 'settings'
@@ -142,6 +149,7 @@ export class PlayerStore {
         enrichRequestId: false,
         historyPlayMode: false,
         library: false,
+        pendingMusic: false,
         runtime: false,
         runtimeStatusDisposer: false,
         settings: false,
@@ -286,7 +294,7 @@ export class PlayerStore {
   }
 
   get needsExternalDecoder(): boolean {
-    return /FFmpeg|外部解码|解码器|DSD|SACD|WAV|PCM|foobar/i.test(this.errorText);
+    return /FFmpeg|外部解码|解码器|DSD|SACD|WAV|PCM/i.test(this.errorText);
   }
 
   get lyricText(): string {
@@ -398,22 +406,34 @@ export class PlayerStore {
 
   playMusic(musicInfo?: PlayerRuntimeMusicInfo, options: PlayerRuntimePlayOptions = {}): void {
     if (musicInfo) {
-      this.currentMusic = musicInfo;
-      this.clearLyricSnapshot();
-      this.syncQueueIndex(musicInfo);
-      this.recordPlayedMusic(musicInfo);
-      this.library?.addPlayHistory(
-        'progress' in musicInfo ? musicInfo.metadata.musicInfo : musicInfo,
-        this.currentQueueId,
-      );
-      this.enrichCurrentLocalMusicInfo(musicInfo);
-      this.enrichCurrentLocalLyricInfo(musicInfo);
-      this.enrichCurrentOnlineMusicInfo(musicInfo);
+      // 外部解码转码耗时较长，延迟切换 currentMusic，等转码完成再切换播放界面信息
+      if (isExternalDecoderLocalMusic(musicInfo)) {
+        this.isPreparingMusic = true;
+        this.pendingMusic = musicInfo;
+        this.syncQueueIndex(musicInfo);
+        this.recordPlayedMusic(musicInfo);
+      } else {
+        this.commitMusicInfo(musicInfo);
+      }
     }
     this.runtime.playMusic(musicInfo, {
       preferredQuality: this.settings?.appSetting?.['player.playQuality'],
       ...options,
     });
+  }
+
+  private commitMusicInfo(musicInfo: PlayerRuntimeMusicInfo): void {
+    this.currentMusic = musicInfo;
+    this.clearLyricSnapshot();
+    this.syncQueueIndex(musicInfo);
+    this.recordPlayedMusic(musicInfo);
+    this.library?.addPlayHistory(
+      'progress' in musicInfo ? musicInfo.metadata.musicInfo : musicInfo,
+      this.currentQueueId,
+    );
+    this.enrichCurrentLocalMusicInfo(musicInfo);
+    this.enrichCurrentLocalLyricInfo(musicInfo);
+    this.enrichCurrentOnlineMusicInfo(musicInfo);
   }
 
   playNext(isAutoToggle = false): void {
@@ -588,6 +608,19 @@ export class PlayerStore {
   }
 
   private applyRuntimeStatus(status: PlayerRuntimeStatus): void {
+    // 外部解码转码完成或失败时，提交或清除 pendingMusic
+    if (typeof status.isPreparing === 'boolean') {
+      this.isPreparingMusic = status.isPreparing;
+      if (!status.isPreparing && this.pendingMusic) {
+        const pending = this.pendingMusic;
+        this.pendingMusic = null;
+        if (status.status !== 'error') this.commitMusicInfo(pending);
+      }
+    } else if (status.status === 'error' && this.pendingMusic) {
+      this.pendingMusic = null;
+      this.isPreparingMusic = false;
+    }
+
     this.setStatus(status);
 
     if (typeof status.progress === 'number') {

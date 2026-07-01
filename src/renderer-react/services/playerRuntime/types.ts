@@ -2,6 +2,8 @@ export type PlayerRuntimeStatus = Partial<Coral.Player.Status> & {
   actualQuality?: Coral.Quality;
   errorText?: string;
   isEnded?: boolean;
+  /** 外部解码转码中（DFF/DSF 等），用于驱动播放按钮 loading 状态 */
+  isPreparing?: boolean;
   /** 在线音频探测到的实际采样率 (Hz) */
   probeSampleRate?: number | null;
   /** 在线音频探测到的实际比特率 (bps) */

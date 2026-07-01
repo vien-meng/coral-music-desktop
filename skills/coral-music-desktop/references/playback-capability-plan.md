@@ -13,7 +13,7 @@ This plan extends the React/Electron migration with three new playback capabilit
 ### Local Audio Files
 
 - Keep `local` music items as first-class music records with `meta.filePath`, `meta.ext`, duration, title, artist, album, and artwork when available.
-- Play browser/Electron-native formats directly through the existing player runtime. The current native baseline is MP3, FLAC, WAV, M4A, AAC, OGG, and OPUS.
+- Play browser/Electron-native formats directly through the existing player runtime. When Electron cannot play a supported local format, fall back to the bundled `audio-decode` path and hand a WAV Blob URL to the existing runtime. The internal decode baseline is MP3, WAV, OGG/OGA Vorbis, FLAC, Opus, M4A/AAC/ALAC, QOA, AIFF, CAF, WebM, AMR, and WMA.
 - Add folder/file import and rescan workflows before building a large local-library manager.
 - Keep path access in the main process or existing Node bridge boundary; the React UI should not assume direct filesystem access.
 
@@ -75,8 +75,26 @@ Status: in progress on 2026-06-25.
 - Add decoder adapter probe smoke using a fake adapter executable in test mode.
 - Add User API source-plugin smoke around import, selection, and rollback.
 
+### Step 147: audio-decode Internal Decoder Expansion
+
+Status: implemented on 2026-07-01.
+
+- Replace the dedicated FLAC-only WASM dependency with `audio-decode` as the single in-app local decoder path.
+- Extend import/playback candidates to the `audio-decode` supported package set: MP3, WAV, OGG/OGA Vorbis, FLAC, Opus, M4A/AAC/ALAC, QOA, AIFF, CAF, WebM, AMR, and WMA.
+- Route all imported/downloaded local-file playback through `audio-decode` before playback so local format behavior is centralized and no longer depends on Electron `Audio.canPlayType()`.
+
+### Step 148: JustDSD DSD/DFF Adapter
+
+Status: implemented on 2026-07-01.
+
+- JustDSD is usable for Coral as a Java helper because it supports `.dsf`, `.dff`, SACD containers, PCM encoding, and DST decompression.
+- Do not bundle JustDSD into the renderer. It runs behind the existing external decoder boundary as a `justdsd` provider.
+- JustDSD is the default external decoder provider. Java and `jdsd-nodep.jar` paths are optional overrides; when left empty, Coral resolves bundled assets from `resources/justdsd`.
+- Coral ships a small Java source-file helper that uses JustDSD classes to export `.dsf`/`.dff`/`.iso`/`.sacd` to temporary WAV.
+- After JustDSD/FFmpeg produces a WAV, Coral still decodes that WAV through `audio-decode`, so the runtime path remains unified.
+
 ## Current Boundaries
 
-- The project already has local URL resolution for `source === 'local'`; this only covers formats Electron can play directly.
+- Local file playback now resolves through `audio-decode`; direct Electron local file playback is intentionally disabled for maintainability.
 - Foobar2000 integration is a future external adapter, not a direct in-process plugin loader.
 - The migrated Coral Music User API flow already exists and should be extended, not replaced.

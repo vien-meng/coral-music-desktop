@@ -60,9 +60,6 @@ export default defineConfig({
     port: parsePort(process.env.CORAL_RENDERER_DEV_PORT, 9080),
     strictPort: true,
   },
-  optimizeDeps: {
-    exclude: ['@wasm-audio-decoders/flac'],
-  },
   legacy: {
     inconsistentCjsInterop: true,
   },
