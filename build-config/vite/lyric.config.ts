@@ -29,10 +29,18 @@ const getManualChunk = (id: string): string | undefined => {
   return 'lyric-vendor';
 };
 
+const removeCrossoriginPlugin = () => ({
+  name: 'remove-crossorigin',
+  enforce: 'post',
+  transformIndexHtml(html: string) {
+    return html.replace(/\s+crossorigin(=["'][^"']*["'])?/gi, '');
+  },
+});
+
 export default defineConfig({
   root: path.join(projectRoot, 'src/lyric-react'),
   base: './',
-  plugins: [react()],
+  plugins: [react(), removeCrossoriginPlugin()],
   define: {
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV ?? 'development'),
   },

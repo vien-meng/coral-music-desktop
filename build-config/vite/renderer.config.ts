@@ -24,10 +24,19 @@ const getManualChunk = (id: string): string | undefined => {
   return 'vendor';
 };
 
+// 移除 Vite 生成的 crossorigin 属性，避免 file:// 协议下模块脚本加载失败
+const removeCrossoriginPlugin = () => ({
+  name: 'remove-crossorigin',
+  enforce: 'post',
+  transformIndexHtml(html: string) {
+    return html.replace(/\s+crossorigin(=["'][^"']*["'])?/gi, '');
+  },
+});
+
 export default defineConfig({
   root: path.join(projectRoot, 'src/renderer-react'),
   base: './',
-  plugins: [react()],
+  plugins: [react(), removeCrossoriginPlugin()],
   define: {
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV ?? 'development'),
   },
