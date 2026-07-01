@@ -3,6 +3,18 @@ import { userApiService } from './userApiService';
 
 type LegacyRuntimeState = typeof import('./musicSdk/sdk/runtimeState.js');
 
+interface WritableLegacyRuntimeState {
+  apiSource: {
+    value: string | null;
+  };
+  userApi: {
+    apis: Record<string, LegacyUserApiMusicSource>;
+    list: Coral.UserApi.UserApiInfo[];
+    message: string;
+    status: boolean;
+  };
+}
+
 interface LegacyMusicUrlResult {
   source: Coral.Source;
   action: 'musicUrl';
@@ -70,6 +82,9 @@ const loadRuntimeState = async (): Promise<LegacyRuntimeState> => {
   return await runtimeStatePromise;
 };
 
+const toWritableRuntimeState = (runtimeState: LegacyRuntimeState): WritableLegacyRuntimeState =>
+  runtimeState as unknown as WritableLegacyRuntimeState;
+
 const createUserApiMusicSource = (source: Coral.Source): LegacyUserApiMusicSource => ({
   getLyric(musicInfo, isGetLyricx) {
     return {
@@ -133,16 +148,17 @@ const applyUserApiRuntime = async (
   runtimeState: LegacyRuntimeState,
   apiInfo: Coral.UserApi.UserApiInfo,
 ): Promise<void> => {
+  const writableRuntimeState = toWritableRuntimeState(runtimeState);
   const apis: Record<string, LegacyUserApiMusicSource> = {};
   for (const [source, sourceInfo] of Object.entries(apiInfo.sources ?? {})) {
     if (sourceInfo.type !== 'music' || !sourceInfo.actions.includes('musicUrl')) continue;
     apis[source] = createUserApiMusicSource(source as Coral.Source);
   }
 
-  runtimeState.userApi.list = [apiInfo];
-  runtimeState.userApi.status = true;
-  runtimeState.userApi.message = '';
-  runtimeState.userApi.apis = apis;
+  writableRuntimeState.userApi.list = [apiInfo];
+  writableRuntimeState.userApi.status = true;
+  writableRuntimeState.userApi.message = '';
+  writableRuntimeState.userApi.apis = apis;
 };
 
 export interface MusicSdkRuntimeSyncOptions {
@@ -156,7 +172,7 @@ const syncMusicSdkRuntimeInternal = async ({
   const setting = await settingService.getAppSetting();
   const apiSource = setting?.['common.apiSource'] || 'temp';
 
-  runtimeState.apiSource.value = apiSource;
+  toWritableRuntimeState(runtimeState).apiSource.value = apiSource;
   if (!apiSource.startsWith('user_api')) {
     syncedApiSource = apiSource;
     return apiSource;

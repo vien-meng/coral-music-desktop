@@ -1,14 +1,10 @@
-export type ExternalDecoderProvider = 'none' | 'foobar2000' | 'ffmpeg';
 export type ExternalDecoderOutput = 'wav' | 'pcm';
 export type AudioOutputMode = 'system' | 'exclusive';
 export type ExclusiveAudioOutputBackend = 'wasapi';
 export type ExclusiveAudioSampleRatePolicy = 'source' | 'deviceDefault' | 'resample';
 
 export interface ExternalDecoderProbeParams {
-  executablePath: string;
   extensions: readonly string[];
-  pluginDirs: readonly string[];
-  provider: ExternalDecoderProvider;
 }
 
 export interface ExternalDecoderProbePathStatus {
@@ -24,17 +20,13 @@ export interface ExternalDecoderProbeResult {
   executablePath: string;
   missingExtensions: string[];
   platform: NodeJS.Platform;
-  pluginDirs: ExternalDecoderProbePathStatus[];
-  provider: ExternalDecoderProvider;
   supportedExtensions: string[];
   warnings: string[];
 }
 
 export interface ExternalDecoderTranscodeParams {
-  executablePath: string;
   inputPath: string;
   output: ExternalDecoderOutput;
-  provider: ExternalDecoderProvider;
   timeoutMs: number;
 }
 
@@ -42,6 +34,11 @@ export interface ExternalDecoderTranscodeResult {
   outputPath: string;
   output: ExternalDecoderOutput;
   warnings: string[];
+}
+
+export interface DecodedAudioData {
+  channelData: Float32Array[];
+  sampleRate: number;
 }
 
 export interface ExclusiveAudioDevice {
@@ -96,40 +93,50 @@ export const nativeLocalAudioExtensions = [
   'm4a',
   'aac',
   'ogg',
+  'oga',
   'opus',
+  'qoa',
+  'aiff',
+  'aif',
+  'm4r',
+  'caf',
+  'webm',
+  'amr',
+  'wma',
 ] as const;
 
-export const externalDecoderExtensions = ['dsf', 'dff', 'iso', 'sacd'] as const;
+export const internalAudioDecodeExtensions = [
+  'mp3',
+  'wav',
+  'ogg',
+  'oga',
+  'flac',
+  'opus',
+  'm4a',
+  'aac',
+  'qoa',
+  'aiff',
+  'aif',
+  'm4r',
+  'caf',
+  'webm',
+  'amr',
+  'wma',
+] as const;
+
+export const externalDecoderExtensions = ['dsf', 'dff', 'alac', 'ac3'] as const;
 
 export const externalDecoderExtensionAliases = {
   sadc: 'sacd',
 } as const;
 
-export const foobar2000DecoderPluginHints = [
-  {
-    id: 'flac',
-    formats: ['flac'],
-    purpose: 'FLAC input support when the platform runtime cannot decode it natively.',
-  },
-  {
-    id: 'foo_input_sacd',
-    formats: ['dsf', 'dff', 'iso', 'sacd'],
-    purpose: 'DSD and SACD input support through an external Foobar2000 process.',
-  },
-  {
-    id: 'foo_input_dsdiff',
-    formats: ['dff'],
-    purpose: 'DSDIFF input support through an external Foobar2000 process.',
-  },
-] as const;
-
 export const playbackCapabilityRoadmap = {
   localAudio: {
     nativeExtensions: nativeLocalAudioExtensions,
+    internalDecodeExtensions: internalAudioDecodeExtensions,
     externalDecoderExtensions,
   },
   externalDecoder: {
-    supportedProviders: ['none', 'foobar2000', 'ffmpeg'] as const,
     preferredOutputs: ['wav', 'pcm'] as const,
   },
   audioOutput: {

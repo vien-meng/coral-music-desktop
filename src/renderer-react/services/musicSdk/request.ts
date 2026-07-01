@@ -152,7 +152,7 @@ const fetchData = async <T = unknown>(
     let s = Buffer.from(bHh, 'hex').toString();
     s = s.replace(s.substr(-1), '');
     s = Buffer.from(s, 'base64').toString();
-    const appVersion = process.versions.app;
+    const appVersion = process.versions.app ?? '0.0.0';
     const v = appVersion
       .split('-')[0]
       .split('.')

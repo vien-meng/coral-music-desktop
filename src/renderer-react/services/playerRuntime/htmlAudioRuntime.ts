@@ -1,6 +1,6 @@
-import { resolvePlayableMusicUrl } from './musicUrlResolver';
+import { resolvePlayableMusicUrl, isExternalDecoderLocalMusic } from './musicUrlResolver';
 import { probeAudioStreamInfo } from './audioHeaderProbe';
-import type { DecodedAudioData } from './localAudioDecodeService';
+import type { DecodedAudioData } from '@shared/playbackCapabilities';
 import { removeFile } from '../nodeBridgeService';
 import type {
   PlayerEqFrequency,
@@ -484,6 +484,10 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
     requestId: number,
     options: PlayerRuntimePlayOptions = {},
   ): Promise<void> {
+    // 外部解码转码（DFF/DSF/ALAC/AC3 等）耗时较长，发布 isPreparing 让 UI 显示 loading
+    const needsPreparing = isExternalDecoderLocalMusic(musicInfo);
+    if (needsPreparing) this.publish({ isPreparing: true });
+
     let resolved: Awaited<ReturnType<typeof resolvePlayableMusicUrl>> = null;
     try {
       resolved = await resolvePlayableMusicUrl(musicInfo, options);
@@ -492,6 +496,7 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
       console.error(err);
 
       this.publish({
+        ...(needsPreparing ? { isPreparing: false } : {}),
         errorText: err instanceof Error ? err.message : String(err),
         status: 'error',
       });
@@ -507,13 +512,17 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
     if (!resolved) {
       this.clearDecodedFile();
       this.clearObjectUrl();
-      this.publish({ status: 'stoped' });
+      this.publish({ ...(needsPreparing ? { isPreparing: false } : {}), status: 'stoped' });
       return;
     }
 
     this.currentMusic = resolved.musicInfo;
     this.publishMusicInfo(resolved.musicInfo);
-    this.publish({ actualQuality: resolved.quality, errorText: '' });
+    this.publish({
+      ...(needsPreparing ? { isPreparing: false } : {}),
+      actualQuality: resolved.quality,
+      errorText: '',
+    });
     this.clearDecodedFile(resolved.decodedFilePath);
     this.clearObjectUrl(resolved.objectUrl);
     this.currentDecodedFilePath = resolved.decodedFilePath ?? null;

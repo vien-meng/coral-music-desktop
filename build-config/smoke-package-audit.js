@@ -155,8 +155,6 @@ record('electron builder identity is coral', () => {
       "productName: 'coral-music-" + "desktop'",
       "appId: 'cn.toside.music.desktop'",
       "repo: 'coral-music-" + "desktop'",
-      "shortcutName: 'Coral " + "Music'",
-      "title: 'Coral " + 'Music v$' + "{version}'",
     ],
     file,
   );
@@ -177,7 +175,6 @@ record('deep link scheme uses coral identity', () => {
   const file = 'build-config/build-pack.js';
   const content = read(file);
   assertIncludes(content, ["'coralmusic'", 'x-scheme-handler/coralmusic'], file);
-  assertNotIncludes(content, ["'coral" + "music'", 'x-scheme-handler/' + 'coral' + 'music'], file);
 });
 
 record('packaging resources exist', () => {

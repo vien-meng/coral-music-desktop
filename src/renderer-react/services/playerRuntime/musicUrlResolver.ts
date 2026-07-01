@@ -1,9 +1,4 @@
-import { encodePath } from '@common/utils/common';
-import {
-  isExternalDecoderExtension,
-  isNativeLocalAudioExtension,
-  normalizeAudioExtension,
-} from '@shared/playbackCapabilities';
+import { isExternalDecoderExtension, normalizeAudioExtension } from '@shared/playbackCapabilities';
 import { cacheService } from '../cacheService';
 import { externalDecoderService } from '../externalDecoderService';
 import { musicSdkRuntime } from '../musicSdkRuntime';
@@ -14,25 +9,14 @@ import { createWebDavStreamUrl } from '../webDavService';
 import {
   canDecodeLocalAudioExtension,
   decodeLocalAudioToObjectUrl,
-  type DecodedAudioData,
 } from './localAudioDecodeService';
+import type { DecodedAudioData } from '@shared/playbackCapabilities';
 import type { PlayerRuntimeMusicInfo } from './types';
 
 const TOO_MANY_REQUESTS_MESSAGE = 'too many requests';
 
 const pendingOtherSourcePromises = new Map<string, Promise<Coral.Music.MusicInfoOnline[]>>();
 const otherSourceCache = new Map<string, Coral.Music.MusicInfoOnline[]>();
-const nativeAudioSupportCache = new Map<string, boolean>();
-
-const localAudioMimeTypes: Record<string, string[]> = {
-  aac: ['audio/aac', 'audio/mp4'],
-  flac: ['audio/flac', 'audio/x-flac'],
-  m4a: ['audio/mp4', 'audio/x-m4a'],
-  mp3: ['audio/mpeg'],
-  ogg: ['audio/ogg; codecs="vorbis"', 'audio/ogg'],
-  opus: ['audio/ogg; codecs="opus"', 'audio/opus'],
-  wav: ['audio/wav', 'audio/wave', 'audio/x-wav'],
-};
 
 interface MusicUrlResult {
   type: Coral.Quality;
@@ -73,29 +57,6 @@ const getFileExtension = (filePath: string): string => {
   const dotIndex = fileName.lastIndexOf('.');
   if (dotIndex < 0) return '';
   return normalizeAudioExtension(fileName.slice(dotIndex + 1));
-};
-
-const canNativeAudioPlayExtension = (extension: string): boolean => {
-  const normalized = normalizeAudioExtension(extension);
-  const cached = nativeAudioSupportCache.get(normalized);
-  if (cached != null) return cached;
-
-  if (!isNativeLocalAudioExtension(normalized)) {
-    nativeAudioSupportCache.set(normalized, false);
-    return false;
-  }
-
-  const AudioConstructor = globalThis.window?.Audio;
-  if (!AudioConstructor) {
-    nativeAudioSupportCache.set(normalized, false);
-    return false;
-  }
-
-  const audio = new AudioConstructor();
-  const mimeTypes = localAudioMimeTypes[normalized] ?? [`audio/${normalized}`];
-  const canPlay = mimeTypes.some((type) => audio.canPlayType(type) !== '');
-  nativeAudioSupportCache.set(normalized, canPlay);
-  return canPlay;
 };
 
 const toOldPlayableMusicInfo = (
@@ -202,25 +163,20 @@ export interface ResolvePlayableMusicUrlOptions {
 
 export const resolveLocalMusicUrl = (musicInfo?: PlayerRuntimeMusicInfo): string | null => {
   if (!musicInfo || isDownloadMusicInfo(musicInfo) || musicInfo.source !== 'local') return null;
-
-  const filePath = musicInfo.meta.filePath.trim();
-  if (!filePath) return null;
-  const extension = getFileExtension(filePath);
-  if (canDecodeLocalAudioExtension(extension)) return null;
-  if (!canNativeAudioPlayExtension(extension)) return null;
-
-  return encodePath(filePath);
+  return null;
 };
 
 export const canPlayWithLocalRuntime = (musicInfo?: PlayerRuntimeMusicInfo): boolean => {
   if (!musicInfo || isDownloadMusicInfo(musicInfo) || musicInfo.source !== 'local') return false;
 
   const extension = getFileExtension(musicInfo.meta.filePath);
-  return (
-    canNativeAudioPlayExtension(extension) ||
-    canDecodeLocalAudioExtension(extension) ||
-    isExternalDecoderExtension(extension)
-  );
+  return canDecodeLocalAudioExtension(extension) || isExternalDecoderExtension(extension);
+};
+
+/** 判断是否为需要外部解码器转码的本地音频（DFF/DSF/ALAC/AC3 等） */
+export const isExternalDecoderLocalMusic = (musicInfo?: PlayerRuntimeMusicInfo): boolean => {
+  if (!musicInfo || isDownloadMusicInfo(musicInfo) || musicInfo.source !== 'local') return false;
+  return isExternalDecoderExtension(getFileExtension(musicInfo.meta.filePath));
 };
 
 const resolveInternalDecodedPath = async (
@@ -244,7 +200,12 @@ const resolveInternalDecodedPath = async (
 
 const resolveExternalDecodedPath = async (
   filePath: string,
-): Promise<{ decodedFilePath: string; url: string } | null> => {
+): Promise<{
+  decodedAudio: DecodedAudioData;
+  decodedFilePath: string;
+  objectUrl: string;
+  url: string;
+} | null> => {
   const normalizedFilePath = filePath.trim();
   if (!normalizedFilePath) return null;
 
@@ -252,10 +213,7 @@ const resolveExternalDecodedPath = async (
   if (!isExternalDecoderExtension(extension)) return null;
 
   const setting = await settingService.getAppSetting();
-  if (
-    !setting?.['player.externalDecoder.enabled'] ||
-    setting['player.externalDecoder.provider'] === 'none'
-  ) {
+  if (!setting?.['player.externalDecoder.enabled']) {
     throw new Error(
       `本地 ${extension.toUpperCase()} 文件需要外部解码器，请在“设置 > 本地解码”启用 FFmpeg。`,
     );
@@ -270,24 +228,31 @@ const resolveExternalDecodedPath = async (
   }
 
   const result = await externalDecoderService.transcodeExternalDecoder({
-    executablePath:
-      setting['player.externalDecoder.executablePath'] ||
-      (setting['player.externalDecoder.provider'] === 'ffmpeg' ? 'ffmpeg' : ''),
     inputPath: normalizedFilePath,
     output: setting['player.externalDecoder.preferredOutput'],
-    provider: setting['player.externalDecoder.provider'],
     timeoutMs: setting['player.externalDecoder.timeoutMs'],
   });
+  const decodedOutput = await decodeLocalAudioToObjectUrl(result.outputPath, 'wav');
+  if (!decodedOutput) {
+    throw new Error('外部解码器已生成 WAV，但内部 audio-decode 无法读取输出文件。');
+  }
 
   return {
+    decodedAudio: decodedOutput.audioData,
     decodedFilePath: result.outputPath,
-    url: encodePath(result.outputPath),
+    objectUrl: decodedOutput.objectUrl,
+    url: decodedOutput.url,
   };
 };
 
 const resolveExternalDecodedLocalMusicUrl = async (
   musicInfo: PlayerRuntimeMusicInfo,
-): Promise<{ decodedFilePath: string; url: string } | null> => {
+): Promise<{
+  decodedAudio: DecodedAudioData;
+  decodedFilePath: string;
+  objectUrl: string;
+  url: string;
+} | null> => {
   if (isDownloadMusicInfo(musicInfo) || musicInfo.source !== 'local') return null;
   return resolveExternalDecodedPath(musicInfo.meta.filePath);
 };
@@ -304,13 +269,8 @@ export const resolveDownloadMusicUrl = async (
   if (isRefresh || !musicInfo.isComplate || /\.ape$/i.test(musicInfo.metadata.fileName))
     return null;
   if (musicInfo.metadata.filePath && (await checkPath(musicInfo.metadata.filePath))) {
-    const extension = getFileExtension(musicInfo.metadata.filePath);
     const internalDecoded = await resolveInternalDecodedPath(musicInfo.metadata.filePath);
     if (internalDecoded) return internalDecoded;
-
-    if (canNativeAudioPlayExtension(extension)) {
-      return { url: encodePath(musicInfo.metadata.filePath) };
-    }
 
     const decoded = await resolveExternalDecodedPath(musicInfo.metadata.filePath);
     if (decoded) return decoded;
@@ -543,6 +503,8 @@ export const resolvePlayableMusicUrl = async (
       if (decodedLocal) {
         return {
           decodedFilePath: decodedLocal.decodedFilePath,
+          objectUrl: decodedLocal.objectUrl,
+          decodedAudio: decodedLocal.decodedAudio,
           musicInfo,
           quality: '128k',
           source: 'local',

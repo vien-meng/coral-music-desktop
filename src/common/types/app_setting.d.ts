@@ -333,24 +333,9 @@ declare global {
       'player.localAudio.supportedExts': string[];
 
       /**
-       * 是否启用外部解码适配器
+       * 是否启用外部解码适配器（内嵌 FFmpeg，用户无需配置）
        */
       'player.externalDecoder.enabled': boolean;
-
-      /**
-       * 外部解码适配器提供方
-       */
-      'player.externalDecoder.provider': 'none' | 'foobar2000' | 'ffmpeg';
-
-      /**
-       * 外部解码器可执行文件路径
-       */
-      'player.externalDecoder.executablePath': string;
-
-      /**
-       * 外部解码插件目录
-       */
-      'player.externalDecoder.pluginDirs': string[];
 
       /**
        * 外部解码输出格式

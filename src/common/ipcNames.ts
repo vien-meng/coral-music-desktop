@@ -93,6 +93,7 @@ const modules = {
     update_not_available: 'update_not_available',
     set_ignore_mouse_events: 'set_ignore_mouse_events',
     set_window_size: 'set_window_size',
+    decode_local_audio: 'decode_local_audio',
 
     handle_request: 'handle_request',
     cancel_request: 'cancel_request',

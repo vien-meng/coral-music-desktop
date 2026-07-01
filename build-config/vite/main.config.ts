@@ -12,6 +12,16 @@ const external = [
   'bufferutil',
   'utf-8-validate',
   'qrc_decode.node',
+  // These 3 codecs use createRequire(import.meta.url)('./src/xxx.wasm.cjs') to load WASM.
+  // When bundled to CJS, import.meta.url is rewritten to __filename, breaking the relative
+  // path to the .wasm.cjs file. Keeping them external preserves ESM import.meta.url resolution.
+  '@audio/decode-aac',
+  '@audio/decode-amr',
+  '@audio/decode-wma',
+  // ffmpeg-static's index.js resolves its binary via path.join(__dirname, 'ffmpeg').
+  // Bundling it inlines __dirname as dist/, which breaks the path. Keep it external so
+  // Node's require resolves it from node_modules at runtime (works in dev and asar:false builds).
+  'ffmpeg-static',
   ...builtinModules,
   ...builtinModules.map((name) => `node:${name}`),
 ];

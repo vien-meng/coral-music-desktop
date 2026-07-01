@@ -18,9 +18,9 @@ interface BackupListInfo {
   id: string;
   list: Coral.Music.MusicInfo[];
   name?: string;
-  source?: string;
+  source?: Coral.OnlineSource;
   sourceListId?: string;
-  locationUpdateTime?: string | null;
+  locationUpdateTime?: number | string | null;
 }
 
 interface AllDataV2 {
@@ -75,6 +75,22 @@ const getAllLists = async (): Promise<BackupListInfo[]> => {
   return lists;
 };
 
+const normalizeLocationUpdateTime = (value: number | string | null | undefined): number | null => {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value !== 'string' || !value.trim()) return null;
+  const timestamp = Number(value);
+  return Number.isFinite(timestamp) ? timestamp : null;
+};
+
+const toUserListInfoFull = (list: BackupListInfo): Coral.List.UserListInfoFull => ({
+  id: list.id,
+  list: list.list,
+  name: list.name ?? '',
+  source: list.source,
+  sourceListId: list.sourceListId,
+  locationUpdateTime: normalizeLocationUpdateTime(list.locationUpdateTime),
+});
+
 const importOldListData = async (lists: BackupListInfo[]): Promise<void> => {
   const allLists = await getAllLists();
   for (const list of lists) {
@@ -88,13 +104,17 @@ const importOldListData = async (lists: BackupListInfo[]): Promise<void> => {
         list: filterMusicList(list.list.map((m) => toNewMusicInfo(m))),
         source: list.source,
         sourceListId: list.sourceListId,
-        locationUpdateTime: list.locationUpdateTime ?? null,
+        locationUpdateTime: normalizeLocationUpdateTime(list.locationUpdateTime),
       });
     }
   }
   const defaultList = allLists.shift()!.list;
   const loveList = allLists.shift()!.list;
-  await listService.overwriteListFull({ defaultList, loveList, userList: allLists });
+  await listService.overwriteListFull({
+    defaultList,
+    loveList,
+    userList: allLists.map(toUserListInfoFull),
+  });
 };
 
 const importNewListData = async (lists: BackupListInfo[]): Promise<void> => {
@@ -110,13 +130,17 @@ const importNewListData = async (lists: BackupListInfo[]): Promise<void> => {
         list: filterMusicList(list.list).map((m) => fixNewMusicInfoQuality(m)),
         source: list.source,
         sourceListId: list.sourceListId,
-        locationUpdateTime: list.locationUpdateTime ?? null,
+        locationUpdateTime: normalizeLocationUpdateTime(list.locationUpdateTime),
       });
     }
   }
   const defaultList = allLists.shift()!.list;
   const loveList = allLists.shift()!.list;
-  await listService.overwriteListFull({ defaultList, loveList, userList: allLists });
+  await listService.overwriteListFull({
+    defaultList,
+    loveList,
+    userList: allLists.map(toUserListInfoFull),
+  });
 };
 
 const importOldSettingData = (setting: Record<string, unknown>): void => {

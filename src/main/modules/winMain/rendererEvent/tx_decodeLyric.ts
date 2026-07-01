@@ -1,5 +1,5 @@
 import { createInflate, constants as zlibConstants } from 'node:zlib';
-// import path from 'path'
+import path from 'node:path';
 import { mainHandle } from '@common/mainIpc';
 import { WIN_MAIN_RENDERER_EVENT_NAME } from '@common/ipcNames';
 
@@ -38,11 +38,11 @@ const decode = async (str: string): Promise<string> => {
 // 感谢某位不愿透露姓名的大佬提供的C++算法源码，但由于作者不希望公开，所以将会以预构建二进制文件的形式加入代码仓库中
 const handleDecode = async (lrc: string, tlrc: string, rlrc: string) => {
   if (!qrc_decode) {
-    // const nativeBindingPath = path.join(__dirname, '../build/Release/qrc_decode.node')
-    // const nativeBindingPath = process.env.NODE_ENV !== 'production' ? path.join(__dirname, '../build/Release/qrc_decode.node')
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const addon = require('qrc_decode.node');
-    // console.log(addon)
+    // dev: dist/main.js → ../build/Release/qrc_decode.node
+    // prod: app/dist/main.js → ../build/Release/qrc_decode.node
+    const nativeBindingPath = path.join(__dirname, '../build/Release/qrc_decode.node');
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require
+    const addon = require(nativeBindingPath);
     qrc_decode = addon.qrc_decode;
   }
 
