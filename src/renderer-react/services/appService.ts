@@ -74,6 +74,11 @@ export const setFullscreen = async (isFullscreen: boolean): Promise<boolean> => 
 
 export const toggleFullscreen = setFullscreen;
 
+export const moveMainWindowTo = (x: number, y: number): void => {
+  if (!isElectronRenderer()) return;
+  ipcClient.send(ipcChannels.winMain.setWindowSize, { x: Math.round(x), y: Math.round(y) });
+};
+
 export const appService = {
   clearEnvParamsDeeplink,
   closeWindow,
@@ -81,6 +86,7 @@ export const appService = {
   isElectronRenderer,
   maximizeWindow,
   minWindow,
+  moveMainWindowTo,
   onDeeplink,
   openUrl,
   sendInited,

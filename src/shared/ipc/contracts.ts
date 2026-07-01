@@ -198,6 +198,7 @@ export const ipcChannels = {
     min: WIN_MAIN_RENDERER_EVENT_NAME.min as 'winMain_min',
     max: WIN_MAIN_RENDERER_EVENT_NAME.max as 'winMain_max',
     fullscreen: WIN_MAIN_RENDERER_EVENT_NAME.fullscreen as 'winMain_fullscreen',
+    setWindowSize: WIN_MAIN_RENDERER_EVENT_NAME.set_window_size as 'winMain_set_window_size',
   },
   winLyric: {
     getConfig: WIN_LYRIC_RENDERER_EVENT_NAME.get_config as 'winLyric_get_config',
@@ -425,6 +426,7 @@ export interface CoralIpcSendMap {
   [ipcChannels.player.invokePlayPrev]: undefined;
   [ipcChannels.player.invokeTogglePlay]: undefined;
   [ipcChannels.winMain.inited]: undefined;
+  [ipcChannels.winMain.setWindowSize]: Partial<Electron.Rectangle>;
   [ipcChannels.winMain.openDirInExplorer]: string;
   [ipcChannels.winMain.playerStatus]: Partial<Coral.Player.Status>;
   [ipcChannels.winMain.saveData]: IpcDataSaveParams;

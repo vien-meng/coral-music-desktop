@@ -31,7 +31,7 @@ import {
 import { observer } from 'mobx-react-lite';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { TRAY_AUTO_ID } from '@common/constants';
-import { sizeFormate } from '@common/utils/common';
+import { isUrl, sizeFormate } from '@common/utils/common';
 import { coralProjectLinks } from '@shared/brand';
 import {
   externalDecoderExtensions,
@@ -47,7 +47,7 @@ import { backupService } from '../../services/backupService';
 import { cacheService } from '../../services/cacheService';
 import { externalDecoderService } from '../../services/externalDecoderService';
 import { listService } from '../../services/listService';
-import { readFile } from '../../services/nodeBridgeService';
+import { basename, joinPath, readFile } from '../../services/nodeBridgeService';
 import { rootStore } from '../../stores/rootStore';
 import { DislikeListModal } from './DislikeListModal';
 import { HotKeySection } from './HotKeySection';
@@ -55,6 +55,34 @@ import { PlayTimeoutModal } from './PlayTimeoutModal';
 import { ThemeEditModal } from './ThemeEditModal';
 
 const { Text } = Typography;
+
+const toLocalFileUrl = (filePath: string): string => {
+  const encodedPath = encodeURI(filePath).replace(/#/g, '%23');
+  return `file://${encodedPath.startsWith('/') ? '' : '/'}${encodedPath}`;
+};
+
+const unwrapCssUrl = (value: string): string =>
+  value
+    .trim()
+    .replace(/^url\((.*)\)$/i, '$1')
+    .replace(/^['"]|['"]$/g, '');
+
+const getThemeBackgroundPreviewUrl = (
+  themeInfo: Coral.ThemeInfo | null,
+  theme: Coral.Theme,
+): string | null => {
+  if (!theme.isCustom) return null;
+
+  const backgroundImage = theme.config.extInfo?.['--background-image'];
+  if (!backgroundImage || backgroundImage === 'none') return null;
+
+  const imagePath = unwrapCssUrl(backgroundImage);
+  if (!imagePath || imagePath === 'none') return null;
+  if (isUrl(imagePath) || imagePath.startsWith('file://')) return imagePath;
+  if (!themeInfo?.dataPath) return null;
+
+  return toLocalFileUrl(joinPath(themeInfo.dataPath, basename(imagePath)));
+};
 
 type BooleanSettingKey = {
   [Key in keyof Coral.AppSetting]: Coral.AppSetting[Key] extends boolean ? Key : never;
@@ -230,6 +258,7 @@ interface ThemeSelectorModalProps {
   onSelectDark: (id: string) => void;
   onSelectLight: (id: string) => void;
   open: boolean;
+  themeInfo: Coral.ThemeInfo | null;
 }
 
 const ThemeSwatch = ({
@@ -237,6 +266,7 @@ const ThemeSwatch = ({
   name,
   onClick,
   onEdit,
+  previewUrl,
   primaryColor,
   onRemove,
 }: {
@@ -244,44 +274,64 @@ const ThemeSwatch = ({
   name: string;
   onClick: () => void;
   onEdit?: () => void;
+  previewUrl?: string | null;
   primaryColor: string;
   onRemove?: () => void;
-}) => (
-  <div
-    className={`coral-theme-swatch${active ? ' coral-theme-swatch-active' : ''}`}
-    onClick={onClick}
-    role="button"
-    tabIndex={0}
-    onKeyDown={(event) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        onClick();
-      }
-    }}
-  >
-    <div className="coral-theme-swatch-bg" style={{ backgroundColor: primaryColor }}>
-      {onEdit ? (
-        <EditOutlined
-          className="coral-theme-swatch-edit"
-          onClick={(event) => {
-            event.stopPropagation();
-            onEdit();
-          }}
-        />
-      ) : null}
-      {onRemove ? (
-        <DeleteOutlined
-          className="coral-theme-swatch-remove"
-          onClick={(event) => {
-            event.stopPropagation();
-            onRemove();
-          }}
-        />
-      ) : null}
+}) => {
+  const [isPreviewAvailable, setIsPreviewAvailable] = useState(Boolean(previewUrl));
+
+  useEffect(() => {
+    setIsPreviewAvailable(Boolean(previewUrl));
+  }, [previewUrl]);
+
+  return (
+    <div
+      className={`coral-theme-swatch${active ? ' coral-theme-swatch-active' : ''}`}
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onClick();
+        }
+      }}
+    >
+      <div className="coral-theme-swatch-bg" style={{ backgroundColor: primaryColor }}>
+        {previewUrl && isPreviewAvailable ? (
+          <img
+            className="coral-theme-swatch-image"
+            src={previewUrl}
+            alt=""
+            draggable={false}
+            onError={() => {
+              setIsPreviewAvailable(false);
+            }}
+          />
+        ) : null}
+        {onEdit ? (
+          <EditOutlined
+            className="coral-theme-swatch-edit"
+            onClick={(event) => {
+              event.stopPropagation();
+              onEdit();
+            }}
+          />
+        ) : null}
+        {onRemove ? (
+          <DeleteOutlined
+            className="coral-theme-swatch-remove"
+            onClick={(event) => {
+              event.stopPropagation();
+              onRemove();
+            }}
+          />
+        ) : null}
+      </div>
+      <div className="coral-theme-swatch-label">{name}</div>
     </div>
-    <div className="coral-theme-swatch-label">{name}</div>
-  </div>
-);
+  );
+};
 
 const ThemeSelectorModal = ({
   appSetting,
@@ -293,6 +343,7 @@ const ThemeSelectorModal = ({
   onSelectDark,
   onSelectLight,
   open,
+  themeInfo,
 }: ThemeSelectorModalProps) => (
   <Modal open={open} title="主题选择" onCancel={onClose} footer={null} width={520}>
     <div className="coral-theme-selector">
@@ -304,6 +355,7 @@ const ThemeSelectorModal = ({
               key={theme.id}
               active={appSetting['theme.lightId'] === theme.id}
               name={theme.isCustom ? theme.name : theme.name}
+              previewUrl={getThemeBackgroundPreviewUrl(themeInfo, theme)}
               primaryColor={theme.config.themeColors['--color-theme']}
               onClick={() => {
                 onSelectLight(theme.id);
@@ -334,6 +386,7 @@ const ThemeSelectorModal = ({
               key={theme.id}
               active={appSetting['theme.darkId'] === theme.id}
               name={theme.isCustom ? theme.name : theme.name}
+              previewUrl={getThemeBackgroundPreviewUrl(themeInfo, theme)}
               primaryColor={theme.config.themeColors['--color-theme']}
               onClick={() => {
                 onSelectDark(theme.id);
@@ -651,10 +704,11 @@ export const SettingsRoutePanel = observer(() => {
           ) : null}
           <Form.Item label="主题模式">
             <Radio.Group
-              value={theme.themeMode}
+              value={theme.themePreference}
               optionType="button"
               buttonStyle="solid"
               options={[
+                { label: '跟随系统', value: 'system' },
                 { label: '浅色', value: 'light' },
                 { label: '深色', value: 'dark' },
               ]}
@@ -2334,6 +2388,7 @@ export const SettingsRoutePanel = observer(() => {
           darkThemes={theme.darkThemes}
           lightThemes={theme.lightThemes}
           open={isThemeSelectorOpen}
+          themeInfo={theme.themeInfo}
           onClose={() => {
             setIsThemeSelectorOpen(false);
           }}
@@ -2347,9 +2402,11 @@ export const SettingsRoutePanel = observer(() => {
           }}
           onSelectDark={(id) => {
             theme.setDarkThemeId(id);
+            setIsThemeSelectorOpen(false);
           }}
           onSelectLight={(id) => {
             theme.setLightThemeId(id);
+            setIsThemeSelectorOpen(false);
           }}
         />
 
@@ -2372,6 +2429,9 @@ export const SettingsRoutePanel = observer(() => {
           themeId={editingThemeId}
           onClose={() => {
             setIsThemeEditOpen(false);
+          }}
+          onSaved={(savedTheme) => {
+            theme.applyTheme(savedTheme);
           }}
         />
       </Space>

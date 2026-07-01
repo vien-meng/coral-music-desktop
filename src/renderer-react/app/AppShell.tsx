@@ -1,5 +1,6 @@
 import {
   CustomerServiceOutlined,
+  DesktopOutlined,
   FileAddOutlined,
   LinkOutlined,
   MoonOutlined,
@@ -8,9 +9,11 @@ import {
 } from '@ant-design/icons';
 import { Button, Dropdown, Flex, Layout, Menu, Space, Spin, Typography } from 'antd';
 import { observer } from 'mobx-react-lite';
+import { useCallback, type MouseEvent } from 'react';
 import { coralBrand } from '@shared/brand';
 import { SearchInput, WindowControlBtns } from '../components/layout';
 import { PlayBar } from '../components/player';
+import { appService } from '../services/appService';
 import { rootStore } from '../stores/rootStore';
 import { RouterOutlet } from './router';
 import { rendererRoutes } from './routeConfig';
@@ -22,10 +25,49 @@ export const AppShell = observer(() => {
   const { settings, theme, ui } = rootStore;
   const controlBtnPosition = settings.appSetting?.['common.controlBtnPosition'] ?? 'right';
   const isFullscreen = false;
+  let themeActionIcon = <DesktopOutlined />;
+  let themeActionLabel = '跟随系统';
+  if (theme.themePreference !== 'system') {
+    themeActionIcon = theme.themeMode === 'light' ? <MoonOutlined /> : <SunOutlined />;
+    themeActionLabel = theme.themeMode === 'light' ? '深色' : '浅色';
+  }
+  const handleWindowDragMouseDown = useCallback((event: MouseEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return;
+
+    event.preventDefault();
+    const startMouseX = event.screenX;
+    const startMouseY = event.screenY;
+    const startWindowX = window.screenX;
+    const startWindowY = window.screenY;
+
+    const handleMouseMove = (moveEvent: globalThis.MouseEvent): void => {
+      appService.moveMainWindowTo(
+        startWindowX + moveEvent.screenX - startMouseX,
+        startWindowY + moveEvent.screenY - startMouseY,
+      );
+    };
+
+    const handleMouseUp = (): void => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, []);
 
   return (
     <Layout className={`coral-shell is-${theme.themeMode}`}>
-      <div className="coral-window-drag-strip" aria-hidden="true" />
+      <div
+        className="coral-window-drag-zone is-top"
+        aria-hidden="true"
+        onMouseDown={handleWindowDragMouseDown}
+      />
+      <div
+        className="coral-window-drag-zone is-left"
+        aria-hidden="true"
+        onMouseDown={handleWindowDragMouseDown}
+      />
       <Sider width={224} className="coral-sider">
         <div className="coral-brand">
           {controlBtnPosition === 'left' ? (
@@ -71,12 +113,12 @@ export const AppShell = observer(() => {
             <Space className="coral-header-actions" size={8}>
               <Button
                 className="coral-header-action-btn"
-                icon={theme.themeMode === 'light' ? <MoonOutlined /> : <SunOutlined />}
+                icon={themeActionIcon}
                 onClick={() => {
                   theme.setThemeMode(theme.themeMode === 'light' ? 'dark' : 'light');
                 }}
               >
-                {theme.themeMode === 'light' ? '深色' : '浅色'}
+                {themeActionLabel}
               </Button>
               <Button
                 className="coral-header-action-btn"

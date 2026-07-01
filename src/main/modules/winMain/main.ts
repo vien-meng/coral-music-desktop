@@ -41,7 +41,7 @@ const winEvent = () => {
     global.coral.event_app.main_window_blur();
   });
 
-  // 阻止生产环境下的 DevTools 快捷键（F12 / Ctrl+Shift+I / Cmd+Option+I）
+  // 阻止 DevTools 快捷键（F12 / Ctrl+Shift+I / Cmd+Option+I）及自动打开
   browserWindow.webContents.on('before-input-event', (event, input) => {
     if (
       input.key === 'F12' ||
@@ -50,6 +50,9 @@ const winEvent = () => {
     ) {
       event.preventDefault();
     }
+  });
+  browserWindow.webContents.on('devtools-opened', () => {
+    if (browserWindow) browserWindow.webContents.closeDevTools();
   });
 
   browserWindow.once('ready-to-show', () => {
