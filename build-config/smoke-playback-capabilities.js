@@ -54,6 +54,7 @@ record('playback capability constants are centralized', () => {
     read(file),
     [
       'nativeLocalAudioExtensions',
+      'bassDecoderExtensions',
       'externalDecoderExtensions',
       'externalDecoderExtensionAliases',
       'foobar2000DecoderPluginHints',
@@ -77,7 +78,7 @@ record('app setting schema exposes local audio and decoder settings', () => {
       "'player.localAudio.scanDirs': string[]",
       "'player.localAudio.supportedExts': string[]",
       "'player.externalDecoder.enabled': boolean",
-      "'player.externalDecoder.provider': 'none' | 'foobar2000' | 'ffmpeg'",
+      "'player.externalDecoder.provider': 'none' | 'bass' | 'foobar2000' | 'ffmpeg'",
       "'player.externalDecoder.executablePath': string",
       "'player.externalDecoder.pluginDirs': string[]",
       "'player.externalDecoder.preferredOutput': 'wav' | 'pcm'",
@@ -90,7 +91,7 @@ record('app setting schema exposes local audio and decoder settings', () => {
   );
 });
 
-record('default settings are conservative', () => {
+record('default settings prefer bundled BASS decoding', () => {
   const file = 'src/common/defaultSetting.ts';
   assertIncludes(
     read(file),
@@ -98,12 +99,15 @@ record('default settings are conservative', () => {
       "'player.localAudio.enabled': true",
       "'player.localAudio.scanDirs': []",
       "'player.localAudio.supportedExts': ['mp3', 'flac', 'wav', 'm4a', 'aac', 'ogg', 'opus']",
-      "'player.externalDecoder.enabled': false",
-      "'player.externalDecoder.provider': 'none'",
+      "'player.externalDecoder.enabled': true",
+      "'player.externalDecoder.provider': 'bass'",
       "'player.externalDecoder.executablePath': ''",
       "'player.externalDecoder.pluginDirs': []",
       "'player.externalDecoder.preferredOutput': 'wav'",
-      "'player.externalDecoder.extensions': ['dsf', 'dff', 'iso', 'sacd']",
+      "'aac'",
+      "'mo3'",
+      "'webm'",
+      "'xm'",
       "'player.externalDecoder.timeoutMs': 30_000",
       "'player.sourcePlugin.allowUserApi': true",
       "'player.sourcePlugin.preferUserApi': true",
@@ -207,6 +211,8 @@ record('external decoder probe is typed and non-executing', () => {
     read('src/main/modules/winMain/externalDecoderProbe.ts'),
     [
       'probeExternalDecoder',
+      'resolveBassBundle',
+      "provider === 'bass'",
       '.stat(path)',
       'FFmpeg will be resolved from PATH',
       'isBareExecutableCommand',
@@ -219,6 +225,8 @@ record('external decoder probe is typed and non-executing', () => {
     read('src/main/modules/winMain/externalDecoderRuntime.ts'),
     [
       'transcodeExternalDecoder',
+      'runBass',
+      'assertBassBundleReady',
       "params.executablePath.trim() || 'ffmpeg'",
       'isBareExecutableCommand',
       'spawn(',
@@ -232,6 +240,11 @@ record('external decoder probe is typed and non-executing', () => {
       '外部解码超时',
     ],
     'src/main/modules/winMain/externalDecoderRuntime.ts',
+  );
+  assertIncludes(
+    read('src/main/modules/winMain/bassBundledRuntime.ts'),
+    ['resolveBassBundle', 'assertBassBundleReady', 'coral-bass-decoder', 'bass.dll', 'bassdsd'],
+    'src/main/modules/winMain/bassBundledRuntime.ts',
   );
   assertIncludes(
     read('src/main/modules/winMain/rendererEvent/app.ts'),
@@ -274,7 +287,7 @@ record('local playback resolver routes native and external formats separately', 
       'decodedFilePath',
       'objectUrl',
       'externalDecoderService.transcodeExternalDecoder',
-      '本地 ${extension.toUpperCase()} 文件需要外部解码器',
+      '本地 ${extension.toUpperCase()} 文件需要解码器',
       '当前外部解码器未启用',
     ],
     file,

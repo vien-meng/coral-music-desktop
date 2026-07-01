@@ -1022,11 +1022,9 @@ export const SettingsRoutePanel = observer(() => {
                   applySetting({
                     'player.externalDecoder.enabled': checked,
                     'player.externalDecoder.executablePath':
-                      checked && !appSetting['player.externalDecoder.executablePath'].trim()
-                        ? 'ffmpeg'
-                        : appSetting['player.externalDecoder.executablePath'],
+                      appSetting['player.externalDecoder.executablePath'].trim(),
                     'player.externalDecoder.preferredOutput': 'wav',
-                    'player.externalDecoder.provider': checked ? 'ffmpeg' : 'none',
+                    'player.externalDecoder.provider': checked ? 'bass' : 'none',
                   });
                   setDecoderProbeResult(null);
                 }}
@@ -1039,6 +1037,7 @@ export const SettingsRoutePanel = observer(() => {
                 buttonStyle="solid"
                 options={[
                   { label: '关闭', value: 'none' },
+                  { label: '内置 BASS', value: 'bass' },
                   { label: 'FFmpeg', value: 'ffmpeg' },
                   { label: 'Foobar2000', value: 'foobar2000' },
                 ]}
@@ -1052,7 +1051,7 @@ export const SettingsRoutePanel = observer(() => {
                         ? 'ffmpeg'
                         : appSetting['player.externalDecoder.executablePath'],
                     'player.externalDecoder.preferredOutput':
-                      provider === 'ffmpeg'
+                      provider === 'ffmpeg' || provider === 'bass'
                         ? 'wav'
                         : appSetting['player.externalDecoder.preferredOutput'],
                     'player.externalDecoder.provider': provider,
@@ -1065,14 +1064,19 @@ export const SettingsRoutePanel = observer(() => {
               <Alert
                 showIcon
                 type={
-                  appSetting['player.externalDecoder.provider'] === 'ffmpeg' ? 'info' : 'warning'
+                  appSetting['player.externalDecoder.provider'] === 'bass' ||
+                  appSetting['player.externalDecoder.provider'] === 'ffmpeg'
+                    ? 'info'
+                    : 'warning'
                 }
                 title={
-                  appSetting['player.externalDecoder.provider'] === 'ffmpeg'
-                    ? 'FFmpeg 会在播放 DSD/SACD 等格式时转码为临时 WAV，切歌或退出播放器后自动清理；当前仅启用 WAV 输出。'
-                    : appSetting['player.externalDecoder.provider'] === 'foobar2000'
-                      ? 'Foobar2000 当前仅支持路径和组件探测，播放时会提示改用 FFmpeg。'
-                      : '外部格式播放前需要先启用 FFmpeg。'
+                  appSetting['player.externalDecoder.provider'] === 'bass'
+                    ? '内置 BASS 会随安装包提供核心库与 add-ons，播放本地高级格式时自动解码为临时 WAV；无需用户下载插件。'
+                    : appSetting['player.externalDecoder.provider'] === 'ffmpeg'
+                      ? 'FFmpeg 会在播放 DSD/SACD 等格式时转码为临时 WAV，切歌或退出播放器后自动清理；当前仅启用 WAV 输出。'
+                      : appSetting['player.externalDecoder.provider'] === 'foobar2000'
+                        ? 'Foobar2000 当前仅支持路径和组件探测，播放时会提示改用 FFmpeg。'
+                        : '外部格式播放前需要先启用内置 BASS 或 FFmpeg。'
                 }
               />
             </Form.Item>
@@ -1110,10 +1114,13 @@ export const SettingsRoutePanel = observer(() => {
                 <Input
                   allowClear
                   value={appSetting['player.externalDecoder.executablePath']}
+                  disabled={appSetting['player.externalDecoder.provider'] === 'bass'}
                   placeholder={
-                    appSetting['player.externalDecoder.provider'] === 'ffmpeg'
-                      ? 'ffmpeg 或 ffmpeg.exe'
-                      : 'foobar2000.exe'
+                    appSetting['player.externalDecoder.provider'] === 'bass'
+                      ? '内置 BASS 模式无需填写路径'
+                      : appSetting['player.externalDecoder.provider'] === 'ffmpeg'
+                        ? 'ffmpeg 或 ffmpeg.exe'
+                        : 'foobar2000.exe'
                   }
                   onChange={(event) => {
                     updateSetting('player.externalDecoder.executablePath', event.target.value);
@@ -1122,6 +1129,7 @@ export const SettingsRoutePanel = observer(() => {
                 />
                 <Button
                   icon={<FolderOpenOutlined />}
+                  disabled={appSetting['player.externalDecoder.provider'] === 'bass'}
                   onClick={() => {
                     handleSelectDecoderExecutable();
                   }}
@@ -1132,7 +1140,7 @@ export const SettingsRoutePanel = observer(() => {
               <Input
                 allowClear
                 value={decoderExtensionsDraft}
-                placeholder="dsf, dff, iso, sacd"
+                placeholder="aac, ape, dff, dsf, flac, it, m4a, m4b, mo3, mod, mp2, mp3, mp4, mpc, mpga, mtm, ogg, opus, s3m, tta, umx, wav, webm, wv, xm"
                 className="coral-settings-decoder-input"
                 onChange={(event) => {
                   setDecoderExtensionsDraft(event.target.value);
@@ -1151,7 +1159,8 @@ export const SettingsRoutePanel = observer(() => {
                 <Input.TextArea
                   autoSize={{ minRows: 2, maxRows: 4 }}
                   value={decoderPluginDirsDraft}
-                  placeholder="每行一个 Foobar2000 components 目录；FFmpeg 可留空"
+                  disabled={appSetting['player.externalDecoder.provider'] === 'bass'}
+                  placeholder="内置 BASS 无需填写；Foobar2000 每行一个 components 目录；FFmpeg 可留空"
                   onChange={(event) => {
                     setDecoderPluginDirsDraft(event.target.value);
                     setDecoderProbeResult(null);
@@ -1164,6 +1173,7 @@ export const SettingsRoutePanel = observer(() => {
                   <Button
                     size="small"
                     icon={<FolderOpenOutlined />}
+                    disabled={appSetting['player.externalDecoder.provider'] === 'bass'}
                     onClick={() => {
                       handleSelectDecoderPluginDirs();
                     }}

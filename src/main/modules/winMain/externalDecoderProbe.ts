@@ -7,6 +7,7 @@ import {
   type ExternalDecoderProbePathStatus,
   type ExternalDecoderProbeResult,
 } from '@shared/playbackCapabilities';
+import { getBassDecoderExtensions, resolveBassBundle } from './bassBundledRuntime';
 
 const isBareExecutableCommand = (executablePath: string): boolean =>
   Boolean(executablePath.trim()) &&
@@ -40,6 +41,55 @@ export const probeExternalDecoder = async (
   params: ExternalDecoderProbeParams,
 ): Promise<ExternalDecoderProbeResult> => {
   const provider = params.provider;
+  if (provider === 'bass') {
+    const requestedExtensions = Array.from(new Set(params.extensions.map(normalizeAudioExtension)));
+    const knownExtensions = new Set(getBassDecoderExtensions());
+    const supportedExtensions = requestedExtensions.filter((ext) => knownExtensions.has(ext));
+    const missingExtensions = requestedExtensions.filter((ext) => !knownExtensions.has(ext));
+    const bundle = await resolveBassBundle();
+    const helperStatus = await probePath(bundle.helperPath);
+    const pluginDirs = [
+      {
+        exists: bundle.coreFiles.length > 0,
+        isDirectory: false,
+        path: bundle.coreFiles.join('; ') || bundle.platformDir,
+      },
+      {
+        exists: bundle.addonFiles.length > 0,
+        isDirectory: false,
+        path: bundle.addonFiles.join('; ') || bundle.platformDir,
+      },
+    ];
+    const warnings: string[] = [];
+    const errors: string[] = [];
+
+    if (!helperStatus.exists || helperStatus.isDirectory) {
+      errors.push('Bundled BASS helper is missing.');
+    }
+    if (!bundle.coreFiles.length) {
+      errors.push('Bundled BASS core library is missing.');
+    }
+    if (!bundle.addonFiles.length) {
+      errors.push('Bundled BASS add-ons are missing.');
+    }
+    if (missingExtensions.length) {
+      warnings.push(`BASS bundled mode does not claim: ${missingExtensions.join(', ')}`);
+    }
+
+    return {
+      canProbe: errors.length === 0,
+      errors,
+      executableExists: helperStatus.exists && !helperStatus.isDirectory,
+      executablePath: bundle.helperPath,
+      missingExtensions,
+      platform: process.platform,
+      pluginDirs,
+      provider,
+      supportedExtensions,
+      warnings,
+    };
+  }
+
   const executablePath = params.executablePath.trim() || (provider === 'ffmpeg' ? 'ffmpeg' : '');
   const requestedExtensions = Array.from(new Set(params.extensions.map(normalizeAudioExtension)));
   const knownExtensions = new Set(externalDecoderExtensions);

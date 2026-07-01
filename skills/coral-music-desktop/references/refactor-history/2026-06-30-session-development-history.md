@@ -175,6 +175,17 @@ This note records the practical implementation history from the recent Codex ses
 - Added a hybrid player runtime so the existing HTMLAudio/Web Audio path remains the default system output, while exclusive mode can fail back to system output.
 - Reserved the out-of-process `coral-wasapi-helper.exe` contract; the real helper still needs to be implemented or bundled before hardware exclusive playback works.
 
+## BASS Native Decoder Plan And First Implementation
+
+- Added implementation history at `skills/coral-music-desktop/references/refactor-history/2026-07-01-bass-native-decoder-plan.md`.
+- Selected BASS native + add-ons as the full-format local decoder direction instead of ManagedBass/.NET wrapper, so Electron can keep a native helper boundary.
+- Target format set: `aac, ape, dff, dsf, flac, it, m4a, m4b, mo3, mod, mp2, mp3, mp4, mpc, mpga, mtm, ogg, opus, s3m, tta, umx, wav, webm, wv, xm`.
+- Added `bass` as an external decoder provider and changed the default local decoder mode to bundled BASS.
+- Added packaged resource contract under `resources/native/bass/<platform>-<arch>/` and configured packaging to include `resources/native`.
+- Added main-process BASS bundle probing and transcode-helper invocation contract through `coral-bass-decoder`.
+- Updated Settings UI so users see `内置 BASS` as the default no-download path, while FFmpeg/Foobar2000 remain fallback/diagnostic options.
+- The code path now expects authorized BASS binaries/add-ons plus the helper to be bundled before the mode can actually decode files.
+
 ## Library History, Favorites, And Categories Plan And First Implementation
 
 - Added implementation history at `skills/coral-music-desktop/references/refactor-history/2026-06-30-library-history-favorites-categories-plan.md`.

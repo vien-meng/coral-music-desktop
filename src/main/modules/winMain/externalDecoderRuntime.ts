@@ -6,6 +6,7 @@ import {
   type ExternalDecoderTranscodeParams,
   type ExternalDecoderTranscodeResult,
 } from '@shared/playbackCapabilities';
+import { assertBassBundleReady } from './bassBundledRuntime';
 
 const MAX_STDERR_LENGTH = 4000;
 
@@ -102,6 +103,74 @@ const runFfmpeg = async (
   });
 };
 
+const runBass = async (
+  params: ExternalDecoderTranscodeParams,
+  outputPath: string,
+): Promise<void> => {
+  if (params.output !== 'wav') {
+    throw new Error('内置 BASS 解码器当前只输出 WAV，请在设置里选择 WAV。');
+  }
+
+  const bundle = await assertBassBundleReady();
+
+  await new Promise<void>((resolve, reject) => {
+    const stderrChunks: string[] = [];
+    const child = spawn(
+      bundle.helperPath,
+      [
+        '--input',
+        params.inputPath,
+        '--output',
+        outputPath,
+        '--format',
+        'wav',
+        '--bass-dir',
+        bundle.platformDir,
+      ],
+      {
+        env: {
+          ...process.env,
+          CORAL_BASS_DIR: bundle.platformDir,
+        },
+        windowsHide: true,
+      },
+    );
+
+    const timeout = setTimeout(() => {
+      child.kill('SIGKILL');
+      reject(new Error('内置 BASS 解码超时，请检查文件或调大解码超时时间。'));
+    }, params.timeoutMs);
+
+    child.stderr.on('data', (chunk: Buffer) => {
+      if (stderrChunks.join('').length < MAX_STDERR_LENGTH) {
+        stderrChunks.push(chunk.toString());
+      }
+    });
+    child.on('error', (error: NodeJS.ErrnoException) => {
+      clearTimeout(timeout);
+      if (error.code === 'ENOENT') {
+        reject(new Error('未找到内置 BASS 解码 helper，请确认安装包包含 native/bass 资源。'));
+        return;
+      }
+      if (error.code === 'EACCES') {
+        reject(new Error('内置 BASS 解码 helper 无法执行，请检查文件权限。'));
+        return;
+      }
+      reject(new Error(error.message || '内置 BASS 解码启动失败。'));
+    });
+    child.on('close', (code) => {
+      clearTimeout(timeout);
+      if (code === 0) {
+        resolve();
+        return;
+      }
+
+      const details = stderrChunks.join('').trim();
+      reject(new Error(details || `BASS decoder exited with code ${code ?? 'unknown'}.`));
+    });
+  });
+};
+
 export const transcodeExternalDecoder = async (
   params: ExternalDecoderTranscodeParams,
 ): Promise<ExternalDecoderTranscodeResult> => {
@@ -109,6 +178,23 @@ export const transcodeExternalDecoder = async (
 
   if (params.provider === 'none') {
     throw new Error('外部解码器未启用。');
+  }
+
+  if (params.provider === 'bass') {
+    const outputPath = createOutputPath(params.inputPath);
+    try {
+      await runBass(params, outputPath);
+      await assertFile(outputPath, 'Decoded output');
+    } catch (error) {
+      await fs.rm(outputPath, { force: true }).catch(() => {});
+      throw error;
+    }
+
+    return {
+      output: 'wav',
+      outputPath,
+      warnings: [],
+    };
   }
 
   if (params.provider === 'foobar2000') {

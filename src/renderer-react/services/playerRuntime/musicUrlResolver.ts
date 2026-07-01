@@ -257,7 +257,7 @@ const resolveExternalDecodedPath = async (
     setting['player.externalDecoder.provider'] === 'none'
   ) {
     throw new Error(
-      `本地 ${extension.toUpperCase()} 文件需要外部解码器，请在“设置 > 本地解码”启用 FFmpeg。`,
+      `本地 ${extension.toUpperCase()} 文件需要解码器，请在“设置 > 本地解码”启用内置 BASS 或 FFmpeg。`,
     );
   }
 
@@ -292,6 +292,18 @@ const resolveExternalDecodedLocalMusicUrl = async (
   return resolveExternalDecodedPath(musicInfo.meta.filePath);
 };
 
+const shouldPreferExternalDecoder = async (filePath: string): Promise<boolean> => {
+  const extension = getFileExtension(filePath);
+  if (!isExternalDecoderExtension(extension)) return false;
+
+  const setting = await settingService.getAppSetting();
+  return Boolean(
+    setting?.['player.externalDecoder.enabled'] &&
+    setting['player.externalDecoder.provider'] !== 'none' &&
+    setting['player.externalDecoder.extensions'].map(normalizeAudioExtension).includes(extension),
+  );
+};
+
 export const resolveDownloadMusicUrl = async (
   musicInfo: Coral.Download.ListItem,
   isRefresh = false,
@@ -301,12 +313,16 @@ export const resolveDownloadMusicUrl = async (
   objectUrl?: string;
   url: string;
 } | null> => {
-  if (isRefresh || !musicInfo.isComplate || /\.ape$/i.test(musicInfo.metadata.fileName))
-    return null;
+  if (isRefresh || !musicInfo.isComplate) return null;
   if (musicInfo.metadata.filePath && (await checkPath(musicInfo.metadata.filePath))) {
     const extension = getFileExtension(musicInfo.metadata.filePath);
     const internalDecoded = await resolveInternalDecodedPath(musicInfo.metadata.filePath);
     if (internalDecoded) return internalDecoded;
+
+    if (await shouldPreferExternalDecoder(musicInfo.metadata.filePath)) {
+      const decoded = await resolveExternalDecodedPath(musicInfo.metadata.filePath);
+      if (decoded) return decoded;
+    }
 
     if (canNativeAudioPlayExtension(extension)) {
       return { url: encodePath(musicInfo.metadata.filePath) };
@@ -515,16 +531,6 @@ export const resolvePlayableMusicUrl = async (
     });
   }
 
-  const localUrl = resolveLocalMusicUrl(musicInfo);
-  if (localUrl) {
-    return {
-      musicInfo,
-      quality: '128k',
-      source: 'local',
-      url: localUrl,
-    };
-  }
-
   if (musicInfo.source === 'local') {
     try {
       const internalDecodedLocal = await resolveInternalDecodedPath(musicInfo.meta.filePath);
@@ -539,19 +545,45 @@ export const resolvePlayableMusicUrl = async (
         };
       }
 
-      const decodedLocal = await resolveExternalDecodedLocalMusicUrl(musicInfo);
-      if (decodedLocal) {
+      const shouldPreferExternal = await shouldPreferExternalDecoder(musicInfo.meta.filePath);
+      if (shouldPreferExternal) {
+        const decodedLocal = await resolveExternalDecodedLocalMusicUrl(musicInfo);
+        if (decodedLocal) {
+          return {
+            decodedFilePath: decodedLocal.decodedFilePath,
+            musicInfo,
+            quality: '128k',
+            source: 'local',
+            url: decodedLocal.url,
+          };
+        }
+      }
+
+      const localUrl = resolveLocalMusicUrl(musicInfo);
+      if (localUrl) {
         return {
-          decodedFilePath: decodedLocal.decodedFilePath,
           musicInfo,
           quality: '128k',
           source: 'local',
-          url: decodedLocal.url,
+          url: localUrl,
         };
+      }
+
+      if (!shouldPreferExternal) {
+        const decodedLocal = await resolveExternalDecodedLocalMusicUrl(musicInfo);
+        if (decodedLocal) {
+          return {
+            decodedFilePath: decodedLocal.decodedFilePath,
+            musicInfo,
+            quality: '128k',
+            source: 'local',
+            url: decodedLocal.url,
+          };
+        }
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      if (/外部解码|FFmpeg/.test(message)) throw error;
+      if (/外部解码|解码器|BASS|FFmpeg/.test(message)) throw error;
       throw new Error(`本地音频解码失败：${message}`);
     }
     return null;

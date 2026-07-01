@@ -58,7 +58,7 @@ const options = {
     'dist/**/*',
   ],
   asar: false,
-  extraResources: ['./licenses'],
+  extraResources: ['./licenses', './resources/native'],
   ...(publishConfig ? { publish: publishConfig } : {}),
 };
 /**

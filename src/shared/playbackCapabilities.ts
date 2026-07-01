@@ -1,4 +1,4 @@
-export type ExternalDecoderProvider = 'none' | 'foobar2000' | 'ffmpeg';
+export type ExternalDecoderProvider = 'none' | 'bass' | 'foobar2000' | 'ffmpeg';
 export type ExternalDecoderOutput = 'wav' | 'pcm';
 export type AudioOutputMode = 'system' | 'exclusive';
 export type ExclusiveAudioOutputBackend = 'wasapi';
@@ -99,7 +99,35 @@ export const nativeLocalAudioExtensions = [
   'opus',
 ] as const;
 
-export const externalDecoderExtensions = ['dsf', 'dff', 'iso', 'sacd'] as const;
+export const bassDecoderExtensions = [
+  'aac',
+  'ape',
+  'dff',
+  'dsf',
+  'flac',
+  'it',
+  'm4a',
+  'm4b',
+  'mo3',
+  'mod',
+  'mp2',
+  'mp3',
+  'mp4',
+  'mpc',
+  'mpga',
+  'mtm',
+  'ogg',
+  'opus',
+  's3m',
+  'tta',
+  'umx',
+  'wav',
+  'webm',
+  'wv',
+  'xm',
+] as const;
+
+export const externalDecoderExtensions = bassDecoderExtensions;
 
 export const externalDecoderExtensionAliases = {
   sadc: 'sacd',
@@ -129,7 +157,7 @@ export const playbackCapabilityRoadmap = {
     externalDecoderExtensions,
   },
   externalDecoder: {
-    supportedProviders: ['none', 'foobar2000', 'ffmpeg'] as const,
+    supportedProviders: ['none', 'bass', 'foobar2000', 'ffmpeg'] as const,
     preferredOutputs: ['wav', 'pcm'] as const,
   },
   audioOutput: {
