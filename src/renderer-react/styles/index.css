@@ -15,28 +15,47 @@ body {
 
 #root,
 .coral-shell,
+.coral-shell > .ant-layout,
+.coral-shell .ant-layout,
 .coral-shell * {
   -webkit-app-region: no-drag !important;
 }
 
 .coral-shell {
-  --coral-accent: #f0645a;
-  --coral-accent-strong: #e85f56;
-  --coral-app-bg: linear-gradient(135deg, rgba(255, 248, 246, 0.92), rgba(245, 251, 255, 0.96));
-  --coral-surface: rgba(255, 255, 255, 0.82);
-  --coral-surface-solid: #fff;
-  --coral-surface-muted: rgba(255, 255, 255, 0.58);
-  --coral-surface-elevated: rgba(255, 255, 255, 0.9);
+  --coral-accent: var(--color-theme, var(--color-primary, #f0645a));
+  --coral-accent-strong: var(--color-primary-dark-100, var(--coral-accent));
+  --coral-app-bg-color: var(--color-app-background, rgba(255, 248, 246, 0.92));
+  --coral-app-bg-fallback-image: linear-gradient(
+    135deg,
+    rgba(255, 248, 246, 0.92),
+    rgba(245, 251, 255, 0.96)
+  );
+  --coral-app-bg: var(
+    --color-app-background,
+    linear-gradient(135deg, rgba(255, 248, 246, 0.92), rgba(245, 251, 255, 0.96))
+  );
+  --coral-surface: var(--color-main-background, rgba(255, 255, 255, 0.82));
+  --coral-surface-solid: var(--color-main-background, #fff);
+  --coral-surface-muted: color-mix(in srgb, var(--coral-surface) 70%, transparent);
+  --coral-surface-elevated: color-mix(in srgb, var(--coral-surface) 92%, white);
   --coral-control-bg: rgba(255, 255, 255, 0.84);
-  --coral-control-hover: rgba(240, 100, 90, 0.07);
+  --coral-control-hover: color-mix(in srgb, var(--coral-accent) 10%, transparent);
   --coral-border: rgba(112, 128, 144, 0.12);
-  --coral-border-soft: rgba(240, 100, 90, 0.08);
+  --coral-border-soft: color-mix(in srgb, var(--coral-accent) 14%, transparent);
   --coral-text: rgba(24, 37, 56, 0.92);
   --coral-text-muted: rgba(24, 37, 56, 0.62);
   --coral-text-subtle: rgba(24, 37, 56, 0.42);
   --coral-shadow: 0 12px 34px rgba(24, 37, 56, 0.06);
   --coral-player-bg: rgba(255, 255, 255, 0.82);
-  background: var(--coral-app-bg);
+  --coral-scrollbar-track: rgba(255, 255, 255, 0.42);
+  --coral-scrollbar-thumb: rgba(119, 136, 153, 0.42);
+  --coral-scrollbar-thumb-hover: rgba(240, 100, 90, 0.64);
+  background-color: var(--coral-app-bg-color);
+  background-image: var(--background-image, none), var(--coral-app-bg-fallback-image);
+  background-position: var(--background-image-position, center), center;
+  background-repeat: no-repeat;
+  background-size: var(--background-image-size, cover), cover;
+  color-scheme: light;
   color: var(--coral-text);
   min-width: 960px;
   height: 100vh;
@@ -46,20 +65,55 @@ body {
 }
 
 .coral-shell.is-dark {
-  --coral-app-bg: #10151c;
-  --coral-surface: rgba(24, 29, 37, 0.92);
-  --coral-surface-solid: #171c24;
-  --coral-surface-muted: rgba(32, 38, 48, 0.72);
-  --coral-surface-elevated: rgba(30, 36, 46, 0.96);
+  --coral-app-bg-color: var(--color-app-background, #10151c);
+  --coral-app-bg-fallback-image: none;
+  --coral-app-bg: var(--color-app-background, #10151c);
+  --coral-surface: var(--color-main-background, rgba(24, 29, 37, 0.92));
+  --coral-surface-solid: var(--color-main-background, #171c24);
+  --coral-surface-muted: color-mix(in srgb, var(--coral-surface) 78%, transparent);
+  --coral-surface-elevated: color-mix(in srgb, var(--coral-surface) 94%, #202630);
   --coral-control-bg: rgba(18, 22, 29, 0.92);
-  --coral-control-hover: rgba(240, 100, 90, 0.16);
+  --coral-control-hover: color-mix(in srgb, var(--coral-accent) 18%, transparent);
   --coral-border: rgba(206, 218, 232, 0.13);
-  --coral-border-soft: rgba(240, 100, 90, 0.18);
+  --coral-border-soft: color-mix(in srgb, var(--coral-accent) 22%, transparent);
   --coral-text: rgba(244, 247, 251, 0.9);
   --coral-text-muted: rgba(220, 228, 238, 0.66);
   --coral-text-subtle: rgba(220, 228, 238, 0.42);
   --coral-shadow: 0 16px 42px rgba(0, 0, 0, 0.22);
   --coral-player-bg: rgba(23, 28, 36, 0.92);
+  --coral-scrollbar-track: rgba(16, 21, 28, 0.86);
+  --coral-scrollbar-thumb: rgba(220, 228, 238, 0.26);
+  --coral-scrollbar-thumb-hover: rgba(240, 100, 90, 0.68);
+  color-scheme: dark;
+}
+
+.coral-shell,
+.coral-shell * {
+  scrollbar-color: var(--coral-scrollbar-thumb) var(--coral-scrollbar-track);
+  scrollbar-width: thin;
+}
+
+.coral-shell ::-webkit-scrollbar {
+  height: 12px;
+  width: 12px;
+}
+
+.coral-shell ::-webkit-scrollbar-track {
+  background: var(--coral-scrollbar-track);
+}
+
+.coral-shell ::-webkit-scrollbar-thumb {
+  background-color: var(--coral-scrollbar-thumb);
+  border: 3px solid var(--coral-scrollbar-track);
+  border-radius: 999px;
+}
+
+.coral-shell ::-webkit-scrollbar-thumb:hover {
+  background-color: var(--coral-scrollbar-thumb-hover);
+}
+
+.coral-shell ::-webkit-scrollbar-corner {
+  background: var(--coral-scrollbar-track);
 }
 
 .coral-shell > .ant-layout,
@@ -68,25 +122,38 @@ body {
   color: var(--coral-text);
 }
 
-.coral-window-drag-strip {
-  height: 18px;
-  left: 0;
-  position: fixed;
-  right: 0;
-  top: 0;
-  z-index: 1000;
-  -webkit-app-region: drag !important;
-}
-
 .coral-shell > .ant-layout {
   min-width: 0;
   min-height: 0;
+}
+
+.coral-shell .coral-window-drag-zone {
+  cursor: default;
+  pointer-events: auto;
+  position: fixed;
+  z-index: 4000;
+  -webkit-app-region: no-drag !important;
+}
+
+.coral-shell .coral-window-drag-zone.is-top {
+  height: 8px;
+  left: 0;
+  right: 0;
+  top: 0;
+}
+
+.coral-shell .coral-window-drag-zone.is-left {
+  bottom: 0;
+  left: 0;
+  top: 0;
+  width: 10px;
 }
 
 .coral-sider {
   background: var(--coral-surface) !important;
   border-right: 1px solid var(--coral-border-soft);
   padding: 18px 14px;
+  -webkit-app-region: no-drag !important;
 }
 
 .coral-sider .ant-layout-sider-children {
@@ -149,52 +216,60 @@ body {
   padding: 12px 24px;
   line-height: 1.4;
   overflow: hidden;
-  -webkit-app-region: no-drag;
+  -webkit-app-region: no-drag !important;
 }
 
 .coral-header-row {
   height: 100%;
+  -webkit-app-region: no-drag !important;
 }
 
 .coral-header-search {
   flex: 0 1 520px;
   min-width: 220px;
-  -webkit-app-region: no-drag;
+  -webkit-app-region: no-drag !important;
 }
 
 .coral-drag-region {
   flex: 1;
   min-width: 0;
-  -webkit-app-region: no-drag;
+  -webkit-app-region: no-drag !important;
 }
 
 .coral-header-drag-spacer {
   flex: 1;
   min-width: 0;
   pointer-events: none;
-  -webkit-app-region: no-drag;
+  -webkit-app-region: no-drag !important;
 }
 
 .coral-header-actions {
   flex: 0 0 auto;
-  -webkit-app-region: no-drag;
+  -webkit-app-region: no-drag !important;
 }
 
 .coral-sider .ant-menu,
+.coral-sider .ant-menu *,
 .coral-global-search,
 .coral-global-search *,
 .coral-header-search,
 .coral-header-search *,
 .coral-header button,
 .coral-header input,
+.coral-header textarea,
 .coral-header .ant-dropdown-trigger,
 .coral-header .ant-select,
 .coral-header .ant-select *,
+.coral-header .ant-input,
+.coral-header .ant-input-affix-wrapper,
+.coral-header .ant-input-affix-wrapper *,
+.coral-header .ant-space,
+.coral-header .ant-space *,
 .coral-window-btns-mac,
 .coral-window-btns-mac *,
 .coral-window-btns-windows,
 .coral-window-btns-windows * {
-  -webkit-app-region: no-drag;
+  -webkit-app-region: no-drag !important;
 }
 
 .coral-header-action-btn {
@@ -217,6 +292,7 @@ body {
 .coral-global-search {
   max-width: 520px;
   width: 100%;
+  border-radius: 50%;
 }
 
 .coral-global-search .ant-input-affix-wrapper {
@@ -244,6 +320,7 @@ body {
 }
 
 .coral-content {
+  background: var(--coral-surface-solid);
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
@@ -1183,6 +1260,26 @@ body {
   padding-right: 8px;
 }
 
+.coral-webdav-empty {
+  color: var(--coral-text-muted);
+  margin-top: 34px;
+}
+
+.coral-webdav-empty .ant-empty-image {
+  height: auto;
+  margin-bottom: 14px;
+}
+
+.coral-webdav-empty .ant-empty-description {
+  color: inherit;
+}
+
+.coral-webdav-empty-icon {
+  color: currentcolor;
+  font-size: 42px;
+  line-height: 1;
+}
+
 .coral-webdav-list .ant-list {
   background: var(--coral-surface);
   border: 1px solid var(--coral-border);
@@ -1308,6 +1405,8 @@ body {
 }
 
 .coral-leaderboard-route {
+  background: var(--coral-surface-solid);
+  color: var(--coral-text);
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -1326,6 +1425,7 @@ body {
 }
 
 .coral-leaderboard-body {
+  background: var(--coral-surface-solid);
   display: flex;
   flex: 1 1 auto;
   gap: 15px;
@@ -1335,6 +1435,7 @@ body {
 }
 
 .coral-leaderboard-sidebar {
+  background: var(--coral-surface-solid);
   flex: 0 0 180px;
   height: 100%;
   min-height: 0;
@@ -1359,6 +1460,7 @@ body {
 }
 
 .coral-leaderboard-detail {
+  background: var(--coral-surface-solid);
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
@@ -1367,6 +1469,7 @@ body {
 }
 
 .coral-leaderboard-music-view {
+  background: var(--coral-surface-solid);
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
@@ -1377,6 +1480,7 @@ body {
 .coral-leaderboard-spin,
 .coral-leaderboard-detail .ant-spin-nested-loading,
 .coral-leaderboard-spin .ant-spin-container {
+  background: var(--coral-surface-solid);
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
@@ -1697,8 +1801,17 @@ body {
   transition: border-color 0.2s ease;
 }
 
+.coral-theme-swatch-image {
+  border-radius: 6px;
+  height: 100%;
+  inset: 0;
+  object-fit: cover;
+  position: absolute;
+  width: 100%;
+}
+
 .coral-theme-swatch-active .coral-theme-swatch-bg {
-  border-color: #f0645a;
+  border-color: var(--coral-accent);
 }
 
 .coral-theme-swatch-remove {
@@ -1711,6 +1824,7 @@ body {
   font-size: 12px;
   color: #ff4d4f;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  z-index: 1;
 }
 
 .coral-theme-swatch-edit {
@@ -1723,6 +1837,7 @@ body {
   font-size: 12px;
   color: #1890ff;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  z-index: 1;
 }
 
 .coral-theme-swatch-label {

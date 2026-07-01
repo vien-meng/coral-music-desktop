@@ -192,7 +192,11 @@ export const WebDavRoutePanel = observer(() => {
 
       <div className="coral-webdav-list scroll">
         {!webDav.activeAccountId ? (
-          <Empty image={<CloudOutlined />} description="请先添加一个 WebDAV 网盘账号" />
+          <Empty
+            className="coral-webdav-empty"
+            image={<CloudOutlined className="coral-webdav-empty-icon" />}
+            description="请先添加一个 WebDAV 网盘账号"
+          />
         ) : (
           <List
             loading={webDav.isLoadingDir}
@@ -317,9 +321,7 @@ export const WebDavRoutePanel = observer(() => {
           <Form.Item name="enabled" label="启用" valuePropName="checked">
             <Switch />
           </Form.Item>
-          {testMessage ? (
-            <Alert showIcon title={testMessage} style={{ marginBottom: 12 }} />
-          ) : null}
+          {testMessage ? <Alert showIcon title={testMessage} style={{ marginBottom: 12 }} /> : null}
           <Button onClick={handleTestAccount}>测试连接</Button>
         </Form>
       </Modal>

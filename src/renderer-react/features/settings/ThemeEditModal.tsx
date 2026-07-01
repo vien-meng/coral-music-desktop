@@ -136,9 +136,14 @@ const EXT_INFO_KEYS = new Set([
   '--color-btn-close',
 ]);
 
+const toLocalFileUrl = (filePath: string): string => {
+  const encodedPath = encodeURI(filePath).replace(/#/g, '%23');
+  return `file://${encodedPath.startsWith('/') ? '' : '/'}${encodedPath}`;
+};
+
 interface ThemeEditModalProps {
   onClose: () => void;
-  onSaved?: () => void;
+  onSaved?: (theme: Coral.Theme) => void;
   open: boolean;
   themeId?: string;
 }
@@ -157,7 +162,7 @@ export const ThemeEditModal = observer(
     const tempBgRef = useRef<string | null>(null);
     const isDarkRef = useRef(false);
     const isDarkFontRef = useRef(false);
-    const previewSnapshotRef = useRef<Record<string, string> | null>(null);
+    const previewSnapshotRef = useRef<Record<string, string | undefined> | null>(null);
 
     useEffect(() => {
       isDarkRef.current = isDark;
@@ -285,26 +290,34 @@ export const ThemeEditModal = observer(
       if (!open || !preview) return;
       if (!previewSnapshotRef.current) {
         const root = document.documentElement;
-        const snapshot: Record<string, string> = {};
+        const snapshot: Record<string, string | undefined> = {};
         for (const field of COLOR_FIELDS) {
           const value = root.style.getPropertyValue(field.key);
-          if (value) snapshot[field.key] = value;
+          snapshot[field.key] = value || undefined;
+        }
+        for (const key of [
+          '--background-image',
+          '--background-image-position',
+          '--background-image-size',
+        ]) {
+          const value = root.style.getPropertyValue(key);
+          snapshot[key] = value || undefined;
         }
         previewSnapshotRef.current = snapshot;
       }
       applyPreviewTheme();
-    }, [colors, preview, isDark, isDarkFont, open]);
+    }, [bgPath, colors, preview, isDark, isDarkFont, open]);
 
     useEffect(() => {
       if (open) return;
       if (previewSnapshotRef.current) {
         const root = document.documentElement;
-        for (const field of COLOR_FIELDS) {
-          const original = previewSnapshotRef.current[field.key];
-          if (original !== undefined) {
-            root.style.setProperty(field.key, original);
+        for (const key of Object.keys(previewSnapshotRef.current)) {
+          const original = previewSnapshotRef.current[key];
+          if (original) {
+            root.style.setProperty(key, original);
           } else {
-            root.style.removeProperty(field.key);
+            root.style.removeProperty(key);
           }
         }
         previewSnapshotRef.current = null;
@@ -323,6 +336,15 @@ export const ThemeEditModal = observer(
       for (const [key, value] of Object.entries(themeColors)) {
         root.style.setProperty(key, value);
       }
+      const backgroundImage =
+        bgPath && bgPath !== 'none'
+          ? isUrl(bgPath)
+            ? `url(${bgPath})`
+            : `url("${toLocalFileUrl(bgPath)}")`
+          : 'none';
+      root.style.setProperty('--background-image', backgroundImage);
+      root.style.setProperty('--background-image-position', 'center');
+      root.style.setProperty('--background-image-size', 'cover');
     };
 
     const handleSelectBgImg = async (): Promise<void> => {
@@ -448,7 +470,7 @@ export const ThemeEditModal = observer(
         }
 
         await theme.saveUserTheme(newTheme);
-        onSaved?.();
+        onSaved?.(newTheme);
         onClose();
       } catch (err) {
         message.error(`保存失败：${err instanceof Error ? err.message : String(err)}`);
@@ -474,7 +496,7 @@ export const ThemeEditModal = observer(
         }
 
         await theme.saveUserTheme(newTheme);
-        onSaved?.();
+        onSaved?.(newTheme);
         onClose();
       } catch (err) {
         message.error(`另存失败：${err instanceof Error ? err.message : String(err)}`);

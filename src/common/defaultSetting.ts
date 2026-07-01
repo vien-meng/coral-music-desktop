@@ -171,8 +171,7 @@ const defaultSetting: Coral.AppSetting = {
   'openAPI.port': '23330',
   'openAPI.bindLan': false,
 
-  // 'theme.id': 'blue_plus',
-  'theme.id': 'green',
+  'theme.id': 'auto',
   'theme.lightId': 'green',
   'theme.darkId': 'black',
 
@@ -182,7 +181,6 @@ const defaultSetting: Coral.AppSetting = {
 
 // 使用新年皮肤
 if (new Date().getMonth() < 2) {
-  defaultSetting['theme.id'] = 'happy_new_year';
   defaultSetting['desktopLyric.style.lyricPlayedColor'] = 'rgba(255, 57, 71, 1)';
 }
 
