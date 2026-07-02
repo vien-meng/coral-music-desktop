@@ -168,18 +168,6 @@ export const PlayBar = observer(() => {
               添加音源
             </Button>
           ) : null}
-          {player.needsExternalDecoder ? (
-            <Button
-              size="small"
-              type="primary"
-              onClick={() => {
-                ui.setActiveRoute('setting');
-                ui.requestQuickAction('configureExternalDecoder');
-              }}
-            >
-              配置解码器
-            </Button>
-          ) : null}
         </Space>
       </Flex>
       <PlayDetailOverlay />

@@ -26,9 +26,9 @@ export class RootStore {
 
   library = new LibraryStore();
 
-  player = new PlayerStore(this.settings, this.dislike, this.library);
-
   list = new ListStore();
+
+  player = new PlayerStore(this.settings, this.dislike, this.library, this.list);
 
   search = new SearchStore();
 

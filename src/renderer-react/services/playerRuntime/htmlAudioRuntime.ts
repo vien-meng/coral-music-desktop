@@ -527,31 +527,10 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
     this.clearObjectUrl(resolved.objectUrl);
     this.currentDecodedFilePath = resolved.decodedFilePath ?? null;
     this.currentObjectUrl = resolved.objectUrl ?? null;
-    if (resolved.decodedAudio) {
-      try {
-        this.audio?.pause();
-        this.audio?.removeAttribute('src');
-        this.clearDecodedAudio();
-        if (!this.ensureBaseAudioGraph()) {
-          throw new Error('当前环境无法初始化 WebAudio 播放引擎。');
-        }
-        this.decodedAudioBuffer = this.createAudioBuffer(resolved.decodedAudio);
-        this.decodedStartOffset = 0;
-        this.publish({ errorText: '' });
-        this.playDecodedAudio(0);
-      } catch (err) {
-        console.error(err);
-        this.publish({
-          errorText: err instanceof Error ? err.message : String(err),
-          status: 'error',
-        });
-      }
-      return;
-    }
     this.setAudioSource(resolved.url);
     this.playAudio();
 
-    // 异步探测在线音频文件头，获取实际采样率/比特率
+    // 异步探测音频文件头，获取实际采样率/比特率
     this.startAudioProbe(resolved.url, requestId);
   }
 

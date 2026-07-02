@@ -1,4 +1,10 @@
-import { makeAutoObservable, observable, reaction, type IReactionDisposer } from 'mobx';
+import {
+  makeAutoObservable,
+  observable,
+  reaction,
+  runInAction,
+  type IReactionDisposer,
+} from 'mobx';
 import {
   playerRuntimeBridge,
   type PlayerRuntimeBridge,
@@ -13,6 +19,7 @@ import { localLyricService } from '../../services/localLyricService';
 import { onlineMediaService } from '../../services/onlineMediaService';
 import type { DislikeStore } from './dislikeStore';
 import type { LibraryStore } from './libraryStore';
+import type { ListStore } from './listStore';
 import type { SettingsStore } from './settingsStore';
 
 const clamp = (value: number, min: number, max: number): number =>
@@ -130,6 +137,7 @@ export class PlayerStore {
     private readonly settings: SettingsStore | null = null,
     private readonly dislike: DislikeStore | null = null,
     private readonly library: LibraryStore | null = null,
+    private readonly list: ListStore | null = null,
   ) {
     makeAutoObservable<
       this,
@@ -137,6 +145,7 @@ export class PlayerStore {
       | 'enrichRequestId'
       | 'historyPlayMode'
       | 'library'
+      | 'list'
       | 'pendingMusic'
       | 'runtime'
       | 'runtimeStatusDisposer'
@@ -149,6 +158,7 @@ export class PlayerStore {
         enrichRequestId: false,
         historyPlayMode: false,
         library: false,
+        list: false,
         pendingMusic: false,
         runtime: false,
         runtimeStatusDisposer: false,
@@ -181,7 +191,7 @@ export class PlayerStore {
   }
 
   get coverUrl(): string | null {
-    return this.displayMusicInfo?.meta.picUrl ?? this.status?.picUrl ?? null;
+    return this.displayMusicInfo?.meta.picUrl || this.status?.picUrl || null;
   }
 
   get albumName(): string {
@@ -412,7 +422,12 @@ export class PlayerStore {
         this.pendingMusic = musicInfo;
         this.syncQueueIndex(musicInfo);
         this.recordPlayedMusic(musicInfo);
+        // 转码期间并行预加载歌词（含在线兜底），避免转码完成后才开始搜索导致延迟
+        this.enrichCurrentLocalLyricInfo(musicInfo);
       } else {
+        // 切到非外部解码音乐时，清除上一首的 pending 状态
+        this.pendingMusic = null;
+        this.isPreparingMusic = false;
         this.commitMusicInfo(musicInfo);
       }
     }
@@ -422,9 +437,12 @@ export class PlayerStore {
     });
   }
 
-  private commitMusicInfo(musicInfo: PlayerRuntimeMusicInfo): void {
+  private commitMusicInfo(
+    musicInfo: PlayerRuntimeMusicInfo,
+    options: { skipLyric?: boolean } = {},
+  ): void {
     this.currentMusic = musicInfo;
-    this.clearLyricSnapshot();
+    if (!options.skipLyric) this.clearLyricSnapshot();
     this.syncQueueIndex(musicInfo);
     this.recordPlayedMusic(musicInfo);
     this.library?.addPlayHistory(
@@ -432,7 +450,7 @@ export class PlayerStore {
       this.currentQueueId,
     );
     this.enrichCurrentLocalMusicInfo(musicInfo);
-    this.enrichCurrentLocalLyricInfo(musicInfo);
+    if (!options.skipLyric) this.enrichCurrentLocalLyricInfo(musicInfo);
     this.enrichCurrentOnlineMusicInfo(musicInfo);
   }
 
@@ -608,17 +626,21 @@ export class PlayerStore {
   }
 
   private applyRuntimeStatus(status: PlayerRuntimeStatus): void {
-    // 外部解码转码完成或失败时，提交或清除 pendingMusic
+    // 外部解码转码完成或失败时，提交 pendingMusic（即使失败也提交，让歌词兜底和播放界面信息正常工作）
     if (typeof status.isPreparing === 'boolean') {
       this.isPreparingMusic = status.isPreparing;
       if (!status.isPreparing && this.pendingMusic) {
         const pending = this.pendingMusic;
         this.pendingMusic = null;
-        if (status.status !== 'error') this.commitMusicInfo(pending);
+        // 歌词已在 playMusic 阶段预加载，提交时不清空不重载，避免闪烁和重复请求
+        this.commitMusicInfo(pending, { skipLyric: true });
       }
     } else if (status.status === 'error' && this.pendingMusic) {
+      // 独占模式下可能不发布 isPreparing，通过 error 状态兜底清理
+      const pending = this.pendingMusic;
       this.pendingMusic = null;
       this.isPreparingMusic = false;
+      this.commitMusicInfo(pending, { skipLyric: true });
     }
 
     this.setStatus(status);
@@ -701,7 +723,12 @@ export class PlayerStore {
           ...this.status,
           albumName: enrichedMusicInfo.meta.albumName,
           picUrl: enrichedMusicInfo.meta.picUrl ?? '',
+          probeBitrate: enrichedMusicInfo.meta.bitrate ?? this.status?.probeBitrate ?? null,
+          probeSampleRate:
+            enrichedMusicInfo.meta.sampleRate ?? this.status?.probeSampleRate ?? null,
+          probeFormat: enrichedMusicInfo.meta.ext ?? this.status?.probeFormat ?? null,
         };
+        this.list?.updateSelectedMusicInfo(enrichedMusicInfo);
       })
       .catch(() => {});
   }
@@ -717,19 +744,25 @@ export class PlayerStore {
         return localLyricService.getFallbackOnlineLyricInfo(musicInfo);
       })
       .then((lyricInfo) => {
-        if (!this.currentMusic || getRuntimeMusicId(this.currentMusic) !== musicId) return;
+        // 转码期间 currentMusic 还是上一首，需同时检查 pendingMusic
+        const activeMusic = this.pendingMusic ?? this.currentMusic;
+        if (!activeMusic || getRuntimeMusicId(activeMusic) !== musicId) return;
         if (![lyricInfo.lyric, lyricInfo.lxlyric, lyricInfo.rlyric, lyricInfo.tlyric].some(Boolean))
           return;
 
-        this.status = {
-          ...this.status,
-          lyric: lyricInfo.lyric,
-          lxlyric: lyricInfo.lxlyric ?? '',
-          rlyric: lyricInfo.rlyric ?? '',
-          tlyric: lyricInfo.tlyric ?? '',
-        };
+        runInAction(() => {
+          this.status = {
+            ...this.status,
+            lyric: lyricInfo.lyric,
+            lxlyric: lyricInfo.lxlyric ?? '',
+            rlyric: lyricInfo.rlyric ?? '',
+            tlyric: lyricInfo.tlyric ?? '',
+          };
+        });
       })
-      .catch(() => {});
+      .catch((err) => {
+        console.error('[歌词] 获取歌词失败:', err);
+      });
   }
 
   private enrichCurrentOnlineMusicInfo(musicInfo: PlayerRuntimeMusicInfo): void {

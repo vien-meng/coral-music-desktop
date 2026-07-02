@@ -7,6 +7,10 @@ interface WindowControlBtnsProps {
   isFullscreen?: boolean;
 }
 
+const diameter = 14;
+const btnFontSize = 12;
+const fontWeight = 600;
+
 export const WindowControlBtns = ({
   variant = 'windows',
   isFullscreen = false,
@@ -42,6 +46,7 @@ export const WindowControlBtns = ({
             gap: 8,
             padding: '0 12px',
             WebkitAppRegion: 'no-drag',
+            zIndex: 999,
           } as React.CSSProperties
         }
       >
@@ -51,8 +56,8 @@ export const WindowControlBtns = ({
             appService.closeWindow();
           }}
           style={{
-            width: 12,
-            height: 12,
+            width: diameter,
+            height: diameter,
             borderRadius: '50%',
             border: 'none',
             background: '#ff5f56',
@@ -61,8 +66,9 @@ export const WindowControlBtns = ({
             alignItems: 'center',
             justifyContent: 'center',
             color: 'rgba(0, 0, 0, 0.5)',
-            fontSize: 8,
+            fontSize: btnFontSize,
             opacity: isHovering ? 1 : 0.8,
+            fontWeight,
           }}
         >
           {isHovering ? '×' : ''}
@@ -73,8 +79,8 @@ export const WindowControlBtns = ({
             appService.minWindow();
           }}
           style={{
-            width: 12,
-            height: 12,
+            width: diameter,
+            height: diameter,
             borderRadius: '50%',
             border: 'none',
             background: '#ffbd2e',
@@ -83,8 +89,9 @@ export const WindowControlBtns = ({
             alignItems: 'center',
             justifyContent: 'center',
             color: 'rgba(0, 0, 0, 0.5)',
-            fontSize: 8,
+            fontSize: btnFontSize,
             opacity: isHovering ? 1 : 0.8,
+            fontWeight,
           }}
         >
           {isHovering ? '−' : ''}
@@ -95,8 +102,8 @@ export const WindowControlBtns = ({
             appService.maximizeWindow().then(setIsMaximized);
           }}
           style={{
-            width: 12,
-            height: 12,
+            width: diameter,
+            height: diameter,
             borderRadius: '50%',
             border: 'none',
             background: '#27c93f',
@@ -105,8 +112,9 @@ export const WindowControlBtns = ({
             alignItems: 'center',
             justifyContent: 'center',
             color: 'rgba(0, 0, 0, 0.5)',
-            fontSize: 8,
+            fontSize: btnFontSize,
             opacity: isHovering ? 1 : 0.8,
+            fontWeight,
           }}
         >
           {isHovering ? (isMaximized ? '◱' : '+') : ''}

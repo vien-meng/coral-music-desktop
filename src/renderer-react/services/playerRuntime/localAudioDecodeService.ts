@@ -1,73 +1,19 @@
 import {
   internalAudioDecodeExtensions,
   normalizeAudioExtension,
-  type DecodedAudioData,
 } from '@shared/playbackCapabilities';
 import { ipcChannels } from '@shared/ipc/contracts';
 import { ipcClient } from '../ipc/client';
-import { readFile } from '../nodeBridgeService';
 
 export interface DecodedAudioObjectUrl {
-  audioData: DecodedAudioData;
   objectUrl: string;
   url: string;
 }
 
 const localDecoderExtensions = new Set<string>(internalAudioDecodeExtensions);
 
-const toArrayBuffer = (buffer: Buffer): ArrayBuffer => {
-  const start = buffer.byteOffset;
-  const end = start + buffer.byteLength;
-  return buffer.buffer.slice(start, end) as ArrayBuffer;
-};
-
-const writeAscii = (view: DataView, offset: number, value: string): void => {
-  for (let index = 0; index < value.length; index += 1) {
-    view.setUint8(offset + index, value.charCodeAt(index));
-  }
-};
-
-const encodePcm16Wav = (audioData: DecodedAudioData): ArrayBuffer => {
-  const channelData = audioData.channelData.filter((channel) => channel.length);
-  if (!channelData.length) throw new Error('本地音频解码结果为空。');
-
-  const channelCount = channelData.length;
-  const sampleRate = audioData.sampleRate;
-  const sampleCount = Math.max(...channelData.map((channel) => channel.length));
-  const bytesPerSample = 2;
-  const blockAlign = channelCount * bytesPerSample;
-  const dataSize = sampleCount * blockAlign;
-  const buffer = new ArrayBuffer(44 + dataSize);
-  const view = new DataView(buffer);
-
-  writeAscii(view, 0, 'RIFF');
-  view.setUint32(4, 36 + dataSize, true);
-  writeAscii(view, 8, 'WAVE');
-  writeAscii(view, 12, 'fmt ');
-  view.setUint32(16, 16, true);
-  view.setUint16(20, 1, true);
-  view.setUint16(22, channelCount, true);
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, sampleRate * blockAlign, true);
-  view.setUint16(32, blockAlign, true);
-  view.setUint16(34, 16, true);
-  writeAscii(view, 36, 'data');
-  view.setUint32(40, dataSize, true);
-
-  let offset = 44;
-  for (let sampleIndex = 0; sampleIndex < sampleCount; sampleIndex += 1) {
-    for (let channelIndex = 0; channelIndex < channelCount; channelIndex += 1) {
-      const sample = Math.max(-1, Math.min(1, channelData[channelIndex][sampleIndex] ?? 0));
-      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
-      offset += bytesPerSample;
-    }
-  }
-
-  return buffer;
-};
-
-const decodeViaMainProcess = async (data: Uint8Array): Promise<DecodedAudioData> =>
-  await ipcClient.invoke(ipcChannels.winMain.decodeLocalAudio, data);
+const decodeWavFileInMain = async (filePath: string): Promise<ArrayBuffer> =>
+  await ipcClient.invoke(ipcChannels.winMain.decodeLocalAudio, filePath);
 
 export const canDecodeLocalAudioExtension = (extension: string): boolean =>
   localDecoderExtensions.has(normalizeAudioExtension(extension));
@@ -78,16 +24,9 @@ export const decodeLocalAudioToObjectUrl = async (
 ): Promise<DecodedAudioObjectUrl | null> => {
   if (!canDecodeLocalAudioExtension(extension)) return null;
 
-  const fileBuffer = await readFile(filePath);
-  const data = new Uint8Array(toArrayBuffer(fileBuffer));
-  const decoded = await decodeViaMainProcess(data);
-  const wavBuffer = encodePcm16Wav(decoded);
+  const wavBuffer = await decodeWavFileInMain(filePath);
   const blob = new Blob([wavBuffer], { type: 'audio/wav' });
   const objectUrl = URL.createObjectURL(blob);
 
-  return {
-    audioData: decoded,
-    objectUrl,
-    url: objectUrl,
-  };
+  return { objectUrl, url: objectUrl };
 };

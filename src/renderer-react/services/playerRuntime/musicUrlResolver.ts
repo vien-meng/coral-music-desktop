@@ -10,7 +10,6 @@ import {
   canDecodeLocalAudioExtension,
   decodeLocalAudioToObjectUrl,
 } from './localAudioDecodeService';
-import type { DecodedAudioData } from '@shared/playbackCapabilities';
 import type { PlayerRuntimeMusicInfo } from './types';
 
 const TOO_MANY_REQUESTS_MESSAGE = 'too many requests';
@@ -144,7 +143,6 @@ const toOnlineMusicInfo = (musicInfo: unknown): Coral.Music.MusicInfoOnline | nu
 };
 
 export interface ResolvedPlaybackUrl {
-  decodedAudio?: DecodedAudioData;
   decodedFilePath?: string;
   objectUrl?: string;
   musicInfo: PlayerRuntimeMusicInfo;
@@ -173,26 +171,37 @@ export const canPlayWithLocalRuntime = (musicInfo?: PlayerRuntimeMusicInfo): boo
   return canDecodeLocalAudioExtension(extension) || isExternalDecoderExtension(extension);
 };
 
-/** 判断是否为需要外部解码器转码的本地音频（DFF/DSF/ALAC/AC3 等） */
+/**
+ * 判断是否为需要 FFmpeg 转码准备的本地音频：
+ * - 外部解码器扩展（DFF/DSF/ALAC/AC3/APE）：必须走 FFmpeg 转码
+ * - WAV：部分 .wav 实际封装 DTS/AC3 等编码音频但伪装 PCM 头，浏览器按 PCM 解码会白噪音，
+ *   统一走 FFmpeg 转码确保 Chrome 能正确播放
+ */
 export const isExternalDecoderLocalMusic = (musicInfo?: PlayerRuntimeMusicInfo): boolean => {
   if (!musicInfo || isDownloadMusicInfo(musicInfo) || musicInfo.source !== 'local') return false;
-  return isExternalDecoderExtension(getFileExtension(musicInfo.meta.filePath));
+  const extension = getFileExtension(musicInfo.meta.filePath);
+  return isExternalDecoderExtension(extension) || normalizeAudioExtension(extension) === 'wav';
 };
 
 const resolveInternalDecodedPath = async (
   filePath: string,
-): Promise<{ decodedAudio: DecodedAudioData; objectUrl: string; url: string } | null> => {
+): Promise<{ objectUrl: string; url: string } | null> => {
   const normalizedFilePath = filePath.trim();
   if (!normalizedFilePath) return null;
 
   const extension = getFileExtension(normalizedFilePath);
   if (!canDecodeLocalAudioExtension(extension)) return null;
 
+  // WAV 不走内嵌解码：有些 .wav 文件实际封装的是 DTS/AC3 等编码音频，
+  // 但 fmt chunk 声明为 PCM（伪造的 PCM 头），浏览器按 PCM 解码会得到白噪音。
+  // 统一交给 resolveExternalDecodedPath 用 FFmpeg 转码，FFmpeg 能正确识别真实编码。
+  const normalizedExt = normalizeAudioExtension(extension);
+  if (normalizedExt === 'wav') return null;
+
   const decoded = await decodeLocalAudioToObjectUrl(normalizedFilePath, extension);
   if (!decoded) return null;
 
   return {
-    decodedAudio: decoded.audioData,
     objectUrl: decoded.objectUrl,
     url: decoded.url,
   };
@@ -201,7 +210,6 @@ const resolveInternalDecodedPath = async (
 const resolveExternalDecodedPath = async (
   filePath: string,
 ): Promise<{
-  decodedAudio: DecodedAudioData;
   decodedFilePath: string;
   objectUrl: string;
   url: string;
@@ -210,45 +218,33 @@ const resolveExternalDecodedPath = async (
   if (!normalizedFilePath) return null;
 
   const extension = getFileExtension(normalizedFilePath);
-  if (!isExternalDecoderExtension(extension)) return null;
+  // 外部解码器扩展（DFF/DSF/ALAC/AC3/APE）或 WAV 回退（无头 raw PCM 等非标准 WAV）
+  if (!isExternalDecoderExtension(extension) && normalizeAudioExtension(extension) !== 'wav') {
+    return null;
+  }
 
   const setting = await settingService.getAppSetting();
-  if (!setting?.['player.externalDecoder.enabled']) {
-    throw new Error(
-      `本地 ${extension.toUpperCase()} 文件需要外部解码器，请在“设置 > 本地解码”启用 FFmpeg。`,
-    );
-  }
-
-  if (
-    !setting['player.externalDecoder.extensions'].map(normalizeAudioExtension).includes(extension)
-  ) {
-    throw new Error(
-      `当前外部解码器未启用 ${extension.toUpperCase()} 扩展，请在“设置 > 本地解码”加入该扩展。`,
-    );
-  }
 
   const result = await externalDecoderService.transcodeExternalDecoder({
     inputPath: normalizedFilePath,
-    output: setting['player.externalDecoder.preferredOutput'],
-    timeoutMs: setting['player.externalDecoder.timeoutMs'],
+    output: 'wav',
+    timeoutMs: setting?.['player.externalDecoder.timeoutMs'] ?? 30_000,
   });
-  const decodedOutput = await decodeLocalAudioToObjectUrl(result.outputPath, 'wav');
-  if (!decodedOutput) {
-    throw new Error('外部解码器已生成 WAV，但内部 audio-decode 无法读取输出文件。');
-  }
-
+  // FFmpeg 输出的是标准 WAV，通过 IPC 读取文件内容创建 blob: URL。
+  // 不用 file:// URL：dev 模式下渲染进程是 http:// origin，file:// 会被 CORS 阻止。
+  // decodeLocalAudioToObjectUrl 内部检测到标准 RIFF/WAVE 头会直接返回原始 bytes，不再解码。
+  const decoded = await decodeLocalAudioToObjectUrl(result.outputPath, 'wav');
+  if (!decoded) throw new Error('FFmpeg 转码输出文件读取失败。');
   return {
-    decodedAudio: decodedOutput.audioData,
     decodedFilePath: result.outputPath,
-    objectUrl: decodedOutput.objectUrl,
-    url: decodedOutput.url,
+    objectUrl: decoded.objectUrl,
+    url: decoded.url,
   };
 };
 
 const resolveExternalDecodedLocalMusicUrl = async (
   musicInfo: PlayerRuntimeMusicInfo,
 ): Promise<{
-  decodedAudio: DecodedAudioData;
   decodedFilePath: string;
   objectUrl: string;
   url: string;
@@ -261,7 +257,6 @@ export const resolveDownloadMusicUrl = async (
   musicInfo: Coral.Download.ListItem,
   isRefresh = false,
 ): Promise<{
-  decodedAudio?: DecodedAudioData;
   decodedFilePath?: string;
   objectUrl?: string;
   url: string;
@@ -455,7 +450,6 @@ export const resolvePlayableMusicUrl = async (
       return {
         decodedFilePath: downloadUrl.decodedFilePath,
         objectUrl: downloadUrl.objectUrl,
-        decodedAudio: downloadUrl.decodedAudio,
         musicInfo,
         quality: musicInfo.metadata.quality,
         source: 'download',
@@ -491,7 +485,6 @@ export const resolvePlayableMusicUrl = async (
       if (internalDecodedLocal) {
         return {
           objectUrl: internalDecodedLocal.objectUrl,
-          decodedAudio: internalDecodedLocal.decodedAudio,
           musicInfo,
           quality: '128k',
           source: 'local',
@@ -504,7 +497,6 @@ export const resolvePlayableMusicUrl = async (
         return {
           decodedFilePath: decodedLocal.decodedFilePath,
           objectUrl: decodedLocal.objectUrl,
-          decodedAudio: decodedLocal.decodedAudio,
           musicInfo,
           quality: '128k',
           source: 'local',

@@ -93,8 +93,19 @@ Status: implemented on 2026-07-01.
 - Coral ships a small Java source-file helper that uses JustDSD classes to export `.dsf`/`.dff`/`.iso`/`.sacd` to temporary WAV.
 - After JustDSD/FFmpeg produces a WAV, Coral still decodes that WAV through `audio-decode`, so the runtime path remains unified.
 
+### Step 149: Local Import And Zero-Config Decoder UX
+
+Status: implemented on 2026-07-02.
+
+- Windows local-audio import no longer relies on a strict extension picker filter; the dialog shows files and folders, and `localAudioService` remains the single source of truth for supported-format filtering.
+- App-shell drag/drop now accepts local files, folders, and mixed selections, then imports them into the fixed `本地音乐` list through the existing recursive scan, metadata read, de-duplication, and import result prompts.
+- The ordinary Settings page no longer exposes external-decoder enable/output/timeout/extension/probe controls. Bundled FFmpeg transcode remains an internal always-on playback capability for DSF/DFF/AC3/ALAC-style formats.
+- Legacy external-decoder setting keys stay in the schema/defaults for data compatibility and smoke coverage, but playback/import no longer lets stale user settings disable DSF/DFF discovery or playback.
+- Missing bundled FFmpeg is treated as an application installation-integrity issue and should tell the user to reinstall instead of asking them to enable a setting.
+
 ## Current Boundaries
 
 - Local file playback now resolves through `audio-decode`; direct Electron local file playback is intentionally disabled for maintainability.
+- DSF/DFF and other bundled-transcode formats are zero-config for ordinary users; decoder toggles and format details must not reappear in the standard Settings UI.
 - Foobar2000 integration is a future external adapter, not a direct in-process plugin loader.
 - The migrated Coral Music User API flow already exists and should be extended, not replaced.

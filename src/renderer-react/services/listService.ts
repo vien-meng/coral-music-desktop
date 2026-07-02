@@ -86,6 +86,13 @@ export const removeListMusics = async (listId: string, ids: string[]): Promise<v
   });
 };
 
+export const updateListMusics = async (
+  musicInfos: Coral.List.ListActionMusicUpdate,
+): Promise<void> => {
+  if (!isElectronRenderer()) return;
+  await ipcClient.invoke(ipcChannels.player.listMusicUpdate, musicInfos);
+};
+
 export const moveListMusics = async (
   fromId: string,
   toId: string,
@@ -205,6 +212,7 @@ export const listService = {
   overwriteListFull,
   removeListMusics,
   removeUserLists,
+  updateListMusics,
   updateListMusicsPosition,
   updateUserListsPosition,
   updateUserLists,

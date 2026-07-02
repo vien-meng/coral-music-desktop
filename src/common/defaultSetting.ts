@@ -75,7 +75,7 @@ const defaultSetting: Coral.AppSetting = {
   ],
   'player.externalDecoder.enabled': true,
   'player.externalDecoder.preferredOutput': 'wav',
-  'player.externalDecoder.extensions': ['dsf', 'dff', 'alac', 'ac3'],
+  'player.externalDecoder.extensions': ['dsf', 'dff', 'alac', 'ac3', 'ape'],
   'player.externalDecoder.timeoutMs': 30_000,
   'player.sourcePlugin.allowUserApi': true,
   'player.sourcePlugin.preferUserApi': true,

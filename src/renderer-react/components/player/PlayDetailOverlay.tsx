@@ -143,18 +143,6 @@ export const PlayDetailOverlay = observer(() => {
     >
       添加音源
     </Button>
-  ) : player.needsExternalDecoder ? (
-    <Button
-      size="small"
-      type="primary"
-      onClick={() => {
-        player.closePlayDetail();
-        ui.setActiveRoute('setting');
-        ui.requestQuickAction('configureExternalDecoder');
-      }}
-    >
-      配置解码器
-    </Button>
   ) : undefined;
 
   return (

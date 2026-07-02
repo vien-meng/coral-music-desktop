@@ -83,7 +83,7 @@ const runProcess = async (
         reject(new Error(messages.eacces));
         return;
       }
-      reject(new Error(error.message || '外部解码器启动失败。'));
+      reject(new Error(error.message || '内嵌 FFmpeg 启动失败，请检查应用完整性或重新安装。'));
     });
     child.on('close', (code) => {
       clearTimeout(timeout);
@@ -103,35 +103,56 @@ const runFfmpeg = async (
   outputPath: string,
 ): Promise<void> => {
   if (params.output !== 'wav') {
-    throw new Error('当前播放器运行时只能播放外部解码后的 WAV 输出，请在设置里选择 WAV。');
+    throw new Error('当前播放器运行时只能播放内嵌 FFmpeg 转码后的 WAV 输出。');
   }
 
   const ffmpegPath = resolveBundledFfmpegPath();
   await assertFile(ffmpegPath, 'FFmpeg 可执行文件');
 
-  await runProcess(
-    ffmpegPath,
-    [
-      '-y',
-      '-hide_banner',
-      '-loglevel',
-      'error',
-      '-i',
-      params.inputPath,
-      '-vn',
-      '-acodec',
-      'pcm_s16le',
-      '-ar',
-      '44100',
-      outputPath,
-    ],
-    params.timeoutMs,
-    {
-      eacces: 'FFmpeg 无法执行，请检查应用完整性或重新安装。',
-      enoent: '内嵌 FFmpeg 未找到，请重新安装应用。',
-      timeout: '外部解码超时，请检查文件或调大超时时间。',
-    },
-  );
+  const baseArgs = ['-y', '-hide_banner', '-loglevel', 'error'];
+  // 强制 stereo：DTS/AC3 可能是多声道，Chrome 对多声道 PCM 支持有限
+  const outputArgs = ['-vn', '-acodec', 'pcm_s16le', '-ar', '44100', '-ac', '2', outputPath];
+
+  try {
+    // 标准探测模式：让 FFmpeg 自动识别格式
+    await runProcess(
+      ffmpegPath,
+      [...baseArgs, '-i', params.inputPath, ...outputArgs],
+      params.timeoutMs,
+      {
+        eacces: 'FFmpeg 无法执行，请检查应用完整性或重新安装。',
+        enoent: '内嵌 FFmpeg 未找到，请重新安装应用。',
+        timeout: '内嵌 FFmpeg 解码超时，请检查音频文件是否完整。',
+      },
+    );
+  } catch (standardError) {
+    // 标准探测失败时（如无头 raw PCM WAV），回退到 raw PCM 强制解码
+    // 常见参数：s16le/48000Hz/stereo（CD/高清 PCM 最常见规格）
+    const errMsg = standardError instanceof Error ? standardError.message : String(standardError);
+    if (!/Invalid data found|Demuxer|not a file/i.test(errMsg)) throw standardError;
+
+    await runProcess(
+      ffmpegPath,
+      [
+        ...baseArgs,
+        '-f',
+        's16le',
+        '-ar',
+        '48000',
+        '-ac',
+        '2',
+        '-i',
+        params.inputPath,
+        ...outputArgs,
+      ],
+      params.timeoutMs,
+      {
+        eacces: 'FFmpeg 无法执行，请检查应用完整性或重新安装。',
+        enoent: '内嵌 FFmpeg 未找到，请重新安装应用。',
+        timeout: '内嵌 FFmpeg 解码超时，请检查音频文件是否完整。',
+      },
+    );
+  }
 };
 
 export const transcodeExternalDecoder = async (

@@ -130,23 +130,22 @@ body {
 .coral-shell .coral-window-drag-zone {
   cursor: default;
   pointer-events: auto;
-  position: fixed;
-  z-index: 4000;
+  position: absolute;
   -webkit-app-region: no-drag !important;
 }
 
 .coral-shell .coral-window-drag-zone.is-top {
-  height: 8px;
   left: 0;
   right: 0;
-  top: 0;
+  bottom: 0;
+  height: 100%;
 }
 
 .coral-shell .coral-window-drag-zone.is-left {
   bottom: 0;
   left: 0;
   top: 0;
-  width: 10px;
+  width: 100%;
 }
 
 .coral-sider {
@@ -216,6 +215,7 @@ body {
   padding: 12px 24px;
   line-height: 1.4;
   overflow: hidden;
+  position: relative;
   -webkit-app-region: no-drag !important;
 }
 
@@ -380,6 +380,41 @@ body {
 
 .coral-global-loading .ant-spin-text {
   white-space: nowrap;
+}
+
+.coral-file-drop-overlay {
+  align-items: center;
+  background: color-mix(in srgb, var(--coral-surface-solid) 58%, transparent);
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  left: 0;
+  pointer-events: none;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 2200;
+  -webkit-app-region: no-drag !important;
+}
+
+.coral-file-drop-panel {
+  align-items: center;
+  background: var(--coral-surface);
+  border: 1px solid var(--coral-accent);
+  border-radius: 8px;
+  box-shadow: var(--coral-shadow);
+  color: var(--coral-text);
+  display: flex;
+  font-size: 18px;
+  font-weight: 650;
+  gap: 12px;
+  min-height: 72px;
+  padding: 0 28px;
+}
+
+.coral-file-drop-panel .anticon {
+  color: var(--coral-accent-strong);
+  font-size: 24px;
 }
 
 .coral-player-slot {

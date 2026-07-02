@@ -7,7 +7,6 @@ import {
   WIN_MAIN_RENDERER_EVENT_NAME,
 } from '@common/ipcNames';
 import type {
-  DecodedAudioData,
   ExternalDecoderProbeParams,
   ExternalDecoderProbeResult,
   ExternalDecoderTranscodeParams,
@@ -61,6 +60,7 @@ export const ipcChannels = {
     listMusicGet: PLAYER_EVENT_NAME.list_music_get as 'player_list_music_get',
     listMusicMove: PLAYER_EVENT_NAME.list_music_move as 'player_list_music_move',
     listMusicRemove: PLAYER_EVENT_NAME.list_music_remove as 'player_list_music_remove',
+    listMusicUpdate: PLAYER_EVENT_NAME.list_music_update as 'player_list_music_update',
     listMusicUpdatePosition:
       PLAYER_EVENT_NAME.list_music_update_position as 'player_list_music_update_position',
   },
@@ -200,7 +200,8 @@ export const ipcChannels = {
     max: WIN_MAIN_RENDERER_EVENT_NAME.max as 'winMain_max',
     fullscreen: WIN_MAIN_RENDERER_EVENT_NAME.fullscreen as 'winMain_fullscreen',
     setWindowSize: WIN_MAIN_RENDERER_EVENT_NAME.set_window_size as 'winMain_set_window_size',
-    decodeLocalAudio: WIN_MAIN_RENDERER_EVENT_NAME.decode_local_audio as 'winMain_decode_local_audio',
+    decodeLocalAudio:
+      WIN_MAIN_RENDERER_EVENT_NAME.decode_local_audio as 'winMain_decode_local_audio',
   },
   winLyric: {
     getConfig: WIN_LYRIC_RENDERER_EVENT_NAME.get_config as 'winLyric_get_config',
@@ -268,6 +269,7 @@ export interface CoralIpcInvokeMap {
   [ipcChannels.player.listMusicGet]: IpcContract<string, Coral.Music.MusicInfo[]>;
   [ipcChannels.player.listMusicMove]: IpcContract<Coral.List.ListActionMusicMove, void>;
   [ipcChannels.player.listMusicRemove]: IpcContract<Coral.List.ListActionMusicRemove, void>;
+  [ipcChannels.player.listMusicUpdate]: IpcContract<Coral.List.ListActionMusicUpdate, void>;
   [ipcChannels.player.listMusicUpdatePosition]: IpcContract<
     Coral.List.ListActionMusicUpdatePosition,
     void
@@ -420,8 +422,8 @@ export interface CoralIpcInvokeMap {
   [ipcChannels.winLyric.getConfig]: IpcContract<undefined, Coral.DesktopLyric.Config>;
   [ipcChannels.winLyric.setConfig]: IpcContract<Partial<Coral.DesktopLyric.Config>, void>;
 
-  // 音频解码：渲染进程 → 主进程，避免 audio-decode 中 createRequire 在 Vite 打包后不可用
-  [ipcChannels.winMain.decodeLocalAudio]: IpcContract<Uint8Array, DecodedAudioData>;
+  // 音频解码：渲染进程传文件路径，主进程读取+解码+重编码为 WAV，渲染进程通过 HTMLAudio 直接播放
+  [ipcChannels.winMain.decodeLocalAudio]: IpcContract<string, ArrayBuffer>;
 }
 
 export interface CoralIpcSendMap {
