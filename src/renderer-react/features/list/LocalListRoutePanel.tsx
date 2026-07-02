@@ -450,9 +450,19 @@ export const LocalListRoutePanel = observer(() => {
       appSetting?.['player.localAudio.supportedExts'] ?? nativeLocalAudioExtensions;
     const externalExtensions = externalDecoderExtensions;
 
+    // Windows does not support openFile + openDirectory simultaneously — it shows a
+    // directory-only picker. macOS handles the combination correctly. On Windows we
+    // exclude openDirectory; folder import still works via drag-and-drop.
+    const useOpenDirectory = typeof process !== 'undefined' && process.platform !== 'win32';
+    const audioExtensions = [...new Set([...nativeExtensions, ...externalExtensions])];
     const result = await appService.showSelectDialog({
-      filters: [{ extensions: ['*'], name: 'All Files' }],
-      properties: ['openFile', 'openDirectory', 'multiSelections'],
+      filters: [
+        { name: '音频文件', extensions: audioExtensions },
+        { name: '所有文件', extensions: ['*'] },
+      ],
+      properties: useOpenDirectory
+        ? ['openFile', 'openDirectory', 'multiSelections']
+        : ['openFile', 'multiSelections'],
       title: '导入本地音频',
     });
     if (result.canceled || !result.filePaths.length) return;
