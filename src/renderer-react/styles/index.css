@@ -272,6 +272,10 @@ body {
   -webkit-app-region: no-drag !important;
 }
 
+.coral-header-actions .ant-space-item {
+  z-index: 10;
+}
+
 .coral-header-action-btn {
   background: var(--coral-control-bg);
   border-color: var(--coral-border);
