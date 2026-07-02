@@ -422,6 +422,9 @@ export class PlayerStore {
         this.pendingMusic = musicInfo;
         this.syncQueueIndex(musicInfo);
         this.recordPlayedMusic(musicInfo);
+        // 切歌时立即清除上一首的歌词/封面等信息，避免转码期间残留显示
+        this.clearLyricSnapshot();
+        this.clearMusicMetaSnapshot();
         // 转码期间并行预加载歌词（含在线兜底），避免转码完成后才开始搜索导致延迟
         this.enrichCurrentLocalLyricInfo(musicInfo);
       } else {
@@ -442,7 +445,10 @@ export class PlayerStore {
     options: { skipLyric?: boolean } = {},
   ): void {
     this.currentMusic = musicInfo;
-    if (!options.skipLyric) this.clearLyricSnapshot();
+    if (!options.skipLyric) {
+      this.clearLyricSnapshot();
+      this.clearMusicMetaSnapshot();
+    }
     this.syncQueueIndex(musicInfo);
     this.recordPlayedMusic(musicInfo);
     this.library?.addPlayHistory(
@@ -607,6 +613,17 @@ export class PlayerStore {
     this.status = {
       ...this.status,
       ...emptyLyricStatus,
+    };
+  }
+
+  clearMusicMetaSnapshot(): void {
+    this.status = {
+      ...this.status,
+      picUrl: '',
+      albumName: '',
+      probeBitrate: null,
+      probeSampleRate: null,
+      probeFormat: null,
     };
   }
 
