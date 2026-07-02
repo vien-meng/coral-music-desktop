@@ -103,9 +103,20 @@ Status: implemented on 2026-07-02.
 - Legacy external-decoder setting keys stay in the schema/defaults for data compatibility and smoke coverage, but playback/import no longer lets stale user settings disable DSF/DFF discovery or playback.
 - Missing bundled FFmpeg is treated as an application installation-integrity issue and should tell the user to reinstall instead of asking them to enable a setting.
 
+### Step 150: Local Metadata And WebM Demux Playback
+
+Status: implemented on 2026-07-02.
+
+- Local import/playback metadata now keeps `music-metadata` as the primary source for embedded cover, bitrate, sample rate, duration, album, title, and artist across supported formats.
+- Header parsing remains a fallback for MP3/FLAC/WAV when metadata tags are incomplete; WebM additionally uses `web-demuxer` media info to recover audio-stream sample rate and bitrate.
+- WebM playback has a renderer-side `web-demuxer` + WebCodecs `AudioDecoder` path that demuxes the audio stream and feeds PCM into the existing decoded AudioBuffer runtime.
+- WebM falls back to the existing main-process `audio-decode` path when WebCodecs or demuxing is unavailable, so the new path improves support without removing the prior safety net.
+- Playback-time local metadata enrichment writes improved local metadata back to the selected list, so recovered cover/sample-rate/bitrate does not disappear on later list reads.
+
 ## Current Boundaries
 
 - Local file playback now resolves through `audio-decode`; direct Electron local file playback is intentionally disabled for maintainability.
+- WebM audio is the exception that first tries renderer-side `web-demuxer` demux + WebCodecs decode, then falls back to the unified `audio-decode` path.
 - DSF/DFF and other bundled-transcode formats are zero-config for ordinary users; decoder toggles and format details must not reappear in the standard Settings UI.
 - Foobar2000 integration is a future external adapter, not a direct in-process plugin loader.
 - The migrated Coral Music User API flow already exists and should be extended, not replaced.

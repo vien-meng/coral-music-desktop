@@ -1,6 +1,6 @@
 {
   "name": "coral-music-desktop",
-  "version": "1.0.3",
+  "version": "1.0.3.1",
   "description": "珊瑚音乐 - 基于 Electron、React、MobX、Vite、TypeScript 与 Ant Design 的桌面音乐播放器",
   "main": "./dist/main.js",
   "scripts": {
@@ -204,6 +204,7 @@
     "tunnel": "^0.0.6",
     "undici": "^7.25.0",
     "utf-8-validate": "^6.0.6",
+    "web-demuxer": "^4.0.0",
     "ws": "^8.20.0"
   },
   "overrides": {

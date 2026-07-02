@@ -149,6 +149,7 @@ record('local audio import is wired to list runtime', () => {
       'createLocalMusicInfosFromPaths',
       'readLocalAudioMetadata',
       'readLocalAudioHeaderInfo',
+      'getWebmAudioMetadata',
       'parseFile(filePath, { duration: true })',
       'parseAudioHeader',
       'formatDuration',
@@ -158,6 +159,7 @@ record('local audio import is wired to list runtime', () => {
       'picUrl: pictureUrl ?? musicInfo.meta.picUrl',
       'sampleRate: sampleRate ?? musicInfo.meta.sampleRate',
       'bitrate: bitrate ?? musicInfo.meta.bitrate',
+      "extension === 'webm' ? getWebmAudioMetadata(filePath) : Promise.resolve(null)",
     ],
     'src/renderer-react/services/localAudioService.ts',
   );
@@ -342,10 +344,32 @@ record('local playback resolver unifies local files through audio-decode', () =>
       'decodeLocalAudio',
       'decodeLocalAudioToObjectUrl',
       'decodeWavFileInMain',
+      'decodeWebmAudioFile',
+      'canDecodeWebmWithWebCodecs',
+      'web-demuxer WebM decode failed',
       'internalAudioDecodeExtensions',
       'URL.createObjectURL',
     ],
     'src/renderer-react/services/playerRuntime/localAudioDecodeService.ts',
+  );
+  assertIncludes(
+    read('src/renderer-react/services/playerRuntime/webmAudioDecodeService.ts'),
+    [
+      'WebDemuxer',
+      'web-demuxer/wasm-mini?url',
+      'AudioDecoder',
+      "demuxer.getMediaStream('audio')",
+      "demuxer.readMediaPacket('audio')",
+      "demuxer.genEncodedChunk('audio'",
+      'getWebmAudioMetadata',
+      'decodeWebmAudioFile',
+    ],
+    'src/renderer-react/services/playerRuntime/webmAudioDecodeService.ts',
+  );
+  assertIncludes(
+    read('src/renderer-react/services/playerRuntime/musicUrlResolver.ts'),
+    ['decodedAudio', 'decodedAudio: internalDecodedLocal.decodedAudio'],
+    'src/renderer-react/services/playerRuntime/musicUrlResolver.ts',
   );
   assertIncludes(
     read('src/renderer-react/stores/domains/playerStore.ts'),

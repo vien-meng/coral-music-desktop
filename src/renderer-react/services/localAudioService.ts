@@ -8,6 +8,7 @@ import {
 import type { IAudioMetadata, parseFile } from 'music-metadata';
 import { basename, extname, isDirectory, readDirectory, readFile } from './nodeBridgeService';
 import { parseAudioHeader, type AudioStreamInfo } from './playerRuntime/audioHeaderProbe';
+import { getWebmAudioMetadata } from './playerRuntime/webmAudioDecodeService';
 
 interface MusicMetadataModule {
   parseFile: typeof parseFile;
@@ -183,9 +184,11 @@ export const enrichLocalMusicInfoWithMetadata = async (
   musicInfo: Coral.Music.MusicInfoLocal,
 ): Promise<Coral.Music.MusicInfoLocal> => {
   const filePath = musicInfo.meta.filePath;
-  const [metadata, headerInfo] = await Promise.all([
+  const extension = normalizeAudioExtension(musicInfo.meta.ext || extname(filePath));
+  const [metadata, headerInfo, webmInfo] = await Promise.all([
     readLocalAudioMetadata(filePath),
     readLocalAudioHeaderInfo(filePath),
+    extension === 'webm' ? getWebmAudioMetadata(filePath) : Promise.resolve(null),
   ]);
 
   const title = trimToNull(metadata?.common.title);
@@ -197,11 +200,11 @@ export const enrichLocalMusicInfoWithMetadata = async (
   const bitrate =
     metadata?.format.bitrate && Number.isFinite(metadata.format.bitrate)
       ? Math.round(metadata.format.bitrate)
-      : (headerInfo?.bitrate ?? null);
+      : (webmInfo?.bitrate ?? headerInfo?.bitrate ?? null);
   const sampleRate =
     metadata?.format.sampleRate && Number.isFinite(metadata.format.sampleRate)
       ? metadata.format.sampleRate
-      : (headerInfo?.sampleRate ?? null);
+      : (webmInfo?.sampleRate ?? headerInfo?.sampleRate ?? null);
 
   return {
     ...musicInfo,

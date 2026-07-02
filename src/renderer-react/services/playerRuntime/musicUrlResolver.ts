@@ -10,6 +10,7 @@ import {
   canDecodeLocalAudioExtension,
   decodeLocalAudioToObjectUrl,
 } from './localAudioDecodeService';
+import type { DecodedAudioData } from '@shared/playbackCapabilities';
 import type { PlayerRuntimeMusicInfo } from './types';
 
 const TOO_MANY_REQUESTS_MESSAGE = 'too many requests';
@@ -143,6 +144,7 @@ const toOnlineMusicInfo = (musicInfo: unknown): Coral.Music.MusicInfoOnline | nu
 };
 
 export interface ResolvedPlaybackUrl {
+  decodedAudio?: DecodedAudioData;
   decodedFilePath?: string;
   objectUrl?: string;
   musicInfo: PlayerRuntimeMusicInfo;
@@ -185,7 +187,7 @@ export const isExternalDecoderLocalMusic = (musicInfo?: PlayerRuntimeMusicInfo):
 
 const resolveInternalDecodedPath = async (
   filePath: string,
-): Promise<{ objectUrl: string; url: string } | null> => {
+): Promise<{ decodedAudio?: DecodedAudioData; objectUrl?: string; url?: string } | null> => {
   const normalizedFilePath = filePath.trim();
   if (!normalizedFilePath) return null;
 
@@ -200,6 +202,13 @@ const resolveInternalDecodedPath = async (
 
   const decoded = await decodeLocalAudioToObjectUrl(normalizedFilePath, extension);
   if (!decoded) return null;
+  if (decoded.decodedAudio) {
+    return {
+      decodedAudio: decoded.decodedAudio,
+      url: '',
+    };
+  }
+  if (!decoded.objectUrl || !decoded.url) return null;
 
   return {
     objectUrl: decoded.objectUrl,
@@ -234,7 +243,7 @@ const resolveExternalDecodedPath = async (
   // 不用 file:// URL：dev 模式下渲染进程是 http:// origin，file:// 会被 CORS 阻止。
   // decodeLocalAudioToObjectUrl 内部检测到标准 RIFF/WAVE 头会直接返回原始 bytes，不再解码。
   const decoded = await decodeLocalAudioToObjectUrl(result.outputPath, 'wav');
-  if (!decoded) throw new Error('FFmpeg 转码输出文件读取失败。');
+  if (!decoded?.objectUrl || !decoded.url) throw new Error('FFmpeg 转码输出文件读取失败。');
   return {
     decodedFilePath: result.outputPath,
     objectUrl: decoded.objectUrl,
@@ -257,9 +266,10 @@ export const resolveDownloadMusicUrl = async (
   musicInfo: Coral.Download.ListItem,
   isRefresh = false,
 ): Promise<{
+  decodedAudio?: DecodedAudioData;
   decodedFilePath?: string;
   objectUrl?: string;
-  url: string;
+  url?: string;
 } | null> => {
   if (isRefresh || !musicInfo.isComplate || /\.ape$/i.test(musicInfo.metadata.fileName))
     return null;
@@ -448,12 +458,13 @@ export const resolvePlayableMusicUrl = async (
     const downloadUrl = await resolveDownloadMusicUrl(musicInfo, options.isRefresh);
     if (downloadUrl) {
       return {
+        decodedAudio: downloadUrl.decodedAudio,
         decodedFilePath: downloadUrl.decodedFilePath,
         objectUrl: downloadUrl.objectUrl,
         musicInfo,
         quality: musicInfo.metadata.quality,
         source: 'download',
-        url: downloadUrl.url,
+        url: downloadUrl.url ?? '',
       };
     }
 
@@ -484,11 +495,12 @@ export const resolvePlayableMusicUrl = async (
       const internalDecodedLocal = await resolveInternalDecodedPath(musicInfo.meta.filePath);
       if (internalDecodedLocal) {
         return {
+          decodedAudio: internalDecodedLocal.decodedAudio,
           objectUrl: internalDecodedLocal.objectUrl,
           musicInfo,
           quality: '128k',
           source: 'local',
-          url: internalDecodedLocal.url,
+          url: internalDecodedLocal.url ?? '',
         };
       }
 
