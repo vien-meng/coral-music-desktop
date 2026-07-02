@@ -41,19 +41,21 @@ const winEvent = () => {
     global.coral.event_app.main_window_blur();
   });
 
-  // 阻止 DevTools 快捷键（F12 / Ctrl+Shift+I / Cmd+Option+I）及自动打开
-  browserWindow.webContents.on('before-input-event', (event, input) => {
-    if (
-      input.key === 'F12' ||
-      (input.control && input.shift && input.key === 'I') ||
-      (input.meta && input.alt && input.key === 'I')
-    ) {
-      event.preventDefault();
-    }
-  });
-  browserWindow.webContents.on('devtools-opened', () => {
-    if (browserWindow) browserWindow.webContents.closeDevTools();
-  });
+  // 阻止 DevTools 快捷键（F12 / Ctrl+Shift+I / Cmd+Option+I）及自动打开（仅生产环境）
+  if (process.env.NODE_ENV === 'production') {
+    browserWindow.webContents.on('before-input-event', (event, input) => {
+      if (
+        input.key === 'F12' ||
+        (input.control && input.shift && input.key === 'I') ||
+        (input.meta && input.alt && input.key === 'I')
+      ) {
+        event.preventDefault();
+      }
+    });
+    browserWindow.webContents.on('devtools-opened', () => {
+      if (browserWindow) browserWindow.webContents.closeDevTools();
+    });
+  }
 
   browserWindow.once('ready-to-show', () => {
     if (!global.envParams.cmdParams.hidden) {

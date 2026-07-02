@@ -27,6 +27,12 @@ const assertIncludes = (content, needles, file) => {
   }
 };
 
+const assertNotIncludes = (content, needles, file) => {
+  for (const needle of needles) {
+    assert(!content.includes(needle), `${file} should not include ${needle}`);
+  }
+};
+
 record('playback capability plan is documented', () => {
   const file = 'skills/coral-music-desktop/references/playback-capability-plan.md';
   assert(exists(file), `${file} not found`);
@@ -102,7 +108,7 @@ record('default settings are conservative', () => {
       "'wma'",
       "'player.externalDecoder.enabled': true",
       "'player.externalDecoder.preferredOutput': 'wav'",
-      "'player.externalDecoder.extensions': ['dsf', 'dff', 'alac', 'ac3']",
+      "'player.externalDecoder.extensions': ['dsf', 'dff', 'alac', 'ac3', 'ape']",
       "'player.externalDecoder.timeoutMs': 30_000",
       "'player.sourcePlugin.allowUserApi': true",
       "'player.sourcePlugin.preferUserApi': true",
@@ -142,34 +148,72 @@ record('local audio import is wired to list runtime', () => {
       'createLocalMusicInfoWithMetadata',
       'createLocalMusicInfosFromPaths',
       'readLocalAudioMetadata',
+      'readLocalAudioHeaderInfo',
       'parseFile(filePath, { duration: true })',
+      'parseAudioHeader',
       'formatDuration',
       "source: 'local'",
       'readDirectory',
       'isLocalAudioDecoderCandidate',
+      'picUrl: pictureUrl ?? musicInfo.meta.picUrl',
+      'sampleRate: sampleRate ?? musicInfo.meta.sampleRate',
+      'bitrate: bitrate ?? musicInfo.meta.bitrate',
     ],
     'src/renderer-react/services/localAudioService.ts',
   );
   assertIncludes(
     read('src/renderer-react/stores/domains/listStore.ts'),
     [
+      'LOCAL_AUDIO_LIST_NAME',
+      'ensureLocalAudioList',
       'isImportingLocalAudio',
       'importLocalAudioPaths',
+      'importLocalAudioPathsToLocalList',
+      'updateSelectedMusicInfo',
       'localAudioService.createLocalMusicInfosFromPaths',
       'listService.addListMusics',
+      'listService.updateListMusics',
     ],
     'src/renderer-react/stores/domains/listStore.ts',
+  );
+  assertIncludes(
+    read('src/renderer-react/services/listService.ts'),
+    ['updateListMusics', 'ipcChannels.player.listMusicUpdate'],
+    'src/renderer-react/services/listService.ts',
   );
   assertIncludes(
     read('src/renderer-react/features/list/LocalListRoutePanel.tsx'),
     [
       'handleImportLocalAudio',
+      "{ extensions: ['*'], name: 'All Files' }",
       'openDirectory',
       'player.localAudio.supportedExts',
-      'player.externalDecoder.extensions',
+      'const externalExtensions = externalDecoderExtensions',
+      'importLocalAudioPathsToLocalList',
       '本地音频',
     ],
     'src/renderer-react/features/list/LocalListRoutePanel.tsx',
+  );
+});
+
+record('drag and drop imports local audio into the local music list', () => {
+  assertIncludes(
+    read('src/renderer-react/app/AppShell.tsx'),
+    [
+      'getDroppedFilePaths',
+      'handleFileDrop',
+      'onDragOver={handleFileDragOver}',
+      'onDrop={handleFileDrop}',
+      'importLocalAudioPathsToLocalList',
+      'const externalExtensions = externalDecoderExtensions',
+      '松开导入到本地音乐',
+    ],
+    'src/renderer-react/app/AppShell.tsx',
+  );
+  assertIncludes(
+    read('src/renderer-react/styles/index.css'),
+    ['coral-file-drop-overlay', 'coral-file-drop-panel'],
+    'src/renderer-react/styles/index.css',
   );
 });
 
@@ -218,7 +262,7 @@ record('external decoder probe is typed and non-executing', () => {
       "'pcm_s16le'",
       'coral-decoder',
       '内嵌 FFmpeg',
-      '外部解码超时',
+      '内嵌 FFmpeg 解码超时',
     ],
     'src/main/modules/winMain/externalDecoderRuntime.ts',
   );
@@ -259,9 +303,18 @@ record('local playback resolver unifies local files through audio-decode', () =>
       'decodedFilePath',
       'objectUrl',
       'externalDecoderService.transcodeExternalDecoder',
+      "output: 'wav'",
       "decodeLocalAudioToObjectUrl(result.outputPath, 'wav')",
-      '本地 ${extension.toUpperCase()} 文件需要外部解码器',
-      '当前外部解码器未启用',
+    ],
+    file,
+  );
+  assertNotIncludes(
+    read(file),
+    [
+      "setting?.['player.externalDecoder.enabled']",
+      "setting['player.externalDecoder.extensions']",
+      '请在“设置 > 本地解码”启用 FFmpeg',
+      '请在“设置 > 本地解码”加入该扩展',
     ],
     file,
   );
@@ -288,8 +341,7 @@ record('local playback resolver unifies local files through audio-decode', () =>
     [
       'decodeLocalAudio',
       'decodeLocalAudioToObjectUrl',
-      'encodePcm16Wav',
-      'decodeViaMainProcess',
+      'decodeWavFileInMain',
       'internalAudioDecodeExtensions',
       'URL.createObjectURL',
     ],
@@ -297,17 +349,27 @@ record('local playback resolver unifies local files through audio-decode', () =>
   );
   assertIncludes(
     read('src/renderer-react/stores/domains/playerStore.ts'),
-    ['needsExternalDecoder', 'FFmpeg|外部解码|解码器|DSD|SACD|WAV|PCM'],
+    [
+      'enrichCurrentLocalMusicInfo',
+      'probeSampleRate',
+      'probeBitrate',
+      'updateSelectedMusicInfo(enrichedMusicInfo)',
+    ],
     'src/renderer-react/stores/domains/playerStore.ts',
   );
   assertIncludes(
+    read('src/renderer-react/stores/domains/playerStore.ts'),
+    ['errorText', 'needsSourcePlugin'],
+    'src/renderer-react/stores/domains/playerStore.ts',
+  );
+  assertNotIncludes(
     read('src/renderer-react/components/player/PlayBar.tsx'),
-    ['player.needsExternalDecoder', 'configureExternalDecoder', '配置解码器'],
+    ['player.needsExternalDecoder', '配置解码器'],
     'src/renderer-react/components/player/PlayBar.tsx',
   );
-  assertIncludes(
+  assertNotIncludes(
     read('src/renderer-react/components/player/PlayDetailOverlay.tsx'),
-    ['errorActionNode', 'player.needsExternalDecoder', 'configureExternalDecoder', '配置解码器'],
+    ['player.needsExternalDecoder', '配置解码器'],
     'src/renderer-react/components/player/PlayDetailOverlay.tsx',
   );
 });
@@ -344,11 +406,20 @@ record('feature entrypoints remain visible for local files and source plugins', 
   );
   assertIncludes(
     read('src/renderer-react/features/settings/SettingsRoutePanel.tsx'),
+    ['内嵌 FFmpeg', '用户无需配置'],
+    'src/renderer-react/features/settings/SettingsRoutePanel.tsx',
+  );
+  assertNotIncludes(
+    read('src/renderer-react/features/settings/SettingsRoutePanel.tsx'),
     [
-      "'player.externalDecoder.preferredOutput': 'wav'",
-      "{ label: 'PCM', value: 'pcm', disabled: true }",
-      '内嵌 FFmpeg',
-      '用户无需配置',
+      'label="外部解码器"',
+      "'player.externalDecoder.enabled'",
+      "'player.externalDecoder.preferredOutput'",
+      "'player.externalDecoder.timeoutMs'",
+      "'player.externalDecoder.extensions'",
+      'handleProbeExternalDecoder',
+      'decoderProbeResult',
+      'isProbingDecoder',
     ],
     'src/renderer-react/features/settings/SettingsRoutePanel.tsx',
   );
@@ -379,7 +450,7 @@ record('feature entrypoints remain visible for local files and source plugins', 
       'handleCreateLocalList',
       '当前列表暂无歌曲',
       '导入本地音频',
-      "list.createUserList('本地音乐')",
+      'importLocalAudioPathsToLocalList',
     ],
     'src/renderer-react/features/list/LocalListRoutePanel.tsx',
   );

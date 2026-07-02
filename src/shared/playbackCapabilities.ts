@@ -41,6 +41,10 @@ export interface DecodedAudioData {
   sampleRate: number;
 }
 
+export interface DecodedAudioWithWav extends DecodedAudioData {
+  wavBuffer: ArrayBuffer;
+}
+
 export interface ExclusiveAudioDevice {
   backend: ExclusiveAudioOutputBackend;
   id: string;
@@ -124,7 +128,7 @@ export const internalAudioDecodeExtensions = [
   'wma',
 ] as const;
 
-export const externalDecoderExtensions = ['dsf', 'dff', 'alac', 'ac3'] as const;
+export const externalDecoderExtensions = ['dsf', 'dff', 'alac', 'ac3', 'ape'] as const;
 
 export const externalDecoderExtensionAliases = {
   sadc: 'sacd',

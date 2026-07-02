@@ -642,11 +642,12 @@ Recommended next implementation batch:
 37. Step 146 fixed local FLAC playback without requiring online sources or external FFmpeg configuration. The player temporarily probed `Audio.canPlayType()` before treating a local extension as browser-native, and local/downloaded FLAC fell back to an in-memory WAV Blob URL for the existing audio runtime.
 38. Step 147 switched the internal local decoder path from the dedicated FLAC dependency to `audio-decode`, expanding decode support to MP3, WAV, OGG/OGA Vorbis, FLAC, Opus, M4A/AAC/ALAC, QOA, AIFF, CAF, WebM, AMR, and WMA. The follow-up implementation removed direct Electron local-file playback entirely: local/downloaded files and external-decoder WAV outputs now all flow through `audio-decode`.
 39. Step 148 implemented JustDSD as a real zero-config external decoder provider. JustDSD is enabled by default for external formats; Java and `jdsd-nodep.jar` settings are optional advanced overrides, while packaged builds auto-resolve bundled assets from `resources/justdsd`. The runtime invokes a packaged Coral Java source-file helper with JustDSD on the classpath to export DSF/DFF/SACD to temporary WAV, and playback then decodes that WAV through the same `audio-decode` AudioBuffer path.
+40. Step 149 completed the local-import and zero-configuration decoder UX pass. Windows import now uses an All Files picker and delegates supported-format filtering to `localAudioService`; global file/folder drag/drop imports into the fixed `本地音乐` list; ordinary Settings no longer exposes external-decoder toggles/output/timeout/extensions/probe controls; stale external-decoder settings no longer disable DSF/DFF import or playback.
 
 Recommended next implementation batch:
 
-1. Step 147: revisit UI/Electron click-through automation once the packaging/runtime environment is less noisy.
-2. Step 148: run a focused visual pass on Settings/List/PlayBar when a stable app window is available.
-3. Step 149: when the real Coral Music repository is known, set `repository.url`, `bugs.url`, `homepage`, README badges, and publish owner/repo workflow docs together.
+1. Step 150: revisit UI/Electron click-through automation once the packaging/runtime environment is less noisy.
+2. Step 151: run a focused visual pass on Settings/List/PlayBar when a stable app window is available.
+3. Step 152: when the real Coral Music repository is known, set `repository.url`, `bugs.url`, `homepage`, README badges, and publish owner/repo workflow docs together.
 
 This order keeps the app startable first, then expands local playback and source-plugin capability behind typed, smoke-guarded runtime boundaries before returning to release metadata polish.

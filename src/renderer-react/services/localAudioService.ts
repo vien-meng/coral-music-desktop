@@ -6,7 +6,8 @@ import {
   normalizeAudioExtension,
 } from '@shared/playbackCapabilities';
 import type { IAudioMetadata, parseFile } from 'music-metadata';
-import { basename, extname, isDirectory, readDirectory } from './nodeBridgeService';
+import { basename, extname, isDirectory, readDirectory, readFile } from './nodeBridgeService';
+import { parseAudioHeader, type AudioStreamInfo } from './playerRuntime/audioHeaderProbe';
 
 interface MusicMetadataModule {
   parseFile: typeof parseFile;
@@ -99,6 +100,28 @@ const readLocalAudioMetadata = async (filePath: string): Promise<IAudioMetadata 
   return await musicMetadata.parseFile(filePath, { duration: true }).catch(() => null);
 };
 
+const LOCAL_AUDIO_HEADER_BYTES = 65536;
+
+const toArrayBuffer = (data: Uint8Array): ArrayBuffer => {
+  const start = data.byteOffset;
+  const end = start + data.byteLength;
+  return data.buffer.slice(start, end) as ArrayBuffer;
+};
+
+const readLocalAudioHeaderInfo = async (filePath: string): Promise<AudioStreamInfo | null> => {
+  try {
+    const fileBuffer = await readFile(filePath);
+    const headerBytes = new Uint8Array(
+      fileBuffer.buffer,
+      fileBuffer.byteOffset,
+      Math.min(fileBuffer.byteLength, LOCAL_AUDIO_HEADER_BYTES),
+    );
+    return parseAudioHeader(toArrayBuffer(headerBytes));
+  } catch {
+    return null;
+  }
+};
+
 const formatDuration = (duration?: number): string | null => {
   if (!duration || !Number.isFinite(duration) || duration <= 0) return null;
 
@@ -124,7 +147,12 @@ const readPictureDataUrl = (metadata: IAudioMetadata): string | null => {
   if (!picture?.data.length) return null;
 
   const format = picture.format || 'image/jpeg';
-  const base64 = Buffer.from(picture.data).toString('base64');
+  const bytes = new Uint8Array(picture.data);
+  let binary = '';
+  for (let index = 0; index < bytes.length; index += 0x8000) {
+    binary += String.fromCharCode(...bytes.slice(index, index + 0x8000));
+  }
+  const base64 = btoa(binary);
   return `data:${format};base64,${base64}`;
 };
 
@@ -155,34 +183,38 @@ export const enrichLocalMusicInfoWithMetadata = async (
   musicInfo: Coral.Music.MusicInfoLocal,
 ): Promise<Coral.Music.MusicInfoLocal> => {
   const filePath = musicInfo.meta.filePath;
-  const metadata = await readLocalAudioMetadata(filePath);
-  if (!metadata) return musicInfo;
+  const [metadata, headerInfo] = await Promise.all([
+    readLocalAudioMetadata(filePath),
+    readLocalAudioHeaderInfo(filePath),
+  ]);
 
-  const title = trimToNull(metadata.common.title);
+  const title = trimToNull(metadata?.common.title);
   const artist =
-    trimToNull(metadata.common.artist) ??
-    trimToNull(metadata.common.artists?.filter(Boolean).join(' / '));
-  const album = trimToNull(metadata.common.album);
-  const pictureUrl = readPictureDataUrl(metadata);
+    trimToNull(metadata?.common.artist) ??
+    trimToNull(metadata?.common.artists?.filter(Boolean).join(' / '));
+  const album = trimToNull(metadata?.common.album);
+  const pictureUrl = metadata ? readPictureDataUrl(metadata) : null;
   const bitrate =
-    metadata.format.bitrate && Number.isFinite(metadata.format.bitrate)
+    metadata?.format.bitrate && Number.isFinite(metadata.format.bitrate)
       ? Math.round(metadata.format.bitrate)
-      : null;
+      : (headerInfo?.bitrate ?? null);
   const sampleRate =
-    metadata.format.sampleRate && Number.isFinite(metadata.format.sampleRate)
+    metadata?.format.sampleRate && Number.isFinite(metadata.format.sampleRate)
       ? metadata.format.sampleRate
-      : null;
+      : (headerInfo?.sampleRate ?? null);
 
   return {
     ...musicInfo,
-    interval: formatDuration(metadata.format.duration),
+    interval: formatDuration(metadata?.format.duration) ?? musicInfo.interval,
     meta: {
       ...musicInfo.meta,
       albumName: album ?? musicInfo.meta.albumName,
-      bitrate,
-      lossless: metadata.format.lossless ?? null,
+      bitrate: bitrate ?? musicInfo.meta.bitrate,
+      lossless:
+        metadata?.format.lossless ??
+        (headerInfo?.format === 'flac' ? true : (musicInfo.meta.lossless ?? null)),
       picUrl: pictureUrl ?? musicInfo.meta.picUrl,
-      sampleRate,
+      sampleRate: sampleRate ?? musicInfo.meta.sampleRate,
     },
     name: title ?? musicInfo.name,
     singer: artist ?? musicInfo.singer,

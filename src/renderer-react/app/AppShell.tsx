@@ -7,10 +7,14 @@ import {
   SunOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
-import { Button, Dropdown, Flex, Layout, Menu, Space, Spin, Typography } from 'antd';
+import { Button, Dropdown, Flex, Layout, Menu, Space, Spin, Typography, message } from 'antd';
 import { observer } from 'mobx-react-lite';
-import { useCallback, type MouseEvent } from 'react';
+import { useCallback, useState, type DragEvent as ReactDragEvent, type MouseEvent } from 'react';
 import { coralBrand } from '@shared/brand';
+import {
+  externalDecoderExtensions,
+  nativeLocalAudioExtensions,
+} from '@shared/playbackCapabilities';
 import { SearchInput, WindowControlBtns } from '../components/layout';
 import { PlayBar } from '../components/player';
 import { appService } from '../services/appService';
@@ -21,8 +25,31 @@ import { rendererRoutes } from './routeConfig';
 const { Header, Sider, Content, Footer } = Layout;
 const { Text } = Typography;
 
+type FileWithPath = File & { path?: string };
+
+const isFileDragEvent = (event: ReactDragEvent<HTMLElement>): boolean =>
+  Array.from(event.dataTransfer.types).includes('Files');
+
+const getDroppedFilePaths = (dataTransfer: DataTransfer): string[] =>
+  Array.from(dataTransfer.files)
+    .map((file) => {
+      const filePath = (file as FileWithPath).path?.trim();
+      if (filePath) return filePath;
+      // Electron 的 File.path 在某些配置下可能不可用，改用 webUtils 获取
+      try {
+        const electron = (globalThis as any).require?.('electron');
+        if (electron?.webUtils?.getPathForFile) {
+          const webUtilsPath: string | null = electron.webUtils.getPathForFile(file);
+          return webUtilsPath?.trim() ?? '';
+        }
+      } catch {}
+      return '';
+    })
+    .filter(Boolean);
+
 export const AppShell = observer(() => {
   const { settings, theme, ui } = rootStore;
+  const [isFileDragActive, setIsFileDragActive] = useState(false);
   const controlBtnPosition = settings.appSetting?.['common.controlBtnPosition'] ?? 'right';
   const isFullscreen = false;
   let themeActionIcon = <DesktopOutlined />;
@@ -56,19 +83,96 @@ export const AppShell = observer(() => {
     document.addEventListener('mouseup', handleMouseUp);
   }, []);
 
+  const handleFileDragEnter = useCallback((event: ReactDragEvent<HTMLElement>) => {
+    if (!isFileDragEvent(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    setIsFileDragActive(true);
+  }, []);
+
+  const handleFileDragOver = useCallback((event: ReactDragEvent<HTMLElement>) => {
+    if (!isFileDragEvent(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = 'copy';
+    setIsFileDragActive(true);
+  }, []);
+
+  const handleFileDragLeave = useCallback((event: ReactDragEvent<HTMLElement>) => {
+    if (!isFileDragEvent(event)) return;
+    const nextTarget = event.relatedTarget;
+    if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) return;
+    setIsFileDragActive(false);
+  }, []);
+
+  const handleFileDrop = useCallback(
+    async (event: ReactDragEvent<HTMLElement>) => {
+      if (!isFileDragEvent(event)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      setIsFileDragActive(false);
+
+      const appSetting = settings.appSetting;
+      if (appSetting && !appSetting['player.localAudio.enabled']) {
+        message.warning('本地音频导入已关闭，请在“设置 > 本地解码”开启。');
+        ui.setActiveRoute('setting');
+        ui.requestQuickAction('configureExternalDecoder');
+        return;
+      }
+
+      const filePaths = getDroppedFilePaths(event.dataTransfer);
+      if (!filePaths.length) {
+        message.warning('未读取到可导入的本地文件路径');
+        return;
+      }
+
+      const addMusicLocationType = appSetting?.['list.addMusicLocationType'] ?? 'top';
+      const nativeExtensions =
+        appSetting?.['player.localAudio.supportedExts'] ?? nativeLocalAudioExtensions;
+      const externalExtensions = externalDecoderExtensions;
+
+      ui.setActiveRoute('list');
+      const importResult = await ui.withGlobalLoading(
+        () =>
+          rootStore.list.importLocalAudioPathsToLocalList(filePaths, addMusicLocationType, {
+            externalExtensions,
+            nativeExtensions,
+          }),
+        '导入本地音频...',
+      );
+      if (!importResult) return;
+
+      if (!importResult.importedMusics.length) {
+        message.warning(
+          importResult.candidateCount
+            ? `已跳过 ${importResult.duplicateCount} 首重复本地音频`
+            : '未发现支持的本地音频文件',
+        );
+        return;
+      }
+
+      const duplicateText = importResult.duplicateCount
+        ? `，跳过重复 ${importResult.duplicateCount} 首`
+        : '';
+      message.success(`已导入 ${importResult.importedMusics.length} 首本地音频${duplicateText}`);
+    },
+    [settings.appSetting, ui],
+  );
+
   return (
-    <Layout className={`coral-shell is-${theme.themeMode}`}>
-      <div
-        className="coral-window-drag-zone is-top"
-        aria-hidden="true"
-        onMouseDown={handleWindowDragMouseDown}
-      />
-      <div
-        className="coral-window-drag-zone is-left"
-        aria-hidden="true"
-        onMouseDown={handleWindowDragMouseDown}
-      />
+    <Layout
+      className={`coral-shell is-${theme.themeMode}`}
+      onDragEnter={handleFileDragEnter}
+      onDragLeave={handleFileDragLeave}
+      onDragOver={handleFileDragOver}
+      onDrop={handleFileDrop}
+    >
       <Sider width={224} className="coral-sider">
+        <div
+          className="coral-window-drag-zone is-left"
+          aria-hidden="true"
+          onMouseDown={handleWindowDragMouseDown}
+        />
         <div className="coral-brand">
           {controlBtnPosition === 'left' ? (
             <WindowControlBtns variant="mac" isFullscreen={isFullscreen} />
@@ -98,6 +202,11 @@ export const AppShell = observer(() => {
       </Sider>
       <Layout>
         <Header className="coral-header">
+          <div
+            className="coral-window-drag-zone is-top"
+            aria-hidden="true"
+            onMouseDown={handleWindowDragMouseDown}
+          />
           <Flex align="center" justify="space-between" gap={16} className="coral-header-row">
             <div className="coral-header-search">
               <SearchInput
@@ -181,6 +290,14 @@ export const AppShell = observer(() => {
           <Spin size="large" description={ui.globalLoadingText || '加载中...'}>
             <div className="coral-global-loading-tip" />
           </Spin>
+        </div>
+      ) : null}
+      {isFileDragActive ? (
+        <div className="coral-file-drop-overlay" aria-live="polite">
+          <div className="coral-file-drop-panel">
+            <FileAddOutlined />
+            <span>松开导入到本地音乐</span>
+          </div>
         </div>
       ) : null}
     </Layout>

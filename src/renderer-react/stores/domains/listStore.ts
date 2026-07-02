@@ -6,6 +6,8 @@ import {
   type LocalAudioImportResult,
 } from '../../services/localAudioService';
 
+const LOCAL_AUDIO_LIST_NAME = '本地音乐';
+
 export class ListStore {
   actionError: string | null = null;
 
@@ -62,6 +64,10 @@ export class ListStore {
       this.userLists = await listService.getUserLists();
       this.selectedListId = this.userLists[0]?.id ?? null;
       this.isHydrated = true;
+      // 同步加载首个歌单的歌曲，避免首次进入列表页时空白
+      if (this.selectedListId) {
+        await this.loadSelectedListMusics(this.selectedListId);
+      }
     } catch (error) {
       this.hydrateError = error instanceof Error ? error.message : String(error);
     } finally {
@@ -247,6 +253,17 @@ export class ListStore {
     }
   }
 
+  async importLocalAudioPathsToLocalList(
+    inputPaths: string[],
+    addMusicLocationType: Coral.AddMusicLocationType,
+    options: LocalAudioImportOptions = {},
+  ): Promise<LocalAudioImportResult | null> {
+    if (!inputPaths.length) return null;
+    const listId = await this.ensureLocalAudioList();
+    if (!listId) return null;
+    return await this.importLocalAudioPaths(inputPaths, addMusicLocationType, options);
+  }
+
   async moveSelectedMusicsToPosition(
     position: number,
     musicInfos: Coral.Music.MusicInfo[],
@@ -295,6 +312,23 @@ export class ListStore {
       this.actionError = error instanceof Error ? error.message : String(error);
     } finally {
       this.isMutatingMusic = false;
+    }
+  }
+
+  async updateSelectedMusicInfo(musicInfo: Coral.Music.MusicInfo): Promise<void> {
+    const listId = this.selectedListId;
+    if (!listId || !musicInfo.id) return;
+
+    const targetIndex = this.selectedMusics.findIndex((item) => item.id === musicInfo.id);
+    if (targetIndex < 0) return;
+
+    try {
+      await listService.updateListMusics([{ id: listId, musicInfo }]);
+      this.selectedMusics = this.selectedMusics.map((item, index) =>
+        index === targetIndex ? musicInfo : item,
+      );
+    } catch (error) {
+      this.actionError = error instanceof Error ? error.message : String(error);
     }
   }
 
@@ -362,6 +396,36 @@ export class ListStore {
       this.selectedMusics = [];
     } catch (error) {
       this.actionError = error instanceof Error ? error.message : String(error);
+    } finally {
+      this.isMutatingList = false;
+    }
+  }
+
+  async ensureLocalAudioList(): Promise<string | null> {
+    const existingList = this.userLists.find((list) => list.name === LOCAL_AUDIO_LIST_NAME);
+    if (existingList) {
+      await this.loadSelectedListMusics(existingList.id);
+      return existingList.id;
+    }
+
+    this.isMutatingList = true;
+    this.actionError = null;
+
+    const listInfo: Coral.List.UserListInfo = {
+      id: `userlist_${Date.now()}`,
+      locationUpdateTime: null,
+      name: LOCAL_AUDIO_LIST_NAME,
+    };
+
+    try {
+      await listService.createUserLists(this.userLists.length, [listInfo]);
+      this.userLists = [...this.userLists, listInfo];
+      this.selectedListId = listInfo.id;
+      this.selectedMusics = [];
+      return listInfo.id;
+    } catch (error) {
+      this.actionError = error instanceof Error ? error.message : String(error);
+      return null;
     } finally {
       this.isMutatingList = false;
     }

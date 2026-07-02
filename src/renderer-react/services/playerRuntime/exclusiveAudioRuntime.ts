@@ -1,6 +1,6 @@
 import { audioOutputService } from '../audioOutputService';
 import { settingService } from '../settingService';
-import { resolvePlayableMusicUrl } from './musicUrlResolver';
+import { isExternalDecoderLocalMusic, resolvePlayableMusicUrl } from './musicUrlResolver';
 import type {
   PlayerRuntimeBridge,
   PlayerRuntimeMusicInfo,
@@ -10,7 +10,9 @@ import type {
   PlayerStatusListener,
 } from './types';
 
-type ExclusiveRuntimeStatus = Awaited<ReturnType<typeof audioOutputService.stopExclusiveAudioOutput>>;
+type ExclusiveRuntimeStatus = Awaited<
+  ReturnType<typeof audioOutputService.stopExclusiveAudioOutput>
+>;
 
 const toPlayerPlaybackStatus = (
   status: ExclusiveRuntimeStatus['status'],
@@ -144,20 +146,25 @@ export class ExclusiveAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
     options: PlayerRuntimePlayOptions,
     requestId: number,
   ): Promise<void> {
+    const needsPreparing = isExternalDecoderLocalMusic(musicInfo);
     try {
       this.publishMusicInfo(musicInfo);
-      this.publish({ status: 'paused', errorText: '' });
+      this.publish({
+        status: 'paused',
+        errorText: '',
+        ...(needsPreparing ? { isPreparing: true } : {}),
+      });
       const [setting, resolved] = await Promise.all([
         settingService.getAppSetting(),
         resolvePlayableMusicUrl(musicInfo, options),
       ]);
       if (this.isDisposed || requestId !== this.loadRequestId) return;
       if (!setting || !resolved) {
-        this.publish({ status: 'stoped' });
+        this.publish({ status: 'stoped', ...(needsPreparing ? { isPreparing: false } : {}) });
         return;
       }
 
-      if (resolved.decodedAudio || resolved.objectUrl?.startsWith('blob:')) {
+      if (resolved.objectUrl?.startsWith('blob:')) {
         throw new Error('独占输出暂不支持浏览器内存解码流，请使用系统输出或启用 FFmpeg 文件解码。');
       }
 
@@ -173,6 +180,7 @@ export class ExclusiveAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
       this.publish({
         actualQuality: resolved.quality,
         ...toPlayerStatus(status),
+        ...(needsPreparing ? { isPreparing: false } : {}),
       });
 
       if (status.status === 'error') {
@@ -186,7 +194,11 @@ export class ExclusiveAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
         await this.playFallbackIfAllowed(setting, musicInfo, options, errorText);
         return;
       }
-      this.publish({ errorText, status: 'error' });
+      this.publish({
+        errorText,
+        status: 'error',
+        ...(needsPreparing ? { isPreparing: false } : {}),
+      });
     }
   }
 

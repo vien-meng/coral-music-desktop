@@ -122,12 +122,21 @@ export const getOnlineLyricInfo = async (
   return lyricInfo;
 };
 
+const parseIntervalToSeconds = (interval: string): number => {
+  // 兼容 "3:34"、"03:34"、"3:34:56" 等格式
+  const parts = interval.split(':').map((part) => parseInt(part, 10));
+  if (parts.some(Number.isNaN)) return 0;
+  return parts.reduce((acc, part) => acc * 60 + part, 0);
+};
+
 export const getOnlineLyricInfoByKeyword = async (musicInfo: {
   interval: string;
   name: string;
   singer: string;
 }): Promise<Coral.Music.LyricInfo> => {
   const sdk = await loadMusicSdk();
+
+  // 第一轮：用原始歌手名 + 歌名搜索
   const rawList =
     (await sdk
       .findMusic?.({
@@ -139,9 +148,37 @@ export const getOnlineLyricInfoByKeyword = async (musicInfo: {
       })
       .catch(() => [])) ?? [];
 
-  const candidates = rawList
+  let candidates = rawList
     .map(toOnlineMusicInfo)
     .filter((item): item is Coral.Music.MusicInfoOnline => item != null);
+
+  // 第二轮：歌手名搜不到时（如英文歌手名 "Leehom Wang" 与平台 "王力宏" 不匹配），
+  // 仅用歌名搜索，按时长最接近排序后取前 5 个候选
+  if (candidates.length === 0 && musicInfo.name) {
+    const fallbackRawList =
+      (await sdk
+        .findMusic?.({
+          albumName: '',
+          interval: musicInfo.interval,
+          name: musicInfo.name,
+          singer: '',
+          source: 'local',
+        })
+        .catch(() => [])) ?? [];
+    const fallbackCandidates = fallbackRawList
+      .map(toOnlineMusicInfo)
+      .filter((item): item is Coral.Music.MusicInfoOnline => item != null);
+
+    const targetSeconds = parseIntervalToSeconds(musicInfo.interval);
+    if (targetSeconds > 0) {
+      fallbackCandidates.sort(
+        (a, b) =>
+          Math.abs(parseIntervalToSeconds(a.interval ?? '') - targetSeconds) -
+          Math.abs(parseIntervalToSeconds(b.interval ?? '') - targetSeconds),
+      );
+    }
+    candidates = fallbackCandidates;
+  }
 
   for (const candidate of candidates.slice(0, 5)) {
     const lyricInfo = await getOnlineLyricInfo(candidate).catch(() => emptyLyricInfo);

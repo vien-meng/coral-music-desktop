@@ -7,7 +7,6 @@ import {
   KeyOutlined,
   LinkOutlined,
   ReloadOutlined,
-  WarningOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
 import {
@@ -33,18 +32,14 @@ import { TRAY_AUTO_ID } from '@common/constants';
 import { isUrl, sizeFormate } from '@common/utils/common';
 import { coralProjectLinks } from '@shared/brand';
 import {
-  externalDecoderExtensions,
-  normalizeAudioExtension,
   type ExclusiveAudioDevice,
   type ExclusiveAudioOutputProbeResult,
-  type ExternalDecoderProbeResult,
 } from '@shared/playbackCapabilities';
 import { audioOutputService } from '../../services/audioOutputService';
 import { PlainList, PlainListItem, PlainListMeta } from '../../components/base';
 import { appService } from '../../services/appService';
 import { backupService } from '../../services/backupService';
 import { cacheService } from '../../services/cacheService';
-import { externalDecoderService } from '../../services/externalDecoderService';
 import { listService } from '../../services/listService';
 import { basename, joinPath, readFile } from '../../services/nodeBridgeService';
 import { rootStore } from '../../stores/rootStore';
@@ -153,21 +148,6 @@ const lyricAlignOptions = [
   { label: '居中', value: 'center' },
   { label: '右侧', value: 'right' },
 ];
-
-const splitListSetting = (value: string): string[] =>
-  Array.from(
-    new Set(
-      value
-        .split(/[\n,，;；\s]+/)
-        .map((item) => item.trim())
-        .filter(Boolean),
-    ),
-  );
-
-const splitExtensionSetting = (value: string): string[] => {
-  const extensions = splitListSetting(value).map(normalizeAudioExtension).filter(Boolean);
-  return Array.from(new Set(extensions));
-};
 
 const SettingSection = ({ children, title }: SettingSectionProps) => (
   <section className="coral-settings-section">
@@ -426,22 +406,12 @@ export const SettingsRoutePanel = observer(() => {
   const [musicUrlCount, setMusicUrlCount] = useState(0);
   const [lyricRawCount, setLyricRawCount] = useState(0);
   const [lyricEditedCount, setLyricEditedCount] = useState(0);
-  const [decoderExtensionsDraft, setDecoderExtensionsDraft] = useState('');
-  const [decoderProbeResult, setDecoderProbeResult] = useState<ExternalDecoderProbeResult | null>(
-    null,
-  );
-  const [isProbingDecoder, setIsProbingDecoder] = useState(false);
   const [exclusiveDevices, setExclusiveDevices] = useState<ExclusiveAudioDevice[]>([]);
   const [exclusiveProbeResult, setExclusiveProbeResult] =
     useState<ExclusiveAudioOutputProbeResult | null>(null);
   const [isLoadingExclusiveDevices, setIsLoadingExclusiveDevices] = useState(false);
   const [isProbingExclusiveOutput, setIsProbingExclusiveOutput] = useState(false);
   const externalDecoderSectionRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!appSetting) return;
-    setDecoderExtensionsDraft(appSetting['player.externalDecoder.extensions'].join(', '));
-  }, [appSetting?.['player.externalDecoder.extensions']]);
 
   useEffect(() => {
     if (appSetting?.['player.audioOutput.mode'] !== 'exclusive') return;
@@ -613,28 +583,6 @@ export const SettingsRoutePanel = observer(() => {
   const currentUserApiSourceNames = userApi.getPlayableSourceNames(currentUserApi);
   const currentUserApiQualityNames = getUserApiQualityNames(currentUserApi);
   const canPlayCurrentUserApi = currentUserApiSourceNames.length > 0;
-
-  const commitDecoderExtensions = (): string[] => {
-    const extensions = splitExtensionSetting(decoderExtensionsDraft);
-    const nextExtensions = extensions.length ? extensions : [...externalDecoderExtensions];
-    setDecoderExtensionsDraft(nextExtensions.join(', '));
-    updateSetting('player.externalDecoder.extensions', nextExtensions);
-    return nextExtensions;
-  };
-
-  const handleProbeExternalDecoder = async (): Promise<void> => {
-    const extensions = commitDecoderExtensions();
-    setIsProbingDecoder(true);
-
-    try {
-      const result = await externalDecoderService.probeExternalDecoder({
-        extensions,
-      });
-      setDecoderProbeResult(result);
-    } finally {
-      setIsProbingDecoder(false);
-    }
-  };
 
   return (
     <Spin
@@ -969,111 +917,13 @@ export const SettingsRoutePanel = observer(() => {
               settingKey="player.localAudio.enabled"
               updateSetting={applySetting}
             />
-            <Form.Item label="外部解码器">
-              <Switch
-                checked={appSetting['player.externalDecoder.enabled']}
-                onChange={(checked) => {
-                  applySetting({
-                    'player.externalDecoder.enabled': checked,
-                    'player.externalDecoder.preferredOutput': 'wav',
-                  });
-                  setDecoderProbeResult(null);
-                }}
-              />
-            </Form.Item>
             <Form.Item label="运行状态" className="coral-settings-wide-item">
               <Alert
                 showIcon
-                type={appSetting['player.externalDecoder.enabled'] ? 'info' : 'warning'}
-                title={
-                  appSetting['player.externalDecoder.enabled']
-                    ? '内嵌 FFmpeg 会在播放 DSD/SACD 等格式时自动转码为临时 WAV，切歌或退出播放器后自动清理；用户无需配置。'
-                    : '外部格式播放前需要先启用外部解码器。'
-                }
+                type="info"
+                title="内嵌 FFmpeg 会在播放 DSF/DFF/AC3/ALAC/APE 等格式时自动转码为临时 WAV，切歌或退出播放器后自动清理；用户无需配置。"
               />
             </Form.Item>
-            <Form.Item label="输出格式">
-              <Radio.Group
-                value={appSetting['player.externalDecoder.preferredOutput']}
-                optionType="button"
-                buttonStyle="solid"
-                options={[
-                  { label: 'WAV', value: 'wav' },
-                  { label: 'PCM', value: 'pcm', disabled: true },
-                ]}
-                onChange={(event) => {
-                  updateSetting('player.externalDecoder.preferredOutput', event.target.value);
-                }}
-              />
-            </Form.Item>
-            <Form.Item label="超时">
-              <Space.Compact>
-                <InputNumber
-                  min={5}
-                  max={300}
-                  value={Math.round(appSetting['player.externalDecoder.timeoutMs'] / 1000)}
-                  onChange={(value) => {
-                    if (value != null) {
-                      updateSetting('player.externalDecoder.timeoutMs', value * 1000);
-                    }
-                  }}
-                />
-                <Button disabled>秒</Button>
-              </Space.Compact>
-            </Form.Item>
-            <Form.Item label="支持扩展" className="coral-settings-wide-item">
-              <Input
-                allowClear
-                value={decoderExtensionsDraft}
-                placeholder="dsf, dff, alac, ac3"
-                className="coral-settings-decoder-input"
-                onChange={(event) => {
-                  setDecoderExtensionsDraft(event.target.value);
-                  setDecoderProbeResult(null);
-                }}
-                onBlur={() => {
-                  commitDecoderExtensions();
-                }}
-                onPressEnter={(event) => {
-                  event.currentTarget.blur();
-                }}
-              />
-            </Form.Item>
-            <Form.Item label="探测" className="coral-settings-wide-item">
-              <Space wrap>
-                <Button
-                  size="small"
-                  icon={<ReloadOutlined />}
-                  loading={isProbingDecoder}
-                  onClick={() => {
-                    handleProbeExternalDecoder();
-                  }}
-                >
-                  探测内嵌 FFmpeg
-                </Button>
-              </Space>
-            </Form.Item>
-            {decoderProbeResult ? (
-              <Form.Item label="探测结果" className="coral-settings-wide-item">
-                <Space orientation="vertical" size="small" className="coral-settings-probe-result">
-                  <Alert
-                    showIcon
-                    type={decoderProbeResult.canProbe ? 'success' : 'warning'}
-                    icon={
-                      decoderProbeResult.canProbe ? <CheckCircleOutlined /> : <WarningOutlined />
-                    }
-                    title={decoderProbeResult.canProbe ? '内嵌 FFmpeg 可用' : '内嵌 FFmpeg 不可用'}
-                    description={`平台 ${decoderProbeResult.platform} · 支持 ${decoderProbeResult.supportedExtensions.length || 0} 个扩展 · 缺失 ${decoderProbeResult.missingExtensions.length || 0} 个扩展`}
-                  />
-                  {decoderProbeResult.errors.length ? (
-                    <Alert showIcon type="error" title={decoderProbeResult.errors.join('；')} />
-                  ) : null}
-                  {decoderProbeResult.warnings.length ? (
-                    <Alert showIcon type="warning" title={decoderProbeResult.warnings.join('；')} />
-                  ) : null}
-                </Space>
-              </Form.Item>
-            ) : null}
           </SettingSection>
         </div>
 

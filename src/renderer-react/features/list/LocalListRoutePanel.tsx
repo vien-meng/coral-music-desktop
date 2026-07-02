@@ -438,19 +438,6 @@ export const LocalListRoutePanel = observer(() => {
       });
   };
 
-  const ensureLocalAudioTargetList = async (): Promise<boolean> => {
-    if (list.selectedListId) return true;
-
-    const firstListId = list.userLists[0]?.id;
-    if (firstListId) {
-      await list.loadSelectedListMusics(firstListId);
-      return true;
-    }
-
-    await list.createUserList('本地音乐');
-    return Boolean(list.selectedListId);
-  };
-
   const handleImportLocalAudio = async (): Promise<void> => {
     if (appSetting && !appSetting['player.localAudio.enabled']) {
       message.warning('本地音频导入已关闭，请在“设置 > 本地解码”开启。');
@@ -461,29 +448,23 @@ export const LocalListRoutePanel = observer(() => {
 
     const nativeExtensions =
       appSetting?.['player.localAudio.supportedExts'] ?? nativeLocalAudioExtensions;
-    const externalExtensions =
-      appSetting?.['player.externalDecoder.extensions'] ?? externalDecoderExtensions;
-
-    const hasTargetList = await ensureLocalAudioTargetList();
-    if (!hasTargetList) {
-      message.warning('请先创建一个列表');
-      return;
-    }
+    const externalExtensions = externalDecoderExtensions;
 
     const result = await appService.showSelectDialog({
-      filters: [
-        { extensions: [...nativeExtensions, ...externalExtensions], name: 'Audio Files' },
-        { extensions: ['*'], name: 'All Files' },
-      ],
+      filters: [{ extensions: ['*'], name: 'All Files' }],
       properties: ['openFile', 'openDirectory', 'multiSelections'],
       title: '导入本地音频',
     });
     if (result.canceled || !result.filePaths.length) return;
 
-    const importResult = await list.importLocalAudioPaths(result.filePaths, addMusicLocationType, {
-      externalExtensions,
-      nativeExtensions,
-    });
+    const importResult = await list.importLocalAudioPathsToLocalList(
+      result.filePaths,
+      addMusicLocationType,
+      {
+        externalExtensions,
+        nativeExtensions,
+      },
+    );
     if (!importResult) return;
     setSelectedMusicIds([]);
     if (!importResult.importedMusics.length) {
