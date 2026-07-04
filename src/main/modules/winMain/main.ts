@@ -41,21 +41,7 @@ const winEvent = () => {
     global.coral.event_app.main_window_blur();
   });
 
-  // 阻止 DevTools 快捷键（F12 / Ctrl+Shift+I / Cmd+Option+I）及自动打开（仅生产环境）
-  if (process.env.NODE_ENV === 'production') {
-    browserWindow.webContents.on('before-input-event', (event, input) => {
-      if (
-        input.key === 'F12' ||
-        (input.control && input.shift && input.key === 'I') ||
-        (input.meta && input.alt && input.key === 'I')
-      ) {
-        event.preventDefault();
-      }
-    });
-    browserWindow.webContents.on('devtools-opened', () => {
-      if (browserWindow) browserWindow.webContents.closeDevTools();
-    });
-  }
+  // 生产环境下 DevTools 快捷键由 -odt 参数控制，不在此拦截
 
   browserWindow.once('ready-to-show', () => {
     if (!global.envParams.cmdParams.hidden) {
@@ -270,6 +256,14 @@ export const setFullScreen = (isFullscreen: boolean): boolean => {
     browserWindow.setFullScreen(isFullscreen);
   }
   return isFullscreen;
+};
+
+let cachedResizable = true;
+export const setWindowResizeable = (resizable: boolean): void => {
+  if (!browserWindow) return;
+  if (cachedResizable === resizable) return;
+  cachedResizable = resizable;
+  browserWindow.setResizable(resizable);
 };
 
 const taskBarButtonFlags: Coral.TaskBarButtonFlags = {
