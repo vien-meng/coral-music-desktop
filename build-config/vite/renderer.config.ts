@@ -1,5 +1,6 @@
 import path from 'node:path';
-import { defineConfig } from 'vite';
+import fs from 'node:fs';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { aliases, projectRoot } from './aliases';
 
@@ -25,7 +26,7 @@ const getManualChunk = (id: string): string | undefined => {
 };
 
 // 移除 Vite 生成的 crossorigin 属性，避免 file:// 协议下模块脚本加载失败
-const removeCrossoriginPlugin = () => ({
+const removeCrossoriginPlugin = (): Plugin => ({
   name: 'remove-crossorigin',
   enforce: 'post',
   transformIndexHtml(html: string) {
@@ -33,10 +34,33 @@ const removeCrossoriginPlugin = () => ({
   },
 });
 
+const webDemuxerWasmPlugin = (): Plugin => {
+  const wasmPath = path.join(
+    projectRoot,
+    'node_modules/web-demuxer/dist/wasm-files/web-demuxer.wasm',
+  );
+  return {
+    name: 'web-demuxer-wasm',
+    configureServer(server) {
+      server.middlewares.use('/assets/web-demuxer.wasm', (_req, res) => {
+        res.setHeader('Content-Type', 'application/wasm');
+        fs.createReadStream(wasmPath).pipe(res);
+      });
+    },
+    generateBundle() {
+      this.emitFile({
+        fileName: 'assets/web-demuxer.wasm',
+        source: fs.readFileSync(wasmPath),
+        type: 'asset',
+      });
+    },
+  };
+};
+
 export default defineConfig({
   root: path.join(projectRoot, 'src/renderer-react'),
   base: './',
-  plugins: [react(), removeCrossoriginPlugin()],
+  plugins: [react(), webDemuxerWasmPlugin(), removeCrossoriginPlugin()],
   define: {
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV ?? 'development'),
   },

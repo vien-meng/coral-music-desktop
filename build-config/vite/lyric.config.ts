@@ -45,13 +45,30 @@ export default defineConfig({
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV ?? 'development'),
   },
   resolve: {
-    alias: aliases,
+    alias: {
+      ...aliases,
+      react: path.join(projectRoot, 'node_modules/react'),
+      'react-dom': path.join(projectRoot, 'node_modules/react-dom'),
+      'mobx-react-lite': path.join(projectRoot, 'node_modules/mobx-react-lite'),
+    },
+    dedupe: [
+      'react',
+      'react-dom',
+      'react-dom/client',
+      'react/jsx-dev-runtime',
+      'react/jsx-runtime',
+      'mobx-react-lite',
+    ],
     extensions: ['.tsx', '.ts', '.jsx', '.js', '.json'],
   },
   server: {
     host: process.env.CORAL_DEV_HOST,
     port: parsePort(process.env.CORAL_LYRIC_DEV_PORT, 9081),
     strictPort: true,
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'mobx-react-lite', 'mobx'],
+    force: true,
   },
   legacy: {
     inconsistentCjsInterop: true,

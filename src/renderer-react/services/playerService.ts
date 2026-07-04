@@ -91,6 +91,10 @@ class IpcPlayerRuntimeBridge implements PlayerRuntimeBridge {
     this.backend.playPrev();
   }
 
+  stop(): void {
+    this.backend.stop();
+  }
+
   togglePlay(): void {
     togglePlay();
     this.backend.togglePlay();

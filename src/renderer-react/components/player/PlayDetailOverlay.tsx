@@ -2,6 +2,7 @@ import {
   CloseOutlined,
   CompressOutlined,
   CustomerServiceOutlined,
+  DesktopOutlined,
   DownOutlined,
   ExpandOutlined,
   FileTextOutlined,
@@ -15,7 +16,7 @@ import {
   StepBackwardOutlined,
   StepForwardOutlined,
 } from '@ant-design/icons';
-import { Alert, Button, Flex, Space, Typography } from 'antd';
+import { Alert, Button, Flex, Space, Tooltip, Typography } from 'antd';
 import { observer } from 'mobx-react-lite';
 import { useCallback, useEffect, useState, type CSSProperties } from 'react';
 import { appService } from '../../services/appService';
@@ -317,6 +318,18 @@ export const PlayDetailOverlay = observer(() => {
               }}
             />
             <LyricMenu />
+            <Tooltip title="桌面歌词">
+              <Button
+                aria-label="桌面歌词"
+                icon={<DesktopOutlined />}
+                shape="circle"
+                type={settings.appSetting?.['desktopLyric.enable'] ? 'primary' : 'default'}
+                onClick={() => {
+                  const enabled = settings.appSetting?.['desktopLyric.enable'] ?? false;
+                  settings.updateAppSetting({ 'desktopLyric.enable': !enabled });
+                }}
+              />
+            </Tooltip>
             <QualitySwitchBtn />
             <FavoriteSongBtn musicInfo={favoriteMusicInfo} />
             <PlayQueueBtn />

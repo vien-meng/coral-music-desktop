@@ -1,10 +1,16 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 
 export type UiQuickAction =
-  'configureExternalDecoder' | 'importLocalAudio' | 'importUserApiFile' | 'importUserApiOnline';
+  | 'configureExternalDecoder'
+  | 'configureLocalAudioImport'
+  | 'importLocalAudio'
+  | 'importUserApiFile'
+  | 'importUserApiOnline';
 
 export class UiStore {
   activeRoute = 'leaderboard';
+
+  activeFavoritesTab: 'songs' | 'songlists' | 'albums' = 'songs';
 
   isRouteTransitioning = false;
 
@@ -45,6 +51,10 @@ export class UiStore {
         this.hideGlobalLoading();
       });
     }, 280);
+  }
+
+  setActiveFavoritesTab(tab: UiStore['activeFavoritesTab']): void {
+    this.activeFavoritesTab = tab;
   }
 
   showGlobalLoading(text = '加载中...'): void {

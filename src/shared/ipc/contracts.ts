@@ -9,6 +9,8 @@ import {
 import type {
   ExternalDecoderProbeParams,
   ExternalDecoderProbeResult,
+  ExternalDecoderStreamParams,
+  ExternalDecoderStreamResult,
   ExternalDecoderTranscodeParams,
   ExternalDecoderTranscodeResult,
   ExclusiveAudioDevice,
@@ -98,6 +100,10 @@ export const ipcChannels = {
       WIN_MAIN_RENDERER_EVENT_NAME.external_decoder_probe as 'winMain_external_decoder_probe',
     externalDecoderTranscode:
       WIN_MAIN_RENDERER_EVENT_NAME.external_decoder_transcode as 'winMain_external_decoder_transcode',
+    externalDecoderCreateStream:
+      WIN_MAIN_RENDERER_EVENT_NAME.external_decoder_create_stream as 'winMain_external_decoder_create_stream',
+    externalDecoderRevokeStream:
+      WIN_MAIN_RENDERER_EVENT_NAME.external_decoder_revoke_stream as 'winMain_external_decoder_revoke_stream',
     audioOutputListDevices:
       WIN_MAIN_RENDERER_EVENT_NAME.audio_output_list_devices as 'winMain_audio_output_list_devices',
     audioOutputProbeExclusive:
@@ -122,6 +128,8 @@ export const ipcChannels = {
       WIN_MAIN_RENDERER_EVENT_NAME.library_history_clear as 'winMain_library_history_clear',
     libraryFavoriteSongListList:
       WIN_MAIN_RENDERER_EVENT_NAME.library_favorite_songlist_list as 'winMain_library_favorite_songlist_list',
+    libraryFavoriteSongListSave:
+      WIN_MAIN_RENDERER_EVENT_NAME.library_favorite_songlist_save as 'winMain_library_favorite_songlist_save',
     libraryFavoriteSongListToggle:
       WIN_MAIN_RENDERER_EVENT_NAME.library_favorite_songlist_toggle as 'winMain_library_favorite_songlist_toggle',
     libraryFavoriteSongListRemove:
@@ -144,6 +152,8 @@ export const ipcChannels = {
     importUserApi: WIN_MAIN_RENDERER_EVENT_NAME.import_user_api as 'winMain_import_user_api',
     inited: WIN_MAIN_RENDERER_EVENT_NAME.inited as 'winMain_inited',
     onConfigChange: WIN_MAIN_RENDERER_EVENT_NAME.on_config_change as 'winMain_on_config_change',
+    onHotKeyConfigChange:
+      WIN_MAIN_RENDERER_EVENT_NAME.set_hot_key_config as 'winMain_set_hot_key_config',
     openApiAction: WIN_MAIN_RENDERER_EVENT_NAME.open_api_action as 'winMain_open_api_action',
     openDirInExplorer:
       WIN_MAIN_RENDERER_EVENT_NAME.open_dir_in_explorer as 'winMain_open_dir_in_explorer',
@@ -188,8 +198,10 @@ export const ipcChannels = {
     clearLyricEdited:
       WIN_MAIN_RENDERER_EVENT_NAME.clear_lyric_edited as 'winMain_clear_lyric_edited',
     hotKeyEnable: HOTKEY_RENDERER_EVENT_NAME.enable as 'hotKey_enable',
+    hotKeyConfig: HOTKEY_RENDERER_EVENT_NAME.get_config as 'hotKey_get_config',
     hotKeySetConfig: HOTKEY_RENDERER_EVENT_NAME.set_config as 'hotKey_set_config',
     hotKeyStatus: HOTKEY_RENDERER_EVENT_NAME.status as 'hotKey_status',
+    keyDown: WIN_MAIN_RENDERER_EVENT_NAME.key_down as 'winMain_key_down',
     syncAction: WIN_MAIN_RENDERER_EVENT_NAME.sync_action as 'winMain_sync_action',
     syncGetServerDevices:
       WIN_MAIN_RENDERER_EVENT_NAME.sync_get_server_devices as 'winMain_sync_get_server_devices',
@@ -315,6 +327,11 @@ export interface CoralIpcInvokeMap {
     ExternalDecoderTranscodeParams,
     ExternalDecoderTranscodeResult
   >;
+  [ipcChannels.winMain.externalDecoderCreateStream]: IpcContract<
+    ExternalDecoderStreamParams,
+    ExternalDecoderStreamResult
+  >;
+  [ipcChannels.winMain.externalDecoderRevokeStream]: IpcContract<string, void>;
   [ipcChannels.winMain.audioOutputListDevices]: IpcContract<undefined, ExclusiveAudioDevice[]>;
   [ipcChannels.winMain.audioOutputProbeExclusive]: IpcContract<
     ExclusiveAudioOutputProbeParams,
@@ -337,6 +354,10 @@ export interface CoralIpcInvokeMap {
   [ipcChannels.winMain.libraryHistoryClear]: IpcContract<undefined, Coral.Library.PlayRecord[]>;
   [ipcChannels.winMain.libraryFavoriteSongListList]: IpcContract<
     undefined,
+    Coral.Library.FavoriteSongList[]
+  >;
+  [ipcChannels.winMain.libraryFavoriteSongListSave]: IpcContract<
+    Coral.Library.FavoriteSongList,
     Coral.Library.FavoriteSongList[]
   >;
   [ipcChannels.winMain.libraryFavoriteSongListToggle]: IpcContract<
@@ -410,6 +431,7 @@ export interface CoralIpcInvokeMap {
   [ipcChannels.winMain.getLyricEditedCount]: IpcContract<undefined, number>;
   [ipcChannels.winMain.clearLyricEdited]: IpcContract<undefined, void>;
   [ipcChannels.winMain.hotKeyEnable]: IpcContract<boolean, void>;
+  [ipcChannels.winMain.hotKeyConfig]: IpcContract<undefined, Coral.HotKeyConfigAll>;
   [ipcChannels.winMain.hotKeySetConfig]: IpcContract<Coral.HotKeyActions, void>;
   [ipcChannels.winMain.hotKeyStatus]: IpcContract<undefined, Coral.HotKeyState>;
   [ipcChannels.winMain.syncAction]: IpcContract<Coral.Sync.SyncServiceActions, unknown>;
@@ -450,6 +472,8 @@ export interface CoralIpcEventMap {
   [ipcChannels.dislike.clearDislikeMusicInfos]: undefined;
   [ipcChannels.dislike.overwriteDislikeMusicInfos]: Coral.Dislike.DislikeRules;
   [ipcChannels.winMain.onConfigChange]: Partial<Coral.AppSetting>;
+  [ipcChannels.winMain.onHotKeyConfigChange]: Coral.HotKeyConfigAll;
+  [ipcChannels.winMain.keyDown]: Coral.HotKeyEvent;
   [ipcChannels.winMain.downloadTaskAction]: IpcDownloadTaskAction;
   [ipcChannels.winMain.audioOutputStatus]: ExclusiveAudioOutputStatus;
   [ipcChannels.winMain.playerActionOnButtonClick]: IpcPlayerActionClick;

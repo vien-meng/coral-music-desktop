@@ -42,9 +42,7 @@ const toPlayHistoryInfo = (
 });
 
 export const getPlayHistory = (): Coral.Library.PlayRecord[] =>
-  (createPlayHistoryQueryStatement().all() as Coral.DBService.PlayHistoryInfo[]).map(
-    toPlayRecord,
-  );
+  (createPlayHistoryQueryStatement().all() as Coral.DBService.PlayHistoryInfo[]).map(toPlayRecord);
 
 export const addPlayHistory = (
   input: Coral.Library.PlayRecordInput,
@@ -86,18 +84,27 @@ export const clearPlayHistory = (): Coral.Library.PlayRecord[] => {
 export const getFavoriteSongLists = (): Coral.Library.FavoriteSongList[] =>
   createFavoriteSongListQueryStatement().all() as Coral.Library.FavoriteSongList[];
 
+export const saveFavoriteSongList = (
+  item: Coral.Library.FavoriteSongList,
+): Coral.Library.FavoriteSongList[] => {
+  createFavoriteSongListInsertStatement().run({
+    ...item,
+    createdAt: item.createdAt || Date.now(),
+  });
+  return getFavoriteSongLists();
+};
+
 export const toggleFavoriteSongList = (
   item: Coral.Library.FavoriteSongList,
 ): Coral.Library.FavoriteSongList[] => {
   const current = getFavoriteSongLists();
-  const exists = current.some((favorite) => favorite.id === item.id && favorite.source === item.source);
+  const exists = current.some(
+    (favorite) => favorite.id === item.id && favorite.source === item.source,
+  );
   if (exists) {
     createFavoriteSongListDeleteStatement().run(item);
   } else {
-    createFavoriteSongListInsertStatement().run({
-      ...item,
-      createdAt: item.createdAt || Date.now(),
-    });
+    saveFavoriteSongList(item);
   }
   return getFavoriteSongLists();
 };
@@ -117,7 +124,9 @@ export const toggleFavoriteAlbum = (
   item: Coral.Library.FavoriteAlbum,
 ): Coral.Library.FavoriteAlbum[] => {
   const current = getFavoriteAlbums();
-  const exists = current.some((favorite) => favorite.id === item.id && favorite.source === item.source);
+  const exists = current.some(
+    (favorite) => favorite.id === item.id && favorite.source === item.source,
+  );
   if (exists) {
     createFavoriteAlbumDeleteStatement().run(item);
   } else {
@@ -139,7 +148,8 @@ export const removeFavoriteAlbums = (ids: string[]): Coral.Library.FavoriteAlbum
 
 const getAllLibraryMusics = (): Coral.Music.MusicInfo[] => {
   const musicMap = new Map<string, Coral.Music.MusicInfo>();
-  for (const record of getPlayHistory()) musicMap.set(`${record.musicInfo.source}:${record.id}`, record.musicInfo);
+  for (const record of getPlayHistory())
+    musicMap.set(`${record.musicInfo.source}:${record.id}`, record.musicInfo);
   for (const list of getAllUserList()) {
     for (const musicInfo of getListMusics(list.id)) {
       musicMap.set(`${musicInfo.source}:${musicInfo.id}`, musicInfo);

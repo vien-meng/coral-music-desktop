@@ -88,6 +88,18 @@ export class ExclusiveAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
     if (this.isUsingFallback) this.fallbackBackend.playPrev();
   }
 
+  stop(): void {
+    this.loadRequestId += 1;
+    this.currentMusic = null;
+    if (this.isUsingFallback) {
+      this.fallbackBackend.stop();
+      return;
+    }
+    audioOutputService.stopExclusiveAudioOutput().then((status) => {
+      this.publish(toPlayerStatus(status));
+    });
+  }
+
   togglePlay(): void {
     if (this.isUsingFallback) {
       this.fallbackBackend.togglePlay();

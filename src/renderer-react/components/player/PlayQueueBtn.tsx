@@ -1,4 +1,9 @@
-import { OrderedListOutlined, PlayCircleOutlined } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  DownloadOutlined,
+  OrderedListOutlined,
+  PlayCircleOutlined,
+} from '@ant-design/icons';
 import { Badge, Button, Drawer, Empty, Tooltip, Typography } from 'antd';
 import { observer } from 'mobx-react-lite';
 import { useState } from 'react';
@@ -6,6 +11,9 @@ import { PlainList, PlainListItem, PlainListMeta } from '../base';
 import { getSourceDisplayName } from '../../services/sourceNameService';
 import { rootStore } from '../../stores/rootStore';
 import type { PlayerRuntimeMusicInfo } from '../../services/playerService';
+import { createWebDavDownloadInfo } from '../../services/downloadTaskFactory';
+import { DownloadQualityModal } from './DownloadQualityModal';
+import { FavoriteSongBtn } from './FavoriteSongBtn';
 
 const { Text } = Typography;
 
@@ -33,12 +41,25 @@ const getQueueMusicInterval = (musicInfo: PlayerRuntimeMusicInfo): string =>
     ? musicInfo.metadata.musicInfo.interval || '--:--'
     : musicInfo.interval || '--:--';
 
+const getQueueMusicInfo = (musicInfo: PlayerRuntimeMusicInfo): Coral.Music.MusicInfo =>
+  isDownloadMusicInfo(musicInfo) ? musicInfo.metadata.musicInfo : musicInfo;
+
 export const PlayQueueBtn = observer(() => {
-  const { player } = rootStore;
+  const { download, player } = rootStore;
   const [isOpen, setIsOpen] = useState(false);
   const [isOpening, setIsOpening] = useState(false);
+  const [downloadMusicInfo, setDownloadMusicInfo] = useState<Coral.Music.MusicInfo | null>(null);
   const queueItems = player.queueItems;
   const currentQueueMusicId = player.currentQueueMusicId;
+
+  const handleDownload = async (musicInfo: Coral.Music.MusicInfo): Promise<void> => {
+    if (musicInfo.source === 'local') return;
+    if (musicInfo.source === 'webdav') {
+      await download.addAndStartTasks([createWebDavDownloadInfo(musicInfo)]);
+      return;
+    }
+    setDownloadMusicInfo(musicInfo);
+  };
 
   const content = (
     <div className="coral-play-queue-panel">
@@ -49,6 +70,8 @@ export const PlayQueueBtn = observer(() => {
         renderItem={(item) => {
           const itemId = getQueueMusicId(item);
           const isActive = itemId === currentQueueMusicId;
+          const musicInfo = getQueueMusicInfo(item);
+          const canDownload = !isDownloadMusicInfo(item) && musicInfo.source !== 'local';
           const description = [
             getQueueMusicSinger(item),
             getQueueMusicSourceText(item),
@@ -73,6 +96,37 @@ export const PlayQueueBtn = observer(() => {
                     player.playFromQueue(item, queueItems, player.currentQueueId);
                   }}
                 />,
+                <FavoriteSongBtn
+                  key="favorite"
+                  musicInfo={musicInfo}
+                  shape={undefined}
+                  size="small"
+                />,
+                canDownload ? (
+                  <Tooltip key="download" title="下载">
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<DownloadOutlined />}
+                      loading={download.isMutatingTask}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleDownload(musicInfo);
+                      }}
+                    />
+                  </Tooltip>
+                ) : null,
+                <Tooltip key="remove" title="从播放列表移除">
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<DeleteOutlined />}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      player.removeQueueItem(item);
+                    }}
+                  />
+                </Tooltip>,
               ]}
               onClick={() => {
                 player.playFromQueue(item, queueItems, player.currentQueueId);
@@ -88,6 +142,13 @@ export const PlayQueueBtn = observer(() => {
               />
             </PlainListItem>
           );
+        }}
+      />
+      <DownloadQualityModal
+        musicInfo={downloadMusicInfo}
+        listId={player.currentQueueId ?? ''}
+        onClose={() => {
+          setDownloadMusicInfo(null);
         }}
       />
     </div>

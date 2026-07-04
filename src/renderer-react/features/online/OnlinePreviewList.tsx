@@ -54,7 +54,7 @@ interface OnlineMusicCoverProps {
   musicInfo: Coral.Music.MusicInfo;
 }
 
-const OnlineMusicCover = ({ musicInfo }: OnlineMusicCoverProps) => {
+export const OnlineMusicCover = ({ musicInfo }: OnlineMusicCoverProps) => {
   const cacheKey = getOnlineCoverCacheKey(musicInfo);
   const initialCoverUrl = isUsableCoverUrl(musicInfo.meta.picUrl)
     ? musicInfo.meta.picUrl

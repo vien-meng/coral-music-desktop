@@ -643,11 +643,14 @@ Recommended next implementation batch:
 38. Step 147 switched the internal local decoder path from the dedicated FLAC dependency to `audio-decode`, expanding decode support to MP3, WAV, OGG/OGA Vorbis, FLAC, Opus, M4A/AAC/ALAC, QOA, AIFF, CAF, WebM, AMR, and WMA. The follow-up implementation removed direct Electron local-file playback entirely: local/downloaded files and external-decoder WAV outputs now all flow through `audio-decode`.
 39. Step 148 implemented JustDSD as a real zero-config external decoder provider. JustDSD is enabled by default for external formats; Java and `jdsd-nodep.jar` settings are optional advanced overrides, while packaged builds auto-resolve bundled assets from `resources/justdsd`. The runtime invokes a packaged Coral Java source-file helper with JustDSD on the classpath to export DSF/DFF/SACD to temporary WAV, and playback then decodes that WAV through the same `audio-decode` AudioBuffer path.
 40. Step 149 completed the local-import and zero-configuration decoder UX pass. Windows import now uses an All Files picker and delegates supported-format filtering to `localAudioService`; global file/folder drag/drop imports into the fixed `本地音乐` list; ordinary Settings no longer exposes external-decoder toggles/output/timeout/extensions/probe controls; stale external-decoder settings no longer disable DSF/DFF import or playback.
+41. Step 150 added low-latency external playback and APE album mode. External big formats now get one-time localhost FFmpeg stream URLs instead of full temporary WAV preparation; DFF explicitly tries FFmpeg's IFF demuxer path; WebM first tries `web-demuxer` plus WebCodecs and falls back to FFmpeg streaming; CUE/SFV sidecars import APE album images as virtual per-track local songs with start/end timestamps and inherited metadata.
+42. Step 151 implemented the native APE decoder adapter path. Monkey's Audio SDK now builds an out-of-process `coral-ape-helper` that streams requested CUE track ranges as WAV bytes, keeps SFV in the TypeScript album diagnostics layer, stays zero-config when packaged, and falls back invisibly to the Step 150 FFmpeg stream path. Darwin arm64 build/roundtrip and macOS dir packaging are verified; Windows helper/package/signing and real APE album samples remain the final external verification gates.
 
 Recommended next implementation batch:
 
-1. Step 150: revisit UI/Electron click-through automation once the packaging/runtime environment is less noisy.
-2. Step 151: run a focused visual pass on Settings/List/PlayBar when a stable app window is available.
-3. Step 152: when the real Coral Music repository is known, set `repository.url`, `bugs.url`, `homepage`, README badges, and publish owner/repo workflow docs together.
+1. Step 151: evaluate and, if viable, implement a native Monkey's Audio APE adapter with bounded streaming/seek support for CUE album tracks.
+2. Step 152: revisit UI/Electron click-through automation once the packaging/runtime environment is less noisy.
+3. Step 153: run a focused visual pass on Settings/List/PlayBar when a stable app window is available.
+4. Step 154: when the real Coral Music repository is known, set `repository.url`, `bugs.url`, `homepage`, README badges, and publish owner/repo workflow docs together.
 
 This order keeps the app startable first, then expands local playback and source-plugin capability behind typed, smoke-guarded runtime boundaries before returning to release metadata polish.

@@ -39,7 +39,13 @@ declare namespace Coral {
       'player.playbackRate': Coral.AppSetting['player.playbackRate'];
     }
 
-    type WinMainActions = 'get_info' | 'get_status' | 'get_analyser_data_array';
+    type WinMainActions =
+      | 'get_info'
+      | 'get_status'
+      | 'get_analyser_data_array'
+      | 'play_prev'
+      | 'toggle_play'
+      | 'play_next';
 
     interface LyricActionBase<A> {
       action: A;

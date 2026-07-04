@@ -41,7 +41,9 @@ export default () => {
   });
 
   mainOn(WIN_LYRIC_RENDERER_EVENT_NAME.request_main_window_channel, ({ event }) => {
-    if (event.senderFrame !== getMainFrame()) return;
+    if (event.senderFrame !== getMainFrame()) {
+      return;
+    }
     // Create a new channel ...
     const { port1, port2 } = new MessageChannelMain();
     // ... send one end to the worker ...
@@ -54,7 +56,6 @@ export default () => {
     );
     // Now the main window and the worker can communicate with each other
     // without going through the main process!
-    console.log('request_main_window_channel');
   });
 
   mainOn<boolean>(WIN_LYRIC_RENDERER_EVENT_NAME.mouse_enter_leave, ({ params: isEnter }) => {

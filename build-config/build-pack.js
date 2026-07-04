@@ -1,8 +1,13 @@
 /* eslint-disable no-template-curly-in-string */
 
+const fs = require('node:fs');
+const path = require('node:path');
+const { execFileSync } = require('node:child_process');
 const builder = require('electron-builder');
 const beforePack = require('./build-before-pack');
 const afterPack = require('./build-after-pack');
+
+const root = path.resolve(__dirname, '..');
 
 const publishConfig =
   process.env.CORAL_PUBLISH_OWNER && process.env.CORAL_PUBLISH_REPO
@@ -62,7 +67,7 @@ const options = {
     'dist/**/*',
   ],
   asar: false,
-  extraResources: ['./licenses'],
+  extraResources: ['./licenses', { from: './resources/bin', to: 'bin', filter: ['**/*'] }],
   ...(publishConfig ? { publish: publishConfig } : {}),
 };
 /**
@@ -143,6 +148,40 @@ const macOptions = {
     ],
     title: 'Coral Music v${version}',
   },
+};
+
+const normalizeTargetPlatform = (target) => {
+  if (target === 'dir') return process.platform;
+  if (target === 'win') return 'win32';
+  if (target === 'mac') return 'darwin';
+  if (target === 'linux') return 'linux';
+  throw new Error(`Unknown target: ${target}`);
+};
+
+const getNativeApeHelperPath = (targetPlatform) =>
+  path.join(
+    root,
+    'resources/bin',
+    targetPlatform === 'win32' ? 'coral-ape-helper.exe' : 'coral-ape-helper',
+  );
+
+const ensureNativeApeHelper = (target) => {
+  const targetPlatform = normalizeTargetPlatform(target);
+  const helperPath = getNativeApeHelperPath(targetPlatform);
+  if (targetPlatform !== process.platform) {
+    if (process.env.CORAL_ALLOW_CROSS_PLATFORM_NATIVE_APE_HELPER === 'true') {
+      if (fs.existsSync(helperPath)) return;
+      throw new Error(`Missing prebuilt native APE helper for ${targetPlatform}: ${helperPath}.`);
+    }
+    throw new Error(
+      `Missing native APE helper for ${targetPlatform}: ${helperPath}. Build this target on its native platform or provide a prebuilt helper before packaging.`,
+    );
+  }
+  if (fs.existsSync(helperPath)) return;
+  console.log(`native APE helper missing, building ${helperPath}`);
+  execFileSync(process.execPath, [path.join(__dirname, 'build-native-ape-helper.js')], {
+    stdio: 'inherit',
+  });
 };
 
 // win: {
@@ -287,6 +326,7 @@ const build = async (target, arch, packageType, publishType) => {
   if (publishType && publishType !== 'never' && !publishConfig) {
     throw new Error('Missing CORAL_PUBLISH_OWNER/CORAL_PUBLISH_REPO for publish build');
   }
+  ensureNativeApeHelper(target);
   if (target == 'dir') {
     await builder.build({
       dir: true,
@@ -313,16 +353,33 @@ const build = async (target, arch, packageType, publishType) => {
   // })
 };
 
-const params = {};
+const parseParams = (argv) => {
+  const params = {};
+  for (const param of argv) {
+    const [name, value] = param.split('=');
+    params[name] = value;
+  }
+  return params;
+};
 
-for (const param of process.argv.slice(2)) {
-  const [name, value] = param.split('=');
-  params[name] = value;
+const main = () => {
+  const params = parseParams(process.argv.slice(2));
+  if (params.target == null) throw new Error('Missing target');
+  if (params.target != 'dir' && params.arch == null) throw new Error('Missing arch');
+  if (params.target != 'dir' && params.type == null) throw new Error('Missing type');
+
+  console.log(params.target, params.arch, params.type, params.publish ?? '');
+  build(params.target, params.arch, params.type, params.publish);
+};
+
+module.exports = {
+  build,
+  ensureNativeApeHelper,
+  getNativeApeHelperPath,
+  normalizeTargetPlatform,
+  parseParams,
+};
+
+if (require.main === module) {
+  main();
 }
-
-if (params.target == null) throw new Error('Missing target');
-if (params.target != 'dir' && params.arch == null) throw new Error('Missing arch');
-if (params.target != 'dir' && params.type == null) throw new Error('Missing type');
-
-console.log(params.target, params.arch, params.type, params.publish ?? '');
-build(params.target, params.arch, params.type, params.publish);

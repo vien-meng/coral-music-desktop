@@ -6,7 +6,23 @@ import {
   normalizeAudioExtension,
 } from '@shared/playbackCapabilities';
 import type { IAudioMetadata, parseFile } from 'music-metadata';
-import { basename, extname, isDirectory, readDirectory, readFile } from './nodeBridgeService';
+import {
+  basename,
+  checkPath,
+  extname,
+  isDirectory,
+  readDirectory,
+  readFileSlice,
+} from './nodeBridgeService';
+import {
+  completeCueTrackEndTimes,
+  createCueTrackMusicInfo,
+  getAudioDurationMs,
+  isCueFile,
+  isSfvFile,
+  readCueTracks,
+  readSfvFiles,
+} from './localAlbumCueService';
 import { parseAudioHeader, type AudioStreamInfo } from './playerRuntime/audioHeaderProbe';
 
 interface MusicMetadataModule {
@@ -21,6 +37,12 @@ export interface LocalAudioImportResult {
   candidateCount: number;
   duplicateCount: number;
   importedMusics: Coral.Music.MusicInfoLocal[];
+  skippedCount: number;
+}
+
+export interface LocalAudioScanResult {
+  candidateCount: number;
+  musicInfos: Coral.Music.MusicInfoLocal[];
   skippedCount: number;
 }
 
@@ -44,6 +66,9 @@ const isSupportedLocalAudioFile = (filePath: string, extensionSet: Set<string>):
   return extensionSet.has(ext);
 };
 
+const isSupportedLocalAlbumSidecarFile = (filePath: string): boolean =>
+  isCueFile(filePath) || isSfvFile(filePath);
+
 const collectLocalAudioFiles = async (
   inputPaths: string[],
   extensionSet: Set<string>,
@@ -63,7 +88,10 @@ const collectLocalAudioFiles = async (
         visitedPaths,
       );
       results.push(...childFiles);
-    } else if (isSupportedLocalAudioFile(inputPath, extensionSet)) {
+    } else if (
+      isSupportedLocalAudioFile(inputPath, extensionSet) ||
+      isSupportedLocalAlbumSidecarFile(inputPath)
+    ) {
       results.push(inputPath);
     }
   }
@@ -100,6 +128,20 @@ const readLocalAudioMetadata = async (filePath: string): Promise<IAudioMetadata 
   return await musicMetadata.parseFile(filePath, { duration: true }).catch(() => null);
 };
 
+type SfvFileInfo = Awaited<ReturnType<typeof readSfvFiles>>[number];
+
+const getSfvInfoByAudioPath = async (sfvPaths: string[]): Promise<Map<string, SfvFileInfo>> => {
+  const entries = await Promise.all(
+    sfvPaths.map(
+      async (sfvPath) =>
+        await readSfvFiles(sfvPath)
+          .then((files) => files.map((file) => [file.filePath, file] as const))
+          .catch(() => []),
+    ),
+  );
+  return new Map(entries.flat());
+};
+
 const LOCAL_AUDIO_HEADER_BYTES = 65536;
 
 const toArrayBuffer = (data: Uint8Array): ArrayBuffer => {
@@ -110,12 +152,7 @@ const toArrayBuffer = (data: Uint8Array): ArrayBuffer => {
 
 const readLocalAudioHeaderInfo = async (filePath: string): Promise<AudioStreamInfo | null> => {
   try {
-    const fileBuffer = await readFile(filePath);
-    const headerBytes = new Uint8Array(
-      fileBuffer.buffer,
-      fileBuffer.byteOffset,
-      Math.min(fileBuffer.byteLength, LOCAL_AUDIO_HEADER_BYTES),
-    );
+    const headerBytes = await readFileSlice(filePath, LOCAL_AUDIO_HEADER_BYTES);
     return parseAudioHeader(toArrayBuffer(headerBytes));
   } catch {
     return null;
@@ -210,6 +247,10 @@ export const enrichLocalMusicInfoWithMetadata = async (
       ...musicInfo.meta,
       albumName: album ?? musicInfo.meta.albumName,
       bitrate: bitrate ?? musicInfo.meta.bitrate,
+      durationMs:
+        metadata?.format.duration && Number.isFinite(metadata.format.duration)
+          ? Math.round(metadata.format.duration * 1000)
+          : (musicInfo.meta.durationMs ?? null),
       lossless:
         metadata?.format.lossless ??
         (headerInfo?.format === 'flac' ? true : (musicInfo.meta.lossless ?? null)),
@@ -226,16 +267,78 @@ export const createLocalMusicInfoWithMetadata = async (
 ): Promise<Coral.Music.MusicInfoLocal> =>
   await enrichLocalMusicInfoWithMetadata(createLocalMusicInfo(filePath));
 
-export const createLocalMusicInfosFromPaths = async (
+export const scanLocalMusicInfosFromPaths = async (
   inputPaths: string[],
   options: LocalAudioImportOptions = {},
-): Promise<Coral.Music.MusicInfoLocal[]> => {
+): Promise<LocalAudioScanResult> => {
   const extensionSet = createExtensionSet(options);
-  const filePaths = await collectLocalAudioFiles(inputPaths, extensionSet);
-  const uniquePaths = Array.from(new Set(filePaths)).sort((left, right) =>
+  const candidatePaths = await collectLocalAudioFiles(inputPaths, extensionSet);
+  const uniqueCandidatePaths = Array.from(new Set(candidatePaths)).sort((left, right) =>
     left.localeCompare(right),
   );
-  return await Promise.all(uniquePaths.map(createLocalMusicInfoWithMetadata));
+  const cuePaths = uniqueCandidatePaths.filter(isCueFile);
+  const sfvPaths = uniqueCandidatePaths.filter(isSfvFile);
+  const audioPaths = uniqueCandidatePaths.filter((filePath) =>
+    isSupportedLocalAudioFile(filePath, extensionSet),
+  );
+  const sfvInfoByAudioPath = await getSfvInfoByAudioPath(sfvPaths);
+  const metadataByAudioPath = new Map<string, IAudioMetadata | null>();
+  const baseMusicByAudioPath = new Map<string, Coral.Music.MusicInfoLocal>();
+  const readBaseMusic = async (filePath: string): Promise<Coral.Music.MusicInfoLocal> => {
+    const cached = baseMusicByAudioPath.get(filePath);
+    if (cached) return cached;
+    const musicInfo = await createLocalMusicInfoWithMetadata(filePath);
+    baseMusicByAudioPath.set(filePath, musicInfo);
+    metadataByAudioPath.set(filePath, await readLocalAudioMetadata(filePath));
+    return musicInfo;
+  };
+
+  const cueMusicInfos: Coral.Music.MusicInfoLocal[] = [];
+  const cueAudioPaths = new Set<string>();
+  for (const cuePath of cuePaths) {
+    const durationByFilePath = new Map<string, number | null>();
+    const currentCueAudioPaths = new Set<string>();
+    const rawCueTracks = await readCueTracks(cuePath, durationByFilePath).catch(() => []);
+    for (const cueTrack of rawCueTracks) {
+      cueAudioPaths.add(cueTrack.filePath);
+      currentCueAudioPaths.add(cueTrack.filePath);
+    }
+
+    await Promise.all(
+      Array.from(currentCueAudioPaths).map(async (filePath) => {
+        if (durationByFilePath.has(filePath)) return;
+        const metadata = await readLocalAudioMetadata(filePath);
+        metadataByAudioPath.set(filePath, metadata);
+        durationByFilePath.set(filePath, getAudioDurationMs(metadata));
+      }),
+    );
+
+    const cueTracks = completeCueTrackEndTimes(rawCueTracks, durationByFilePath);
+    for (const cueTrack of cueTracks) {
+      if (!isSupportedLocalAudioFile(cueTrack.filePath, extensionSet)) continue;
+      if (!(await checkPath(cueTrack.filePath))) continue;
+      const baseMusic = await readBaseMusic(cueTrack.filePath);
+      const metadata = metadataByAudioPath.get(cueTrack.filePath) ?? null;
+      cueMusicInfos.push(
+        createCueTrackMusicInfo(
+          baseMusic,
+          cueTrack,
+          metadata,
+          sfvInfoByAudioPath.get(cueTrack.filePath) ?? null,
+          sfvPaths.length > 0,
+        ),
+      );
+    }
+  }
+
+  const standaloneAudioPaths = audioPaths.filter((filePath) => !cueAudioPaths.has(filePath));
+  const standaloneMusicInfos = await Promise.all(standaloneAudioPaths.map(readBaseMusic));
+  const musicInfos = [...cueMusicInfos, ...standaloneMusicInfos];
+  return {
+    candidateCount: uniqueCandidatePaths.length,
+    musicInfos,
+    skippedCount: Math.max(0, uniqueCandidatePaths.length - musicInfos.length),
+  };
 };
 
 export const isLocalAudioDecoderCandidate = (ext: string): boolean =>
@@ -244,7 +347,12 @@ export const isLocalAudioDecoderCandidate = (ext: string): boolean =>
 export const localAudioService = {
   createLocalMusicInfo,
   createLocalMusicInfoWithMetadata,
-  createLocalMusicInfosFromPaths,
+  createLocalMusicInfosFromPaths: async (
+    inputPaths: string[],
+    options: LocalAudioImportOptions = {},
+  ): Promise<Coral.Music.MusicInfoLocal[]> =>
+    (await scanLocalMusicInfosFromPaths(inputPaths, options)).musicInfos,
   enrichLocalMusicInfoWithMetadata,
   isLocalAudioDecoderCandidate,
+  scanLocalMusicInfosFromPaths,
 };

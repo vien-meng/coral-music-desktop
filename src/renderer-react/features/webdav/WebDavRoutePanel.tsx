@@ -17,10 +17,10 @@ import {
   Empty,
   Form,
   Input,
-  List,
   Modal,
   Select,
   Space,
+  Spin,
   Switch,
   Tag,
   Tooltip,
@@ -198,20 +198,33 @@ export const WebDavRoutePanel = observer(() => {
             description="请先添加一个 WebDAV 网盘账号"
           />
         ) : (
-          <List
-            loading={webDav.isLoadingDir}
-            dataSource={webDav.filteredItems}
-            locale={{
-              emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="当前目录为空" />,
-            }}
-            renderItem={(item) => (
-              <List.Item
-                className="coral-webdav-list-item"
-                actions={
-                  item.isDirectory
-                    ? []
-                    : [
-                        <Tooltip title="播放" key="play">
+          <Spin spinning={webDav.isLoadingDir}>
+            <div className="coral-webdav-file-list">
+              {webDav.filteredItems.length ? (
+                webDav.filteredItems.map((item) => (
+                  <div className="coral-webdav-list-item" key={item.path}>
+                    <div className="coral-webdav-item-main">
+                      <span className="coral-webdav-item-icon">
+                        {item.isDirectory ? <FolderOpenOutlined /> : <AudioOutlined />}
+                      </span>
+                      <div className="coral-webdav-item-info">
+                        {item.isDirectory ? (
+                          <Button type="link" onClick={() => webDav.loadDir(item.path)}>
+                            {item.name}
+                          </Button>
+                        ) : (
+                          <Text ellipsis>{item.name}</Text>
+                        )}
+                        <Space size={8}>
+                          <Tag>{item.isDirectory ? '目录' : item.ext.toUpperCase() || '文件'}</Tag>
+                          {item.isAudio ? <Tag color="green">音频</Tag> : null}
+                          <Text type="secondary">{formatSize(item.contentLength)}</Text>
+                        </Space>
+                      </div>
+                    </div>
+                    {item.isDirectory ? null : (
+                      <Space className="coral-webdav-item-actions" size={4}>
+                        <Tooltip title="播放">
                           <Button
                             type="text"
                             size="small"
@@ -219,8 +232,8 @@ export const WebDavRoutePanel = observer(() => {
                             disabled={!isWebDavAudioFile(item)}
                             onClick={() => playItem(item)}
                           />
-                        </Tooltip>,
-                        <Tooltip title="添加到当前列表" key="add">
+                        </Tooltip>
+                        <Tooltip title="添加到当前列表">
                           <Button
                             type="text"
                             size="small"
@@ -228,8 +241,8 @@ export const WebDavRoutePanel = observer(() => {
                             disabled={!isWebDavAudioFile(item)}
                             onClick={() => addToCurrentList(item)}
                           />
-                        </Tooltip>,
-                        <Tooltip title="下载" key="download">
+                        </Tooltip>
+                        <Tooltip title="下载">
                           <Button
                             type="text"
                             size="small"
@@ -238,32 +251,16 @@ export const WebDavRoutePanel = observer(() => {
                             loading={download.isMutatingTask}
                             onClick={() => downloadItem(item)}
                           />
-                        </Tooltip>,
-                      ]
-                }
-              >
-                <List.Item.Meta
-                  avatar={item.isDirectory ? <FolderOpenOutlined /> : <AudioOutlined />}
-                  title={
-                    item.isDirectory ? (
-                      <Button type="link" onClick={() => webDav.loadDir(item.path)}>
-                        {item.name}
-                      </Button>
-                    ) : (
-                      <Text ellipsis>{item.name}</Text>
-                    )
-                  }
-                  description={
-                    <Space size={8}>
-                      <Tag>{item.isDirectory ? '目录' : item.ext.toUpperCase() || '文件'}</Tag>
-                      {item.isAudio ? <Tag color="green">音频</Tag> : null}
-                      <Text type="secondary">{formatSize(item.contentLength)}</Text>
-                    </Space>
-                  }
-                />
-              </List.Item>
-            )}
-          />
+                        </Tooltip>
+                      </Space>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="当前目录为空" />
+              )}
+            </div>
+          </Spin>
         )}
       </div>
 

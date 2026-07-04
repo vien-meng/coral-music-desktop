@@ -3,13 +3,26 @@ import zhCN from 'antd/locale/zh_CN';
 import { observer } from 'mobx-react-lite';
 import { useEffect, useRef, type PropsWithChildren } from 'react';
 import { createCoralAntdTheme } from '@shared/theme/antdTheme';
+import { desktopLyricService } from '../services/desktopLyricService';
+import { keyboardShortcutService } from '../services/keyboardShortcutService';
 import { rootStore } from '../stores/rootStore';
 
 export const AppProviders = observer(({ children }: PropsWithChildren) => {
   const appliedThemeKeysRef = useRef<string[]>([]);
 
   useEffect(() => {
-    rootStore.initialize();
+    // 必须优先启动 desktopLyricService，在 rootStore.initialize() 发送
+    // inited IPC 触发歌词窗口创建之前就注册好端口监听，
+    // 否则歌词窗口发起的 MessageChannel 连接中 port1 会丢失。
+    desktopLyricService.start(rootStore.player, rootStore.settings);
+    rootStore
+      .initialize()
+      .then(() => keyboardShortcutService.start())
+      .catch(() => {});
+    return () => {
+      desktopLyricService.stop();
+      keyboardShortcutService.stop();
+    };
   }, []);
 
   useEffect(() => {

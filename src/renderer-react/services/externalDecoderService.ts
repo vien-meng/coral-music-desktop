@@ -2,6 +2,8 @@ import { ipcChannels } from '@shared/ipc/contracts';
 import type {
   ExternalDecoderProbeParams,
   ExternalDecoderProbeResult,
+  ExternalDecoderStreamParams,
+  ExternalDecoderStreamResult,
   ExternalDecoderTranscodeParams,
   ExternalDecoderTranscodeResult,
 } from '@shared/playbackCapabilities';
@@ -33,7 +35,21 @@ export const transcodeExternalDecoder = async (
   return await ipcClient.invoke(ipcChannels.winMain.externalDecoderTranscode, params);
 };
 
+export const createExternalDecoderStream = async (
+  params: ExternalDecoderStreamParams,
+): Promise<ExternalDecoderStreamResult> => {
+  if (!isElectronRenderer()) throw new Error('Electron IPC is unavailable.');
+  return await ipcClient.invoke(ipcChannels.winMain.externalDecoderCreateStream, params);
+};
+
+export const revokeExternalDecoderStream = async (token: string): Promise<void> => {
+  if (!isElectronRenderer()) throw new Error('Electron IPC is unavailable.');
+  await ipcClient.invoke(ipcChannels.winMain.externalDecoderRevokeStream, token);
+};
+
 export const externalDecoderService = {
+  createExternalDecoderStream,
   probeExternalDecoder,
+  revokeExternalDecoderStream,
   transcodeExternalDecoder,
 };

@@ -4,13 +4,10 @@ import { observer } from 'mobx-react-lite';
 import { useCallback, useEffect, useMemo } from 'react';
 import { OnlineBoardSelector, OnlineSourceSelect } from '../online/OnlineControls';
 import { OnlineMusicRowActions } from '../online/OnlineMusicRowActions';
-import { OnlinePager } from '../online/OnlinePreviewList';
+import { OnlineMusicCover, OnlinePager } from '../online/OnlinePreviewList';
 import { rootStore } from '../../stores/rootStore';
 
 const { Text } = Typography;
-
-const transparentImage =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 
 export const LeaderboardRoutePanel = observer(() => {
   const { leaderboard, list, player } = rootStore;
@@ -191,9 +188,9 @@ export const LeaderboardRoutePanel = observer(() => {
                   <Spin spinning={leaderboard.isLoadingDetail} className="coral-leaderboard-spin">
                     {leaderboard.listDetailInfo.list.length ? (
                       <div className="coral-leaderboard-track-grid">
-                        {leaderboard.listDetailInfo.list.map((item, index) => (
+                        {leaderboard.listDetailInfo.list.map((item) => (
                           <div
-                            key={`${item.source}__${item.id}__${index}`}
+                            key={`${item.source}__${item.id}`}
                             className="coral-leaderboard-track"
                             role="button"
                             tabIndex={0}
@@ -207,12 +204,7 @@ export const LeaderboardRoutePanel = observer(() => {
                               }
                             }}
                           >
-                            <img
-                              src={item.meta.picUrl || transparentImage}
-                              alt=""
-                              className="coral-leaderboard-track-cover"
-                              loading="lazy"
-                            />
+                            <OnlineMusicCover musicInfo={item} />
                             <div className="coral-leaderboard-track-meta">
                               <Text className="coral-leaderboard-track-name" ellipsis>
                                 {item.name}

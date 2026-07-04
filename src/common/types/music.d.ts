@@ -43,11 +43,22 @@ declare namespace Coral {
     }
 
     interface MusicInfoMeta_local extends MusicInfoMetaBase {
+      albumArtist?: string | null;
+      albumFilePath?: string;
+      albumId?: string | null;
       bitrate?: number | null;
+      cuePath?: string;
+      durationMs?: number | null;
       filePath: string;
       ext: string;
       lossless?: boolean | null;
       sampleRate?: number | null;
+      sfvExpectedCrc32?: string | null;
+      sfvPath?: string | null;
+      sfvStatus?: 'unchecked' | 'ok' | 'mismatch' | 'missing';
+      trackEndMs?: number | null;
+      trackNo?: number;
+      trackStartMs?: number;
     }
 
     interface MusicInfoMeta_webdav extends MusicInfoMetaBase {

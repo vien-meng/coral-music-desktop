@@ -421,7 +421,10 @@ export const SettingsRoutePanel = observer(() => {
   useEffect(() => {
     if (!appSetting) return;
 
-    if (ui.consumeQuickAction('configureExternalDecoder')) {
+    if (
+      ui.consumeQuickAction('configureLocalAudioImport') ||
+      ui.consumeQuickAction('configureExternalDecoder')
+    ) {
       externalDecoderSectionRef.current?.scrollIntoView({
         behavior: 'smooth',
         block: 'start',
@@ -921,7 +924,7 @@ export const SettingsRoutePanel = observer(() => {
               <Alert
                 showIcon
                 type="info"
-                title="内嵌 FFmpeg 会在播放 DSF/DFF/AC3/ALAC/APE 等格式时自动转码为临时 WAV，切歌或退出播放器后自动清理；用户无需配置。"
+                title="内置解码能力会自动处理 DSF/DFF/AC3/ALAC/APE 等格式；APE 优先使用随应用打包的原生解码器，其余格式按需流式解码，用户无需配置。"
               />
             </Form.Item>
           </SettingSection>

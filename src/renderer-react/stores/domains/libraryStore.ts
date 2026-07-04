@@ -66,7 +66,10 @@ export class LibraryStore {
     this.history = await libraryService.getPlayHistory();
   }
 
-  async addPlayHistory(musicInfo: Coral.Music.MusicInfo, sourceContext?: string | null): Promise<void> {
+  async addPlayHistory(
+    musicInfo: Coral.Music.MusicInfo,
+    sourceContext?: string | null,
+  ): Promise<void> {
     this.history = await libraryService.addPlayHistory({
       musicInfo,
       sourceContext,
@@ -111,6 +114,11 @@ export class LibraryStore {
 
   async toggleFavoriteSongList(item: Coral.Library.FavoriteSongList): Promise<void> {
     this.favoriteSongLists = await libraryService.toggleFavoriteSongList(item);
+  }
+
+  async saveFavoriteSongList(item: Coral.Library.FavoriteSongList): Promise<void> {
+    this.favoriteSongLists = await libraryService.saveFavoriteSongList(item);
+    this.isHydrated = true;
   }
 
   async toggleFavoriteSongListItem(item: OnlineSongListItem): Promise<void> {
@@ -179,4 +187,3 @@ export class LibraryStore {
     }
   }
 }
-

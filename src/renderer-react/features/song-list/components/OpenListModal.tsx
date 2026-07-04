@@ -1,4 +1,4 @@
-import { Input, Modal, Select, Typography } from 'antd';
+import { Input, Modal, Select, Typography, message } from 'antd';
 import { observer } from 'mobx-react-lite';
 import { useCallback, useEffect, useState } from 'react';
 import { coralProjectLinks } from '@shared/brand';
@@ -14,7 +14,7 @@ export interface OpenListModalProps {
 }
 
 export const OpenListModal = observer(({ open, onClose }: OpenListModalProps) => {
-  const { songList } = rootStore;
+  const { library, songList, ui } = rootStore;
   const [source, setSource] = useState(songList.activeSource);
   const [text, setText] = useState('');
 
@@ -25,11 +25,18 @@ export const OpenListModal = observer(({ open, onClose }: OpenListModalProps) =>
     }
   }, [open, songList.activeSource]);
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     if (!text.trim()) return;
-    songList.setOpenSongListInputInfo({ source, text });
-    onClose();
-  }, [text, source, songList, onClose]);
+    try {
+      const favorite = await songList.importSongListToFavorites(source, text, library);
+      ui.setActiveFavoritesTab('songlists');
+      ui.setActiveRoute('favorites');
+      message.success(`已导入歌单：${favorite.name}`);
+      onClose();
+    } catch (error) {
+      message.error(`导入失败：${error instanceof Error ? error.message : String(error)}`);
+    }
+  }, [library, onClose, songList, source, text, ui]);
 
   return (
     <Modal
@@ -37,7 +44,7 @@ export const OpenListModal = observer(({ open, onClose }: OpenListModalProps) =>
       title="导入歌单"
       width={640}
       okText="确定"
-      okButtonProps={{ disabled: !text.trim() }}
+      okButtonProps={{ disabled: !text.trim(), loading: songList.isImportingSongList }}
       onOk={handleSubmit}
       onCancel={onClose}
       destroyOnClose
@@ -46,7 +53,9 @@ export const OpenListModal = observer(({ open, onClose }: OpenListModalProps) =>
         <div style={{ display: 'flex', flexFlow: 'row nowrap' }}>
           <Select
             value={source}
-            onChange={setSource}
+            onChange={(value: Coral.OnlineSource) => {
+              setSource(value);
+            }}
             options={songList.sources.map((s) => ({ label: getSourceDisplayName(s), value: s }))}
             style={{ width: 120 }}
             className="coral-open-list-source-select"

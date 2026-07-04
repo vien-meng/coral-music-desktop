@@ -103,9 +103,38 @@ Status: implemented on 2026-07-02.
 - Legacy external-decoder setting keys stay in the schema/defaults for data compatibility and smoke coverage, but playback/import no longer lets stale user settings disable DSF/DFF discovery or playback.
 - Missing bundled FFmpeg is treated as an application installation-integrity issue and should tell the user to reinstall instead of asking them to enable a setting.
 
+### Step 150: Low-Latency External Streams, WebM Demux, And APE Album Mode
+
+Status: implemented on 2026-07-03.
+
+- DFF/DSF/APE and WebM fallback playback use a one-time localhost FFmpeg stream URL instead of waiting for a complete temporary WAV file. Closing or switching the track closes the HTTP connection and terminates FFmpeg.
+- DFF streams explicitly force FFmpeg's IFF demuxer (`-f iff`) before input, because the bundled FFmpeg exposes DSF as a named demuxer but DFF/DSDIFF through its IFF container path.
+- WebM audio first tries `web-demuxer` plus WebCodecs, with the WASM asset served locally in dev and emitted into renderer assets during build.
+- CUE files are parsed as album sidecars during local import. A referenced long APE file becomes per-track virtual local music items with stable IDs, track number, start/end timestamps, inherited metadata, and normal queue behavior.
+- SFV entries attach their expected CRC32 values to matching virtual tracks and unmatched tracks are marked `missing`. Full-file CRC calculation stays out of the ordinary import path so large APE album images are not reread before playback.
+- APE native decoder adoption remains gated behind a zero-config packaging check: only a cross-platform, stream/seek-capable Monkey's Audio SDK or equivalent adapter can replace FFmpeg streaming.
+
+### Step 151: Native APE Decoder Adapter Evaluation
+
+Status: native helper source/build path implemented on 2026-07-03; Windows packaging verification still pending.
+
+- Add the native APE path as an internal provider behind the existing external-stream contract, not as a user-visible setting.
+- `externalDecoderProviders` now models `native-ape` ahead of FFmpeg and enables it when the packaged helper is available for the current platform. Runtime stream creation selects through this provider boundary, so APE playback uses the native helper first and falls back invisibly to FFmpeg before any user-visible stream error.
+- Native APE helper integration is now implemented as an out-of-process `coral-ape-helper` protocol under packaged `resources/bin`. The helper outputs WAV bytes on stdout and accepts `--input`, `--format wav`, plus optional `--start-ms`/`--end-ms` arguments so CUE tracks can stream only their requested range. If the helper is absent or fails before emitting audio, playback falls back to FFmpeg without user-visible configuration.
+- `build:native-ape-helper` builds the helper from the official Monkey's Audio SDK source using `MAC_SDK_DIR` or the official SDK zip, and `smoke:native-ape-helper` generates a WAV, smoke-encodes it to APE through the helper, then verifies ranged APE-to-WAV decoding.
+- Monkey's Audio SDK is the native APE adapter path. The official developer page says the SDK includes full source code, supports compress/decompress/verify/convert, can perform on-the-fly decompression, and ships Windows Visual Studio plus macOS Xcode projects. Current local evidence proves the Darwin arm64 helper build and generated APE roundtrip; Windows helper build, signing, and real APE album samples still need verification.
+- The adapter must stream PCM/WAV chunks and seek by sample/time range so CUE virtual tracks can start instantly without decoding the whole album image.
+- CUE/SFV support stays in Coral's TypeScript album layer. The native adapter only decodes the referenced APE media path and requested time range; it must not own playlist/list metadata behavior.
+- SFV should remain album-side diagnostic metadata: parse and attach CRC expectations during import, then add optional verification later without blocking playback.
+- If the native adapter is missing, unsupported on the current platform, or slower than FFmpeg for a file, playback falls back to the existing one-time FFmpeg stream URL without showing configuration to ordinary users.
+- Success criteria: APE+CUE imports as per-track album rows, first audible PCM arrives quickly after play/seek, memory stays bounded by stream buffers, packaged app remains one-click usable, and smoke/build gates cover parser fixtures plus native/FFmpeg fallback selection. Current local evidence proves the Darwin arm64 helper build plus generated APE roundtrip; Windows helper build, signing, and real APE album samples still need verification.
+
 ## Current Boundaries
 
 - Local file playback now resolves through `audio-decode`; direct Electron local file playback is intentionally disabled for maintainability.
 - DSF/DFF and other bundled-transcode formats are zero-config for ordinary users; decoder toggles and format details must not reappear in the standard Settings UI.
+- APE album images with `.cue` import as virtual tracks by default; only standalone APE files without CUE remain single long tracks.
+- APE native decoding is now available when `coral-ape-helper` is packaged for the current platform; FFmpeg streaming remains the invisible fallback.
+- DSF/DFF/APE+CUE should not be marked end-to-end complete until `CORAL_REQUIRE_EXTERNAL_AUDIO_SAMPLES=true node build-config/smoke-external-audio-samples.js` passes against real sample files.
 - Foobar2000 integration is a future external adapter, not a direct in-process plugin loader.
 - The migrated Coral Music User API flow already exists and should be extended, not replaced.

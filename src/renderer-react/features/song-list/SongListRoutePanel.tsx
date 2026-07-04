@@ -113,10 +113,19 @@ export const SongListRoutePanel = observer(() => {
   const handleSelectSongList = useCallback(
     (item: { id: string; source: Coral.OnlineSource }) => {
       if (songList.isLoadingDetail || ui.isGlobalLoading) return;
+      songList.setDetailBackTarget('square');
       ui.withGlobalLoading(() => songList.loadListDetail(item.id, item.source), '正在打开歌单...');
     },
     [songList, ui],
   );
+
+  const handleBackFromDetail = useCallback(() => {
+    songList.setListDetailVisible(false);
+    if (songList.detailBackTarget !== 'favorites') return;
+
+    ui.setActiveFavoritesTab('songlists');
+    ui.setActiveRoute('favorites');
+  }, [songList, ui]);
 
   const handlePlayDetail = useCallback(() => {
     const queue = songList.listDetailInfo.list;
@@ -431,13 +440,8 @@ export const SongListRoutePanel = observer(() => {
                     >
                       收藏歌单
                     </Button>
-                    <Button
-                      icon={<CloseOutlined />}
-                      onClick={() => {
-                        songList.setListDetailVisible(false);
-                      }}
-                    >
-                      返回广场
+                    <Button icon={<CloseOutlined />} onClick={handleBackFromDetail}>
+                      {songList.detailBackTarget === 'favorites' ? '返回收藏' : '返回广场'}
                     </Button>
                   </Space>
                 </div>

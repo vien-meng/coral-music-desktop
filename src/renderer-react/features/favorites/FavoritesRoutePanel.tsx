@@ -10,6 +10,7 @@ import { Button, Image, Input, Modal, Space, Tabs, Tag, Typography } from 'antd'
 import { observer } from 'mobx-react-lite';
 import { useEffect, useState } from 'react';
 import { PlainList, PlainListItem, PlainListMeta } from '../../components/base';
+import { getSourceDisplayName } from '../../services/sourceNameService';
 import { OnlineMusicRowActions } from '../online/OnlineMusicRowActions';
 import { rootStore } from '../../stores/rootStore';
 
@@ -68,6 +69,7 @@ export const FavoritesRoutePanel = observer(() => {
 
   const handleOpenSongList = async (item: Coral.Library.FavoriteSongList) => {
     await ui.withGlobalLoading(async () => {
+      songList.setDetailBackTarget('favorites');
       await songList.loadListDetail(item.id, item.source);
       ui.setActiveRoute('song-list');
     }, '正在打开收藏歌单...');
@@ -105,6 +107,10 @@ export const FavoritesRoutePanel = observer(() => {
       </div>
 
       <Tabs
+        activeKey={ui.activeFavoritesTab}
+        onChange={(key) => {
+          ui.setActiveFavoritesTab(key as typeof ui.activeFavoritesTab);
+        }}
         items={[
           {
             key: 'songs',
@@ -159,7 +165,8 @@ export const FavoritesRoutePanel = observer(() => {
                         type="text"
                         size="small"
                         icon={<OrderedListOutlined />}
-                        onClick={() => {
+                        onClick={(event) => {
+                          event.stopPropagation();
                           handleOpenSongList(item);
                         }}
                       />,
@@ -168,11 +175,15 @@ export const FavoritesRoutePanel = observer(() => {
                         type="text"
                         size="small"
                         icon={<DeleteOutlined />}
-                        onClick={() => {
+                        onClick={(event) => {
+                          event.stopPropagation();
                           library.removeFavoriteSongLists([item.id]);
                         }}
                       />,
                     ]}
+                    onClick={() => {
+                      handleOpenSongList(item);
+                    }}
                   >
                     <PlainListMeta
                       avatar={item.img ? <Image width={44} height={44} src={item.img} /> : null}
@@ -180,7 +191,7 @@ export const FavoritesRoutePanel = observer(() => {
                       description={
                         <Space size={6} wrap>
                           <Text type="secondary">{item.author || '未知作者'}</Text>
-                          <Tag>{item.source}</Tag>
+                          <Tag>{getSourceDisplayName(item.source)}</Tag>
                           <Text type="secondary">{item.playCount}</Text>
                         </Space>
                       }
@@ -227,7 +238,7 @@ export const FavoritesRoutePanel = observer(() => {
                       description={
                         <Space size={6} wrap>
                           <Text type="secondary">{item.artist || '未知歌手'}</Text>
-                          <Tag>{item.source}</Tag>
+                          <Tag>{getSourceDisplayName(item.source)}</Tag>
                         </Space>
                       }
                     />

@@ -11,6 +11,8 @@ import { encodePath } from '@common/utils/electron';
 
 let browserWindow: Electron.BrowserWindow | null = null;
 let isWinBoundsUpdateing = false;
+let hasShownCurrentWindow = false;
+let hasAppliedDisplayState = false;
 
 const saveBoundsConfig = debounce((config: Partial<Coral.AppSetting>) => {
   global.coral.event_app.update_config(config);
@@ -29,6 +31,8 @@ const winEvent = () => {
 
   browserWindow.on('closed', () => {
     browserWindow = null;
+    hasShownCurrentWindow = false;
+    hasAppliedDisplayState = false;
   });
 
   browserWindow.on('move', () => {
@@ -75,28 +79,30 @@ const winEvent = () => {
   // })
 
   browserWindow.once('ready-to-show', () => {
-    showWindow();
-    if (global.coral.appSetting['desktopLyric.isLock']) {
-      browserWindow!.setIgnoreMouseEvents(true, {
-        forward: !isLinux && global.coral.appSetting['desktopLyric.isHoverHide'],
-      });
-    }
-    // linux下每次重开时貌似要重新设置置顶
-    // if (isLinux && global.coral.appSetting['desktopLyric.isAlwaysOnTop']) {
-    //   browserWindow!.setAlwaysOnTop(global.coral.appSetting['desktopLyric.isAlwaysOnTop'], 'screen-saver')
-    // }
-    if (
-      global.coral.appSetting['desktopLyric.isAlwaysOnTop'] &&
-      global.coral.appSetting['desktopLyric.isAlwaysOnTopLoop']
-    )
-      alwaysOnTopTools.startLoop();
-    browserWindow!.blur();
+    showLyricWindowOnce();
+    applyLyricWindowDisplayState();
   });
+
+  browserWindow.webContents.once('did-finish-load', () => {
+    showLyricWindowOnce();
+    applyLyricWindowDisplayState();
+  });
+
+  browserWindow.webContents.on(
+    'did-fail-load',
+    (_event, errorCode, errorDescription, validatedURL) => {
+      console.error(
+        `[winLyric] failed to load lyric window (${errorCode}): ${errorDescription} ${validatedURL}`,
+      );
+    },
+  );
 };
 
 export const createWindow = () => {
   closeWindow();
   if (!global.envParams.workAreaSize) return;
+  hasShownCurrentWindow = false;
+  hasAppliedDisplayState = false;
   let x = global.coral.appSetting['desktopLyric.x'];
   let y = global.coral.appSetting['desktopLyric.y'];
   let width = global.coral.appSetting['desktopLyric.width'];
@@ -155,14 +161,12 @@ export const createWindow = () => {
     process.env.NODE_ENV !== 'production'
       ? (process.env.CORAL_LYRIC_DEV_URL ?? 'http://localhost:9081/lyric.html')
       : `file://${path.join(encodePath(__dirname), 'lyric.html')}`;
-  browserWindow.loadURL(
-    `${
-      winURL
-    }?os=${getPlatform()}&dark=${shouldUseDarkColors}&theme=${encodeURIComponent(JSON.stringify(theme))}`,
-  );
-
+  const lyricUrl = `${winURL}?os=${getPlatform()}&dark=${shouldUseDarkColors}&theme=${encodeURIComponent(JSON.stringify(theme))}`;
   winEvent();
-  // browserWindow.webContents.openDevTools()
+  browserWindow.loadURL(lyricUrl).catch((error) => {
+    console.error(`[winLyric] failed to start loading lyric window: ${lyricUrl}`, error);
+  });
+
   global.coral.event_app.desktop_lyric_window_created(browserWindow);
 };
 export const isExistWindow = (): boolean => !!browserWindow;
@@ -175,6 +179,48 @@ export const closeWindow = () => {
 export const showWindow = () => {
   if (!browserWindow) return;
   browserWindow.show();
+};
+
+const showLyricWindowOnce = () => {
+  if (!browserWindow || hasShownCurrentWindow) return;
+  hasShownCurrentWindow = true;
+  if (process.platform === 'darwin') {
+    browserWindow.showInactive();
+    revealLyricWindowOnMac();
+  } else showWindow();
+};
+
+const revealLyricWindowOnMac = () => {
+  if (!browserWindow) return;
+  browserWindow.moveTop();
+  if (global.coral.appSetting['desktopLyric.isAlwaysOnTop']) return;
+
+  browserWindow.setAlwaysOnTop(true, 'floating');
+  setTimeout(() => {
+    if (!browserWindow || global.coral.appSetting['desktopLyric.isAlwaysOnTop']) return;
+    browserWindow.setAlwaysOnTop(false);
+    browserWindow.moveTop();
+  }, 1200);
+};
+
+const applyLyricWindowDisplayState = () => {
+  if (!browserWindow || hasAppliedDisplayState) return;
+  hasAppliedDisplayState = true;
+  if (global.coral.appSetting['desktopLyric.isLock']) {
+    browserWindow.setIgnoreMouseEvents(true, {
+      forward: !isLinux && global.coral.appSetting['desktopLyric.isHoverHide'],
+    });
+  }
+  // linux下每次重开时貌似要重新设置置顶
+  // if (isLinux && global.coral.appSetting['desktopLyric.isAlwaysOnTop']) {
+  //   browserWindow.setAlwaysOnTop(global.coral.appSetting['desktopLyric.isAlwaysOnTop'], 'screen-saver')
+  // }
+  if (
+    global.coral.appSetting['desktopLyric.isAlwaysOnTop'] &&
+    global.coral.appSetting['desktopLyric.isAlwaysOnTopLoop']
+  )
+    alwaysOnTopTools.startLoop();
+  browserWindow.blur();
 };
 
 export const setResizeable = (isResizeable: boolean) => {

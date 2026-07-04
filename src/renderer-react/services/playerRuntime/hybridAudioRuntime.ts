@@ -49,6 +49,10 @@ export class HybridAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
     this.getActiveBackend().playPrev();
   }
 
+  stop(): void {
+    this.getActiveBackend().stop();
+  }
+
   togglePlay(): void {
     this.getActiveBackend().togglePlay();
   }
@@ -78,7 +82,7 @@ export class HybridAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
   }
 
   getAnalyser(): AnalyserNode | null {
-    return this.activeMode === 'system' ? this.systemBackend.getAnalyser?.() ?? null : null;
+    return this.activeMode === 'system' ? (this.systemBackend.getAnalyser?.() ?? null) : null;
   }
 
   onStatus(listener: PlayerStatusListener): () => void {
@@ -123,4 +127,3 @@ export class HybridAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
 
 export const createHybridAudioPlayerRuntimeBackend = (): PlayerRuntimeBridge =>
   new HybridAudioPlayerRuntimeBackend();
-

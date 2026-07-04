@@ -46,8 +46,29 @@ export const checkPath = async (filePath: string): Promise<boolean> => {
     .catch(() => false);
 };
 
+export const getFileSize = async (filePath: string): Promise<number | null> =>
+  await getFsPromises()
+    .stat(filePath)
+    .then((stats) => (stats.isFile() ? stats.size : null))
+    .catch(() => null);
+
 export const readFile = async (filePath: string): Promise<Buffer> =>
   await getFsPromises().readFile(filePath);
+
+export const readFileSlice = async (
+  filePath: string,
+  length: number,
+  position = 0,
+): Promise<Buffer> => {
+  const handle = await getFsPromises().open(filePath, 'r');
+  try {
+    const buffer = Buffer.alloc(Math.max(0, length));
+    const result = await handle.read(buffer, 0, buffer.length, position);
+    return buffer.subarray(0, result.bytesRead);
+  } finally {
+    await handle.close();
+  }
+};
 
 export const isDirectory = async (filePath: string): Promise<boolean> =>
   await getFsPromises()

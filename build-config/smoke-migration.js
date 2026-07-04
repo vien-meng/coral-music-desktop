@@ -50,14 +50,26 @@ record('active renderer routes are React panels', () => {
   assertIncludes(
     content,
     [
-      "RendererRouteKey = 'search' | 'song-list' | 'leaderboard' | 'list' | 'download' | 'setting'",
-      'lazy(async()',
+      'RendererRouteKey =',
+      "'search'",
+      "'song-list'",
+      "'leaderboard'",
+      "'list'",
+      "'favorites'",
+      "'library'",
+      "'webdav'",
+      "'download'",
+      "'setting'",
+      'lazy(async ()',
       "import('../features/download/DownloadRoutePanel')",
+      "import('../features/favorites/FavoritesRoutePanel')",
       "import('../features/leaderboard/LeaderboardRoutePanel')",
+      "import('../features/library/LibraryRoutePanel')",
       "import('../features/list/LocalListRoutePanel')",
       "import('../features/search/SearchRoutePanel')",
       "import('../features/settings/SettingsRoutePanel')",
       "import('../features/song-list/SongListRoutePanel')",
+      "import('../features/webdav/WebDavRoutePanel')",
     ],
     file,
   );
@@ -92,7 +104,7 @@ record('online feature panels use MobX stores', () => {
     ],
     [
       'src/renderer-react/features/leaderboard/LeaderboardRoutePanel.tsx',
-      ['rootStore', 'leaderboard.loadBoards', 'leaderboard.loadListDetail'],
+      ['rootStore', 'leaderboard.loadBoards', 'leaderboard.loadListDetail', 'OnlineMusicCover'],
     ],
     [
       'src/renderer-react/features/list/LocalListRoutePanel.tsx',
@@ -186,6 +198,107 @@ record('legacy renderer bridges are absent from React and lyric renderers', () =
     }
   }
   assert(hits.length === 0, hits.join('; '));
+});
+
+record('desktop lyric window has macOS-safe show fallback', () => {
+  const file = 'src/main/modules/winLyric/main.ts';
+  const content = read(file);
+  assertIncludes(
+    content,
+    [
+      'showLyricWindowOnce',
+      'applyLyricWindowDisplayState',
+      'revealLyricWindowOnMac',
+      "browserWindow.webContents.once('did-finish-load'",
+      "browserWindow.webContents.on(\n    'did-fail-load'",
+      'browserWindow.showInactive()',
+      'browserWindow.moveTop()',
+      "browserWindow.setAlwaysOnTop(true, 'floating')",
+      'failed to load lyric window',
+    ],
+    file,
+  );
+  assert(
+    content.indexOf('winEvent();') < content.indexOf('browserWindow.loadURL(lyricUrl)'),
+    'winLyric events should be registered before loadURL',
+  );
+});
+
+record('desktop lyric progress sync survives seek and reopen', () => {
+  const file = 'src/renderer-react/services/desktopLyricService.ts';
+  const content = read(file);
+  assertIncludes(
+    content,
+    [
+      'SEEK_SYNC_THRESHOLD_MS',
+      'playedTimeMs: Math.round(player.currentTime * 1000)',
+      'played_time: snap.playedTimeMs',
+      '() => Math.round(player.currentTime * 1000)',
+      'this.pushStatus(player)',
+      'Math.abs(timeMs - previousTimeMs) >= SEEK_SYNC_THRESHOLD_MS',
+      "this.postMessage({ action: 'set_status'",
+      "this.postMessage({ action: 'set_info'",
+      "this.postMessage({ action: 'set_play'",
+    ],
+    file,
+  );
+});
+
+record('desktop lyric toolbar controls main playback', () => {
+  assertIncludes(
+    read('src/common/types/desktop_lyric.d.ts'),
+    ['play_prev', 'toggle_play', 'play_next'],
+    'src/common/types/desktop_lyric.d.ts',
+  );
+  assertIncludes(
+    read('src/renderer-react/services/desktopLyricService.ts'),
+    ['player.playPrev()', 'player.togglePlay()', 'player.playNext()'],
+    'src/renderer-react/services/desktopLyricService.ts',
+  );
+  assertIncludes(
+    read('src/lyric-react/components/layout/ControlBar.tsx'),
+    ['StepBackwardOutlined', 'PauseCircleOutlined', 'PlayCircleOutlined', 'StepForwardOutlined'],
+    'src/lyric-react/components/layout/ControlBar.tsx',
+  );
+});
+
+record('default player shortcuts are wired to renderer playback actions', () => {
+  assertIncludes(
+    read('src/common/defaultHotKey.ts'),
+    [
+      'space:',
+      "'ctrl+alt+arrowleft'",
+      'f7:',
+      "'ctrl+alt+arrowright'",
+      'f8:',
+      'arrowup:',
+      'arrowdown:',
+    ],
+    'src/common/defaultHotKey.ts',
+  );
+  assertIncludes(
+    read('src/main/utils/index.ts'),
+    ['legacyDefaultHotKeyKeys', 'mod+f5', 'mod+arrowleft', 'migrateDefaultHotKeyConfig'],
+    'src/main/utils/index.ts',
+  );
+  assertIncludes(
+    read('src/renderer-react/services/keyboardShortcutService.ts'),
+    [
+      'player.togglePlay()',
+      'player.playPrev()',
+      'player.playNext()',
+      'player.setVolume(player.volume + VOLUME_STEP)',
+      'player.setVolume(player.volume - VOLUME_STEP)',
+      'ipcChannels.winMain.keyDown',
+      'ipcChannels.winMain.onHotKeyConfigChange',
+    ],
+    'src/renderer-react/services/keyboardShortcutService.ts',
+  );
+  assertIncludes(
+    read('src/renderer-react/app/providers.tsx'),
+    ['keyboardShortcutService.start()', 'keyboardShortcutService.stop()'],
+    'src/renderer-react/app/providers.tsx',
+  );
 });
 
 record('deprecated antd List usage is absent from migrated React panels', () => {

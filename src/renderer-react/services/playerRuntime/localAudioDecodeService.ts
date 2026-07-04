@@ -4,6 +4,7 @@ import {
 } from '@shared/playbackCapabilities';
 import { ipcChannels } from '@shared/ipc/contracts';
 import { ipcClient } from '../ipc/client';
+import { decodeWebmToWav } from './webmDemuxDecodeService';
 
 export interface DecodedAudioObjectUrl {
   objectUrl: string;
@@ -24,7 +25,11 @@ export const decodeLocalAudioToObjectUrl = async (
 ): Promise<DecodedAudioObjectUrl | null> => {
   if (!canDecodeLocalAudioExtension(extension)) return null;
 
-  const wavBuffer = await decodeWavFileInMain(filePath);
+  const normalizedExtension = normalizeAudioExtension(extension);
+  const wavBuffer =
+    normalizedExtension === 'webm'
+      ? await decodeWebmToWav(filePath)
+      : await decodeWavFileInMain(filePath);
   const blob = new Blob([wavBuffer], { type: 'audio/wav' });
   const objectUrl = URL.createObjectURL(blob);
 

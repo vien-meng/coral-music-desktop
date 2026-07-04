@@ -18,6 +18,7 @@ import {
 import { SearchInput, WindowControlBtns } from '../components/layout';
 import { PlayBar } from '../components/player';
 import { appService } from '../services/appService';
+import { getDroppedFilePaths } from '../services/droppedFilePathService';
 import { rootStore } from '../stores/rootStore';
 import { RouterOutlet } from './router';
 import { rendererRoutes } from './routeConfig';
@@ -25,27 +26,8 @@ import { rendererRoutes } from './routeConfig';
 const { Header, Sider, Content, Footer } = Layout;
 const { Text } = Typography;
 
-type FileWithPath = File & { path?: string };
-
 const isFileDragEvent = (event: ReactDragEvent<HTMLElement>): boolean =>
   Array.from(event.dataTransfer.types).includes('Files');
-
-const getDroppedFilePaths = (dataTransfer: DataTransfer): string[] =>
-  Array.from(dataTransfer.files)
-    .map((file) => {
-      const filePath = (file as FileWithPath).path?.trim();
-      if (filePath) return filePath;
-      // Electron 的 File.path 在某些配置下可能不可用，改用 webUtils 获取
-      try {
-        const electron = (globalThis as any).require?.('electron');
-        if (electron?.webUtils?.getPathForFile) {
-          const webUtilsPath: string | null = electron.webUtils.getPathForFile(file);
-          return webUtilsPath?.trim() ?? '';
-        }
-      } catch {}
-      return '';
-    })
-    .filter(Boolean);
 
 export const AppShell = observer(() => {
   const { settings, theme, ui } = rootStore;
@@ -116,7 +98,7 @@ export const AppShell = observer(() => {
       if (appSetting && !appSetting['player.localAudio.enabled']) {
         message.warning('本地音频导入已关闭，请在“设置 > 本地解码”开启。');
         ui.setActiveRoute('setting');
-        ui.requestQuickAction('configureExternalDecoder');
+        ui.requestQuickAction('configureLocalAudioImport');
         return;
       }
 
@@ -143,9 +125,12 @@ export const AppShell = observer(() => {
       if (!importResult) return;
 
       if (!importResult.importedMusics.length) {
+        const skippedText = importResult.skippedCount
+          ? `，跳过 ${importResult.skippedCount} 个无效或不可用条目`
+          : '';
         message.warning(
           importResult.candidateCount
-            ? `已跳过 ${importResult.duplicateCount} 首重复本地音频`
+            ? `已跳过 ${importResult.duplicateCount} 首重复本地音频${skippedText}`
             : '未发现支持的本地音频文件',
         );
         return;
@@ -154,7 +139,12 @@ export const AppShell = observer(() => {
       const duplicateText = importResult.duplicateCount
         ? `，跳过重复 ${importResult.duplicateCount} 首`
         : '';
-      message.success(`已导入 ${importResult.importedMusics.length} 首本地音频${duplicateText}`);
+      const skippedText = importResult.skippedCount
+        ? `，跳过 ${importResult.skippedCount} 个无效或不可用条目`
+        : '';
+      message.success(
+        `已导入 ${importResult.importedMusics.length} 首本地音频${duplicateText}${skippedText}`,
+      );
     },
     [settings.appSetting, ui],
   );

@@ -1,13 +1,39 @@
 import { spawn } from 'node:child_process';
+import type { ChildProcessWithoutNullStreams } from 'node:child_process';
+import http from 'node:http';
+import { randomUUID } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { app } from 'electron';
 import {
+  createExternalDecoderStreamProviders,
+  selectExternalDecoderStreamProvider,
+  type ExternalDecoderStreamProviderId,
+} from '@shared/externalDecoderProviders';
+import { createExternalDecoderStreamArgs } from '@shared/externalDecoderStreamArgs';
+import { createNativeApeHelperStreamArgs } from '@shared/nativeApeHelperArgs';
+import {
+  type ExternalDecoderStreamParams,
+  type ExternalDecoderStreamResult,
   type ExternalDecoderTranscodeParams,
   type ExternalDecoderTranscodeResult,
 } from '@shared/playbackCapabilities';
 
 const MAX_STDERR_LENGTH = 4000;
+const STREAM_TOKEN_TTL_MS = 30 * 60 * 1000;
+
+interface ExternalStreamToken {
+  endMs?: number | null;
+  expiresAt: number;
+  inputFormat?: string | null;
+  inputPath: string;
+  startMs?: number | null;
+  timeoutMs: number;
+}
+
+let streamServer: http.Server | null = null;
+let streamServerPort = 0;
+const streamTokens = new Map<string, ExternalStreamToken>();
 
 /**
  * Resolve the bundled ffmpeg-static binary path.
@@ -34,6 +60,26 @@ const assertFile = async (filePath: string, label: string): Promise<void> => {
   const stats = await fs.stat(filePath).catch(() => null);
   if (!stats || stats.isDirectory()) {
     throw new Error(`${label} path is not a file (resolved: "${filePath}").`);
+  }
+};
+
+const getNativeApeHelperPath = (): string =>
+  process.env.CORAL_NATIVE_APE_HELPER_PATH ||
+  path.join(
+    process.resourcesPath || app.getAppPath(),
+    'bin',
+    process.platform === 'win32' ? 'coral-ape-helper.exe' : 'coral-ape-helper',
+  );
+
+const isNativeApeHelperAvailable = async (): Promise<boolean> => {
+  const stat = await fs.stat(getNativeApeHelperPath()).catch(() => null);
+  return Boolean(stat?.isFile());
+};
+
+const cleanupExpiredStreamTokens = (): void => {
+  const now = Date.now();
+  for (const [token, info] of streamTokens) {
+    if (info.expiresAt < now) streamTokens.delete(token);
   }
 };
 
@@ -155,6 +201,167 @@ const runFfmpeg = async (
   }
 };
 
+const ensureStreamServer = async (): Promise<number> => {
+  if (streamServer && streamServerPort) return streamServerPort;
+
+  streamServer = http.createServer((req, res) => {
+    handleStreamRequest(req, res).catch((error) => {
+      if (!res.headersSent) res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end(error instanceof Error ? error.message : String(error));
+    });
+  });
+
+  await new Promise<void>((resolve) => {
+    streamServer!.listen(0, '127.0.0.1', () => {
+      const address = streamServer!.address();
+      streamServerPort = typeof address === 'object' && address ? address.port : 0;
+      resolve();
+    });
+  });
+
+  return streamServerPort;
+};
+
+const createStreamChild = async (
+  providerId: ExternalDecoderStreamProviderId,
+  info: ExternalStreamToken,
+): Promise<ChildProcessWithoutNullStreams> => {
+  if (providerId === 'native-ape') {
+    const helperPath = getNativeApeHelperPath();
+    await assertFile(helperPath, 'APE helper');
+    return spawn(helperPath, createNativeApeHelperStreamArgs(info), { windowsHide: true });
+  }
+
+  const ffmpegPath = resolveBundledFfmpegPath();
+  await assertFile(ffmpegPath, 'FFmpeg 可执行文件');
+  return spawn(ffmpegPath, createExternalDecoderStreamArgs(info), { windowsHide: true });
+};
+
+const pipeProviderStream = async (
+  providerId: ExternalDecoderStreamProviderId,
+  info: ExternalStreamToken,
+  res: http.ServerResponse,
+  options: { allowFallback: boolean },
+): Promise<void> => {
+  const child = await createStreamChild(providerId, info);
+  const stderrChunks: string[] = [];
+  let didFallback = false;
+  let startupTimedOut = false;
+  let didWriteOutput = false;
+  let startupTimer: NodeJS.Timeout | null = setTimeout(() => {
+    startupTimedOut = true;
+    child.kill('SIGKILL');
+    if (options.allowFallback && providerId === 'native-ape' && !didWriteOutput) return;
+    if (!res.writableEnded)
+      res.destroy(new Error('内嵌 FFmpeg 启动解码超时，请检查音频文件是否完整。'));
+  }, info.timeoutMs);
+  const clearStartupTimer = (): void => {
+    if (!startupTimer) return;
+    clearTimeout(startupTimer);
+    startupTimer = null;
+  };
+  const writeAudioHeaders = (): void => {
+    if (res.headersSent) return;
+    res.writeHead(200, {
+      'Accept-Ranges': 'none',
+      'Cache-Control': 'no-store',
+      'Content-Type': 'audio/wav',
+    });
+  };
+  const fallbackToFfmpeg = (): void => {
+    if (didFallback || didWriteOutput || res.headersSent || res.writableEnded) return;
+    didFallback = true;
+    clearStartupTimer();
+    pipeProviderStream('ffmpeg', info, res, { allowFallback: false }).catch((error) => {
+      if (!res.headersSent) res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end(error instanceof Error ? error.message : String(error));
+    });
+  };
+
+  child.stderr.on('data', (chunk: Buffer) => {
+    if (stderrChunks.join('').length < MAX_STDERR_LENGTH) stderrChunks.push(chunk.toString());
+  });
+  child.on('error', (error: NodeJS.ErrnoException) => {
+    clearStartupTimer();
+    if (options.allowFallback && providerId === 'native-ape' && !didWriteOutput) {
+      fallbackToFfmpeg();
+      return;
+    }
+    if (res.headersSent) return;
+    const message =
+      error.code === 'ENOENT'
+        ? '内嵌 FFmpeg 未找到，请重新安装应用。'
+        : error.code === 'EACCES'
+          ? 'FFmpeg 无法执行，请检查应用完整性或重新安装。'
+          : error.message || '内嵌 FFmpeg 启动失败，请检查应用完整性或重新安装。';
+    res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end(message);
+  });
+  child.on('close', (code) => {
+    clearStartupTimer();
+    if (
+      options.allowFallback &&
+      providerId === 'native-ape' &&
+      !didWriteOutput &&
+      !res.headersSent
+    ) {
+      fallbackToFfmpeg();
+      return;
+    }
+    if ((code || startupTimedOut) && !res.writableEnded) {
+      const details = stderrChunks.join('').trim();
+      res.destroy(
+        new Error(
+          details ||
+            (startupTimedOut
+              ? '内嵌 FFmpeg 启动解码超时，请检查音频文件是否完整。'
+              : `${providerId} exited with code ${code}.`),
+        ),
+      );
+    }
+  });
+
+  res.on('close', () => {
+    if (!child.killed) child.kill('SIGKILL');
+  });
+  child.stdout.once('data', (chunk: Buffer) => {
+    didWriteOutput = true;
+    clearStartupTimer();
+    writeAudioHeaders();
+    res.write(chunk);
+    child.stdout.pipe(res);
+  });
+};
+
+const handleStreamRequest = async (
+  req: http.IncomingMessage,
+  res: http.ServerResponse,
+): Promise<void> => {
+  const token = decodeURIComponent((req.url ?? '').split('/').pop() ?? '');
+  const info = streamTokens.get(token);
+  if (!info || info.expiresAt < Date.now()) {
+    streamTokens.delete(token);
+    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('External decoder stream token expired');
+    return;
+  }
+  // 注意：不要在这里删除 token。流式播放期间音频元素和头部探测会并发请求同一 URL，
+  // 删除会导致第二个请求拿到 404。token 由过期清理（cleanupExpiredStreamTokens）
+  // 和显式撤销（revokeExternalDecoderStream）负责回收。
+
+  await assertFile(info.inputPath, 'Input');
+  const providerSelection = selectExternalDecoderStreamProvider(
+    info.inputPath,
+    createExternalDecoderStreamProviders({
+      nativeApeAvailable: await isNativeApeHelperAvailable(),
+    }),
+  );
+
+  await pipeProviderStream(providerSelection.provider.id, info, res, {
+    allowFallback: providerSelection.fallbackProviderId === 'ffmpeg',
+  });
+};
+
 export const transcodeExternalDecoder = async (
   params: ExternalDecoderTranscodeParams,
 ): Promise<ExternalDecoderTranscodeResult> => {
@@ -174,4 +381,33 @@ export const transcodeExternalDecoder = async (
     outputPath,
     warnings: [],
   };
+};
+
+export const createExternalDecoderStream = async (
+  params: ExternalDecoderStreamParams,
+): Promise<ExternalDecoderStreamResult> => {
+  await assertFile(params.inputPath, 'Input');
+  cleanupExpiredStreamTokens();
+  const port = await ensureStreamServer();
+  const token = randomUUID();
+  const expiresAt = Date.now() + STREAM_TOKEN_TTL_MS;
+  streamTokens.set(token, {
+    endMs: params.endMs ?? null,
+    expiresAt,
+    inputFormat: params.inputFormat ?? null,
+    inputPath: params.inputPath,
+    startMs: params.startMs ?? null,
+    timeoutMs: params.timeoutMs,
+  });
+
+  return {
+    expiresAt,
+    token,
+    url: `http://127.0.0.1:${port}/external-decoder/stream/${encodeURIComponent(token)}`,
+    warnings: [],
+  };
+};
+
+export const revokeExternalDecoderStream = (token: string): void => {
+  streamTokens.delete(token);
 };
