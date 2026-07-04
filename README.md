@@ -64,9 +64,18 @@ ELECTRON_CACHE=/private/tmp/coral-electron-cache npm run pack:dir
 
 成功后应生成平台对应的目录产物，例如 macOS arm64 下的 `build/mac-arm64`。
 
-## 用户界面
+## 应用界面
 
-<p><img width="100%" src="./doc/images/app.png" alt="珊瑚音乐 UI 截图"></p>
+<p><img width="100%" src="./doc/images/app_01.png" alt="珊瑚音乐 UI 截图"></p>
+<p><img width="100%" src="./doc/images/app_02.png" alt="珊瑚音乐 UI 截图"></p>
+<p><img width="100%" src="./doc/images/app_03.png" alt="珊瑚音乐 UI 截图"></p>
+<p><img width="100%" src="./doc/images/app_04.png" alt="珊瑚音乐 UI 截图"></p>
+<p><img width="100%" src="./doc/images/app_05.png" alt="珊瑚音乐 UI 截图"></p>
+<p><img width="100%" src="./doc/images/app_01_s.png" alt="珊瑚音乐 UI 截图"></p>
+<p><img width="100%" src="./doc/images/app_02_s.png" alt="珊瑚音乐 UI 截图"></p>
+<p><img width="100%" src="./doc/images/app_03_s.png" alt="珊瑚音乐 UI 截图"></p>
+<p><img width="100%" src="./doc/images/app_04_s.png" alt="珊瑚音乐 UI 截图"></p>
+<p><img width="100%" src="./doc/images/app_05_s.png" alt="珊瑚音乐 UI 截图"></p>
 
 ## 贡献代码
 
