@@ -4,6 +4,7 @@ import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
 import { PlainList, PlainListItem, PlainListMeta } from '../../components/base';
 import { OnlineMusicRowActions } from '../online/OnlineMusicRowActions';
+import { getSourceDisplayName } from '../../services/sourceNameService';
 import { rootStore } from '../../stores/rootStore';
 
 const { Text } = Typography;
@@ -91,7 +92,7 @@ export const LibraryRoutePanel = observer(() => {
                         description={
                           <Space size={6} wrap>
                             <Text type="secondary">{record.musicInfo.meta.albumName || '无专辑'}</Text>
-                            <Tag>{record.musicInfo.source}</Tag>
+                            <Tag>{getSourceDisplayName(record.musicInfo.source)}</Tag>
                             <Text type="secondary">
                               {record.playCount} 次 · {new Date(record.playedAt).toLocaleString()}
                             </Text>
@@ -166,7 +167,7 @@ export const LibraryRoutePanel = observer(() => {
                     >
                       <PlainListMeta
                         title={`${musicInfo.name} - ${musicInfo.singer}`}
-                        description={musicInfo.meta.albumName || musicInfo.source}
+                        description={musicInfo.meta.albumName || getSourceDisplayName(musicInfo.source)}
                       />
                     </PlainListItem>
                   )}
