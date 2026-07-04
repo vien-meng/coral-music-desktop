@@ -209,6 +209,7 @@
     "tunnel": "^0.0.6",
     "undici": "^7.25.0",
     "utf-8-validate": "^6.0.6",
+    "web-demuxer": "^4.0.0",
     "ws": "^8.20.0"
   },
   "overrides": {
