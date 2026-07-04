@@ -6,6 +6,21 @@
 提交规范基于 [约定式提交](http://conventionalcommits.org)。
 日志格式基于 [Keep a Changelog](http://keepachangelog.com/)。
 
+
+## [1.1.1] - 2026-07-05
+
+#### 稳定性修复与调试优化
+
+### 修复
+
+- 修复 超大DSF/DFF 或者特定编码文件扫描时获取不到时长、封面等元数据的问题
+- 修复 frameless 透明窗口在特定 Windows 环境（Win11 + RDP）下拖拽时窗口尺寸递增的问题
+  - 拖拽开始前调用 `setWindowResizeable(false)` 禁用缩放
+  - 每次移动通过 `setBounds` 强制写回原始宽高，阻断 OS 误触 resize
+  - 拖拽结束后恢复 `setWindowResizeable(true)`
+- 修复文件拖拽导入失效的问题
+
+
 ## [1.1.0] - 2026-07-04
 
 #### 大版本更新，不要错过

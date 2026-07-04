@@ -14,6 +14,7 @@ import {
   getCacheSize,
   toggleDevTools,
   setWindowBounds,
+  setWindowResizeable,
   setIgnoreMouseEvents,
   // setThumbnailClip,
   toggleMinimize,
@@ -192,6 +193,10 @@ export default () => {
       setWindowBounds(params);
     },
   );
+
+  mainOn<boolean>(WIN_MAIN_RENDERER_EVENT_NAME.set_window_resizeable, ({ params: resizable }) => {
+    setWindowResizeable(resizable);
+  });
 
   mainOn<boolean>(WIN_MAIN_RENDERER_EVENT_NAME.set_ignore_mouse_events, ({ params: isIgnored }) => {
     isIgnored ? setIgnoreMouseEvents(isIgnored, { forward: true }) : setIgnoreMouseEvents(false);

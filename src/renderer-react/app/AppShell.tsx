@@ -9,7 +9,7 @@ import {
 } from '@ant-design/icons';
 import { Button, Dropdown, Flex, Layout, Menu, Space, Spin, Typography, message } from 'antd';
 import { observer } from 'mobx-react-lite';
-import { useCallback, useState, type DragEvent as ReactDragEvent, type MouseEvent } from 'react';
+import { useCallback, useState, type DragEvent as ReactDragEvent, type MouseEvent as ReactMouseEvent } from 'react';
 import { coralBrand } from '@shared/brand';
 import {
   externalDecoderExtensions,
@@ -40,25 +40,27 @@ export const AppShell = observer(() => {
     themeActionIcon = theme.themeMode === 'light' ? <MoonOutlined /> : <SunOutlined />;
     themeActionLabel = theme.themeMode === 'light' ? '深色' : '浅色';
   }
-  const handleWindowDragMouseDown = useCallback((event: MouseEvent<HTMLDivElement>) => {
+  const handleWindowDragMouseDown = useCallback((event: ReactMouseEvent<HTMLDivElement>) => {
     if (event.button !== 0) return;
-
     event.preventDefault();
-    const startMouseX = event.screenX;
-    const startMouseY = event.screenY;
-    const startWindowX = window.screenX;
-    const startWindowY = window.screenY;
+
+    const startX = event.screenX;
+    const startY = event.screenY;
+    const winX = window.screenX;
+    const winY = window.screenY;
+    appService.setWindowResizeable(false);
 
     const handleMouseMove = (moveEvent: globalThis.MouseEvent): void => {
       appService.moveMainWindowTo(
-        startWindowX + moveEvent.screenX - startMouseX,
-        startWindowY + moveEvent.screenY - startMouseY,
+        winX + moveEvent.screenX - startX,
+        winY + moveEvent.screenY - startY,
       );
     };
 
     const handleMouseUp = (): void => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      appService.setWindowResizeable(true);
     };
 
     document.addEventListener('mousemove', handleMouseMove);

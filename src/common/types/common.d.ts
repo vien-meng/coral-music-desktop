@@ -18,6 +18,11 @@ declare namespace Coral {
     dt?: boolean;
 
     /**
+     * 打开开发者工具（undocked 模式），在正式环境中配合 RDP 远程查看调试信息
+     */
+    odt?: boolean;
+
+    /**
      * 禁用硬件媒体密钥处理
      */
     dhmkh?: boolean;

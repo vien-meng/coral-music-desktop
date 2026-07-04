@@ -77,6 +77,28 @@ export const parseAudioHeader = (buffer: ArrayBuffer): AudioStreamInfo => {
     return { sampleRate: null, bitrate: null, format: 'm4a' };
   }
 
+  // DSDIFF/DFF: 以 "FRM8" 开头，紧接着 "DSD "（Big-Endian 格式）
+  if (
+    bytes.length >= 12 &&
+    bytes[0] === 0x46 &&
+    bytes[1] === 0x52 &&
+    bytes[2] === 0x4d &&
+    bytes[3] === 0x38
+  ) {
+    return parseDffHeader(bytes);
+  }
+
+  // DSF: 以 "DSD " 开头（Little-Endian 格式）
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x44 &&
+    bytes[1] === 0x53 &&
+    bytes[2] === 0x44 &&
+    bytes[3] === 0x20
+  ) {
+    return parseDsfHeader(bytes);
+  }
+
   // RIFF/WAV: 以 "RIFF" 开头
   if (
     bytes.length >= 12 &&
@@ -246,4 +268,47 @@ const parseWavHeader = (bytes: Uint8Array): AudioStreamInfo => {
   }
 
   return { sampleRate: null, bitrate: null, format: 'wav' };
+};
+
+// ==================== DSDIFF/DFF ====================
+// Big-Endian IFF 格式。不同工具生成的 DFF 文件头结构差异很大：
+// 有的 DSD 在 offset 8，有的在 offset 12，FRM8 的 size 字段可能为 0。
+// 直接暴カ搜索 "SND " 模式来获取 sampleRate，不依赖特定偏移。
+const parseDffHeader = (bytes: Uint8Array): AudioStreamInfo => {
+  const maxScan = Math.min(bytes.length - 16, 65536);
+  for (let offset = 0; offset < maxScan; offset++) {
+    if (
+      bytes[offset] === 0x53 &&
+      bytes[offset + 1] === 0x4e &&
+      bytes[offset + 2] === 0x44 &&
+      bytes[offset + 3] === 0x20
+    ) {
+      // SND 后的 4 字节是 sampleRate (big-endian)
+      const sampleRate =
+        (bytes[offset + 4] << 24) |
+        (bytes[offset + 5] << 16) |
+        (bytes[offset + 6] << 8) |
+        bytes[offset + 7];
+      if (sampleRate > 0 && sampleRate < 20000000) {
+        return { sampleRate, bitrate: null, format: 'wav' };
+      }
+    }
+  }
+  return { sampleRate: null, bitrate: null, format: 'unknown' };
+};
+
+// ==================== DSF ====================
+// Little-Endian 格式
+// "DSD "(4) + size(8, LE) + version(4) + formatID(4) + channelType(4) + channelNum(4)
+// + sampleRate(4, LE) + bitsPerSample(4) + sampleCount(8) + blockSize(4) + ...
+const parseDsfHeader = (bytes: Uint8Array): AudioStreamInfo => {
+  if (bytes.length < 32) return { sampleRate: null, bitrate: null, format: 'unknown' };
+
+  const sampleRate =
+    bytes[28] | (bytes[29] << 8) | (bytes[30] << 16) | (bytes[31] << 24);
+
+  if (sampleRate > 0) {
+    return { sampleRate, bitrate: null, format: 'wav' };
+  }
+  return { sampleRate: null, bitrate: null, format: 'unknown' };
 };

@@ -76,7 +76,20 @@ export const toggleFullscreen = setFullscreen;
 
 export const moveMainWindowTo = (x: number, y: number): void => {
   if (!isElectronRenderer()) return;
-  ipcClient.send(ipcChannels.winMain.setWindowSize, { x: Math.round(x), y: Math.round(y) });
+  ipcClient.send(ipcChannels.winMain.setWindowSize, {
+    x: Math.round(x),
+    y: Math.round(y),
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
+};
+
+let resizeableCache = true;
+export const setWindowResizeable = (resizable: boolean): void => {
+  if (!isElectronRenderer()) return;
+  if (resizeableCache === resizable) return;
+  resizeableCache = resizable;
+  ipcClient.send(ipcChannels.winMain.setWindowResizeable, resizable);
 };
 
 export const appService = {
@@ -91,6 +104,7 @@ export const appService = {
   openUrl,
   sendInited,
   setFullscreen,
+  setWindowResizeable,
   showSaveDialog,
   showSelectDialog,
   toggleFullscreen,

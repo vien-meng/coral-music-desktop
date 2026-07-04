@@ -16,14 +16,14 @@ export const parseEnvParams = (
 ): { cmdParams: Coral.CmdParams; deeplink: string | null } => {
   const cmdParams: Coral.CmdParams = {};
   let deeplink = null;
-  const rx = /^-\w+/;
+  const rx = /^-{1,2}[a-z]/i;
   for (let param of argv) {
     if (URL_SCHEME_RXP.test(param)) {
       deeplink = param;
     }
 
     if (!rx.test(param)) continue;
-    param = param.substring(1);
+    param = param.replace(/^-{1,2}/, '');
     let index = param.indexOf('=');
     if (index < 0) {
       cmdParams[param] = true;
