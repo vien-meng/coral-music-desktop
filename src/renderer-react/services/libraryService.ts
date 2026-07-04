@@ -49,6 +49,13 @@ export const getFavoriteSongLists = async (): Promise<Coral.Library.FavoriteSong
   return await ipcClient.invoke(ipcChannels.winMain.libraryFavoriteSongListList);
 };
 
+export const saveFavoriteSongList = async (
+  item: Coral.Library.FavoriteSongList,
+): Promise<Coral.Library.FavoriteSongList[]> => {
+  if (!isElectronRenderer()) return [];
+  return await ipcClient.invoke(ipcChannels.winMain.libraryFavoriteSongListSave, item);
+};
+
 export const toggleFavoriteSongList = async (
   item: Coral.Library.FavoriteSongList,
 ): Promise<Coral.Library.FavoriteSongList[]> => {
@@ -104,7 +111,8 @@ export const createAlbumFavoriteFromMusic = (
   const name = musicInfo.meta.albumName?.trim();
   if (!name) return null;
   const meta = musicInfo.meta as unknown as Record<string, unknown>;
-  const albumId = meta.albumId ?? meta.albumMid ?? `${musicInfo.source}:${name}:${musicInfo.singer}`;
+  const albumId =
+    meta.albumId ?? meta.albumMid ?? `${musicInfo.source}:${name}:${musicInfo.singer}`;
   return {
     artist: musicInfo.singer,
     createdAt: Date.now(),
@@ -128,6 +136,7 @@ export const libraryService = {
   removeFavoriteAlbums,
   removeFavoriteSongLists,
   removePlayHistory,
+  saveFavoriteSongList,
   toggleFavoriteAlbum,
   toggleFavoriteSong,
   toggleFavoriteSongList,

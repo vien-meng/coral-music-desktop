@@ -303,10 +303,6 @@ export class PlayerStore {
     return /添加音源|User API|Api is not found|没有可用音源/.test(this.errorText);
   }
 
-  get needsExternalDecoder(): boolean {
-    return /FFmpeg|外部解码|解码器|DSD|SACD|WAV|PCM/i.test(this.errorText);
-  }
-
   get lyricText(): string {
     return (
       [
@@ -494,6 +490,46 @@ export class PlayerStore {
     this.currentQueueId = null;
     this.currentQueueIndex = -1;
     this.clearPlayedHistory();
+  }
+
+  removeQueueItem(musicInfo: PlayerRuntimeMusicInfo): void {
+    const removeIndex = this.findQueueIndex(musicInfo);
+    if (removeIndex < 0) return;
+
+    const musicId = getRuntimeMusicId(musicInfo);
+    const currentIndex = this.currentMusic
+      ? this.findQueueIndex(this.currentMusic)
+      : this.currentQueueIndex;
+    const isRemovingCurrent =
+      this.currentMusic != null && getRuntimeMusicId(this.currentMusic) === musicId;
+    const nextQueue = this.playQueue.filter((_, index) => index !== removeIndex);
+
+    this.playQueue = nextQueue;
+    this.playedMusicIds = this.playedMusicIds.filter((id) => id !== musicId);
+
+    if (!nextQueue.length) {
+      this.currentQueueIndex = -1;
+      this.currentQueueId = null;
+      if (isRemovingCurrent) {
+        this.runtime.stop();
+        this.currentMusic = null;
+        this.pendingMusic = null;
+        this.isPreparingMusic = false;
+        this.clearLyricSnapshot();
+        this.clearMusicMetaSnapshot();
+      }
+      return;
+    }
+
+    if (isRemovingCurrent) {
+      const nextIndex = Math.min(removeIndex, nextQueue.length - 1);
+      this.currentQueueIndex = nextIndex;
+      this.playMusic(nextQueue[nextIndex]);
+      return;
+    }
+
+    this.currentQueueIndex =
+      currentIndex > removeIndex ? currentIndex - 1 : Math.min(currentIndex, nextQueue.length - 1);
   }
 
   playFromQueue(
@@ -721,7 +757,7 @@ export class PlayerStore {
 
   private enrichCurrentLocalMusicInfo(musicInfo: PlayerRuntimeMusicInfo): void {
     if (isDownloadMusicInfo(musicInfo) || musicInfo.source !== 'local') return;
-    if (musicInfo.meta.picUrl && musicInfo.meta.bitrate) return;
+    if (musicInfo.meta.picUrl && musicInfo.meta.bitrate && musicInfo.meta.sampleRate) return;
 
     const musicId = getRuntimeMusicId(musicInfo);
     localAudioService

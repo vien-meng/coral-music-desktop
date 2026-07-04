@@ -225,10 +225,8 @@ export class ListStore {
     this.actionError = null;
 
     try {
-      const musicInfos = await localAudioService.createLocalMusicInfosFromPaths(
-        inputPaths,
-        options,
-      );
+      const scanResult = await localAudioService.scanLocalMusicInfosFromPaths(inputPaths, options);
+      const { candidateCount, musicInfos, skippedCount } = scanResult;
       const existingIds = new Set(this.selectedMusics.map((musicInfo) => musicInfo.id));
       const importedMusics = musicInfos.filter((musicInfo) => !existingIds.has(musicInfo.id));
       if (importedMusics.length) {
@@ -240,10 +238,10 @@ export class ListStore {
       }
 
       return {
-        candidateCount: musicInfos.length,
+        candidateCount,
         duplicateCount: musicInfos.length - importedMusics.length,
         importedMusics,
-        skippedCount: 0,
+        skippedCount,
       };
     } catch (error) {
       this.actionError = error instanceof Error ? error.message : String(error);

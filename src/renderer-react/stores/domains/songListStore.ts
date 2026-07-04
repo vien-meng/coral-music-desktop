@@ -1,5 +1,6 @@
 import { makeAutoObservable, observable } from 'mobx';
 import { loadOnlineMusicService } from '../../services/onlineMusicServiceLoader';
+import type { LibraryStore } from './libraryStore';
 
 const defaultSongListSources: Coral.OnlineSource[] = ['kw', 'kg', 'tx', 'wy', 'mg'];
 
@@ -71,9 +72,11 @@ export interface SongListDetailInfo {
 }
 
 export interface OpenSongListInputInfo {
-  source: string;
+  source: Coral.OnlineSource;
   text: string;
 }
+
+export type SongListDetailBackTarget = 'square' | 'favorites';
 
 const createListInfo = (): SongListInfo => ({
   key: null,
@@ -100,12 +103,36 @@ const createListDetailInfo = (): SongListDetailInfo => ({
   total: 0,
 });
 
+const urlParamNames = ['id', 'playlistId', 'disstid', 'specialid', 'sid', 'pid'];
+
+const normalizeSongListInput = (input: string): string => {
+  const text = input.trim();
+  if (!text) return '';
+
+  try {
+    const url = new URL(text);
+    for (const name of urlParamNames) {
+      const value = url.searchParams.get(name);
+      if (value) return value;
+    }
+  } catch {}
+
+  const match = text.match(
+    /(?:playlistId|disstid|specialid|playlist|songlist|playsquare|id)[=/](?:id_)?([A-Za-z0-9_-]+)/i,
+  );
+  return match?.[1] ?? text;
+};
+
 export class SongListStore {
   detailError: string | null = null;
+
+  detailBackTarget: SongListDetailBackTarget = 'square';
 
   isLoadingDetail = false;
 
   isLoadingList = false;
+
+  isImportingSongList = false;
 
   isLoadingTags = false;
 
@@ -118,7 +145,7 @@ export class SongListStore {
   listInfo: SongListInfo = createListInfo();
 
   openSongListInputInfo: OpenSongListInputInfo = {
-    source: '',
+    source: 'kw',
     text: '',
   };
 
@@ -158,6 +185,10 @@ export class SongListStore {
     this.isVisibleListDetail = isVisible;
   }
 
+  setDetailBackTarget(target: SongListDetailBackTarget): void {
+    this.detailBackTarget = target;
+  }
+
   setListInfo(info: Partial<SongListInfo>): void {
     this.listInfo = {
       ...this.listInfo,
@@ -177,6 +208,45 @@ export class SongListStore {
       ...this.openSongListInputInfo,
       ...info,
     };
+  }
+
+  async importSongListToFavorites(
+    source: Coral.OnlineSource,
+    input: string,
+    library: LibraryStore,
+  ): Promise<Coral.Library.FavoriteSongList> {
+    if (this.isImportingSongList) throw new Error('正在导入歌单，请稍候');
+
+    const id = normalizeSongListInput(input);
+    if (!id) throw new Error('请输入歌单链接或 ID');
+
+    this.isImportingSongList = true;
+    this.detailError = null;
+    this.setOpenSongListInputInfo({ source, text: input.trim() });
+
+    try {
+      const onlineMusicService = await loadOnlineMusicService();
+      this.sources = await onlineMusicService.getSongListSources();
+      const result = await onlineMusicService.getSongListDetail(source, id, 1);
+      const favorite: Coral.Library.FavoriteSongList = {
+        author: result.info.author ?? '',
+        createdAt: Date.now(),
+        desc: result.info.desc ?? null,
+        id: result.id ?? id,
+        img: result.info.img ?? '',
+        name: result.info.name?.trim() || `歌单 ${result.id ?? id}`,
+        playCount: result.info.play_count ?? String(result.total || result.list.length || ''),
+        source,
+      };
+
+      await library.saveFavoriteSongList(favorite);
+      return favorite;
+    } catch (error) {
+      this.detailError = error instanceof Error ? error.message : String(error);
+      throw error;
+    } finally {
+      this.isImportingSongList = false;
+    }
   }
 
   async loadList(

@@ -2,6 +2,11 @@ import { resolvePlayableMusicUrl, isExternalDecoderLocalMusic } from './musicUrl
 import { probeAudioStreamInfo } from './audioHeaderProbe';
 import type { DecodedAudioData } from '@shared/playbackCapabilities';
 import { removeFile } from '../nodeBridgeService';
+import { externalDecoderService } from '../externalDecoderService';
+import {
+  calculateAudioSnapshotTimes,
+  normalizeExternalStreamSeekSeconds,
+} from './audioSnapshotMath';
 import type {
   PlayerEqFrequency,
   PlayerRuntimePlayOptions,
@@ -87,9 +92,17 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
 
   private currentDecodedFilePath: string | null = null;
 
+  private currentExternalStreamDuration: number | null = null;
+
+  private currentExternalStreamProgressOffset = 0;
+
+  private currentExternalStreamToken: string | null = null;
+
   private currentObjectUrl: string | null = null;
 
   private loadRequestId = 0;
+
+  private lastPlayOptions: PlayerRuntimePlayOptions = {};
 
   private status: PlayerRuntimeStatus = {};
 
@@ -103,6 +116,7 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
 
   playMusic(musicInfo?: PlayerRuntimeMusicInfo, options: PlayerRuntimePlayOptions = {}): void {
     if (musicInfo) {
+      this.lastPlayOptions = options;
       this.currentMusic = musicInfo;
       this.publishMusicInfo(musicInfo);
       this.loadAndPlayMusic(musicInfo, ++this.loadRequestId, options);
@@ -118,6 +132,21 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
 
   playPrev(): void {
     this.publish({});
+  }
+
+  stop(): void {
+    this.loadRequestId += 1;
+    this.audio?.pause();
+    if (this.audio) {
+      this.audio.removeAttribute('src');
+      this.audio.load();
+    }
+    this.clearDecodedAudio();
+    this.clearDecodedFile();
+    this.clearExternalStreamToken();
+    this.clearObjectUrl();
+    this.currentMusic = null;
+    this.publish({ duration: 0, isEnded: false, progress: 0, status: 'stoped' });
   }
 
   togglePlay(): void {
@@ -157,6 +186,20 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
         progress: nextOffset,
         status: this.decodedStatus === 'playing' ? 'playing' : 'paused',
       });
+      return;
+    }
+
+    if (this.currentExternalStreamToken && this.currentMusic) {
+      const streamTargetTime = normalizeExternalStreamSeekSeconds(
+        targetTime,
+        this.currentExternalStreamDuration,
+      );
+      this.lastPlayOptions = {
+        ...this.lastPlayOptions,
+        localStartOffsetSeconds: streamTargetTime,
+      };
+      this.publish({ isPreparing: true, progress: streamTargetTime, status: 'paused' });
+      this.loadAndPlayMusic(this.currentMusic, ++this.loadRequestId, this.lastPlayOptions);
       return;
     }
 
@@ -224,6 +267,7 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
     }
     this.clearDecodedAudio();
     this.clearDecodedFile();
+    this.clearExternalStreamToken();
     this.clearObjectUrl();
     this.audioContext?.close();
     this.audioContext = null;
@@ -300,6 +344,16 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
 
     this.currentObjectUrl = null;
     globalThis.URL?.revokeObjectURL(objectUrl);
+  }
+
+  private clearExternalStreamToken(exceptToken?: string): void {
+    const token = this.currentExternalStreamToken;
+    if (!token || token === exceptToken) return;
+
+    this.currentExternalStreamToken = null;
+    this.currentExternalStreamDuration = null;
+    this.currentExternalStreamProgressOffset = 0;
+    externalDecoderService.revokeExternalDecoderStream(token).catch(() => {});
   }
 
   private clearDecodedAudio(): void {
@@ -506,11 +560,17 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
     if (this.isDisposed || requestId !== this.loadRequestId) {
       if (resolved?.decodedFilePath) removeFile(resolved.decodedFilePath);
       if (resolved?.objectUrl) globalThis.URL?.revokeObjectURL(resolved.objectUrl);
+      if (resolved?.externalStreamToken) {
+        externalDecoderService
+          .revokeExternalDecoderStream(resolved.externalStreamToken)
+          .catch(() => {});
+      }
       return;
     }
 
     if (!resolved) {
       this.clearDecodedFile();
+      this.clearExternalStreamToken();
       this.clearObjectUrl();
       this.publish({ ...(needsPreparing ? { isPreparing: false } : {}), status: 'stoped' });
       return;
@@ -525,8 +585,12 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
     });
     this.clearDecodedFile(resolved.decodedFilePath);
     this.clearObjectUrl(resolved.objectUrl);
-    this.currentDecodedFilePath = resolved.decodedFilePath ?? null;
-    this.currentObjectUrl = resolved.objectUrl ?? null;
+    this.clearExternalStreamToken(resolved.externalStreamToken);
+    this.currentDecodedFilePath = resolved.decodedFilePath || null;
+    this.currentObjectUrl = resolved.objectUrl || null;
+    this.currentExternalStreamToken = resolved.externalStreamToken ?? null;
+    this.currentExternalStreamDuration = resolved.externalStreamDuration ?? null;
+    this.currentExternalStreamProgressOffset = resolved.externalStreamProgressOffset ?? 0;
     this.setAudioSource(resolved.url);
     this.playAudio();
 
@@ -601,8 +665,13 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
       return;
     }
 
-    const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
-    const progress = Number.isFinite(audio.currentTime) ? audio.currentTime : 0;
+    const { duration, progress } = calculateAudioSnapshotTimes({
+      currentTime: audio.currentTime,
+      externalStreamDuration: this.currentExternalStreamDuration,
+      externalStreamProgressOffset: this.currentExternalStreamProgressOffset,
+      isEnded: status.isEnded,
+      nativeDuration: audio.duration,
+    });
     this.publish({
       duration,
       mute: audio.muted,

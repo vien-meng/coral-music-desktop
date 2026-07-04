@@ -3,6 +3,11 @@ import { mainHandle } from '@common/mainIpc';
 import { init, registerHotkey, unRegisterHotkey, unRegisterHotkeyAll } from './utils';
 
 export default () => {
+  mainHandle<Coral.HotKeyConfigAll>(
+    HOTKEY_RENDERER_EVENT_NAME.get_config,
+    async () => global.coral.hotKey.config,
+  );
+
   mainHandle<Coral.HotKeyActions, boolean>(
     HOTKEY_RENDERER_EVENT_NAME.set_config,
     async ({ params }) => {

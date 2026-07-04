@@ -55,6 +55,7 @@ record('library ipc contracts are typed', () => {
     [
       'libraryHistoryList',
       'libraryHistoryAdd',
+      'libraryFavoriteSongListSave',
       'libraryFavoriteSongListToggle',
       'libraryFavoriteAlbumToggle',
       'libraryCategoryGroups',
@@ -71,6 +72,7 @@ record('library db service exposes history favorites and categories', () => {
     [
       'HISTORY_LIMIT = 1000',
       'addPlayHistory',
+      'saveFavoriteSongList',
       'toggleFavoriteSongList',
       'toggleFavoriteAlbum',
       'getLibraryCategoryGroups',
@@ -85,12 +87,24 @@ record('library db service exposes history favorites and categories', () => {
 record('renderer service and store are wired', () => {
   assertIncludes(
     read('src/renderer-react/services/libraryService.ts'),
-    ['toggleFavoriteSong', 'LIST_IDS.LOVE', 'createAlbumFavoriteFromMusic', 'getCategoryGroups'],
+    [
+      'toggleFavoriteSong',
+      'LIST_IDS.LOVE',
+      'saveFavoriteSongList',
+      'createAlbumFavoriteFromMusic',
+      'getCategoryGroups',
+    ],
     'src/renderer-react/services/libraryService.ts',
   );
   assertIncludes(
     read('src/renderer-react/stores/domains/libraryStore.ts'),
-    ['LibraryStore', 'favoriteSongs', 'toggleFavoriteSongListItem', 'loadCategoryGroups'],
+    [
+      'LibraryStore',
+      'favoriteSongs',
+      'saveFavoriteSongList',
+      'toggleFavoriteSongListItem',
+      'loadCategoryGroups',
+    ],
     'src/renderer-react/stores/domains/libraryStore.ts',
   );
   assertIncludes(
@@ -108,7 +122,14 @@ record('favorites and library routes are visible', () => {
   );
   assertIncludes(
     read('src/renderer-react/features/favorites/FavoritesRoutePanel.tsx'),
-    ['收藏歌曲', '收藏歌单', '收藏专辑', '创建歌单'],
+    [
+      'activeFavoritesTab',
+      "songList.setDetailBackTarget('favorites')",
+      '收藏歌曲',
+      '收藏歌单',
+      '收藏专辑',
+      '创建歌单',
+    ],
     'src/renderer-react/features/favorites/FavoritesRoutePanel.tsx',
   );
   assertIncludes(
@@ -125,6 +146,40 @@ record('favorites and library routes are visible', () => {
     read('src/renderer-react/features/library/LibraryRoutePanel.tsx'),
     ['播放记录', '音乐分类', '按专辑', '按类型', '按歌手', '按年代'],
     'src/renderer-react/features/library/LibraryRoutePanel.tsx',
+  );
+});
+
+record('song list import saves into favorite songlists', () => {
+  assertIncludes(
+    read('src/renderer-react/stores/domains/songListStore.ts'),
+    [
+      'normalizeSongListInput',
+      'detailBackTarget',
+      'setDetailBackTarget',
+      'importSongListToFavorites',
+      'library.saveFavoriteSongList',
+    ],
+    'src/renderer-react/stores/domains/songListStore.ts',
+  );
+  assertIncludes(
+    read('src/renderer-react/features/song-list/SongListRoutePanel.tsx'),
+    [
+      'handleBackFromDetail',
+      "songList.setDetailBackTarget('square')",
+      "ui.setActiveFavoritesTab('songlists')",
+      "ui.setActiveRoute('favorites')",
+      '返回收藏',
+    ],
+    'src/renderer-react/features/song-list/SongListRoutePanel.tsx',
+  );
+  assertIncludes(
+    read('src/renderer-react/features/song-list/components/OpenListModal.tsx'),
+    [
+      'importSongListToFavorites',
+      "ui.setActiveFavoritesTab('songlists')",
+      "ui.setActiveRoute('favorites')",
+    ],
+    'src/renderer-react/features/song-list/components/OpenListModal.tsx',
   );
 });
 

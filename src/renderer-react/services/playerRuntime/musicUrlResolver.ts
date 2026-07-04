@@ -3,7 +3,7 @@ import { cacheService } from '../cacheService';
 import { externalDecoderService } from '../externalDecoderService';
 import { musicSdkRuntime } from '../musicSdkRuntime';
 import { getPreferredOnlineMusicQuality } from '../musicQualityService';
-import { checkPath } from '../nodeBridgeService';
+import { checkPath, getFileSize } from '../nodeBridgeService';
 import { settingService } from '../settingService';
 import { createWebDavStreamUrl } from '../webDavService';
 import {
@@ -13,6 +13,7 @@ import {
 import type { PlayerRuntimeMusicInfo } from './types';
 
 const TOO_MANY_REQUESTS_MESSAGE = 'too many requests';
+const WEBM_DEMUX_MAX_BYTES = 64 * 1024 * 1024;
 
 const pendingOtherSourcePromises = new Map<string, Promise<Coral.Music.MusicInfoOnline[]>>();
 const otherSourceCache = new Map<string, Coral.Music.MusicInfoOnline[]>();
@@ -56,6 +57,22 @@ const getFileExtension = (filePath: string): string => {
   const dotIndex = fileName.lastIndexOf('.');
   if (dotIndex < 0) return '';
   return normalizeAudioExtension(fileName.slice(dotIndex + 1));
+};
+
+const getExternalDecoderInputFormat = (extension: string): string | null => {
+  switch (normalizeAudioExtension(extension)) {
+    case 'dff':
+      return 'iff';
+    default:
+      return null;
+  }
+};
+
+const parseIntervalToSeconds = (interval?: string | null): number => {
+  if (!interval) return 0;
+  const parts = interval.split(':').map((part) => parseInt(part, 10));
+  if (parts.some(Number.isNaN)) return 0;
+  return parts.reduce((acc, part) => acc * 60 + part, 0);
 };
 
 const toOldPlayableMusicInfo = (
@@ -144,6 +161,9 @@ const toOnlineMusicInfo = (musicInfo: unknown): Coral.Music.MusicInfoOnline | nu
 
 export interface ResolvedPlaybackUrl {
   decodedFilePath?: string;
+  externalStreamDuration?: number | null;
+  externalStreamProgressOffset?: number;
+  externalStreamToken?: string;
   objectUrl?: string;
   musicInfo: PlayerRuntimeMusicInfo;
   quality: Coral.Quality;
@@ -156,6 +176,7 @@ export interface ResolvePlayableMusicUrlOptions {
   allowToggleSource?: boolean;
   isRefresh?: boolean;
   onToggleSource?: (musicInfo?: Coral.Music.MusicInfoOnline) => void;
+  localStartOffsetSeconds?: number;
   preferredQuality?: Coral.Quality;
 }
 
@@ -172,10 +193,10 @@ export const canPlayWithLocalRuntime = (musicInfo?: PlayerRuntimeMusicInfo): boo
 };
 
 /**
- * 判断是否为需要 FFmpeg 转码准备的本地音频：
- * - 外部解码器扩展（DFF/DSF/ALAC/AC3/APE）：必须走 FFmpeg 转码
+ * 判断是否为需要内置解码适配的本地音频：
+ * - DFF/DSF/ALAC/AC3/APE：走内置流式解码，APE 可优先使用原生 helper
  * - WAV：部分 .wav 实际封装 DTS/AC3 等编码音频但伪装 PCM 头，浏览器按 PCM 解码会白噪音，
- *   统一走 FFmpeg 转码确保 Chrome 能正确播放
+ *   统一交给内置解码适配器识别真实编码
  */
 export const isExternalDecoderLocalMusic = (musicInfo?: PlayerRuntimeMusicInfo): boolean => {
   if (!musicInfo || isDownloadMusicInfo(musicInfo) || musicInfo.source !== 'local') return false;
@@ -192,13 +213,22 @@ const resolveInternalDecodedPath = async (
   const extension = getFileExtension(normalizedFilePath);
   if (!canDecodeLocalAudioExtension(extension)) return null;
 
-  // WAV 不走内嵌解码：有些 .wav 文件实际封装的是 DTS/AC3 等编码音频，
+  // WAV 不走 audio-decode：有些 .wav 文件实际封装的是 DTS/AC3 等编码音频，
   // 但 fmt chunk 声明为 PCM（伪造的 PCM 头），浏览器按 PCM 解码会得到白噪音。
-  // 统一交给 resolveExternalDecodedPath 用 FFmpeg 转码，FFmpeg 能正确识别真实编码。
+  // 统一交给内置解码适配器识别真实编码。
   const normalizedExt = normalizeAudioExtension(extension);
   if (normalizedExt === 'wav') return null;
+  if (normalizedExt === 'webm') {
+    const fileSize = await getFileSize(normalizedFilePath);
+    if (fileSize != null && fileSize > WEBM_DEMUX_MAX_BYTES) return null;
+  }
 
-  const decoded = await decodeLocalAudioToObjectUrl(normalizedFilePath, extension);
+  const decoded = await decodeLocalAudioToObjectUrl(normalizedFilePath, extension).catch(
+    (error) => {
+      if (normalizedExt === 'webm') return null;
+      throw error;
+    },
+  );
   if (!decoded) return null;
 
   return {
@@ -209,8 +239,18 @@ const resolveInternalDecodedPath = async (
 
 const resolveExternalDecodedPath = async (
   filePath: string,
+  options: {
+    endMs?: number | null;
+    fallbackDurationSeconds?: number;
+    localStartOffsetSeconds?: number;
+    startMs?: number | null;
+    stream?: boolean;
+  } = {},
 ): Promise<{
   decodedFilePath: string;
+  externalStreamDuration?: number | null;
+  externalStreamProgressOffset?: number;
+  externalStreamToken?: string;
   objectUrl: string;
   url: string;
 } | null> => {
@@ -218,23 +258,55 @@ const resolveExternalDecodedPath = async (
   if (!normalizedFilePath) return null;
 
   const extension = getFileExtension(normalizedFilePath);
-  // 外部解码器扩展（DFF/DSF/ALAC/AC3/APE）或 WAV 回退（无头 raw PCM 等非标准 WAV）
-  if (!isExternalDecoderExtension(extension) && normalizeAudioExtension(extension) !== 'wav') {
+  // 需要内置解码适配的扩展（DFF/DSF/ALAC/AC3/APE）或 WAV 回退（无头 raw PCM 等非标准 WAV）
+  const normalizedExt = normalizeAudioExtension(extension);
+  if (
+    !isExternalDecoderExtension(extension) &&
+    normalizedExt !== 'wav' &&
+    normalizedExt !== 'webm'
+  ) {
     return null;
   }
 
   const setting = await settingService.getAppSetting();
+
+  if (options.stream) {
+    const trackStartMs = options.startMs ?? 0;
+    const seekOffsetMs = Math.max(0, Math.round((options.localStartOffsetSeconds ?? 0) * 1000));
+    const streamStartMs = trackStartMs + seekOffsetMs;
+    const result = await externalDecoderService.createExternalDecoderStream({
+      endMs: options.endMs ?? null,
+      inputFormat: getExternalDecoderInputFormat(extension),
+      inputPath: normalizedFilePath,
+      startMs: streamStartMs,
+      timeoutMs: setting?.['player.externalDecoder.timeoutMs'] ?? 30_000,
+    });
+    const duration =
+      typeof options.endMs === 'number' && options.endMs > trackStartMs
+        ? (options.endMs - trackStartMs) / 1000
+        : options.fallbackDurationSeconds && options.fallbackDurationSeconds > 0
+          ? options.fallbackDurationSeconds
+          : null;
+    return {
+      decodedFilePath: '',
+      externalStreamDuration: duration,
+      externalStreamProgressOffset: seekOffsetMs / 1000,
+      externalStreamToken: result.token,
+      objectUrl: '',
+      url: result.url,
+    };
+  }
 
   const result = await externalDecoderService.transcodeExternalDecoder({
     inputPath: normalizedFilePath,
     output: 'wav',
     timeoutMs: setting?.['player.externalDecoder.timeoutMs'] ?? 30_000,
   });
-  // FFmpeg 输出的是标准 WAV，通过 IPC 读取文件内容创建 blob: URL。
+  // 兜底解码输出的是标准 WAV，通过 IPC 读取文件内容创建 blob: URL。
   // 不用 file:// URL：dev 模式下渲染进程是 http:// origin，file:// 会被 CORS 阻止。
   // decodeLocalAudioToObjectUrl 内部检测到标准 RIFF/WAVE 头会直接返回原始 bytes，不再解码。
   const decoded = await decodeLocalAudioToObjectUrl(result.outputPath, 'wav');
-  if (!decoded) throw new Error('FFmpeg 转码输出文件读取失败。');
+  if (!decoded) throw new Error('内置解码输出读取失败，请检查应用完整性或重新安装。');
   return {
     decodedFilePath: result.outputPath,
     objectUrl: decoded.objectUrl,
@@ -244,13 +316,23 @@ const resolveExternalDecodedPath = async (
 
 const resolveExternalDecodedLocalMusicUrl = async (
   musicInfo: PlayerRuntimeMusicInfo,
+  options: ResolvePlayableMusicUrlOptions = {},
 ): Promise<{
   decodedFilePath: string;
+  externalStreamDuration?: number | null;
+  externalStreamProgressOffset?: number;
+  externalStreamToken?: string;
   objectUrl: string;
   url: string;
 } | null> => {
   if (isDownloadMusicInfo(musicInfo) || musicInfo.source !== 'local') return null;
-  return resolveExternalDecodedPath(musicInfo.meta.filePath);
+  return resolveExternalDecodedPath(musicInfo.meta.filePath, {
+    endMs: musicInfo.meta.trackEndMs,
+    fallbackDurationSeconds: parseIntervalToSeconds(musicInfo.interval),
+    localStartOffsetSeconds: options.localStartOffsetSeconds,
+    startMs: musicInfo.meta.trackStartMs,
+    stream: true,
+  });
 };
 
 export const resolveDownloadMusicUrl = async (
@@ -258,6 +340,9 @@ export const resolveDownloadMusicUrl = async (
   isRefresh = false,
 ): Promise<{
   decodedFilePath?: string;
+  externalStreamDuration?: number | null;
+  externalStreamProgressOffset?: number;
+  externalStreamToken?: string;
   objectUrl?: string;
   url: string;
 } | null> => {
@@ -267,7 +352,10 @@ export const resolveDownloadMusicUrl = async (
     const internalDecoded = await resolveInternalDecodedPath(musicInfo.metadata.filePath);
     if (internalDecoded) return internalDecoded;
 
-    const decoded = await resolveExternalDecodedPath(musicInfo.metadata.filePath);
+    const decoded = await resolveExternalDecodedPath(musicInfo.metadata.filePath, {
+      fallbackDurationSeconds: parseIntervalToSeconds(musicInfo.metadata.musicInfo.interval),
+      stream: true,
+    });
     if (decoded) return decoded;
   }
 
@@ -303,7 +391,9 @@ export const fetchFreshOnlineMusicUrl = async (
 };
 
 const isMissingMusicSourceError = (message: string): boolean =>
-  message === 'Api is not found' || /^music url source not found:/.test(message);
+  message === 'Api is not found' ||
+  /^music url source not found:/.test(message) ||
+  /getMusicUrl/.test(message);
 
 const fetchFreshOnlineMusicUrlWithReadyRetry = async (
   musicInfo: Coral.Music.MusicInfoOnline,
@@ -396,9 +486,6 @@ const resolveOnlineMusicUrl = async (
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    if (isMissingMusicSourceError(message)) {
-      throw new Error('当前没有可用音源，请先通过“添加音源”导入并启用 User API。');
-    }
     if (options.allowToggleSource === false || message === TOO_MANY_REQUESTS_MESSAGE) throw err;
 
     options.onToggleSource?.();
@@ -418,6 +505,10 @@ const resolveOnlineMusicUrl = async (
         preferredQuality: targetQuality,
       }).catch(() => null);
       if (resolved) return resolved;
+    }
+
+    if (isMissingMusicSourceError(message)) {
+      throw new Error('当前没有可用音源，请先通过“添加音源”导入并启用 User API。');
     }
 
     throw err;
@@ -449,6 +540,9 @@ export const resolvePlayableMusicUrl = async (
     if (downloadUrl) {
       return {
         decodedFilePath: downloadUrl.decodedFilePath,
+        externalStreamDuration: downloadUrl.externalStreamDuration,
+        externalStreamProgressOffset: downloadUrl.externalStreamProgressOffset,
+        externalStreamToken: downloadUrl.externalStreamToken,
         objectUrl: downloadUrl.objectUrl,
         musicInfo,
         quality: musicInfo.metadata.quality,
@@ -492,10 +586,13 @@ export const resolvePlayableMusicUrl = async (
         };
       }
 
-      const decodedLocal = await resolveExternalDecodedLocalMusicUrl(musicInfo);
+      const decodedLocal = await resolveExternalDecodedLocalMusicUrl(musicInfo, options);
       if (decodedLocal) {
         return {
           decodedFilePath: decodedLocal.decodedFilePath,
+          externalStreamDuration: decodedLocal.externalStreamDuration,
+          externalStreamProgressOffset: decodedLocal.externalStreamProgressOffset,
+          externalStreamToken: decodedLocal.externalStreamToken,
           objectUrl: decodedLocal.objectUrl,
           musicInfo,
           quality: '128k',

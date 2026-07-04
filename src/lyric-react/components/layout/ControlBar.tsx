@@ -6,8 +6,12 @@ import {
   FontSizeOutlined,
   LockOutlined,
   MinusOutlined,
+  PauseCircleOutlined,
+  PlayCircleOutlined,
   PlusOutlined,
   PushpinOutlined,
+  StepBackwardOutlined,
+  StepForwardOutlined,
   UnlockOutlined,
 } from '@ant-design/icons';
 import { Button, Segmented, Space, Tag, Tooltip } from 'antd';
@@ -52,6 +56,38 @@ export const ControlBar = observer(() => {
             }}
           />
         </Tooltip>
+        <Space.Compact size="small">
+          <Tooltip title="上一曲">
+            <Button
+              type="text"
+              icon={<StepBackwardOutlined />}
+              disabled={!lyricRootStore.isConnectedToMainWindow}
+              onClick={() => {
+                lyricRootStore.playPrev();
+              }}
+            />
+          </Tooltip>
+          <Tooltip title={lyricRootStore.isPlay ? '暂停' : '播放'}>
+            <Button
+              type="text"
+              icon={lyricRootStore.isPlay ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+              disabled={!lyricRootStore.isConnectedToMainWindow}
+              onClick={() => {
+                lyricRootStore.togglePlay();
+              }}
+            />
+          </Tooltip>
+          <Tooltip title="下一曲">
+            <Button
+              type="text"
+              icon={<StepForwardOutlined />}
+              disabled={!lyricRootStore.isConnectedToMainWindow}
+              onClick={() => {
+                lyricRootStore.playNext();
+              }}
+            />
+          </Tooltip>
+        </Space.Compact>
         <Space.Compact size="small">
           <Tooltip title="字号减小">
             <Button

@@ -32,12 +32,19 @@ export const getHotKeyStatus = async (): Promise<Coral.HotKeyState> => {
   return await ipcClient.invoke(ipcChannels.winMain.hotKeyStatus);
 };
 
+export const getHotKeyConfig = async (): Promise<Coral.HotKeyConfigAll | null> => {
+  if (!isElectronRenderer()) return null;
+  return await ipcClient.invoke(ipcChannels.winMain.hotKeyConfig);
+};
+
 export const formatHotKeyName = (key: string): string => {
   const name = key
     .replace('arrowleft', '←')
     .replace('arrowright', '→')
     .replace('arrowup', '↑')
     .replace('arrowdown', '↓')
+    .replace('space', 'Space')
+    .replace('ctrl', 'Ctrl')
     .replace('mod', isMacPlatform ? 'Command' : 'Ctrl')
     .replace('alt', isMacPlatform ? 'Option' : 'Alt');
   return name
@@ -49,6 +56,7 @@ export const formatHotKeyName = (key: string): string => {
 export const hotKeyService = {
   allHotKeys,
   formatHotKeyName,
+  getHotKeyConfig,
   getHotKeyStatus,
   setHotKeyConfig,
   setHotKeyEnable,

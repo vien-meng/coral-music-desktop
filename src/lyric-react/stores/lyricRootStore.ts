@@ -334,6 +334,18 @@ export class LyricRootStore {
     this.sendDesktopLyricInfo('get_analyser_data_array');
   }
 
+  playPrev(): void {
+    this.sendDesktopLyricInfo('play_prev');
+  }
+
+  togglePlay(): void {
+    this.sendDesktopLyricInfo('toggle_play');
+  }
+
+  playNext(): void {
+    this.sendDesktopLyricInfo('play_next');
+  }
+
   requestAnalyserData(): void {
     if (!this.isAudioVisualizationActive) return;
     this.getAnalyserDataArray();
@@ -507,6 +519,13 @@ export class LyricRootStore {
       return;
     }
 
+    // 窗口刚打开还未连接主窗口或未收到任何歌词数据时，不触发 pauseHide，
+    // 避免用户主动打开歌词窗口时因未播放而被立即隐藏（opacity 0.05）。
+    if (!this.isConnectedToMainWindow || !this.musicInfo.id) {
+      this.isPauseHidden = false;
+      return;
+    }
+
     this.pauseHideTimer = setTimeout(() => {
       this.isPauseHidden = true;
       this.pauseHideTimer = null;
@@ -526,7 +545,6 @@ export class LyricRootStore {
   }
 
   private refreshTimelineLyric(): void {
-    if (!this.musicInfo.id) return;
     this.timeline.setLyric(this.lyrics, this.config);
   }
 

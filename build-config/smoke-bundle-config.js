@@ -84,7 +84,7 @@ record('routes are code split at the route boundary', () => {
   assertIncludes(
     content,
     [
-      'lazy(async()',
+      'lazy(async ()',
       "import('../features/search/SearchRoutePanel')",
       "import('../features/song-list/SongListRoutePanel')",
       "import('../features/leaderboard/LeaderboardRoutePanel')",

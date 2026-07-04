@@ -24,6 +24,7 @@ export interface PlayerSoundEffectConfig {
 
 export interface PlayerRuntimePlayOptions {
   isRefresh?: boolean;
+  localStartOffsetSeconds?: number;
   preferredQuality?: Coral.Quality;
 }
 
@@ -32,6 +33,7 @@ export interface PlayerRuntimeBridge {
   playMusic: (musicInfo?: PlayerRuntimeMusicInfo, options?: PlayerRuntimePlayOptions) => void;
   playNext: () => void;
   playPrev: () => void;
+  stop: () => void;
   togglePlay: () => void;
   seek: (seconds: number) => void;
   setVolume: (volume: number) => void;

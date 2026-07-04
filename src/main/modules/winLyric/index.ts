@@ -19,8 +19,11 @@ export default () => {
     if (global.coral.appSetting['desktopLyric.enable']) {
       if (global.coral.appSetting['desktopLyric.fullscreenHide'] && isMainWidnowFullscreen) {
         closeWindow();
-      } else if (isExistWindow()) sendMainWindowInitedEvent();
-      else createWindow();
+      } else if (isExistWindow()) {
+        sendMainWindowInitedEvent();
+      } else {
+        createWindow();
+      }
     }
   });
   global.coral.event_app.on('updated_config', (keys, setting) => {

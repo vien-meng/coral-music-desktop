@@ -8,6 +8,7 @@ import {
   ImportOutlined,
   MoreOutlined,
   OrderedListOutlined,
+  FolderAddOutlined,
   DownloadOutlined,
   PlayCircleOutlined,
   PlusOutlined,
@@ -51,6 +52,10 @@ import { musicDetailService } from '../../services/musicDetailService';
 import { DownloadQualityModal } from '../../components/player/DownloadQualityModal';
 import { DraggableMusicList } from '../../components/player/DraggableMusicList';
 import { BatchDownloadModal } from '../../components/player/BatchDownloadModal';
+import {
+  createLocalAudioFolderImportDialogOptions,
+  createLocalAudioImportDialogOptions,
+} from '../../services/localAudioDialogService';
 import { rootStore } from '../../stores/rootStore';
 
 const { Text } = Typography;
@@ -438,11 +443,11 @@ export const LocalListRoutePanel = observer(() => {
       });
   };
 
-  const handleImportLocalAudio = async (): Promise<void> => {
+  const importLocalAudioPaths = async (filePaths: string[]): Promise<void> => {
     if (appSetting && !appSetting['player.localAudio.enabled']) {
       message.warning('本地音频导入已关闭，请在“设置 > 本地解码”开启。');
       ui.setActiveRoute('setting');
-      ui.requestQuickAction('configureExternalDecoder');
+      ui.requestQuickAction('configureLocalAudioImport');
       return;
     }
 
@@ -450,25 +455,8 @@ export const LocalListRoutePanel = observer(() => {
       appSetting?.['player.localAudio.supportedExts'] ?? nativeLocalAudioExtensions;
     const externalExtensions = externalDecoderExtensions;
 
-    // Windows does not support openFile + openDirectory simultaneously — it shows a
-    // directory-only picker. macOS handles the combination correctly. On Windows we
-    // exclude openDirectory; folder import still works via drag-and-drop.
-    const useOpenDirectory = typeof process !== 'undefined' && process.platform !== 'win32';
-    const audioExtensions = [...new Set([...nativeExtensions, ...externalExtensions])];
-    const result = await appService.showSelectDialog({
-      filters: [
-        { name: '音频文件', extensions: audioExtensions },
-        { name: '所有文件', extensions: ['*'] },
-      ],
-      properties: useOpenDirectory
-        ? ['openFile', 'openDirectory', 'multiSelections']
-        : ['openFile', 'multiSelections'],
-      title: '导入本地音频',
-    });
-    if (result.canceled || !result.filePaths.length) return;
-
     const importResult = await list.importLocalAudioPathsToLocalList(
-      result.filePaths,
+      filePaths,
       addMusicLocationType,
       {
         externalExtensions,
@@ -478,9 +466,12 @@ export const LocalListRoutePanel = observer(() => {
     if (!importResult) return;
     setSelectedMusicIds([]);
     if (!importResult.importedMusics.length) {
+      const skippedText = importResult.skippedCount
+        ? `，跳过 ${importResult.skippedCount} 个无效或不可用条目`
+        : '';
       message.warning(
         importResult.candidateCount
-          ? `已跳过 ${importResult.duplicateCount} 首重复本地音频`
+          ? `已跳过 ${importResult.duplicateCount} 首重复本地音频${skippedText}`
           : '未发现支持的本地音频文件',
       );
       return;
@@ -489,7 +480,24 @@ export const LocalListRoutePanel = observer(() => {
     const duplicateText = importResult.duplicateCount
       ? `，跳过重复 ${importResult.duplicateCount} 首`
       : '';
-    message.success(`已导入 ${importResult.importedMusics.length} 首本地音频${duplicateText}`);
+    const skippedText = importResult.skippedCount
+      ? `，跳过 ${importResult.skippedCount} 个无效或不可用条目`
+      : '';
+    message.success(
+      `已导入 ${importResult.importedMusics.length} 首本地音频${duplicateText}${skippedText}`,
+    );
+  };
+
+  const handleImportLocalAudio = async (): Promise<void> => {
+    const result = await appService.showSelectDialog(createLocalAudioImportDialogOptions());
+    if (result.canceled || !result.filePaths.length) return;
+    await importLocalAudioPaths(result.filePaths);
+  };
+
+  const handleImportLocalAudioFolder = async (): Promise<void> => {
+    const result = await appService.showSelectDialog(createLocalAudioFolderImportDialogOptions());
+    if (result.canceled || !result.filePaths.length) return;
+    await importLocalAudioPaths(result.filePaths);
   };
 
   const handleExportListPart = (): void => {
@@ -650,6 +658,16 @@ export const LocalListRoutePanel = observer(() => {
           }}
         >
           本地音频
+        </Button>
+        <Button
+          icon={<FolderAddOutlined />}
+          disabled={list.isHydrating}
+          loading={list.isImportingLocalAudio}
+          onClick={() => {
+            handleImportLocalAudioFolder();
+          }}
+        >
+          文件夹
         </Button>
         <Button
           icon={<ExportOutlined />}
@@ -960,6 +978,15 @@ export const LocalListRoutePanel = observer(() => {
                     }}
                   >
                     导入本地音频
+                  </Button>
+                  <Button
+                    icon={<FolderAddOutlined />}
+                    loading={list.isImportingLocalAudio}
+                    onClick={() => {
+                      handleImportLocalAudioFolder();
+                    }}
+                  >
+                    导入文件夹
                   </Button>
                   <Button
                     icon={<PlusOutlined />}

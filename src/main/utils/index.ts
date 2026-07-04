@@ -171,6 +171,54 @@ export const initSetting = async () => {
 /**
  * 初始化快捷键设置
  */
+const legacyDefaultHotKeyKeys: Record<'local' | 'global', string[]> = {
+  local: ['mod+f5', 'mod+arrowleft', 'mod+arrowright', 'ctrl+alt+arrowleft', 'ctrl+alt+arrowright', 'f8'],
+  global: [
+    'mod+alt+f5',
+    'mod+alt+arrowleft',
+    'mod+alt+arrowright',
+    'mod+alt+arrowup',
+    'mod+alt+arrowdown',
+    'ctrl+alt+space',
+    'ctrl+alt+arrowleft',
+    'ctrl+alt+arrowright',
+    'ctrl+alt+arrowup',
+    'ctrl+alt+arrowdown',
+    'f7',
+    'f8',
+  ],
+};
+
+const migrateDefaultHotKeyConfig = (
+  type: 'local' | 'global',
+  config: Coral.HotKeyConfig,
+): boolean => {
+  let changed = false;
+  const defaultConfig = defaultHotKey[type];
+  const defaultActions = new Set(Object.values(defaultConfig.keys).map((info) => info.action));
+  const shouldApplyNewDefaults = legacyDefaultHotKeyKeys[type].some((key) => {
+    const info = config.keys[key];
+    return info && defaultActions.has(info.action);
+  });
+
+  if (!shouldApplyNewDefaults) return false;
+
+  for (const key of legacyDefaultHotKeyKeys[type]) {
+    const info = config.keys[key];
+    if (info && defaultActions.has(info.action)) {
+      delete config.keys[key];
+      changed = true;
+    }
+  }
+
+  for (const [key, info] of Object.entries(defaultConfig.keys)) {
+    config.keys[key] = { ...info };
+    changed = true;
+  }
+
+  return changed;
+};
+
 export const initHotKey = async (): Promise<Coral.HotKeyConfigAll> => {
   const electronStore_hotKey = getStore(STORE_NAMES.HOTKEY);
 
@@ -183,6 +231,12 @@ export const initHotKey = async (): Promise<Coral.HotKeyConfigAll> => {
       delete globalConfig.keys.MediaPlayPause;
       delete globalConfig.keys.MediaNextTrack;
       delete globalConfig.keys.MediaPreviousTrack;
+      electronStore_hotKey.set('global', globalConfig);
+    }
+    if (localConfig && migrateDefaultHotKeyConfig('local', localConfig)) {
+      electronStore_hotKey.set('local', localConfig);
+    }
+    if (migrateDefaultHotKeyConfig('global', globalConfig)) {
       electronStore_hotKey.set('global', globalConfig);
     }
   } else {

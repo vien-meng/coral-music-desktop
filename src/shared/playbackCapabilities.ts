@@ -36,6 +36,21 @@ export interface ExternalDecoderTranscodeResult {
   warnings: string[];
 }
 
+export interface ExternalDecoderStreamParams {
+  endMs?: number | null;
+  inputFormat?: string | null;
+  inputPath: string;
+  startMs?: number | null;
+  timeoutMs: number;
+}
+
+export interface ExternalDecoderStreamResult {
+  expiresAt: number;
+  token: string;
+  url: string;
+  warnings: string[];
+}
+
 export interface DecodedAudioData {
   channelData: Float32Array[];
   sampleRate: number;

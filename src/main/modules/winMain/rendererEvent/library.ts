@@ -23,6 +23,10 @@ export default () => {
     async () => global.coral.worker.dbService.getFavoriteSongLists(),
   );
   mainHandle<Coral.Library.FavoriteSongList, Coral.Library.FavoriteSongList[]>(
+    WIN_MAIN_RENDERER_EVENT_NAME.library_favorite_songlist_save,
+    async ({ params }) => global.coral.worker.dbService.saveFavoriteSongList(params),
+  );
+  mainHandle<Coral.Library.FavoriteSongList, Coral.Library.FavoriteSongList[]>(
     WIN_MAIN_RENDERER_EVENT_NAME.library_favorite_songlist_toggle,
     async ({ params }) => global.coral.worker.dbService.toggleFavoriteSongList(params),
   );
@@ -51,4 +55,3 @@ export default () => {
     async ({ params }) => global.coral.worker.dbService.getLibraryCategoryItems(params),
   );
 };
-

@@ -26,7 +26,11 @@ import { quitApp } from '@main/app';
 import { getAllThemes, removeTheme, saveTheme, setPowerSaveBlocker } from '@main/utils';
 import { openDirInExplorer } from '@common/utils/electron';
 import { probeExternalDecoder } from '../externalDecoderProbe';
-import { transcodeExternalDecoder } from '../externalDecoderRuntime';
+import {
+  createExternalDecoderStream,
+  revokeExternalDecoderStream,
+  transcodeExternalDecoder,
+} from '../externalDecoderRuntime';
 import {
   listExclusiveAudioDevices,
   pauseExclusiveAudioOutput,
@@ -40,6 +44,8 @@ import {
 import type {
   ExternalDecoderProbeParams,
   ExternalDecoderProbeResult,
+  ExternalDecoderStreamParams,
+  ExternalDecoderStreamResult,
   ExternalDecoderTranscodeParams,
   ExternalDecoderTranscodeResult,
   ExclusiveAudioDevice,
@@ -85,6 +91,16 @@ export default () => {
   mainHandle<ExternalDecoderTranscodeParams, ExternalDecoderTranscodeResult>(
     WIN_MAIN_RENDERER_EVENT_NAME.external_decoder_transcode,
     async ({ params }) => transcodeExternalDecoder(params),
+  );
+  mainHandle<ExternalDecoderStreamParams, ExternalDecoderStreamResult>(
+    WIN_MAIN_RENDERER_EVENT_NAME.external_decoder_create_stream,
+    async ({ params }) => createExternalDecoderStream(params),
+  );
+  mainHandle<string>(
+    WIN_MAIN_RENDERER_EVENT_NAME.external_decoder_revoke_stream,
+    async ({ params }) => {
+      revokeExternalDecoderStream(params);
+    },
   );
   setExclusiveAudioOutputStatusSender((status) => {
     sendEvent(WIN_MAIN_RENDERER_EVENT_NAME.audio_output_status, status);
