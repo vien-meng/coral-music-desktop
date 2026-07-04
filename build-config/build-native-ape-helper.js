@@ -94,6 +94,14 @@ const run = (command, args, options = {}) => {
   execFileSync(command, args, { stdio: 'inherit', ...options });
 };
 
+const runPowershell = (args, options = {}) => {
+  console.log(['powershell.exe', ...args].join(' '));
+  execFileSync('powershell.exe', ['-NoProfile', '-Command', ...args], {
+    stdio: 'inherit',
+    ...options,
+  });
+};
+
 const commandExists = (command) => {
   try {
     execFileSync(process.platform === 'win32' ? 'where' : 'which', [command], {
@@ -132,7 +140,13 @@ const ensureSdk = () => {
     run('curl', ['-L', '--fail', sdkUrl, '-o', sdkZip]);
   }
   fs.rmSync(sdkDir, { recursive: true, force: true });
-  run('unzip', ['-q', sdkZip, '-d', sdkDir]);
+  if (process.platform === 'win32') {
+    runPowershell([
+      `Expand-Archive -Path '${sdkZip.replace(/'/g, "''")}' -DestinationPath '${sdkDir.replace(/'/g, "''")}'`,
+    ]);
+  } else {
+    run('unzip', ['-q', sdkZip, '-d', sdkDir]);
+  }
 };
 
 const clangCompileObject = (compiler, sourcePath, objectPath) => {
