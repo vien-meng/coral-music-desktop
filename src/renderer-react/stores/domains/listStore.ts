@@ -320,6 +320,9 @@ export class ListStore {
     const targetIndex = this.selectedMusics.findIndex((item) => item.id === musicInfo.id);
     if (targetIndex < 0) return;
 
+    this.isMutatingMusic = true;
+    this.actionError = null;
+
     try {
       await listService.updateListMusics([{ id: listId, musicInfo }]);
       this.selectedMusics = this.selectedMusics.map((item, index) =>
@@ -327,6 +330,8 @@ export class ListStore {
       );
     } catch (error) {
       this.actionError = error instanceof Error ? error.message : String(error);
+    } finally {
+      this.isMutatingMusic = false;
     }
   }
 
@@ -377,6 +382,10 @@ export class ListStore {
   async createUserList(name: string): Promise<void> {
     const listName = name.trim();
     if (!listName) return;
+    if (this.userLists.some((list) => list.name === listName)) {
+      this.actionError = '列表名称已存在';
+      return;
+    }
 
     this.isMutatingList = true;
     this.actionError = null;
@@ -432,6 +441,10 @@ export class ListStore {
   async renameSelectedList(name: string): Promise<void> {
     const listName = name.trim();
     if (!this.selectedList || !listName) return;
+    if (this.userLists.some((list) => list.id !== this.selectedListId && list.name === listName)) {
+      this.actionError = '列表名称已存在';
+      return;
+    }
 
     this.isMutatingList = true;
     this.actionError = null;
@@ -463,8 +476,9 @@ export class ListStore {
     try {
       await listService.removeUserLists([listId]);
       this.userLists = this.userLists.filter((list) => list.id !== listId);
-      this.selectedListId = this.userLists[0]?.id ?? null;
-      this.selectedMusics = [];
+      const nextListId = this.userLists[0]?.id ?? null;
+      this.selectedListId = nextListId;
+      await this.loadSelectedListMusics(nextListId);
     } catch (error) {
       this.actionError = error instanceof Error ? error.message : String(error);
     } finally {

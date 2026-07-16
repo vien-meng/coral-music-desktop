@@ -4,6 +4,7 @@ import {
   ClockCircleOutlined,
   DeleteOutlined,
   EditOutlined,
+  FolderOpenOutlined,
   KeyOutlined,
   LinkOutlined,
   ReloadOutlined,
@@ -24,6 +25,7 @@ import {
   Spin,
   Switch,
   Tag,
+  Tabs,
   Typography,
 } from 'antd';
 import { observer } from 'mobx-react-lite';
@@ -84,8 +86,11 @@ type BooleanSettingKey = {
 
 interface SettingSectionProps {
   children: ReactNode;
+  hidden?: boolean;
   title: string;
 }
+
+type SettingTabKey = 'general' | 'playback' | 'download' | 'services' | 'data';
 
 interface SettingSwitchProps {
   appSetting: Coral.AppSetting;
@@ -149,12 +154,21 @@ const lyricAlignOptions = [
   { label: '右侧', value: 'right' },
 ];
 
-const SettingSection = ({ children, title }: SettingSectionProps) => (
-  <section className="coral-settings-section">
-    <h2>{title}</h2>
-    <Form layout="vertical">{children}</Form>
-  </section>
-);
+const settingTabs: Array<{ key: SettingTabKey; label: string }> = [
+  { key: 'general', label: '常规' },
+  { key: 'playback', label: '播放' },
+  { key: 'download', label: '下载' },
+  { key: 'services', label: '网络与服务' },
+  { key: 'data', label: '快捷键与数据' },
+];
+
+const SettingSection = ({ children, hidden, title }: SettingSectionProps) =>
+  hidden ? null : (
+    <section className="coral-settings-section">
+      <h2>{title}</h2>
+      <Form layout="vertical">{children}</Form>
+    </section>
+  );
 
 const SettingSwitch = ({
   appSetting,
@@ -411,6 +425,7 @@ export const SettingsRoutePanel = observer(() => {
     useState<ExclusiveAudioOutputProbeResult | null>(null);
   const [isLoadingExclusiveDevices, setIsLoadingExclusiveDevices] = useState(false);
   const [isProbingExclusiveOutput, setIsProbingExclusiveOutput] = useState(false);
+  const [activeTab, setActiveTab] = useState<SettingTabKey>('general');
   const externalDecoderSectionRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -425,20 +440,25 @@ export const SettingsRoutePanel = observer(() => {
       ui.consumeQuickAction('configureLocalAudioImport') ||
       ui.consumeQuickAction('configureExternalDecoder')
     ) {
-      externalDecoderSectionRef.current?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
+      setActiveTab('playback');
+      requestAnimationFrame(() => {
+        externalDecoderSectionRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
       });
       return;
     }
 
     if (ui.consumeQuickAction('importUserApiOnline')) {
+      setActiveTab('services');
       setIsOnlineImportOpen(true);
       return;
     }
 
     if (!ui.consumeQuickAction('importUserApiFile')) return;
 
+    setActiveTab('services');
     (async () => {
       if (userApi.userApis.length > 20) {
         Modal.warning({ title: '提示', content: '最多支持 20 个自定义源' });
@@ -598,7 +618,16 @@ export const SettingsRoutePanel = observer(() => {
         ) : null}
         {settings.saveError ? <Alert showIcon type="error" title={settings.saveError} /> : null}
 
-        <SettingSection title="主题">
+        <Tabs
+          activeKey={activeTab}
+          className="coral-settings-tabs"
+          items={settingTabs}
+          onChange={(key) => {
+            setActiveTab(key as SettingTabKey);
+          }}
+        />
+
+        <SettingSection title="主题" hidden={activeTab !== 'general'}>
           {theme.hydrateError ? (
             <Alert
               showIcon
@@ -647,7 +676,7 @@ export const SettingsRoutePanel = observer(() => {
           </Form.Item>
         </SettingSection>
 
-        <SettingSection title="基础">
+        <SettingSection title="基础" hidden={activeTab !== 'general'}>
           <SettingSwitch
             appSetting={appSetting}
             label="界面动画"
@@ -714,7 +743,7 @@ export const SettingsRoutePanel = observer(() => {
           </Form.Item>
         </SettingSection>
 
-        <SettingSection title="播放">
+        <SettingSection title="播放" hidden={activeTab !== 'playback'}>
           <SettingSwitch
             appSetting={appSetting}
             label="启动时自动播放"
@@ -913,7 +942,7 @@ export const SettingsRoutePanel = observer(() => {
         </SettingSection>
 
         <div ref={externalDecoderSectionRef}>
-          <SettingSection title="本地解码">
+          <SettingSection title="本地解码" hidden={activeTab !== 'playback'}>
             <SettingSwitch
               appSetting={appSetting}
               label="本地音频导入"
@@ -930,7 +959,7 @@ export const SettingsRoutePanel = observer(() => {
           </SettingSection>
         </div>
 
-        <SettingSection title="播放详情">
+        <SettingSection title="播放详情" hidden={activeTab !== 'playback'}>
           <SettingSwitch
             appSetting={appSetting}
             label="当前歌词缩放"
@@ -974,7 +1003,7 @@ export const SettingsRoutePanel = observer(() => {
           </Form.Item>
         </SettingSection>
 
-        <SettingSection title="桌面歌词">
+        <SettingSection title="桌面歌词" hidden={activeTab !== 'playback'}>
           <SettingSwitch
             appSetting={appSetting}
             label="启用桌面歌词"
@@ -1130,7 +1159,7 @@ export const SettingsRoutePanel = observer(() => {
           </Form.Item>
         </SettingSection>
 
-        <SettingSection title="列表">
+        <SettingSection title="列表" hidden={activeTab !== 'general'}>
           <SettingSwitch
             appSetting={appSetting}
             label="显示歌曲来源"
@@ -1159,7 +1188,7 @@ export const SettingsRoutePanel = observer(() => {
           </Form.Item>
         </SettingSection>
 
-        <SettingSection title="下载">
+        <SettingSection title="下载" hidden={activeTab !== 'download'}>
           <SettingSwitch
             appSetting={appSetting}
             label="启用下载"
@@ -1180,7 +1209,7 @@ export const SettingsRoutePanel = observer(() => {
           />
           <SettingSwitch
             appSetting={appSetting}
-            label="换源下载"
+            label="自动换源下载"
             settingKey="download.isUseOtherSource"
             updateSetting={applySetting}
           />
@@ -1209,25 +1238,102 @@ export const SettingsRoutePanel = observer(() => {
               }}
             />
           </Form.Item>
-          <Form.Item label="歌词文件">
-            <Space wrap>
-              <Switch
-                checked={appSetting['download.isDownloadLrc']}
-                onChange={(checked) => {
-                  updateSetting('download.isDownloadLrc', checked);
-                }}
-              />
-              <Text type="secondary">{appSetting['download.lrcFormat'].toUpperCase()}</Text>
-            </Space>
+          <SettingSwitch
+            appSetting={appSetting}
+            label="下载歌词文件"
+            settingKey="download.isDownloadLrc"
+            updateSetting={applySetting}
+          />
+          <SettingSwitch
+            appSetting={appSetting}
+            disabled={!appSetting['download.isDownloadLrc']}
+            label="同时写入珊瑚音乐逐字歌词"
+            settingKey="download.isDownloadLxLrc"
+            updateSetting={applySetting}
+          />
+          <SettingSwitch
+            appSetting={appSetting}
+            disabled={!appSetting['download.isDownloadLrc']}
+            label="同时写入翻译歌词"
+            settingKey="download.isDownloadTLrc"
+            updateSetting={applySetting}
+          />
+          <SettingSwitch
+            appSetting={appSetting}
+            disabled={!appSetting['download.isDownloadLrc']}
+            label="同时写入罗马音歌词"
+            settingKey="download.isDownloadRLrc"
+            updateSetting={applySetting}
+          />
+          <Form.Item label="歌词文件编码">
+            <Radio.Group
+              value={appSetting['download.lrcFormat']}
+              optionType="button"
+              buttonStyle="solid"
+              disabled={!appSetting['download.isDownloadLrc']}
+              options={[
+                { label: 'UTF-8', value: 'utf8' },
+                { label: 'GBK', value: 'gbk' },
+              ]}
+              onChange={(event) => {
+                updateSetting('download.lrcFormat', event.target.value);
+              }}
+            />
           </Form.Item>
+          <SettingSwitch
+            appSetting={appSetting}
+            label="嵌入封面"
+            settingKey="download.isEmbedPic"
+            updateSetting={applySetting}
+          />
+          <SettingSwitch
+            appSetting={appSetting}
+            label="嵌入普通歌词"
+            settingKey="download.isEmbedLyric"
+            updateSetting={applySetting}
+          />
+          <SettingSwitch
+            appSetting={appSetting}
+            label="嵌入珊瑚音乐逐字歌词"
+            settingKey="download.isEmbedLyricLx"
+            updateSetting={applySetting}
+          />
+          <SettingSwitch
+            appSetting={appSetting}
+            label="嵌入翻译歌词"
+            settingKey="download.isEmbedLyricT"
+            updateSetting={applySetting}
+          />
+          <SettingSwitch
+            appSetting={appSetting}
+            label="嵌入罗马音歌词"
+            settingKey="download.isEmbedLyricR"
+            updateSetting={applySetting}
+          />
           <Form.Item label="保存路径">
-            <Text ellipsis className="coral-settings-path">
-              {appSetting['download.savePath']}
-            </Text>
+            <Space wrap>
+              <Text ellipsis className="coral-settings-path">
+                {appSetting['download.savePath']}
+              </Text>
+              <Button
+                icon={<FolderOpenOutlined />}
+                onClick={async () => {
+                  const result = await appService.showSelectDialog({
+                    title: '选择下载目录',
+                    defaultPath: appSetting['download.savePath'],
+                    properties: ['openDirectory', 'createDirectory'],
+                  });
+                  if (result.canceled || !result.filePaths.length) return;
+                  updateSetting('download.savePath', result.filePaths[0]);
+                }}
+              >
+                选择目录
+              </Button>
+            </Space>
           </Form.Item>
         </SettingSection>
 
-        <SettingSection title="搜索">
+        <SettingSection title="搜索" hidden={activeTab !== 'general'}>
           <SettingSwitch
             appSetting={appSetting}
             label="显示热门搜索"
@@ -1248,7 +1354,7 @@ export const SettingsRoutePanel = observer(() => {
           />
         </SettingSection>
 
-        <SettingSection title="更新">
+        <SettingSection title="更新" hidden={activeTab !== 'general'}>
           <SettingSwitch
             appSetting={appSetting}
             label="尝试自动更新"
@@ -1263,7 +1369,7 @@ export const SettingsRoutePanel = observer(() => {
           />
         </SettingSection>
 
-        <SettingSection title="网络">
+        <SettingSection title="网络" hidden={activeTab !== 'services'}>
           <SettingSwitch
             appSetting={appSetting}
             label="启用代理"
@@ -1300,7 +1406,7 @@ export const SettingsRoutePanel = observer(() => {
           </Form.Item>
         </SettingSection>
 
-        <SettingSection title="ODC">
+        <SettingSection title="ODC" hidden={activeTab !== 'services'}>
           <SettingSwitch
             appSetting={appSetting}
             label="离开时清空搜索框"
@@ -1315,7 +1421,7 @@ export const SettingsRoutePanel = observer(() => {
           />
         </SettingSection>
 
-        <SettingSection title="同步">
+        <SettingSection title="同步" hidden={activeTab !== 'services'}>
           {sync.actionError ? (
             <Alert
               showIcon
@@ -1445,7 +1551,7 @@ export const SettingsRoutePanel = observer(() => {
           </Form.Item>
         </SettingSection>
 
-        <SettingSection title="OpenAPI">
+        <SettingSection title="OpenAPI" hidden={activeTab !== 'services'}>
           <SettingSwitch
             appSetting={appSetting}
             label="启用 OpenAPI"
@@ -1474,7 +1580,7 @@ export const SettingsRoutePanel = observer(() => {
           </Form.Item>
         </SettingSection>
 
-        <SettingSection title="User API">
+        <SettingSection title="User API" hidden={activeTab !== 'services'}>
           {userApi.hydrateError ? (
             <Alert
               showIcon
@@ -1665,11 +1771,11 @@ export const SettingsRoutePanel = observer(() => {
           </Form.Item>
         </SettingSection>
 
-        <SettingSection title="快捷键">
+        <SettingSection title="快捷键" hidden={activeTab !== 'data'}>
           <HotKeySection />
         </SettingSection>
 
-        <SettingSection title="备份">
+        <SettingSection title="备份" hidden={activeTab !== 'data'}>
           <Form.Item label="部分备份" className="coral-settings-wide-item">
             <Space wrap>
               <Button
@@ -1852,7 +1958,7 @@ export const SettingsRoutePanel = observer(() => {
           </Form.Item>
         </SettingSection>
 
-        <SettingSection title="其他">
+        <SettingSection title="其他" hidden={activeTab !== 'data'}>
           <SettingSwitch
             appSetting={appSetting}
             label="透明窗口"
@@ -2012,7 +2118,7 @@ export const SettingsRoutePanel = observer(() => {
           </Form.Item>
         </SettingSection>
 
-        <SettingSection title="关于">
+        <SettingSection title="关于" hidden={activeTab !== 'general'}>
           <Form.Item label="开发者">
             <Text type="secondary">vien.meng</Text>
           </Form.Item>

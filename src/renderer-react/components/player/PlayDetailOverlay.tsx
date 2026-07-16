@@ -10,7 +10,6 @@ import {
   FullscreenOutlined,
   LoadingOutlined,
   MinusOutlined,
-  MessageOutlined,
   PauseCircleOutlined,
   PlayCircleOutlined,
   StepBackwardOutlined,
@@ -25,7 +24,6 @@ import { AudioVisualizer } from './AudioVisualizer';
 import { FavoriteSongBtn } from './FavoriteSongBtn';
 import { LyricMenu } from './LyricMenu';
 import { LyricSelectionPanel } from './LyricSelectionPanel';
-import { MusicCommentPanel } from './MusicCommentPanel';
 import { PlaybackRateBtn } from './PlaybackRateBtn';
 import { PlayDetailLyricView } from './PlayDetailLyricView';
 import { PlayQueueBtn } from './PlayQueueBtn';
@@ -130,7 +128,6 @@ export const PlayDetailOverlay = observer(() => {
     </div>
   );
   if (player.isLyricSelectionOpen) centerNode = <LyricSelectionPanel />;
-  if (player.isCommentPanelOpen) centerNode = <MusicCommentPanel />;
 
   const errorActionNode = player.needsSourcePlugin ? (
     <Button
@@ -299,15 +296,6 @@ export const PlayDetailOverlay = observer(() => {
           </Space>
 
           <Space size="small" className="coral-playdetail-extra-controls">
-            <Button
-              aria-label={player.isCommentPanelOpen ? '关闭评论' : '歌曲评论'}
-              icon={<MessageOutlined />}
-              shape="circle"
-              type={player.isCommentPanelOpen ? 'primary' : 'default'}
-              onClick={() => {
-                player.toggleCommentPanel();
-              }}
-            />
             <Button
               aria-label={player.isLyricSelectionOpen ? '关闭歌词文本' : '歌词文本'}
               icon={<FileTextOutlined />}

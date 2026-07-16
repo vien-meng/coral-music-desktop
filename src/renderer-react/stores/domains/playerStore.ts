@@ -57,6 +57,7 @@ const createSoundEffectConfig = (setting: Coral.AppSetting): PlayerSoundEffectCo
   pannerEnabled: setting['player.soundEffect.panner.enable'],
   pannerSoundR: setting['player.soundEffect.panner.soundR'],
   pitchPlaybackRate: setting['player.soundEffect.pitchShifter.playbackRate'],
+  preservesPitch: setting['player.preservesPitch'],
 });
 
 const lrcTimeTagRxp = /\[\d{1,2}:\d{1,2}(?:[.:]\d+)?]/g;
@@ -116,8 +117,6 @@ export class PlayerStore {
   statusText = '';
 
   isPlayDetailOpen = false;
-
-  isCommentPanelOpen = false;
 
   isLyricSelectionOpen = false;
 
@@ -551,9 +550,9 @@ export class PlayerStore {
     this.runtime.seek(seconds);
   }
 
-  setVolume(volume: number): void {
+  setVolume(volume: number, persist = true): void {
     this.volume = Math.max(0, Math.min(1, volume));
-    this.settings?.updateAppSetting({ 'player.volume': this.volume });
+    if (persist) this.settings?.updateAppSetting({ 'player.volume': this.volume });
     this.runtime.setVolume(this.volume);
   }
 
@@ -594,34 +593,22 @@ export class PlayerStore {
 
   closePlayDetail(): void {
     this.isPlayDetailOpen = false;
-    this.isCommentPanelOpen = false;
     this.isLyricSelectionOpen = false;
   }
 
   togglePlayDetail(): void {
     this.isPlayDetailOpen = !this.isPlayDetailOpen;
     if (!this.isPlayDetailOpen) {
-      this.isCommentPanelOpen = false;
       this.isLyricSelectionOpen = false;
     }
-  }
-
-  closeCommentPanel(): void {
-    this.isCommentPanelOpen = false;
   }
 
   closeLyricSelection(): void {
     this.isLyricSelectionOpen = false;
   }
 
-  toggleCommentPanel(): void {
-    this.isCommentPanelOpen = !this.isCommentPanelOpen;
-    if (this.isCommentPanelOpen) this.isLyricSelectionOpen = false;
-  }
-
   toggleLyricSelection(): void {
     this.isLyricSelectionOpen = !this.isLyricSelectionOpen;
-    if (this.isLyricSelectionOpen) this.isCommentPanelOpen = false;
   }
 
   setStatus(status: PlayerRuntimeStatus): void {
@@ -1068,6 +1055,9 @@ export class PlayerStore {
         this.volume = normalizeStatusVolume(snapshot.volume);
         this.isMute = snapshot.isMute;
         this.playbackRate = clamp(snapshot.playbackRate, 0.5, 2);
+        this.runtime.setVolume(this.volume);
+        this.runtime.setMute(this.isMute);
+        this.runtime.setPlaybackRate(this.playbackRate);
         this.runtime.setSoundEffectConfig?.(snapshot.soundEffectConfig);
       },
       { fireImmediately: true },

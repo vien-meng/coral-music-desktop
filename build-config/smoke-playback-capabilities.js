@@ -287,6 +287,32 @@ record('local audio import dialog keeps Windows files visible', () => {
   assert(macOptions.properties.includes('openDirectory'), 'non-Windows picker can include folders');
 });
 
+record('local list controls stay wired behind tabs', () => {
+  assertIncludes(
+    read('src/renderer-react/features/list/LocalListRoutePanel.tsx'),
+    [
+      '<Tabs',
+      '导入与导出',
+      '批量操作',
+      '列表管理',
+      'setDragList(sortedAllMusics)',
+      'ensureLocalAudioList',
+      '打开文件位置',
+      '重新读取歌曲信息',
+    ],
+    'src/renderer-react/features/list/LocalListRoutePanel.tsx',
+  );
+  assertIncludes(
+    read('src/renderer-react/stores/domains/listStore.ts'),
+    [
+      "this.actionError = '列表名称已存在'",
+      'const nextListId = this.userLists[0]?.id ?? null',
+      'await this.loadSelectedListMusics(nextListId)',
+    ],
+    'src/renderer-react/stores/domains/listStore.ts',
+  );
+});
+
 record('drag and drop imports local audio into the local music list', () => {
   assertIncludes(
     read('src/renderer-react/app/AppShell.tsx'),
@@ -1154,6 +1180,57 @@ record('release smoke includes playback capability guard', () => {
     pkg.scripts['smoke:release'].includes('smoke:local-audio-fixtures'),
     'smoke:release should include generated local audio fixture smoke',
   );
+});
+
+record('player controls keep normalized state and sync settings to the runtime', () => {
+  assertIncludes(
+    read('src/renderer-react/services/playerRuntime/htmlAudioRuntime.ts'),
+    [
+      'const toPlayerStatusVolume = (volume: number): number => clamp(volume, 0, 1)',
+      'playbackRate: this.basePlaybackRate',
+      'this.audio.preservesPitch = this.soundEffectConfig.preservesPitch',
+      'getDecodedProgress()',
+      '* this.decodedPlaybackRate',
+    ],
+    'src/renderer-react/services/playerRuntime/htmlAudioRuntime.ts',
+  );
+  assertIncludes(
+    read('src/renderer-react/stores/domains/playerStore.ts'),
+    [
+      'this.runtime.setVolume(this.volume)',
+      'this.runtime.setMute(this.isMute)',
+      'this.runtime.setPlaybackRate(this.playbackRate)',
+      'preservesPitch:',
+    ],
+    'src/renderer-react/stores/domains/playerStore.ts',
+  );
+});
+
+record('settings expose tabs, native download directory selection, and metadata options', () => {
+  const file = 'src/renderer-react/features/settings/SettingsRoutePanel.tsx';
+  assertIncludes(
+    read(file),
+    [
+      "{ key: 'playback', label: '播放' }",
+      "{ key: 'download', label: '下载' }",
+      "properties: ['openDirectory', 'createDirectory']",
+      'download.isDownloadLxLrc',
+      'download.isDownloadTLrc',
+      'download.isDownloadRLrc',
+      'download.isEmbedPic',
+      'download.isEmbedLyric',
+      'download.isEmbedLyricLx',
+      'download.isEmbedLyricT',
+      'download.isEmbedLyricR',
+      "{ label: 'GBK', value: 'gbk' }",
+    ],
+    file,
+  );
+  assert(
+    !exists('src/renderer-react/components/player/MusicCommentPanel.tsx'),
+    'comment panel remains',
+  );
+  assert(!exists('src/renderer-react/services/musicCommentService.ts'), 'comment service remains');
 });
 
 if (failures.length) {

@@ -17,10 +17,14 @@ const handleWriteMeta = (meta, filePath) => {
 };
 
 module.exports = (filePath, meta, proxy) => {
-  if (!meta.APIC) return handleWriteMeta(meta, filePath);
+  if (!meta.APIC) {
+    handleWriteMeta(meta, filePath);
+    return Promise.resolve();
+  }
   if (!/^http/.test(meta.APIC)) {
     delete meta.APIC;
-    return handleWriteMeta(meta, filePath);
+    handleWriteMeta(meta, filePath);
+    return Promise.resolve();
   }
   let ext = path.extname(meta.APIC);
   let picPath = filePath.replace(/\.mp3$/, '') + (ext ? ext.replace(extReg, '$1') : '.jpg');
@@ -28,13 +32,11 @@ module.exports = (filePath, meta, proxy) => {
   let picUrl = meta.APIC;
   if (picUrl.includes('music.126.net'))
     picUrl += `${picUrl.includes('?') ? '&' : '?'}param=500y500`;
-  download(picUrl, picPath, proxy).then((success) => {
+  return download(picUrl, picPath, proxy).then((success) => {
     if (success) {
       meta.APIC = picPath;
       handleWriteMeta(meta, filePath);
-      fs.unlink(picPath, (err) => {
-        if (err) console.log(err.message);
-      });
+      fs.unlinkSync(picPath);
     } else {
       delete meta.APIC;
       handleWriteMeta(meta, filePath);

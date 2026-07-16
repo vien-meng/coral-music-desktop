@@ -3,6 +3,8 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { app } from 'electron';
+import iconv from 'iconv-lite';
+import NodeID3 from 'node-id3';
 import { DOWNLOAD_STATUS } from '@common/constants';
 import { clearDownloadTasks, pauseDownloadTask, startDownloadTask } from './downloadRuntime';
 
@@ -70,13 +72,22 @@ const createSmokeTask = (
   writeQueue: 0,
 });
 
-const createServer = async (payload: Buffer): Promise<SmokeServer> => {
+const createServer = async (payload: Buffer, coverPayload: Buffer): Promise<SmokeServer> => {
   const server = http.createServer((req, res) => {
     if (req.url?.startsWith('/missing')) {
       res.writeHead(404, {
         'Content-Length': '0',
       });
       res.end();
+      return;
+    }
+
+    if (req.url?.startsWith('/cover')) {
+      res.writeHead(200, {
+        'Content-Length': String(coverPayload.length),
+        'Content-Type': 'image/png',
+      });
+      res.end(coverPayload);
       return;
     }
 
@@ -176,6 +187,7 @@ const configureSmokeSettings = (downloadDir: string): Partial<Coral.AppSetting> 
     'download.isEmbedLyricR': global.coral.appSetting['download.isEmbedLyricR'],
     'download.isEmbedLyricT': global.coral.appSetting['download.isEmbedLyricT'],
     'download.isEmbedPic': global.coral.appSetting['download.isEmbedPic'],
+    'download.lrcFormat': global.coral.appSetting['download.lrcFormat'],
     'download.savePath': global.coral.appSetting['download.savePath'],
     'download.skipExistFile': global.coral.appSetting['download.skipExistFile'],
   };
@@ -185,11 +197,12 @@ const configureSmokeSettings = (downloadDir: string): Partial<Coral.AppSetting> 
     'download.isDownloadLxLrc': false,
     'download.isDownloadRLrc': false,
     'download.isDownloadTLrc': false,
-    'download.isEmbedLyric': false,
+    'download.isEmbedLyric': true,
     'download.isEmbedLyricLx': false,
     'download.isEmbedLyricR': false,
     'download.isEmbedLyricT': false,
-    'download.isEmbedPic': false,
+    'download.isEmbedPic': true,
+    'download.lrcFormat': 'gbk',
     'download.savePath': downloadDir,
     'download.skipExistFile': false,
   };
@@ -211,8 +224,8 @@ const assertCompletedFile = async (
     throw new Error(`expected completed task, got ${task.status}`);
   if (!task.metadata.filePath) throw new Error('completed task has no file path');
   const stats = await fs.stat(task.metadata.filePath);
-  if (stats.size !== expectedSize)
-    throw new Error(`downloaded file size mismatch: ${stats.size} !== ${expectedSize}`);
+  if (stats.size < expectedSize)
+    throw new Error(`downloaded file is truncated: ${stats.size} < ${expectedSize}`);
 };
 
 const waitForFile = async (filePath: string, description: string): Promise<void> => {
@@ -228,20 +241,33 @@ const waitForFile = async (filePath: string, description: string): Promise<void>
   throw new Error(`download smoke timeout waiting for ${description}: ${filePath}`);
 };
 
+const waitForEmbeddedMetadata = async (filePath: string): Promise<void> => {
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < WAIT_TIMEOUT_MS) {
+    const tags = NodeID3.read(filePath);
+    if (tags.image && tags.unsynchronisedLyrics?.text.includes('珊瑚下载测试')) return;
+    await wait(100);
+  }
+  throw new Error(`download smoke timeout waiting for embedded cover and lyric: ${filePath}`);
+};
+
 const runSmoke = async (): Promise<void> => {
   const smokeId = `coral-smoke-${Date.now()}`;
   const downloadDir = await fs.mkdtemp(path.join(os.tmpdir(), `${smokeId}-`));
   const previousSetting = configureSmokeSettings(downloadDir);
   const payload = Buffer.alloc(4 * 1024 * 1024, 'coral-download-smoke');
-  const server = await createServer(payload);
+  const coverPayload = await fs.readFile(path.join(process.cwd(), 'resources/icons/16x16.png'));
+  const server = await createServer(payload, coverPayload);
   const taskIds = [`${smokeId}-pause-retry`, `${smokeId}-fail-refresh`];
 
   try {
-    const pauseRetryTask = createSmokeTask(taskIds[0], 'pause-retry.mp3');
+    const pauseRetryMusic = createSmokeMusicInfo(taskIds[0], 'pause-retry');
+    pauseRetryMusic.meta.picUrl = server.url('/cover.png');
+    const pauseRetryTask = createSmokeTask(taskIds[0], 'pause-retry.mp3', pauseRetryMusic);
     const failRefreshTask = createSmokeTask(taskIds[1], 'fail-refresh.mp3');
     await saveTasks([pauseRetryTask, failRefreshTask]);
     await global.coral.worker.dbService.rawLyricAdd(pauseRetryTask.metadata.musicInfo.id, {
-      lyric: '[00:00.00]Coral download smoke',
+      lyric: '[00:00.00]珊瑚下载测试',
     });
 
     await startDownloadTask({
@@ -281,6 +307,10 @@ const runSmoke = async (): Promise<void> => {
       completedTask.metadata.filePath.replace(/\.mp3$/i, '.lrc'),
       'sidecar lyric file',
     );
+    const lyricFile = completedTask.metadata.filePath.replace(/\.mp3$/i, '.lrc');
+    const lyricText = iconv.decode(await fs.readFile(lyricFile), 'gb18030');
+    if (!lyricText.includes('珊瑚下载测试')) throw new Error('GBK sidecar lyric content mismatch');
+    await waitForEmbeddedMetadata(completedTask.metadata.filePath);
 
     await startDownloadTask({
       task: failRefreshTask,

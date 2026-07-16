@@ -5,6 +5,7 @@ import {
   EditOutlined,
   ExportOutlined,
   FileAddOutlined,
+  FolderOpenOutlined,
   ImportOutlined,
   MoreOutlined,
   OrderedListOutlined,
@@ -33,6 +34,7 @@ import {
   Select,
   Space,
   Tag,
+  Tabs,
   Tooltip,
   Typography,
 } from 'antd';
@@ -49,6 +51,8 @@ import type { SearchSource } from '../../stores/domains/searchStore';
 import { appService } from '../../services/appService';
 import { loadOnlineMusicService } from '../../services/onlineMusicServiceLoader';
 import { musicDetailService } from '../../services/musicDetailService';
+import { localAudioService } from '../../services/localAudioService';
+import { openDownloadTaskFile } from '../../services/downloadService';
 import { DownloadQualityModal } from '../../components/player/DownloadQualityModal';
 import { DraggableMusicList } from '../../components/player/DraggableMusicList';
 import { BatchDownloadModal } from '../../components/player/BatchDownloadModal';
@@ -199,9 +203,14 @@ export const LocalListRoutePanel = observer(() => {
           .some((text) => text.toLocaleLowerCase().includes(normalizedFilterText)),
       )
     : list.selectedMusics;
-  const sortedMusics = sortMusicInfos(filteredMusics, sortField, sortDirection);
+  const sortedAllMusics = sortMusicInfos(list.selectedMusics, sortField, sortDirection);
+  const sortedMusics = normalizedFilterText
+    ? sortMusicInfos(filteredMusics, sortField, sortDirection)
+    : sortedAllMusics;
   const selectedMusicIdSet = new Set(selectedMusicIds);
-  const selectedMusics = sortedMusics.filter((musicInfo) => selectedMusicIdSet.has(musicInfo.id));
+  const selectedMusics = sortedAllMusics.filter((musicInfo) =>
+    selectedMusicIdSet.has(musicInfo.id),
+  );
   const filteredMusicIds = filteredMusics.map((musicInfo) => musicInfo.id);
   const isAllSelected =
     Boolean(filteredMusicIds.length) && filteredMusicIds.every((id) => selectedMusicIdSet.has(id));
@@ -233,20 +242,23 @@ export const LocalListRoutePanel = observer(() => {
     list.loadSelectedListMusics();
   };
 
-  const handleCreateList = (): void => {
+  const handleCreateList = async (): Promise<void> => {
     const name = createName.trim();
     if (!name) return;
+    await list.createUserList(name);
+    if (list.actionError) return;
     setCreateName('');
-    list.createUserList(name);
+    message.success('列表已创建');
   };
 
-  const handleCreateLocalList = (): void => {
+  const handleCreateLocalList = async (): Promise<void> => {
     setCreateName('');
-    list.createUserList('本地音乐');
+    await list.ensureLocalAudioList();
   };
 
-  const handleRenameList = (): void => {
-    list.renameSelectedList(renameName);
+  const handleRenameList = async (): Promise<void> => {
+    await list.renameSelectedList(renameName);
+    if (!list.actionError) message.success('列表已重命名');
   };
 
   const handleRemoveList = (): void => {
@@ -261,6 +273,7 @@ export const LocalListRoutePanel = observer(() => {
       title: '删除列表',
       onOk: async () => {
         await list.removeSelectedList();
+        if (!list.actionError) message.success('列表已删除');
       },
     });
   };
@@ -277,6 +290,7 @@ export const LocalListRoutePanel = observer(() => {
       title: '清空列表歌曲',
       onOk: async () => {
         await list.clearSelectedListMusics();
+        if (!list.actionError) message.success('列表已清空');
       },
     });
   };
@@ -317,14 +331,17 @@ export const LocalListRoutePanel = observer(() => {
       title: '批量移除',
       onOk: async () => {
         await list.removeMusicsFromSelectedList(selectedMusicIds);
+        if (list.actionError) return;
         setSelectedMusicIds([]);
+        message.success('已移除选中歌曲');
       },
     });
   };
 
-  const handleCopySelectedMusics = (): void => {
+  const handleCopySelectedMusics = async (): Promise<void> => {
     if (!targetListId || !selectedMusics.length) return;
-    list.copyMusicsToList(targetListId, selectedMusics, addMusicLocationType);
+    await list.copyMusicsToList(targetListId, selectedMusics, addMusicLocationType);
+    if (!list.actionError) message.success(`已复制 ${selectedMusics.length} 首歌曲`);
   };
 
   const handleMoveSelectedMusics = (): void => {
@@ -336,18 +353,21 @@ export const LocalListRoutePanel = observer(() => {
       title: '移动到列表',
       onOk: async () => {
         await list.moveMusicsToList(targetListId, selectedMusics, addMusicLocationType);
+        if (list.actionError) return;
         setSelectedMusicIds([]);
+        message.success('歌曲已移动');
       },
     });
   };
 
-  const handleMoveSelectedMusicsToPosition = (position: number): void => {
+  const handleMoveSelectedMusicsToPosition = async (position: number): Promise<void> => {
     if (!selectedMusics.length) return;
 
-    list.moveSelectedMusicsToPosition(position, selectedMusics).then(() => {
-      setSelectedMusicIds([]);
-      setMoveTargetPosition(null);
-    });
+    await list.moveSelectedMusicsToPosition(position, selectedMusics);
+    if (list.actionError) return;
+    setSelectedMusicIds([]);
+    setMoveTargetPosition(null);
+    message.success('歌曲位置已更新');
   };
 
   const handleMoveSelectedMusicsToInputPosition = (): void => {
@@ -355,16 +375,20 @@ export const LocalListRoutePanel = observer(() => {
     handleMoveSelectedMusicsToPosition(moveTargetPosition - 1);
   };
 
-  const handleSaveCurrentSort = (): void => {
+  const handleSaveCurrentSort = async (): Promise<void> => {
     if (!list.selectedMusics.length) return;
 
-    list.replaceSelectedMusicOrder(sortMusicInfos(list.selectedMusics, sortField, sortDirection));
+    await list.replaceSelectedMusicOrder(
+      sortMusicInfos(list.selectedMusics, sortField, sortDirection),
+    );
+    if (!list.actionError) message.success('排序已保存');
   };
 
-  const handleShuffleSelectedList = (): void => {
+  const handleShuffleSelectedList = async (): Promise<void> => {
     if (list.selectedMusics.length < 2) return;
 
-    list.replaceSelectedMusicOrder(shuffleMusicInfos(list.selectedMusics));
+    await list.replaceSelectedMusicOrder(shuffleMusicInfos(list.selectedMusics));
+    if (!list.actionError) message.success('已随机排序');
   };
 
   const handleDragReorder = (fromIndex: number, toIndex: number): void => {
@@ -374,11 +398,13 @@ export const LocalListRoutePanel = observer(() => {
     setDragList(nextDragList);
   };
 
-  const handleSaveDragOrder = (): void => {
+  const handleSaveDragOrder = async (): Promise<void> => {
     if (!dragList.length || dragList.length !== list.selectedMusics.length) return;
-    list.replaceSelectedMusicOrder(dragList);
+    await list.replaceSelectedMusicOrder(dragList);
+    if (list.actionError) return;
     setIsDraggingMode(false);
     setDragList([]);
+    message.success('拖拽顺序已保存');
   };
 
   const toggleDragMode = (): void => {
@@ -387,7 +413,7 @@ export const LocalListRoutePanel = observer(() => {
       setDragList([]);
       return;
     }
-    setDragList(sortedMusics);
+    setDragList(sortedAllMusics);
     setIsDraggingMode(true);
   };
 
@@ -411,19 +437,21 @@ export const LocalListRoutePanel = observer(() => {
     const nextMusics = list.selectedMusics.filter((musicInfo) => !musicIds.includes(musicInfo.id));
 
     await list.removeMusicsFromSelectedList(musicIds);
+    if (list.actionError) return;
     setSelectedMusicIds((ids) => ids.filter((id) => !musicIds.includes(id)));
     const reviewItems = getDuplicateMusicReviewItems(nextMusics);
     setDuplicateReviewItems(reviewItems);
     if (!reviewItems.length) setIsDuplicateReviewOpen(false);
+    message.success(`已移除 ${musicIds.length} 首重复歌曲`);
   };
 
-  const handleRemoveDuplicateCopies = (): void => {
+  const handleRemoveDuplicateCopies = async (): Promise<void> => {
     const removalIds = duplicateReviewItems
       .filter((item) => !item.isRetained)
       .map((item) => item.musicInfo.id);
     if (!removalIds.length) return;
 
-    handleRemoveDuplicateIds(removalIds);
+    await handleRemoveDuplicateIds(removalIds);
   };
 
   const handleImportListPart = (): void => {
@@ -439,7 +467,9 @@ export const LocalListRoutePanel = observer(() => {
       .then(async (result) => {
         if (result.canceled || !result.filePaths[0]) return;
         await list.importListPart(result.filePaths[0], addMusicLocationType);
+        if (list.actionError) return;
         setSelectedMusicIds([]);
+        message.success('列表已导入');
       });
   };
 
@@ -511,7 +541,25 @@ export const LocalListRoutePanel = observer(() => {
       .then(async (result) => {
         if (result.canceled || !result.filePath) return;
         await list.exportSelectedListPart(result.filePath);
+        if (!list.actionError) message.success('列表已导出');
       });
+  };
+
+  const handleMoveSelectedList = async (position: number): Promise<void> => {
+    await list.moveSelectedListToPosition(position);
+    if (!list.actionError) message.success('列表位置已更新');
+  };
+
+  const handleOpenLocalFile = (musicInfo: Coral.Music.MusicInfo): void => {
+    if (musicInfo.source !== 'local') return;
+    openDownloadTaskFile(musicInfo.meta.filePath);
+  };
+
+  const handleRefreshLocalMusic = async (musicInfo: Coral.Music.MusicInfo): Promise<void> => {
+    if (musicInfo.source !== 'local') return;
+    const nextMusicInfo = await localAudioService.enrichLocalMusicInfoWithMetadata(musicInfo);
+    await list.updateSelectedMusicInfo(nextMusicInfo);
+    if (!list.actionError) message.success('歌曲信息已更新');
   };
 
   const handleCopyMusicName = (musicInfo: Coral.Music.MusicInfo): void => {
@@ -617,132 +665,306 @@ export const LocalListRoutePanel = observer(() => {
 
   return (
     <Space orientation="vertical" size="middle" className="coral-wide coral-local-page">
-      <Space wrap className="coral-route-controls coral-local-primary-controls">
-        <Select
-          value={selectedListId}
-          placeholder="列表"
-          className="coral-local-list-select"
-          loading={list.isHydrating}
-          options={list.userLists.map((userList) => ({
-            label: userList.name,
-            value: userList.id,
-          }))}
-          onChange={(listId) => {
-            list.loadSelectedListMusics(listId);
-          }}
-        />
-        <Button icon={<ReloadOutlined />} loading={list.isLoadingMusics} onClick={loadSelectedList}>
-          歌曲
-        </Button>
-        <Button
-          icon={<PlayCircleOutlined />}
-          disabled={!sortedMusics.length}
-          onClick={handlePlayAllMusics}
-        >
-          播放全部
-        </Button>
-        <Button
-          icon={<ImportOutlined />}
-          loading={list.isMutatingList}
-          onClick={handleImportListPart}
-        >
-          导入列表
-        </Button>
-        <Button
-          icon={<FileAddOutlined />}
-          type="primary"
-          disabled={list.isHydrating}
-          loading={list.isImportingLocalAudio}
-          onClick={() => {
-            handleImportLocalAudio();
-          }}
-        >
-          本地音频
-        </Button>
-        <Button
-          icon={<FolderAddOutlined />}
-          disabled={list.isHydrating}
-          loading={list.isImportingLocalAudio}
-          onClick={() => {
-            handleImportLocalAudioFolder();
-          }}
-        >
-          文件夹
-        </Button>
-        <Button
-          icon={<ExportOutlined />}
-          disabled={!list.selectedList}
-          loading={list.isMutatingList}
-          onClick={handleExportListPart}
-        >
-          导出列表
-        </Button>
-        <Dropdown
-          trigger={['click']}
-          menu={{
-            items: [
-              {
-                disabled: !list.selectedList || list.userLists[0]?.id === list.selectedListId,
-                icon: <VerticalAlignTopOutlined />,
-                key: 'listTop',
-                label: '列表置顶',
-              },
-              {
-                disabled: !list.selectedList || lastUserListId === list.selectedListId,
-                icon: <VerticalAlignBottomOutlined />,
-                key: 'listBottom',
-                label: '列表置底',
-              },
-              {
-                disabled: !list.selectedMusics.length,
-                icon: <SwapOutlined />,
-                key: 'duplicate',
-                label: '移除重复',
-              },
-              {
-                danger: true,
-                disabled: !list.selectedList || !list.selectedMusics.length,
-                icon: <ClearOutlined />,
-                key: 'clear',
-                label: '清空歌曲',
-              },
-            ],
-            onClick: ({ key }) => {
-              if (key === 'listTop') list.moveSelectedListToPosition(0);
-              if (key === 'listBottom') list.moveSelectedListToPosition(list.userLists.length);
-              if (key === 'duplicate') handleRemoveDuplicateMusics();
-              if (key === 'clear') handleClearMusics();
-            },
-          }}
-        >
-          <Button icon={<MoreOutlined />} loading={list.isMutatingList || list.isMutatingMusic}>
-            更多
+      <section className="coral-local-toolbar">
+        <Space wrap className="coral-local-toolbar-header">
+          <Select
+            value={selectedListId}
+            placeholder="列表"
+            className="coral-local-list-select"
+            loading={list.isHydrating}
+            options={list.userLists.map((userList) => ({
+              label: userList.name,
+              value: userList.id,
+            }))}
+            onChange={(listId) => {
+              list.loadSelectedListMusics(listId);
+            }}
+          />
+          <Button
+            icon={<ReloadOutlined />}
+            loading={list.isLoadingMusics}
+            onClick={loadSelectedList}
+          >
+            刷新歌曲
           </Button>
-        </Dropdown>
-        <Button disabled={!list.selectedMusics.length} onClick={handleSelectAllMusics}>
-          {isAllSelected ? '取消全选' : '全选'}
-        </Button>
-        <Button
-          icon={<PlayCircleOutlined />}
-          disabled={!selectedMusics.length}
-          onClick={handlePlaySelectedMusics}
-        >
-          播放选中
-        </Button>
-        <Button
-          danger
-          icon={<DeleteOutlined />}
-          disabled={!selectedMusics.length}
-          loading={list.isMutatingMusic}
-          onClick={handleRemoveSelectedMusics}
-        >
-          移除选中
-        </Button>
-        <Tag>
-          {selectedMusics.length} / {list.selectedMusics.length}
-        </Tag>
-        {normalizedFilterText ? <Tag color="blue">筛选 {filteredMusics.length}</Tag> : null}
-      </Space>
+          <Button
+            icon={<PlayCircleOutlined />}
+            disabled={!sortedMusics.length}
+            onClick={handlePlayAllMusics}
+          >
+            播放全部
+          </Button>
+          <Tag>歌曲 {list.selectedMusics.length}</Tag>
+          <Tag>已选 {selectedMusics.length}</Tag>
+          {normalizedFilterText ? <Tag color="blue">筛选 {filteredMusics.length}</Tag> : null}
+        </Space>
+
+        <Tabs
+          defaultActiveKey="import"
+          className="coral-local-tabs"
+          items={[
+            {
+              key: 'import',
+              label: '导入与导出',
+              children: (
+                <Space wrap className="coral-local-tab-controls">
+                  <Button
+                    icon={<FileAddOutlined />}
+                    type="primary"
+                    disabled={list.isHydrating}
+                    loading={list.isImportingLocalAudio}
+                    onClick={handleImportLocalAudio}
+                  >
+                    本地音频
+                  </Button>
+                  <Button
+                    icon={<FolderAddOutlined />}
+                    disabled={list.isHydrating}
+                    loading={list.isImportingLocalAudio}
+                    onClick={handleImportLocalAudioFolder}
+                  >
+                    导入文件夹
+                  </Button>
+                  <Button
+                    icon={<ImportOutlined />}
+                    loading={list.isMutatingList}
+                    onClick={handleImportListPart}
+                  >
+                    导入列表
+                  </Button>
+                  <Button
+                    icon={<ExportOutlined />}
+                    disabled={!list.selectedList}
+                    loading={list.isMutatingList}
+                    onClick={handleExportListPart}
+                  >
+                    导出列表
+                  </Button>
+                </Space>
+              ),
+            },
+            {
+              key: 'batch',
+              label: '批量操作',
+              children: (
+                <Space wrap className="coral-local-tab-controls">
+                  <Button disabled={!filteredMusics.length} onClick={handleSelectAllMusics}>
+                    {isAllSelected ? '取消全选' : '全选当前结果'}
+                  </Button>
+                  <Button
+                    icon={<PlayCircleOutlined />}
+                    disabled={!selectedMusics.length}
+                    onClick={handlePlaySelectedMusics}
+                  >
+                    播放选中
+                  </Button>
+                  <Button
+                    danger
+                    icon={<DeleteOutlined />}
+                    disabled={!selectedMusics.length}
+                    loading={list.isMutatingMusic}
+                    onClick={handleRemoveSelectedMusics}
+                  >
+                    移除选中
+                  </Button>
+                  <Select
+                    allowClear
+                    value={targetListId}
+                    placeholder="目标列表"
+                    className="coral-local-list-select"
+                    options={targetListOptions}
+                    disabled={!targetListOptions.length}
+                    onChange={setTargetListId}
+                  />
+                  <Button
+                    disabled={!targetListId || !selectedMusics.length}
+                    loading={list.isAddingMusic}
+                    onClick={handleCopySelectedMusics}
+                  >
+                    复制到列表
+                  </Button>
+                  <Button
+                    disabled={!targetListId || !selectedMusics.length}
+                    loading={list.isAddingMusic}
+                    onClick={handleMoveSelectedMusics}
+                  >
+                    移动到列表
+                  </Button>
+                  <Button
+                    icon={<SwapOutlined />}
+                    disabled={!list.selectedMusics.length}
+                    onClick={handleRemoveDuplicateMusics}
+                  >
+                    移除重复
+                  </Button>
+                  <Button
+                    danger
+                    icon={<ClearOutlined />}
+                    disabled={!list.selectedMusics.length}
+                    loading={list.isMutatingMusic}
+                    onClick={handleClearMusics}
+                  >
+                    清空歌曲
+                  </Button>
+                </Space>
+              ),
+            },
+            {
+              key: 'sort',
+              label: '排序',
+              children: (
+                <Space wrap className="coral-local-tab-controls">
+                  <Select
+                    value={sortField}
+                    className="coral-list-action-input"
+                    options={[
+                      { label: '按名称', value: 'name' },
+                      { label: '按歌手', value: 'singer' },
+                      { label: '按专辑', value: 'album' },
+                      { label: '按来源', value: 'source' },
+                      { label: '按时长', value: 'interval' },
+                    ]}
+                    onChange={setSortField}
+                  />
+                  <Select
+                    value={sortDirection}
+                    className="coral-list-action-input"
+                    options={[
+                      { label: '升序', value: 'asc' },
+                      { label: '降序', value: 'desc' },
+                    ]}
+                    onChange={setSortDirection}
+                  />
+                  <Button
+                    icon={<SaveOutlined />}
+                    disabled={!list.selectedMusics.length}
+                    loading={list.isMutatingMusic}
+                    onClick={handleSaveCurrentSort}
+                  >
+                    保存排序
+                  </Button>
+                  <Button
+                    icon={<RetweetOutlined />}
+                    disabled={list.selectedMusics.length < 2}
+                    loading={list.isMutatingMusic}
+                    onClick={handleShuffleSelectedList}
+                  >
+                    随机排序
+                  </Button>
+                  <Button
+                    icon={<OrderedListOutlined />}
+                    type={isDraggingMode ? 'primary' : 'default'}
+                    disabled={!list.selectedMusics.length}
+                    onClick={toggleDragMode}
+                  >
+                    {isDraggingMode ? '退出拖拽' : '拖拽排序'}
+                  </Button>
+                  <InputNumber
+                    min={1}
+                    max={Math.max(list.selectedMusics.length, 1)}
+                    value={moveTargetPosition}
+                    placeholder="目标序号"
+                    className="coral-list-action-input"
+                    disabled={!selectedMusics.length}
+                    onChange={(value) => {
+                      const nextValue = Number(value);
+                      setMoveTargetPosition(Number.isFinite(nextValue) ? nextValue : null);
+                    }}
+                  />
+                  <Button
+                    disabled={!selectedMusics.length || moveTargetPosition == null}
+                    loading={list.isMutatingMusic}
+                    onClick={handleMoveSelectedMusicsToInputPosition}
+                  >
+                    移动到序号
+                  </Button>
+                  <Button
+                    icon={<VerticalAlignTopOutlined />}
+                    disabled={!selectedMusics.length}
+                    loading={list.isMutatingMusic}
+                    onClick={() => handleMoveSelectedMusicsToPosition(0)}
+                  >
+                    置顶
+                  </Button>
+                  <Button
+                    icon={<VerticalAlignBottomOutlined />}
+                    disabled={!selectedMusics.length}
+                    loading={list.isMutatingMusic}
+                    onClick={() => handleMoveSelectedMusicsToPosition(list.selectedMusics.length)}
+                  >
+                    置底
+                  </Button>
+                </Space>
+              ),
+            },
+            {
+              key: 'manage',
+              label: '列表管理',
+              children: (
+                <Space wrap className="coral-local-tab-controls">
+                  <Input
+                    allowClear
+                    value={createName}
+                    placeholder="新列表"
+                    className="coral-list-action-input"
+                    onChange={(event) => setCreateName(event.target.value)}
+                    onPressEnter={handleCreateList}
+                  />
+                  <Button
+                    icon={<PlusOutlined />}
+                    loading={list.isMutatingList}
+                    onClick={handleCreateList}
+                  >
+                    新建
+                  </Button>
+                  <Input
+                    allowClear
+                    value={renameName}
+                    disabled={!list.selectedList}
+                    placeholder="列表名称"
+                    className="coral-list-action-input"
+                    onChange={(event) => setRenameName(event.target.value)}
+                    onPressEnter={handleRenameList}
+                  />
+                  <Button
+                    icon={<EditOutlined />}
+                    disabled={!list.selectedList}
+                    loading={list.isMutatingList}
+                    onClick={handleRenameList}
+                  >
+                    重命名
+                  </Button>
+                  <Button
+                    icon={<VerticalAlignTopOutlined />}
+                    disabled={!list.selectedList || list.userLists[0]?.id === list.selectedListId}
+                    loading={list.isMutatingList}
+                    onClick={() => handleMoveSelectedList(0)}
+                  >
+                    列表置顶
+                  </Button>
+                  <Button
+                    icon={<VerticalAlignBottomOutlined />}
+                    disabled={!list.selectedList || lastUserListId === list.selectedListId}
+                    loading={list.isMutatingList}
+                    onClick={() => handleMoveSelectedList(list.userLists.length)}
+                  >
+                    列表置底
+                  </Button>
+                  <Button
+                    danger
+                    icon={<DeleteOutlined />}
+                    disabled={!list.selectedList}
+                    loading={list.isMutatingList}
+                    onClick={handleRemoveList}
+                  >
+                    删除列表
+                  </Button>
+                </Space>
+              ),
+            },
+          ]}
+        />
+      </section>
 
       <Input.Search
         allowClear
@@ -757,173 +979,6 @@ export const LocalListRoutePanel = observer(() => {
           setFilterText(value);
         }}
       />
-
-      <Space wrap className="coral-route-controls coral-local-secondary-controls">
-        <Select
-          value={sortField}
-          className="coral-list-action-input"
-          options={[
-            { label: '按名称', value: 'name' },
-            { label: '按歌手', value: 'singer' },
-            { label: '按专辑', value: 'album' },
-            { label: '按来源', value: 'source' },
-            { label: '按时长', value: 'interval' },
-          ]}
-          onChange={(value) => {
-            setSortField(value);
-          }}
-        />
-        <Select
-          value={sortDirection}
-          className="coral-list-action-input"
-          options={[
-            { label: '升序', value: 'asc' },
-            { label: '降序', value: 'desc' },
-          ]}
-          onChange={(value) => {
-            setSortDirection(value);
-          }}
-        />
-        <Tag>
-          歌曲 {list.selectedMusics.length}
-          {normalizedFilterText ? ` · 当前 ${filteredMusics.length}` : ''}
-        </Tag>
-        <InputNumber
-          min={1}
-          max={Math.max(list.selectedMusics.length, 1)}
-          value={moveTargetPosition}
-          placeholder="目标序号"
-          className="coral-list-action-input"
-          disabled={!selectedMusics.length}
-          onChange={(value) => {
-            const nextValue = Number(value);
-            setMoveTargetPosition(Number.isFinite(nextValue) ? nextValue : null);
-          }}
-        />
-        <Button
-          icon={<OrderedListOutlined />}
-          type={isDraggingMode ? 'primary' : 'default'}
-          disabled={!list.selectedMusics.length}
-          onClick={toggleDragMode}
-        >
-          拖拽排序
-        </Button>
-        <Button
-          icon={<SaveOutlined />}
-          disabled={!list.selectedMusics.length}
-          loading={list.isMutatingMusic}
-          onClick={handleSaveCurrentSort}
-        >
-          保存排序
-        </Button>
-        <Button
-          icon={<RetweetOutlined />}
-          disabled={list.selectedMusics.length < 2}
-          loading={list.isMutatingMusic}
-          onClick={handleShuffleSelectedList}
-        >
-          随机排序
-        </Button>
-        <Button
-          disabled={!selectedMusics.length || moveTargetPosition == null}
-          loading={list.isMutatingMusic}
-          onClick={handleMoveSelectedMusicsToInputPosition}
-        >
-          移动到序号
-        </Button>
-        <Button
-          icon={<VerticalAlignTopOutlined />}
-          disabled={!selectedMusics.length}
-          loading={list.isMutatingMusic}
-          onClick={() => {
-            handleMoveSelectedMusicsToPosition(0);
-          }}
-        >
-          置顶
-        </Button>
-        <Button
-          icon={<VerticalAlignBottomOutlined />}
-          disabled={!selectedMusics.length}
-          loading={list.isMutatingMusic}
-          onClick={() => {
-            handleMoveSelectedMusicsToPosition(list.selectedMusics.length);
-          }}
-        >
-          置底
-        </Button>
-      </Space>
-
-      <Space wrap className="coral-route-controls coral-local-secondary-controls">
-        <Select
-          allowClear
-          value={targetListId}
-          placeholder="目标列表"
-          className="coral-local-list-select"
-          options={targetListOptions}
-          disabled={!targetListOptions.length}
-          onChange={(value) => {
-            setTargetListId(value);
-          }}
-        />
-        <Button
-          disabled={!targetListId || !selectedMusics.length}
-          loading={list.isAddingMusic}
-          onClick={handleCopySelectedMusics}
-        >
-          复制到列表
-        </Button>
-        <Button
-          disabled={!targetListId || !selectedMusics.length}
-          loading={list.isAddingMusic}
-          onClick={handleMoveSelectedMusics}
-        >
-          移动到列表
-        </Button>
-      </Space>
-
-      <Space wrap className="coral-route-controls coral-local-secondary-controls">
-        <Input
-          allowClear
-          value={createName}
-          placeholder="新列表"
-          className="coral-list-action-input"
-          onChange={(event) => {
-            setCreateName(event.target.value);
-          }}
-          onPressEnter={handleCreateList}
-        />
-        <Button icon={<PlusOutlined />} loading={list.isMutatingList} onClick={handleCreateList}>
-          新建
-        </Button>
-        <Input
-          allowClear
-          value={renameName}
-          disabled={!list.selectedList}
-          placeholder="列表名称"
-          className="coral-list-action-input"
-          onChange={(event) => {
-            setRenameName(event.target.value);
-          }}
-          onPressEnter={handleRenameList}
-        />
-        <Button
-          icon={<EditOutlined />}
-          disabled={!list.selectedList}
-          loading={list.isMutatingList}
-          onClick={handleRenameList}
-        >
-          重命名
-        </Button>
-        <Button
-          danger
-          icon={<DeleteOutlined />}
-          disabled={!list.selectedList}
-          loading={list.isMutatingList}
-          onClick={handleRemoveList}
-        >
-          删除
-        </Button>
-      </Space>
 
       {list.hydrateError ? <Alert showIcon type="error" title={list.hydrateError} /> : null}
       {list.actionError ? <Alert showIcon type="error" title={list.actionError} /> : null}
@@ -1034,12 +1089,36 @@ export const LocalListRoutePanel = observer(() => {
                 trigger={['click']}
                 menu={{
                   items: [
-                    {
-                      disabled: String(item.source) === 'local',
-                      icon: <DownloadOutlined />,
-                      key: 'download',
-                      label: '下载',
-                    },
+                    ...(item.source === 'local'
+                      ? [
+                          {
+                            icon: <FolderOpenOutlined />,
+                            key: 'open-local-file',
+                            label: '打开文件位置',
+                          },
+                          {
+                            icon: <ReloadOutlined />,
+                            key: 'refresh-local-music',
+                            label: '重新读取歌曲信息',
+                          },
+                        ]
+                      : [
+                          {
+                            icon: <DownloadOutlined />,
+                            key: 'download',
+                            label: '下载',
+                          },
+                          {
+                            icon: <SwapOutlined />,
+                            key: 'toggle-source',
+                            label: '切换来源',
+                          },
+                          {
+                            icon: <SearchOutlined />,
+                            key: 'source-detail',
+                            label: '查看详情',
+                          },
+                        ]),
                     {
                       icon: <CopyOutlined />,
                       key: 'copy',
@@ -1049,18 +1128,6 @@ export const LocalListRoutePanel = observer(() => {
                       icon: <SearchOutlined />,
                       key: 'search',
                       label: '搜索歌曲',
-                    },
-                    {
-                      disabled: String(item.source) === 'local',
-                      icon: <SwapOutlined />,
-                      key: 'toggle-source',
-                      label: '切换来源',
-                    },
-                    {
-                      disabled: String(item.source) === 'local',
-                      icon: <SearchOutlined />,
-                      key: 'source-detail',
-                      label: '查看详情',
                     },
                   ],
                   onClick: ({ key }) => {
@@ -1074,6 +1141,10 @@ export const LocalListRoutePanel = observer(() => {
                       handleDownload(item);
                     } else if (key === 'source-detail') {
                       handleOpenSourceDetail(item);
+                    } else if (key === 'open-local-file') {
+                      handleOpenLocalFile(item);
+                    } else if (key === 'refresh-local-music') {
+                      handleRefreshLocalMusic(item);
                     }
                   },
                 }}

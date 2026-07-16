@@ -35,12 +35,13 @@ const createDefaultSoundEffectConfig = (): PlayerSoundEffectConfig => ({
   pannerEnabled: false,
   pannerSoundR: 5,
   pitchPlaybackRate: 1,
+  preservesPitch: true,
 });
 
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
 
-const toPlayerStatusVolume = (volume: number): number => Math.round(clamp(volume, 0, 1) * 100);
+const toPlayerStatusVolume = (volume: number): number => clamp(volume, 0, 1);
 
 const createAudioElement = (): HTMLAudioElement | null => {
   if (typeof globalThis.window?.Audio === 'undefined') return null;
@@ -75,6 +76,8 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
   private decodedGain: GainNode | null = null;
 
   private decodedPlayStartedAt = 0;
+
+  private decodedPlaybackRate = 1;
 
   private decodedProgressTimer: number | null = null;
 
@@ -363,6 +366,7 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
     this.decodedGain = null;
     this.decodedAudioBuffer = null;
     this.decodedPlayStartedAt = 0;
+    this.decodedPlaybackRate = 1;
     this.decodedStartOffset = 0;
     this.decodedStatus = 'idle';
   }
@@ -453,11 +457,12 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
     this.stopDecodedSource();
     const source = this.audioContext.createBufferSource();
     source.buffer = audioBuffer;
-    source.playbackRate.value = clamp(
+    this.decodedPlaybackRate = clamp(
       this.basePlaybackRate * this.soundEffectConfig.pitchPlaybackRate,
       0.25,
       4,
     );
+    source.playbackRate.value = this.decodedPlaybackRate;
     if (!this.decodedGain) {
       this.decodedGain = this.audioContext.createGain();
       this.decodedGain.connect(graphInput);
@@ -465,7 +470,7 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
     this.applyDecodedGain(this.audio?.volume ?? 1, this.audio?.muted ?? false);
     source.connect(this.decodedGain);
     this.decodedStartOffset = clamp(offset, 0, audioBuffer.duration);
-    this.decodedPlayStartedAt = this.audioContext.currentTime - this.decodedStartOffset;
+    this.decodedPlayStartedAt = this.audioContext.currentTime;
     this.decodedStatus = 'playing';
     this.decodedAudioSource = source;
     source.onended = () => {
@@ -494,11 +499,7 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
 
   private pauseDecodedAudio(): void {
     if (!this.audioContext || !this.decodedAudioBuffer) return;
-    this.decodedStartOffset = clamp(
-      this.audioContext.currentTime - this.decodedPlayStartedAt,
-      0,
-      this.decodedAudioBuffer.duration,
-    );
+    this.decodedStartOffset = clamp(this.getDecodedProgress(), 0, this.decodedAudioBuffer.duration);
     this.decodedStatus = 'paused';
     this.stopDecodedSource();
     this.stopDecodedProgressTimer();
@@ -514,11 +515,7 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
     this.decodedProgressTimer = globalThis.window.setInterval(() => {
       if (!this.audioContext || !this.decodedAudioBuffer || this.decodedStatus !== 'playing')
         return;
-      const progress = clamp(
-        this.audioContext.currentTime - this.decodedPlayStartedAt,
-        0,
-        this.decodedAudioBuffer.duration,
-      );
+      const progress = clamp(this.getDecodedProgress(), 0, this.decodedAudioBuffer.duration);
       this.publish({
         duration: this.decodedAudioBuffer.duration,
         progress,
@@ -531,6 +528,16 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
     if (!this.decodedGain) return;
     const normalizedVolume = typeof volume === 'number' && volume > 1 ? volume / 100 : volume;
     this.decodedGain.gain.value = isMute ? 0 : clamp(normalizedVolume, 0, 1);
+  }
+
+  private getDecodedProgress(): number {
+    if (!this.audioContext || !this.decodedAudioBuffer) return this.decodedStartOffset;
+    return clamp(
+      this.decodedStartOffset +
+        (this.audioContext.currentTime - this.decodedPlayStartedAt) * this.decodedPlaybackRate,
+      0,
+      this.decodedAudioBuffer.duration,
+    );
   }
 
   private async loadAndPlayMusic(
@@ -675,7 +682,7 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
     this.publish({
       duration,
       mute: audio.muted,
-      playbackRate: audio.playbackRate,
+      playbackRate: this.basePlaybackRate,
       progress,
       volume: toPlayerStatusVolume(audio.volume),
       ...status,
@@ -707,9 +714,17 @@ export class HtmlAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
 
   private applyPlaybackRate(): void {
     const rate = clamp(this.basePlaybackRate * this.soundEffectConfig.pitchPlaybackRate, 0.25, 4);
-    if (!this.audio) return;
-    this.audio.defaultPlaybackRate = rate;
-    this.audio.playbackRate = rate;
+    if (this.audio) {
+      this.audio.defaultPlaybackRate = rate;
+      this.audio.playbackRate = rate;
+      this.audio.preservesPitch = this.soundEffectConfig.preservesPitch;
+    }
+    if (this.decodedAudioSource && this.decodedStatus === 'playing' && this.audioContext) {
+      this.decodedStartOffset = this.getDecodedProgress();
+      this.decodedPlayStartedAt = this.audioContext.currentTime;
+      this.decodedPlaybackRate = rate;
+      this.decodedAudioSource.playbackRate.value = rate;
+    }
   }
 
   private applySoundEffectConfig(): void {

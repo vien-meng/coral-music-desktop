@@ -9,4 +9,4 @@ export function setMeta(
   filePath: string,
   meta: MusicMeta,
   proxy?: { host: string; port: number },
-): void;
+): Promise<void>;

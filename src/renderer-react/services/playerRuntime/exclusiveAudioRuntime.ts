@@ -120,7 +120,7 @@ export class ExclusiveAudioPlayerRuntimeBackend implements PlayerRuntimeBridge {
 
   setVolume(volume: number): void {
     if (this.isUsingFallback) this.fallbackBackend.setVolume(volume);
-    this.publish({ volume: Math.round(Math.max(0, Math.min(1, volume)) * 100) });
+    this.publish({ volume: Math.max(0, Math.min(1, volume)) });
   }
 
   setMute(isMute: boolean): void {
