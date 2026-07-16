@@ -20,6 +20,7 @@ export interface PlayerSoundEffectConfig {
   pannerEnabled: boolean;
   pannerSoundR: number;
   pitchPlaybackRate: number;
+  preservesPitch: boolean;
 }
 
 export interface PlayerRuntimePlayOptions {

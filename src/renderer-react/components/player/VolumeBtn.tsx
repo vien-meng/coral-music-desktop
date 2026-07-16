@@ -16,22 +16,41 @@ export const VolumeBtn = observer(() => {
   const isMute = player.isMute;
 
   const handleVolumeChange = (value: number): void => {
-    player.setVolume(value);
+    player.setVolume(value, false);
   };
 
   const handleMuteToggle = (checked: boolean): void => {
     player.setMute(checked);
   };
 
+  const adjustVolume = (delta: number): void => {
+    player.setVolume(Math.max(0, Math.min(1, player.volume + delta)));
+  };
+
   const handleWheel = (event: React.WheelEvent): void => {
+    if (!event.deltaY) return;
     event.preventDefault();
-    const delta = event.deltaY > 0 ? -0.05 : 0.05;
-    const newVolume = Math.max(0, Math.min(1, volume + delta));
-    handleVolumeChange(newVolume);
+    adjustVolume(event.deltaY > 0 ? -0.05 : 0.05);
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent): void => {
+    if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+    event.preventDefault();
+    adjustVolume(event.key === 'ArrowUp' ? 0.05 : -0.05);
   };
 
   const content = (
-    <div style={{ width: 200, padding: '8px 0' }}>
+    <div
+      aria-label="音量控制"
+      role="group"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      onMouseEnter={(event) => {
+        event.currentTarget.focus({ preventScroll: true });
+      }}
+      onWheel={handleWheel}
+      style={{ width: 200, padding: '8px 0' }}
+    >
       <div
         style={{
           display: 'flex',
@@ -49,6 +68,9 @@ export const VolumeBtn = observer(() => {
         step={0.01}
         value={volume}
         onChange={handleVolumeChange}
+        onChangeComplete={(value) => {
+          player.setVolume(value);
+        }}
         tooltip={{ formatter: (value) => `${Math.round((value ?? 0) * 100)}%` }}
       />
       <Checkbox
@@ -67,6 +89,10 @@ export const VolumeBtn = observer(() => {
     <Popover content={content} trigger="click" placement="topRight">
       <button
         aria-label={isMute ? '取消静音' : '音量'}
+        onKeyDown={handleKeyDown}
+        onMouseEnter={(event) => {
+          event.currentTarget.focus({ preventScroll: true });
+        }}
         onWheel={handleWheel}
         style={{
           border: 'none',

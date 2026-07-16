@@ -7,6 +7,32 @@
 日志格式基于 [Keep a Changelog](http://keepachangelog.com/)。
 
 
+## [1.1.2] - 2026-07-16
+
+设置页 Tab 分区重构，播放器变速进度修复，音乐元数据写入异步化，移除评论功能。
+
+### 新增
+
+- 设置页 Tab 分区：分为常规、播放、下载、网络与服务、快捷键与数据五个标签页，快捷操作自动跳转到对应 Tab
+- 播放器 `preservesPitch` 配置：变速播放时保持音高
+- 设置保存乐观更新：先合并到本地再异步保存，保存失败自动回滚
+
+### 优化
+
+- 音乐元数据写入改为 Promise：FLAC/MP3 元数据写入使用 `pipeline` 替代手动 pipe，下载完成时 `await setMeta` 确保元数据写入完成后再进入下一步
+- 播放器音量值改为 0-1 小数，不再乘 100
+- 播放器快照恢复时同步设置音量、静音、播放速率到 runtime
+- 下载烟雾测试增强：新增封面图片下载、歌词嵌入、GBK 编码格式测试
+
+### 修复
+
+- 修复 decoded 音频变速后进度计算错误的问题：`decodedPlaybackRate` 独立存储，`decodedPlayStartedAt` 不再减去 offset
+- 修复 Seek 后进度跳跃的问题
+
+### 移除
+
+- 移除评论功能：删除 `MusicCommentPanel` 组件、`musicCommentService` 服务及相关状态和方法
+
 ## [1.1.1] - 2026-07-05
 
 #### 稳定性修复与调试优化

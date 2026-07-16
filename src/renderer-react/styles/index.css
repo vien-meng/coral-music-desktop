@@ -382,7 +382,7 @@ body {
   width: max-content;
 }
 
-.coral-global-loading .ant-spin-text {
+.coral-global-loading .ant-spin-description {
   white-space: nowrap;
 }
 
@@ -1074,25 +1074,31 @@ body {
 
 .coral-settings-spin {
   display: block;
-  height: 100vh;
-  min-height: 0;
+  min-height: 100%;
 }
 
 .coral-settings-spin > .ant-spin-container {
-  height: 100%;
-  min-height: 0;
+  min-height: 100%;
 }
 
 .coral-settings-panel {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  height: 100%;
   max-width: none;
-  min-height: 0;
-  overflow: auto;
   padding: 8px 8px 96px;
-  scrollbar-gutter: stable;
+}
+
+.coral-settings-tabs {
+  background: var(--coral-surface-elevated);
+  border: 1px solid var(--coral-border);
+  border-radius: 14px;
+  box-shadow: var(--coral-shadow);
+  overflow: hidden;
+  padding: 0 20px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
 }
 
 .coral-settings-section {
@@ -1196,23 +1202,32 @@ body {
   width: 100%;
 }
 
-.coral-local-page .coral-route-controls {
-  background: var(--coral-surface);
+.coral-local-toolbar {
+  background: var(--coral-surface-elevated);
   border: 1px solid var(--coral-border);
   border-radius: 14px;
   box-shadow: var(--coral-shadow);
-  padding: 12px;
+  overflow: hidden;
+  padding: 12px 16px 4px;
 }
 
-.coral-local-page .coral-local-primary-controls {
+.coral-local-toolbar-header {
   align-items: center;
-  background: var(--coral-surface-elevated);
-  position: relative;
+  margin-bottom: 4px;
 }
 
-.coral-local-page .coral-local-secondary-controls {
-  background: var(--coral-surface-muted);
-  box-shadow: none;
+.coral-local-tabs .ant-tabs-nav {
+  margin: 0 0 12px;
+}
+
+.coral-local-tabs .ant-tabs-tab {
+  padding: 12px 4px;
+}
+
+.coral-local-tab-controls {
+  align-items: center;
+  min-height: 48px;
+  padding-bottom: 12px;
 }
 
 .coral-local-search .ant-input-group-wrapper,
@@ -1220,7 +1235,6 @@ body {
   border-radius: 14px;
 }
 
-.coral-local-page .coral-route-controls .ant-btn,
 .coral-local-page .ant-input,
 .coral-local-page .ant-input-search .ant-input,
 .coral-local-page .ant-input-search .ant-input-group-addon .ant-btn,

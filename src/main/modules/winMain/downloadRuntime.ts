@@ -160,7 +160,7 @@ const writeDownloadMetadata = async (task: Coral.Download.ListItem): Promise<voi
     title: task.metadata.musicInfo.name,
   };
 
-  setMeta(task.metadata.filePath, meta);
+  await setMeta(task.metadata.filePath, meta);
 };
 
 const verifyCompletedFile = async (task: Coral.Download.ListItem): Promise<void> => {

@@ -2,6 +2,7 @@ const fs = require('fs');
 
 const fsPromises = fs.promises;
 const path = require('path');
+const { pipeline } = require('stream/promises');
 const getImgSize = require('image-size');
 const download = require('./downloader');
 
@@ -48,17 +49,9 @@ const writeMeta = async (filePath, meta, picPath) => {
   const flacProcessor = new FlacProcessor();
   flacProcessor.writeMeta(data);
 
-  reader
-    .pipe(flacProcessor)
-    .pipe(writer)
-    .on('finish', () => {
-      fs.unlink(filePath, (err) => {
-        if (err) return console.log(err.message);
-        fs.rename(tempPath, filePath, (err) => {
-          if (err) console.log(err.message);
-        });
-      });
-    });
+  await pipeline(reader, flacProcessor, writer);
+  await fsPromises.rm(filePath);
+  await fsPromises.rename(tempPath, filePath);
 };
 
 module.exports = (filePath, meta, proxy) => {
@@ -73,13 +66,13 @@ module.exports = (filePath, meta, proxy) => {
 
   if (picUrl.includes('music.126.net'))
     picUrl += `${picUrl.includes('?') ? '&' : '?'}param=500y500`;
-  download(picUrl, picPath, proxy).then((success) => {
+  return download(picUrl, picPath, proxy).then(async (success) => {
     if (success) {
-      writeMeta(filePath, meta, picPath).finally(() => {
-        fs.unlink(picPath, (err) => {
-          if (err) console.log(err.message);
-        });
-      });
-    } else writeMeta(filePath, meta);
+      try {
+        await writeMeta(filePath, meta, picPath);
+      } finally {
+        await fsPromises.rm(picPath, { force: true });
+      }
+    } else await writeMeta(filePath, meta);
   });
 };

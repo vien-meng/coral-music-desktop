@@ -65,11 +65,30 @@ export class SettingsStore {
   async updateAppSetting(setting: Partial<Coral.AppSetting>): Promise<void> {
     this.isSaving = true;
     this.saveError = null;
+    const previous = this.appSetting
+      ? Object.fromEntries(
+          Object.keys(setting).map((key) => [
+            key,
+            this.appSetting?.[key as keyof Coral.AppSetting],
+          ]),
+        )
+      : null;
+    this.mergeAppSetting(setting);
 
     try {
       await settingService.updateAppSetting(setting);
-      this.mergeAppSetting(setting);
     } catch (error) {
+      if (previous) {
+        const rollback = Object.fromEntries(
+          Object.entries(previous).filter(([key]) =>
+            Object.is(
+              this.appSetting?.[key as keyof Coral.AppSetting],
+              setting[key as keyof Coral.AppSetting],
+            ),
+          ),
+        ) as Partial<Coral.AppSetting>;
+        this.mergeAppSetting(rollback);
+      }
       this.saveError = error instanceof Error ? error.message : String(error);
     } finally {
       this.isSaving = false;
