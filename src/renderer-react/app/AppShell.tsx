@@ -9,13 +9,19 @@ import {
 } from '@ant-design/icons';
 import { Button, Dropdown, Flex, Layout, Menu, Space, Spin, Typography, message } from 'antd';
 import { observer } from 'mobx-react-lite';
-import { useCallback, useState, type DragEvent as ReactDragEvent, type MouseEvent as ReactMouseEvent } from 'react';
+import {
+  useCallback,
+  useState,
+  type DragEvent as ReactDragEvent,
+  type MouseEvent as ReactMouseEvent,
+} from 'react';
 import { coralBrand } from '@shared/brand';
 import {
   externalDecoderExtensions,
   nativeLocalAudioExtensions,
 } from '@shared/playbackCapabilities';
 import { SearchInput, WindowControlBtns } from '../components/layout';
+import { SyncConflictModal } from '../components/layout/SyncConflictModal';
 import { PlayBar } from '../components/player';
 import { appService } from '../services/appService';
 import { getDroppedFilePaths } from '../services/droppedFilePathService';
@@ -275,6 +281,7 @@ export const AppShell = observer(() => {
         </Content>
         <Footer className="coral-player-slot">
           <PlayBar />
+          <SyncConflictModal />
         </Footer>
       </Layout>
       {ui.isGlobalLoading ? (

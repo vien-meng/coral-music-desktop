@@ -1,6 +1,7 @@
 import { makeAutoObservable, observable } from 'mobx';
 import type { OnlineSourceWithAll } from '../../services/onlineMusicService';
 import { loadOnlineMusicService } from '../../services/onlineMusicServiceLoader';
+import { dataService } from '../../services/dataService';
 
 export type SearchRouteType = 'music' | 'songlist';
 export type SearchSource = OnlineSourceWithAll;
@@ -96,6 +97,10 @@ export class SearchStore {
     );
   }
 
+  async hydrate(): Promise<void> {
+    this.historyList = (await dataService.getData<string[]>('searchHistoryList')) ?? [];
+  }
+
   get hasQuery(): boolean {
     return this.searchText.trim().length > 0;
   }
@@ -113,10 +118,12 @@ export class SearchStore {
     if (!word) return;
 
     this.historyList = [word, ...this.historyList.filter((item) => item !== word)].slice(0, 20);
+    dataService.saveData('searchHistoryList', this.historyList);
   }
 
   clearHistoryList(): void {
     this.historyList = [];
+    dataService.saveData('searchHistoryList', []);
   }
 
   setPage(page: number): void {
@@ -126,6 +133,12 @@ export class SearchStore {
   setSearchText(text: string): void {
     this.searchText = text;
     this.page = 1;
+  }
+
+  clearSearch(clearText: boolean, clearResults: boolean): void {
+    if (clearText) this.searchText = '';
+    this.searchError = null;
+    if (clearResults) this.resetActiveResult();
   }
 
   setSearchType(type: SearchRouteType): void {

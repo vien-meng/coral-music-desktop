@@ -11,6 +11,15 @@ body {
   overflow: hidden;
   user-select: none;
   -webkit-app-region: no-drag;
+  font-size: var(--coral-font-size, 14px);
+}
+
+.coral-reduce-motion *,
+.coral-reduce-motion *::before,
+.coral-reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+  transition-duration: 0.01ms !important;
 }
 
 #root,
@@ -506,6 +515,18 @@ body {
   min-width: 180px;
 }
 
+.coral-playbar.is-progress-mini .coral-playbar-progress-wrap {
+  flex: 0 1 260px;
+}
+
+.coral-playbar.is-progress-mini .coral-playbar-time {
+  display: none;
+}
+
+.coral-playbar.is-progress-full .coral-playbar-progress-wrap {
+  max-width: none;
+}
+
 .coral-playbar-progress {
   flex: 1 1 auto;
 }
@@ -752,6 +773,11 @@ body {
   font-weight: 720;
   opacity: 1;
   transform: translateY(-1px);
+}
+
+.is-lyric-zoom-disabled .coral-playdetail-lyric-lines .line-content.active {
+  font-size: var(--coral-playdetail-lyric-font-size, 18px);
+  transform: none;
 }
 
 .coral-playdetail-lyric-lines .font-lrc,

@@ -61,6 +61,7 @@ export const PlayDetailOverlay = observer(() => {
     '--coral-playdetail-lyric-font-size': `${18 * lyricFontScale}px`,
     textAlign: lyricAlign,
   };
+  const isZoomActiveLrc = settings.appSetting?.['playDetail.isZoomActiveLrc'] ?? true;
   const overlayClassName = player.isPlayDetailOpen
     ? `coral-playdetail is-open${isFullscreen ? ' is-fullscreen' : ''}`
     : `coral-playdetail${isFullscreen ? ' is-fullscreen' : ''}`;
@@ -197,7 +198,7 @@ export const PlayDetailOverlay = observer(() => {
         </Space>
       </header>
 
-      <div className="coral-playdetail-main">
+      <div className={`coral-playdetail-main${isZoomActiveLrc ? '' : ' is-lyric-zoom-disabled'}`}>
         <div className="coral-playdetail-art-wrap">
           <div className="coral-playdetail-art">{coverNode}</div>
           <div className="coral-playdetail-meta">

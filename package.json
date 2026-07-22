@@ -67,6 +67,7 @@
     "smoke:build-pack-helper": "node build-config/smoke-build-pack-helper.js",
     "smoke:bundle": "node build-config/smoke-bundle-config.js",
     "smoke:playback-capabilities": "node build-config/smoke-playback-capabilities.js",
+    "smoke:settings-sync": "node build-config/smoke-settings-sync.js",
     "smoke:local-audio-fixtures": "node build-config/smoke-local-audio-fixtures.js",
     "smoke:external-audio-samples": "node build-config/smoke-external-audio-samples.js",
     "smoke:native-ape-helper": "node build-config/smoke-native-ape-helper.js",

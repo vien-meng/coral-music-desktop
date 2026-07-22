@@ -73,6 +73,10 @@ export class DownloadStore {
     return this.settings?.appSetting?.['download.maxDownloadNum'] ?? 3;
   }
 
+  get isDownloadEnabled(): boolean {
+    return this.settings?.appSetting?.['download.enable'] ?? true;
+  }
+
   get runningTaskCount(): number {
     return this.tasks.filter((task) => task.status === 'run').length;
   }
@@ -166,6 +170,10 @@ export class DownloadStore {
   }
 
   async startTask(taskId: string): Promise<void> {
+    if (!this.isDownloadEnabled) {
+      this.actionError = '下载功能已在设置中关闭';
+      return;
+    }
     const task = this.getTaskById(taskId);
     if (!task) return;
 
@@ -209,6 +217,10 @@ export class DownloadStore {
   }
 
   async startTasks(taskIds: string[]): Promise<void> {
+    if (!this.isDownloadEnabled) {
+      this.actionError = '下载功能已在设置中关闭';
+      return;
+    }
     const ids = Array.from(new Set(taskIds)).filter(Boolean);
     for (const id of ids) {
       const task = this.getTaskById(id);
@@ -219,6 +231,10 @@ export class DownloadStore {
 
   async addAndStartTasks(tasks: Coral.Download.ListItem[]): Promise<void> {
     if (!tasks.length) return;
+    if (!this.isDownloadEnabled) {
+      this.actionError = '下载功能已在设置中关闭';
+      return;
+    }
     this.isMutatingTask = true;
     this.actionError = null;
 

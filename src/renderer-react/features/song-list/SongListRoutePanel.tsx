@@ -40,8 +40,7 @@ const formatPlayCount = (count: string): string => {
 };
 
 export const SongListRoutePanel = observer(() => {
-  const { player, songList, ui } = rootStore;
-  const { library } = rootStore;
+  const { library, list, player, songList, ui } = rootStore;
   const [isOpenListOpen, setIsOpenListOpen] = useState(false);
   const [isDetailPlayLoading, setIsDetailPlayLoading] = useState(false);
   const [isDetailCollectLoading, setIsDetailCollectLoading] = useState(false);
@@ -147,31 +146,41 @@ export const SongListRoutePanel = observer(() => {
     songList.listDetailInfo.source,
   ]);
 
-  const handleCollectDetail = useCallback(() => {
+  const handleCollectDetail = useCallback(async () => {
     if (!songList.listDetailInfo.id || !songList.listDetailInfo.list.length) return;
+    const favorite: Coral.Library.FavoriteSongList = {
+      author: songList.listDetailInfo.info.author ?? '',
+      createdAt: Date.now(),
+      desc: detailDesc ?? null,
+      id: songList.listDetailInfo.id,
+      img: songList.listDetailInfo.info.img ?? '',
+      name: detailTitle,
+      playCount: songList.listDetailInfo.info.play_count ?? '',
+      source: songList.listDetailInfo.source,
+    };
+    const wasFavorite = library.isFavoriteSongList(favorite.id, favorite.source);
     setIsDetailCollectLoading(true);
-    library
-      .toggleFavoriteSongList({
-        author: songList.listDetailInfo.info.author ?? '',
-        createdAt: Date.now(),
-        desc: detailDesc ?? null,
-        id: songList.listDetailInfo.id,
-        img: songList.listDetailInfo.info.img ?? '',
-        name: detailTitle,
-        playCount: songList.listDetailInfo.info.play_count ?? '',
-        source: songList.listDetailInfo.source,
-      })
-      .finally(() => {
-        setIsDetailCollectLoading(false);
-      });
+    try {
+      if (wasFavorite) {
+        await list.removeOnlineFavoriteSongList(favorite);
+        await library.toggleFavoriteSongList(favorite);
+      } else {
+        await list.mirrorOnlineFavoriteSongList(favorite, await songList.getAllListDetailMusics());
+        await library.toggleFavoriteSongList(favorite);
+      }
+    } finally {
+      setIsDetailCollectLoading(false);
+    }
   }, [
     detailDesc,
     detailTitle,
     library,
+    list,
     songList.listDetailInfo.id,
     songList.listDetailInfo.info.author,
     songList.listDetailInfo.info.img,
     songList.listDetailInfo.info.play_count,
+    songList.listDetailInfo.list,
     songList.listDetailInfo.list.length,
     songList.listDetailInfo.source,
   ]);

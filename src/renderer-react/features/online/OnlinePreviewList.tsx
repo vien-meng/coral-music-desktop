@@ -1,9 +1,11 @@
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { Button, Card, Empty, Image, InputNumber, Space, Tag, Tooltip, Typography } from 'antd';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { observer } from 'mobx-react-lite';
 import { PlainList, PlainListItem, PlainListMeta } from '../../components/base';
 import { onlineMediaService } from '../../services/onlineMediaService';
 import { getSourceDisplayName } from '../../services/sourceNameService';
+import { rootStore } from '../../stores/rootStore';
 
 const { Text } = Typography;
 
@@ -228,31 +230,31 @@ export const OnlinePager = ({
   );
 };
 
-export const OnlineMusicPreviewList = ({
-  actions,
-  empty,
-  emptyText,
-  list,
-}: OnlineMusicPreviewListProps) => (
-  <PlainList
-    className="coral-result-list coral-online-music-list"
-    items={list}
-    empty={empty ?? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyText} />}
-    renderItem={(item) => (
-      <PlainListItem key={item.id} actions={actions?.(item)}>
-        <PlainListMeta
-          avatar={<OnlineMusicCover musicInfo={item} />}
-          title={<Text ellipsis>{item.name}</Text>}
-          description={
-            <Text
-              type="secondary"
-              ellipsis
-            >{`${item.singer} · ${getSourceDisplayName(item.source)} · ${item.interval ?? '--:--'}`}</Text>
-          }
-        />
-      </PlainListItem>
-    )}
-  />
+export const OnlineMusicPreviewList = observer(
+  ({ actions, empty, emptyText, list }: OnlineMusicPreviewListProps) => {
+    const showSource = rootStore.settings.appSetting?.['list.isShowSource'] ?? true;
+    return (
+      <PlainList
+        className="coral-result-list coral-online-music-list"
+        items={list}
+        empty={empty ?? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyText} />}
+        renderItem={(item) => (
+          <PlainListItem key={item.id} actions={actions?.(item)}>
+            <PlainListMeta
+              avatar={<OnlineMusicCover musicInfo={item} />}
+              title={<Text ellipsis>{item.name}</Text>}
+              description={
+                <Text
+                  type="secondary"
+                  ellipsis
+                >{`${item.singer}${showSource ? ` · ${getSourceDisplayName(item.source)}` : ''} · ${item.interval ?? '--:--'}`}</Text>
+              }
+            />
+          </PlainListItem>
+        )}
+      />
+    );
+  },
 );
 
 export const OnlineSongListPreviewList = <Item extends OnlineSongListPreviewItem>({

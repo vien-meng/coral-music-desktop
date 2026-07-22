@@ -7,6 +7,10 @@ import {
 } from '../../services/localAudioService';
 
 const LOCAL_AUDIO_LIST_NAME = '本地音乐';
+const ONLINE_FAVORITE_LIST_PREFIX = 'favorite_songlist_';
+
+const getOnlineFavoriteListId = (source: Coral.OnlineSource, sourceListId: string): string =>
+  `${ONLINE_FAVORITE_LIST_PREFIX}${source}_${encodeURIComponent(sourceListId)}`;
 
 export class ListStore {
   actionError: string | null = null;
@@ -406,6 +410,66 @@ export class ListStore {
     } finally {
       this.isMutatingList = false;
     }
+  }
+
+  async mirrorOnlineFavoriteSongList(
+    favorite: Coral.Library.FavoriteSongList,
+    musicInfos: Coral.Music.MusicInfo[],
+  ): Promise<void> {
+    await this.hydrate();
+    const id = getOnlineFavoriteListId(favorite.source, favorite.id);
+    const listInfo: Coral.List.UserListInfo = {
+      id,
+      locationUpdateTime: null,
+      name: `收藏：${favorite.name}`,
+      source: favorite.source,
+      sourceListId: favorite.id,
+    };
+
+    this.isMutatingList = true;
+    this.actionError = null;
+    try {
+      if (this.userLists.some((list) => list.id === id)) return;
+      await listService.createUserLists(this.userLists.length, [listInfo]);
+      await listService.addListMusics(id, musicInfos, 'bottom');
+      this.userLists = [...this.userLists, listInfo];
+    } catch (error) {
+      this.actionError = error instanceof Error ? error.message : String(error);
+      throw error;
+    } finally {
+      this.isMutatingList = false;
+    }
+  }
+
+  async removeOnlineFavoriteSongList(favorite: Coral.Library.FavoriteSongList): Promise<void> {
+    await this.hydrate();
+    const id = getOnlineFavoriteListId(favorite.source, favorite.id);
+    if (!this.userLists.some((list) => list.id === id)) return;
+
+    this.isMutatingList = true;
+    this.actionError = null;
+    try {
+      await listService.removeUserLists([id]);
+      this.userLists = this.userLists.filter((list) => list.id !== id);
+      if (this.selectedListId === id) {
+        this.selectedListId = this.userLists[0]?.id ?? null;
+        await this.loadSelectedListMusics();
+      }
+    } catch (error) {
+      this.actionError = error instanceof Error ? error.message : String(error);
+      throw error;
+    } finally {
+      this.isMutatingList = false;
+    }
+  }
+
+  async refresh(): Promise<void> {
+    const selectedListId = this.selectedListId;
+    this.userLists = await listService.getUserLists();
+    this.selectedListId = this.userLists.some((list) => list.id === selectedListId)
+      ? selectedListId
+      : (this.userLists[0]?.id ?? null);
+    await this.loadSelectedListMusics();
   }
 
   async ensureLocalAudioList(): Promise<string | null> {

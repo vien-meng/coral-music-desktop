@@ -1,4 +1,4 @@
-import { makeAutoObservable } from 'mobx';
+import { makeAutoObservable, reaction } from 'mobx';
 import { DislikeStore } from './domains/dislikeStore';
 import { DownloadStore } from './domains/downloadStore';
 import { LeaderboardStore } from './domains/leaderboardStore';
@@ -56,6 +56,24 @@ export class RootStore {
       { initializePromise: false },
       { autoBind: true },
     );
+    reaction(
+      () => this.ui.activeRoute,
+      (route, previousRoute) => {
+        if (previousRoute !== 'search' || route === 'search') return;
+        const setting = this.settings.appSetting;
+        if (!setting) return;
+        this.search.clearSearch(
+          setting['odc.isAutoClearSearchInput'],
+          setting['odc.isAutoClearSearchList'],
+        );
+      },
+    );
+    reaction(
+      () => this.sync.clientStatus?.status,
+      (connected) => {
+        if (connected) this.list.refresh().catch(() => {});
+      },
+    );
   }
 
   async initialize(): Promise<void> {
@@ -85,8 +103,10 @@ export class RootStore {
       this.download.hydrate(),
       this.dislike.hydrate(),
       this.sync.hydrate(),
+      this.openApi.refreshStatus(),
       this.userApi.hydrate(),
       this.webDav.hydrate(),
+      this.search.hydrate(),
     ]);
   }
 }
