@@ -10,6 +10,15 @@ export class OpenApiStore {
     makeAutoObservable(this, {}, { autoBind: true });
   }
 
+  async configure(enable: boolean, port: string, bindLan: boolean): Promise<boolean> {
+    const status = await this.sendAction({ action: 'enable', data: { enable, port, bindLan } });
+    return Boolean(status?.status) === enable;
+  }
+
+  async refreshStatus(): Promise<void> {
+    await this.sendAction({ action: 'status' });
+  }
+
   async sendAction(action: Coral.OpenAPI.Actions): Promise<Coral.OpenAPI.Status | null> {
     this.lastError = null;
 

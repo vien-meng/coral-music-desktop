@@ -39,6 +39,21 @@ export const AppProviders = observer(({ children }: PropsWithChildren) => {
     appliedThemeKeysRef.current = entries.map(([key]) => key);
   }, [rootStore.theme.activeThemeColors]);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    const setting = rootStore.settings.appSetting;
+    const fontSize = setting?.['common.fontSize'] ?? 14;
+    root.style.setProperty('--coral-font-size', `${fontSize}px`);
+    root.classList.toggle('coral-reduce-motion', setting?.['common.isShowAnimation'] === false);
+    return () => {
+      root.style.removeProperty('--coral-font-size');
+      root.classList.remove('coral-reduce-motion');
+    };
+  }, [
+    rootStore.settings.appSetting?.['common.fontSize'],
+    rootStore.settings.appSetting?.['common.isShowAnimation'],
+  ]);
+
   return (
     <ConfigProvider
       locale={zhCN}

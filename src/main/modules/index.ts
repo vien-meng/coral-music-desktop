@@ -5,6 +5,8 @@ import registerTray from './tray';
 import registerAppMenu from './appMenu';
 import registerWinLyric from './winLyric';
 import registerCommonRenderers from './commonRenderers';
+import registerSync from './sync';
+import registerOpenApiRuntime from './openApi/runtime';
 
 let isRegistered = false;
 export default () => {
@@ -16,5 +18,7 @@ export default () => {
   registerTray();
   registerAppMenu();
   registerWinLyric();
+  registerSync();
+  registerOpenApiRuntime();
   isRegistered = true;
 };

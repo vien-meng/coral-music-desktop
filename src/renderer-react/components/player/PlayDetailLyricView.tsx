@@ -14,7 +14,7 @@ const hasDisplayableLyric = (lyric: string): boolean =>
   hasTimestamp(lyric) && lyric.replace(/\[[^\]]+]/g, '').trim().length > 0;
 
 export const PlayDetailLyricView = observer(({ style }: PlayDetailLyricViewProps) => {
-  const { player } = rootStore;
+  const { player, settings } = rootStore;
   const hostRef = useRef<HTMLDivElement | null>(null);
   const lyricPlayerRef = useRef<Lyric | null>(null);
   const wasPlayingRef = useRef(false);
@@ -31,10 +31,18 @@ export const PlayDetailLyricView = observer(({ style }: PlayDetailLyricViewProps
   }, [lyricInfo.lxlyric, lyricInfo.lyric]);
   const extendedLyrics = useMemo(
     () =>
-      [lyricInfo.tlyric, lyricInfo.rlyric]
+      [
+        settings.appSetting?.['player.isShowLyricTranslation'] ? lyricInfo.tlyric : '',
+        settings.appSetting?.['player.isShowLyricRoma'] ? lyricInfo.rlyric : '',
+      ]
         .map((text) => text?.trim() ?? '')
         .filter(hasDisplayableLyric),
-    [lyricInfo.tlyric, lyricInfo.rlyric],
+    [
+      lyricInfo.tlyric,
+      lyricInfo.rlyric,
+      settings.appSetting?.['player.isShowLyricRoma'],
+      settings.appSetting?.['player.isShowLyricTranslation'],
+    ],
   );
 
   useEffect(() => {
@@ -81,11 +89,11 @@ export const PlayDetailLyricView = observer(({ style }: PlayDetailLyricViewProps
     if (!line) return;
 
     line.scrollIntoView({
-      behavior: 'smooth',
+      behavior: settings.appSetting?.['playDetail.isDelayScroll'] ? 'smooth' : 'instant',
       block: 'center',
       inline: 'center',
     });
-  }, [activeLine, timelineLines]);
+  }, [activeLine, settings.appSetting?.['playDetail.isDelayScroll'], timelineLines]);
 
   useEffect(() => {
     lyricPlayerRef.current?.setPlaybackRate(player.playbackRate);

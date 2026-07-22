@@ -21,10 +21,11 @@ export const LIST_IDS = {
 export const SYNC_CODE = {
   helloMsg: 'Hello~::^-^::~v4~',
   idPrefix: 'OjppZDo6',
-  authMsg: 'coral-music auth::',
+  // LX sync servers validate these wire markers; product branding must not change the protocol.
+  authMsg: 'lx-music auth::',
   msgAuthFailed: 'Auth failed',
   msgBlockedIp: 'Blocked IP',
-  msgConnect: 'coral-music connect',
+  msgConnect: 'lx-music connect',
 
   authFailed: 'Auth failed',
   missingAuthCode: 'Missing auth code',

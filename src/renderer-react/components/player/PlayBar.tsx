@@ -40,6 +40,7 @@ export const PlayBar = observer(() => {
   const nowPlayTimeStr = formatTime(player.currentTime);
   const maxPlayTimeStr = formatTime(player.maxPlayTime);
   const favoriteMusicInfo = player.displayMusicInfo;
+  const progressStyle = settings.appSetting?.['common.playBarProgressStyle'] ?? 'middle';
 
   const handleSeek = (seconds: number): void => {
     player.seek(seconds);
@@ -51,7 +52,7 @@ export const PlayBar = observer(() => {
   };
 
   return (
-    <div className="coral-playbar">
+    <div className={`coral-playbar is-progress-${progressStyle}`}>
       <Flex align="center" justify="space-between" gap={16} className="coral-playbar-inner">
         <button
           type="button"

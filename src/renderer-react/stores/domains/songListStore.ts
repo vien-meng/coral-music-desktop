@@ -339,6 +339,20 @@ export class SongListStore {
     }
   }
 
+  async getAllListDetailMusics(): Promise<Coral.Music.MusicInfoOnline[]> {
+    const { id, limit, list, source, total } = this.listDetailInfo;
+    // ponytail: a source without a total cannot expose pages we cannot discover; add source cursors if needed.
+    if (!id || !list.length || total <= limit) return list;
+
+    const onlineMusicService = await loadOnlineMusicService();
+    const musicMap = new Map<string | number, Coral.Music.MusicInfoOnline>();
+    for (let page = 1; page <= Math.ceil(total / limit); page++) {
+      const result = await onlineMusicService.getSongListDetail(source, id, page);
+      for (const musicInfo of result.list) musicMap.set(musicInfo.id, musicInfo);
+    }
+    return [...musicMap.values()];
+  }
+
   async loadTags(source = this.activeSource): Promise<void> {
     this.isLoadingTags = true;
     this.tagError = null;

@@ -705,7 +705,12 @@ export class PlayerStore {
       this.playbackRate = clamp(status.playbackRate, 0.5, 2);
     }
 
-    if (status.isEnded) this.playNext(true);
+    if (
+      status.isEnded ||
+      (status.status === 'error' && this.settings?.appSetting?.['player.autoSkipOnError'])
+    ) {
+      this.playNext(true);
+    }
   }
 
   private findQueueIndex(musicInfo: PlayerRuntimeMusicInfo): number {

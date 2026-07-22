@@ -407,7 +407,7 @@ const ThemeSelectorModal = ({
 );
 
 export const SettingsRoutePanel = observer(() => {
-  const { settings, sync, theme, userApi, dislike, list, ui } = rootStore;
+  const { settings, sync, openApi, theme, userApi, dislike, list, ui } = rootStore;
   const appSetting = settings.appSetting;
   const [isOnlineImportOpen, setIsOnlineImportOpen] = useState(false);
   const [isThemeSelectorOpen, setIsThemeSelectorOpen] = useState(false);
@@ -425,6 +425,7 @@ export const SettingsRoutePanel = observer(() => {
     useState<ExclusiveAudioOutputProbeResult | null>(null);
   const [isLoadingExclusiveDevices, setIsLoadingExclusiveDevices] = useState(false);
   const [isProbingExclusiveOutput, setIsProbingExclusiveOutput] = useState(false);
+  const [syncAuthCode, setSyncAuthCode] = useState('');
   const [activeTab, setActiveTab] = useState<SettingTabKey>('general');
   const externalDecoderSectionRef = useRef<HTMLDivElement | null>(null);
 
@@ -575,6 +576,56 @@ export const SettingsRoutePanel = observer(() => {
       [key]: value,
     };
     applySetting(nextSetting);
+  };
+
+  const handleSyncEnabledChange = async (enabled: boolean): Promise<void> => {
+    if (!enabled) {
+      if (appSetting['sync.mode'] === 'client') await sync.disconnectClient();
+      else {
+        await sync.sendAction({
+          action: 'enable_server',
+          data: { enable: false, port: appSetting['sync.server.port'] },
+        });
+      }
+      await settings.updateAppSetting({ 'sync.enable': false });
+      return;
+    }
+
+    if (appSetting['sync.mode'] === 'server') {
+      const port = Number(appSetting['sync.server.port']);
+      if (!Number.isInteger(port) || port < 1 || port > 65535) {
+        Modal.error({ title: '端口无效', content: '端口必须在 1 到 65535 之间' });
+        return;
+      }
+      await sync.sendAction({
+        action: 'enable_server',
+        data: { enable: true, port: appSetting['sync.server.port'] },
+      });
+      await settings.updateAppSetting({ 'sync.enable': true });
+      return;
+    }
+
+    const host = appSetting['sync.client.host'].trim();
+    if (!/^https?:\/\//.test(host)) {
+      Modal.error({ title: '地址无效', content: '请输入以 http:// 或 https:// 开头的同步地址' });
+      return;
+    }
+    await sync.connectClient(host, syncAuthCode.trim());
+    setSyncAuthCode('');
+    await settings.updateAppSetting({ 'sync.enable': true });
+  };
+
+  const handleOpenApiConfig = async (
+    nextSetting: Partial<
+      Pick<Coral.AppSetting, 'openAPI.enable' | 'openAPI.port' | 'openAPI.bindLan'>
+    >,
+  ): Promise<void> => {
+    const enable = nextSetting['openAPI.enable'] ?? appSetting['openAPI.enable'];
+    const port = nextSetting['openAPI.port'] ?? appSetting['openAPI.port'];
+    const bindLan = nextSetting['openAPI.bindLan'] ?? appSetting['openAPI.bindLan'];
+    if (enable && !(await openApi.configure(true, port, bindLan))) return;
+    if (!enable) await openApi.configure(false, port, bindLan);
+    await settings.updateAppSetting(nextSetting);
   };
 
   const loadExclusiveDevices = async (): Promise<void> => {
@@ -1430,12 +1481,15 @@ export const SettingsRoutePanel = observer(() => {
               className="coral-settings-wide-item"
             />
           ) : null}
-          <SettingSwitch
-            appSetting={appSetting}
-            label="启用同步"
-            settingKey="sync.enable"
-            updateSetting={applySetting}
-          />
+          <Form.Item label="启用同步">
+            <Switch
+              checked={appSetting['sync.enable']}
+              loading={sync.isMutating}
+              onChange={(enabled) => {
+                handleSyncEnabledChange(enabled).catch(() => {});
+              }}
+            />
+          </Form.Item>
           <Form.Item label="同步模式">
             <Radio.Group
               value={appSetting['sync.mode']}
@@ -1471,7 +1525,7 @@ export const SettingsRoutePanel = observer(() => {
               allowClear
               disabled={appSetting['sync.enable']}
               defaultValue={appSetting['sync.client.host']}
-              placeholder="http://127.0.0.1:23332"
+              placeholder="https://sync.example.com"
               className="coral-settings-input"
               onBlur={(event) => {
                 updateSetting('sync.client.host', event.target.value.trim());
@@ -1481,6 +1535,43 @@ export const SettingsRoutePanel = observer(() => {
               }}
             />
           </Form.Item>
+          {appSetting['sync.mode'] === 'client' ? (
+            <>
+              <Form.Item label="链接码">
+                <Input.Password
+                  allowClear
+                  disabled={appSetting['sync.enable']}
+                  placeholder="首次配对时输入；成功后不会保存"
+                  value={syncAuthCode}
+                  className="coral-settings-input"
+                  onChange={(event) => {
+                    setSyncAuthCode(event.target.value);
+                  }}
+                />
+              </Form.Item>
+              <Form.Item label="客户端状态" className="coral-settings-wide-item">
+                <Alert
+                  showIcon
+                  type={sync.clientStatus?.status ? 'success' : 'info'}
+                  title={sync.clientStatus?.status ? '已连接' : '未连接'}
+                  description={sync.clientStatus?.message || '首次连接需要输入服务提供的链接码。'}
+                />
+              </Form.Item>
+            </>
+          ) : (
+            <Form.Item label="服务端状态" className="coral-settings-wide-item">
+              <Alert
+                showIcon
+                type={sync.serverStatus?.status ? 'success' : 'info'}
+                title={sync.serverStatus?.status ? '服务已启动' : '服务未启动'}
+                description={
+                  sync.serverStatus?.status
+                    ? `${sync.serverStatus.address.join(' · ')}${sync.serverStatus.code ? ` · 配对码 ${sync.serverStatus.code}` : ''}`
+                    : sync.serverStatus?.message || '启用后会生成配对码。'
+                }
+              />
+            </Form.Item>
+          )}
           <Form.Item label="最大快照数">
             <InputNumber
               min={1}
@@ -1494,76 +1585,90 @@ export const SettingsRoutePanel = observer(() => {
               }}
             />
           </Form.Item>
-          <Form.Item label="服务端设备" className="coral-settings-wide-item">
-            <Space orientation="vertical" size="small" className="coral-wide">
-              <Space wrap>
-                <Button
-                  icon={<ReloadOutlined />}
-                  loading={sync.isHydrating}
-                  onClick={() => {
-                    sync.refreshServerDevices();
-                  }}
-                >
-                  刷新
-                </Button>
-                <Button
-                  icon={<KeyOutlined />}
-                  loading={sync.isMutating}
-                  onClick={() => {
-                    sync.generateCode();
-                  }}
-                >
-                  配对码
-                </Button>
-              </Space>
-              <PlainList
-                items={syncServerDevices}
-                empty={<Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无设备" />}
-                renderItem={(device) => (
-                  <PlainListItem
-                    key={device.clientId}
-                    actions={[
-                      <Popconfirm
-                        key="remove"
-                        title="移除设备"
-                        description={device.deviceName}
-                        okText="移除"
-                        cancelText="取消"
-                        onConfirm={() => {
-                          sync.removeServerDevice(device.clientId);
-                        }}
-                      >
-                        <Button
-                          danger
-                          type="text"
-                          size="small"
-                          icon={<DeleteOutlined />}
-                          loading={sync.isMutating}
-                        />
-                      </Popconfirm>,
-                    ]}
+          {appSetting['sync.mode'] === 'server' ? (
+            <Form.Item label="服务端设备" className="coral-settings-wide-item">
+              <Space orientation="vertical" size="small" className="coral-wide">
+                <Space wrap>
+                  <Button
+                    icon={<ReloadOutlined />}
+                    loading={sync.isHydrating}
+                    onClick={() => {
+                      sync.refreshServerDevices();
+                    }}
                   >
-                    <PlainListMeta title={device.deviceName} description={device.clientId} />
-                  </PlainListItem>
-                )}
-              />
-            </Space>
-          </Form.Item>
+                    刷新
+                  </Button>
+                  <Button
+                    icon={<KeyOutlined />}
+                    loading={sync.isMutating}
+                    onClick={() => {
+                      sync.generateCode();
+                    }}
+                  >
+                    配对码
+                  </Button>
+                </Space>
+                <PlainList
+                  items={syncServerDevices}
+                  empty={<Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无设备" />}
+                  renderItem={(device) => (
+                    <PlainListItem
+                      key={device.clientId}
+                      actions={[
+                        <Popconfirm
+                          key="remove"
+                          title="移除设备"
+                          description={device.deviceName}
+                          okText="移除"
+                          cancelText="取消"
+                          onConfirm={() => {
+                            sync.removeServerDevice(device.clientId);
+                          }}
+                        >
+                          <Button
+                            danger
+                            type="text"
+                            size="small"
+                            icon={<DeleteOutlined />}
+                            loading={sync.isMutating}
+                          />
+                        </Popconfirm>,
+                      ]}
+                    >
+                      <PlainListMeta title={device.deviceName} description={device.clientId} />
+                    </PlainListItem>
+                  )}
+                />
+              </Space>
+            </Form.Item>
+          ) : null}
         </SettingSection>
 
         <SettingSection title="OpenAPI" hidden={activeTab !== 'services'}>
-          <SettingSwitch
-            appSetting={appSetting}
-            label="启用 OpenAPI"
-            settingKey="openAPI.enable"
-            updateSetting={applySetting}
-          />
-          <SettingSwitch
-            appSetting={appSetting}
-            label="绑定局域网"
-            settingKey="openAPI.bindLan"
-            updateSetting={applySetting}
-          />
+          {openApi.lastError ? (
+            <Alert
+              showIcon
+              type="error"
+              title={openApi.lastError}
+              className="coral-settings-wide-item"
+            />
+          ) : null}
+          <Form.Item label="启用 OpenAPI">
+            <Switch
+              checked={appSetting['openAPI.enable']}
+              onChange={(enabled) => {
+                handleOpenApiConfig({ 'openAPI.enable': enabled }).catch(() => {});
+              }}
+            />
+          </Form.Item>
+          <Form.Item label="绑定局域网">
+            <Switch
+              checked={appSetting['openAPI.bindLan']}
+              onChange={(bindLan) => {
+                handleOpenApiConfig({ 'openAPI.bindLan': bindLan }).catch(() => {});
+              }}
+            />
+          </Form.Item>
           <Form.Item label="端口">
             <Input
               allowClear
@@ -1571,11 +1676,23 @@ export const SettingsRoutePanel = observer(() => {
               placeholder="23330"
               className="coral-settings-number-input"
               onBlur={(event) => {
-                updateSetting('openAPI.port', event.target.value.trim());
+                handleOpenApiConfig({ 'openAPI.port': event.target.value.trim() }).catch(() => {});
               }}
               onPressEnter={(event) => {
                 event.currentTarget.blur();
               }}
+            />
+          </Form.Item>
+          <Form.Item label="运行状态" className="coral-settings-wide-item">
+            <Alert
+              showIcon
+              type={openApi.status?.status ? 'success' : 'info'}
+              title={openApi.status?.status ? 'OpenAPI 已启动' : 'OpenAPI 未启动'}
+              description={
+                openApi.status?.address ||
+                openApi.status?.message ||
+                '启用后可通过 HTTP 控制播放器。'
+              }
             />
           </Form.Item>
         </SettingSection>

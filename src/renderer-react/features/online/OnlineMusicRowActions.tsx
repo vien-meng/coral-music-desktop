@@ -15,7 +15,7 @@ export interface OnlineMusicRowActionsProps {
 
 export const OnlineMusicRowActions = observer(
   ({ musicInfo, queue, queueId = null }: OnlineMusicRowActionsProps) => {
-    const { list, player, settings } = rootStore;
+    const { download, list, player, settings } = rootStore;
     const [downloadMusicInfo, setDownloadMusicInfo] = useState<Coral.Music.MusicInfo | null>(null);
     const addMusicLocationType = settings.appSetting?.['list.addMusicLocationType'] ?? 'top';
 
@@ -71,6 +71,7 @@ export const OnlineMusicRowActions = observer(
                 type="text"
                 size="small"
                 icon={<DownloadOutlined />}
+                disabled={!download.isDownloadEnabled}
                 onClick={handleDownload}
               />
             </Tooltip>
