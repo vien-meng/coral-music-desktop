@@ -4,6 +4,7 @@
 
 > - 当前项目是用 React 技术栈开发的 Coral Music。正式 Coral Music 仓库、真正意义上的包含在线播放+本地全格式播放播放器；
 > - 支持所有主流音频格式，超大文件DSD/SACD/DSF/DFF/ALAC/AC3/APE秒播
+> - 移动端应用请访问 [Coral Music Mobile](https://github.com/vien-meng/coral-music-mobile)
 > - 不要将其他项目的 Releases 视为 Coral Music 发布渠道。迁移资料、兼容文档或致谢来源仅作为历史参考。
 
 ## 说明
